@@ -5,6 +5,7 @@ import MyRentalsPage from './pages/MyRentalsPage';
 import OwnerOrdersPage from './pages/OwnerOrdersPage';
 import AdminOrdersPage from './pages/AdminOrdersPage';
 import BookingPage from './pages/BookingPage';
+import OrderDetailPage from './pages/OrderDetailPage';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/orders/new" element={<BookingPage />} />
           <Route path="/orders/my-rentals" element={<MyRentalsPage />} />
           <Route path="/orders/my-cars" element={<OwnerOrdersPage />} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
           <Route path="/admin/orders" element={<AdminOrdersPage />} />
         </Routes>
       </Container>
