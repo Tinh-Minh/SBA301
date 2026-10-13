@@ -194,7 +194,121 @@ public class RentalOrderServiceImpl implements RentalOrderService {
         return actionLogService.getLogsOfOrder(orderId);
     }
 
+    // ------------------------------------------------------------------ vòng đời đơn
+
+    @Override
+    @Transactional
+    public OrderResponseDTO confirmOrder(Long orderId, String note) {
+        Customer user = currentUserService.getCurrentUser();
+        RentalOrder order = findOrder(orderId);
+        if (!isOwner(order, user)) {
+            throw new ForbiddenException("Chỉ chủ xe mới được xác nhận đơn");
+        }
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (order.getStatus() == OrderStatus.PENDING
+                && order.getExpiresAt() != null && !now.isBefore(order.getExpiresAt())) {
+            throw new ConflictException("Đơn đã quá hạn xác nhận");
+        }
+        OrderStatus from = changeStatus(order, OrderStatus.CONFIRMED);
+        order.setConfirmedAt(now);
+        rentalOrderRepository.saveAndFlush(order);
+        actionLogService.log(order, user, ActionLogService.CONFIRM, from, OrderStatus.CONFIRMED, note);
+        return OrderResponseDTO.fromEntity(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDTO rejectOrder(Long orderId, String reason) {
+        Customer user = currentUserService.getCurrentUser();
+        RentalOrder order = findOrder(orderId);
+        if (!isOwner(order, user)) {
+            throw new ForbiddenException("Chỉ chủ xe mới được từ chối đơn");
+        }
+        requireReason(reason, "từ chối");
+        OrderStatus from = changeStatus(order, OrderStatus.REJECTED);
+        order.setCancelReason(reason.trim());
+        releaseVoucher(order);
+        rentalOrderRepository.saveAndFlush(order);
+        actionLogService.log(order, user, ActionLogService.REJECT, from, OrderStatus.REJECTED, reason);
+        return OrderResponseDTO.fromEntity(order);
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDTO cancelOrder(Long orderId, String reason) {
+        Customer user = currentUserService.getCurrentUser();
+        RentalOrder order = findOrder(orderId);
+        boolean renter = isRenter(order, user);
+        boolean owner = isOwner(order, user);
+        boolean admin = currentUserService.isAdmin(user);
+        if (!renter && !owner && !admin) {
+            throw new ForbiddenException("Bạn không có quyền huỷ đơn này");
+        }
+        // Người thuê huỷ không cần lý do; chủ xe/admin huỷ phải ghi rõ lý do.
+        if (!renter) {
+            requireReason(reason, "huỷ");
+        }
+        if (order.getStatus() == OrderStatus.ONGOING) {
+            throw new ConflictException("Xe đã được bàn giao, không thể huỷ đơn");
+        }
+        OrderStatus from = changeStatus(order, OrderStatus.CANCELLED);
+        order.setCancelledAt(LocalDateTime.now(clock));
+        order.setCancelledBy(user);
+        order.setCancelReason(reason == null || reason.isBlank() ? null : reason.trim());
+        releaseVoucher(order);
+        rentalOrderRepository.saveAndFlush(order);
+        actionLogService.log(order, user, ActionLogService.CANCEL, from, OrderStatus.CANCELLED, reason);
+        return OrderResponseDTO.fromEntity(order);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> findOverduePendingOrderIds() {
+        return rentalOrderRepository
+                .findByStatusAndExpiresAtBefore(OrderStatus.PENDING, LocalDateTime.now(clock))
+                .stream().map(RentalOrder::getId).toList();
+    }
+
+    @Override
+    @Transactional
+    public boolean expireOrder(Long orderId) {
+        RentalOrder order = findOrder(orderId);
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (order.getStatus() != OrderStatus.PENDING
+                || order.getExpiresAt() == null || order.getExpiresAt().isAfter(now)) {
+            return false;
+        }
+        OrderStatus from = changeStatus(order, OrderStatus.EXPIRED);
+        releaseVoucher(order);
+        rentalOrderRepository.saveAndFlush(order);
+        actionLogService.log(order, null, ActionLogService.EXPIRE, from, OrderStatus.EXPIRED,
+                "Chủ xe không xác nhận trước " + order.getExpiresAt());
+        return true;
+    }
+
     // ------------------------------------------------------------------ helpers
+
+    /** Đổi trạng thái theo bảng chuyển hợp lệ trong OrderStatus; trả về trạng thái cũ. */
+    OrderStatus changeStatus(RentalOrder order, OrderStatus target) {
+        OrderStatus from = order.getStatus();
+        if (!from.canTransitionTo(target)) {
+            throw new ConflictException("Không thể chuyển đơn từ " + from + " sang " + target);
+        }
+        order.setStatus(target);
+        return from;
+    }
+
+    private void releaseVoucher(RentalOrder order) {
+        if (order.getVoucher() != null) {
+            voucherRepository.decreaseUsage(order.getVoucher().getId());
+        }
+    }
+
+    private static void requireReason(String reason, String action) {
+        if (reason == null || reason.isBlank()) {
+            throw new BadRequestException("Vui lòng nhập lý do " + action + " đơn");
+        }
+    }
 
     private CarSlot findSlot(Long slotId) {
         return carSlotRepository.findById(slotId)

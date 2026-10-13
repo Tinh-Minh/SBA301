@@ -19,8 +19,9 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     /**
      * Tăng lượt dùng một cách nguyên tử, chỉ thành công khi còn lượt.
      * Trả về 0 nếu voucher đã hết lượt (do người khác vừa dùng hết).
+     * Không clear persistence context để các entity đã nạp (slot, xe, người thuê) vẫn dùng được.
      */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("""
             update Voucher v set v.usedCount = v.usedCount + 1
             where v.id = :id and (v.usageLimit is null or v.usedCount < v.usageLimit)
@@ -28,7 +29,7 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long> {
     int increaseUsage(@Param("id") Long id);
 
     /** Trả lại một lượt dùng khi đơn bị huỷ/từ chối/hết hạn. */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query("update Voucher v set v.usedCount = v.usedCount - 1 where v.id = :id and v.usedCount > 0")
     int decreaseUsage(@Param("id") Long id);
 }
