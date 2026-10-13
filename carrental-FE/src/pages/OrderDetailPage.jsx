@@ -70,6 +70,11 @@ export default function OrderDetailPage() {
     }
   };
 
+  const closeModal = () => {
+    setModalAction(null);
+    setActionError('');
+  };
+
   const handleModalSubmit = () => {
     if (modalAction === 'reject') {
       runAction(() => orderService.rejectOrder(order.id, reason));
@@ -86,7 +91,7 @@ export default function OrderDetailPage() {
           <StatusBadge status={order.status} />
         </Card.Header>
         <Card.Body>
-          {actionError && <Alert variant="danger">{actionError}</Alert>}
+          {actionError && modalAction === null && <Alert variant="danger">{actionError}</Alert>}
           <Row>
             <Col md={6}>
               <Table size="sm" borderless>
@@ -162,17 +167,18 @@ export default function OrderDetailPage() {
         </Card.Body>
       </Card>
 
-      <Modal show={modalAction !== null} onHide={() => setModalAction(null)}>
+      <Modal show={modalAction !== null} onHide={closeModal}>
         <Modal.Header closeButton>
           <Modal.Title>{modalAction && ACTION_LABEL[modalAction].title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {actionError && <Alert variant="danger">{actionError}</Alert>}
           <Form.Label>Lý do {modalAction === 'cancel' && isRenter ? '(không bắt buộc)' : ''}</Form.Label>
           <Form.Control as="textarea" rows={3} maxLength={500} value={reason}
                         onChange={(e) => setReason(e.target.value)} />
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setModalAction(null)}>Đóng</Button>
+          <Button variant="secondary" onClick={closeModal}>Đóng</Button>
           {modalAction && (
             <Button variant={ACTION_LABEL[modalAction].variant} onClick={handleModalSubmit}>
               {ACTION_LABEL[modalAction].button}

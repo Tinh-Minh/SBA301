@@ -12,6 +12,7 @@ export default function HandoverSection({ order, handovers, isRenter, isOwner, o
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
+  const [modalError, setModalError] = useState('');
 
   const isParty = isRenter || isOwner;
   const hasPickup = handovers.some((h) => h.handoverType === 'PICKUP');
@@ -32,7 +33,7 @@ export default function HandoverSection({ order, handovers, isRenter, isOwner, o
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length > 0) return;
-    setError('');
+    setModalError('');
     try {
       await handoverService.createHandover(order.id, {
         handoverType: nextType,
@@ -46,8 +47,14 @@ export default function HandoverSection({ order, handovers, isRenter, isOwner, o
       setForm(EMPTY_FORM);
       onChanged();
     } catch (err) {
-      setError(getErrorMessage(err));
+      setModalError(getErrorMessage(err));
     }
+  };
+
+  const closeModal = () => {
+    setShow(false);
+    setModalError('');
+    setErrors({});
   };
 
   const handleConfirm = async (handoverId) => {
@@ -108,11 +115,12 @@ export default function HandoverSection({ order, handovers, isRenter, isOwner, o
         ))}
       </Card.Body>
 
-      <Modal show={show} onHide={() => setShow(false)}>
+      <Modal show={show} onHide={closeModal}>
         <Modal.Header closeButton>
           <Modal.Title>{nextType === 'PICKUP' ? 'Biên bản nhận xe' : 'Biên bản trả xe'}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          {modalError && <Alert variant="danger">{modalError}</Alert>}
           <Row className="mb-3">
             <Col>
               <Form.Label>Số km (odo)</Form.Label>
@@ -139,7 +147,7 @@ export default function HandoverSection({ order, handovers, isRenter, isOwner, o
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShow(false)}>Huỷ</Button>
+          <Button variant="secondary" onClick={closeModal}>Huỷ</Button>
           <Button variant="primary" onClick={handleCreate}>Lưu biên bản</Button>
         </Modal.Footer>
       </Modal>
