@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Form, Row, Spinner, Table } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
@@ -13,26 +13,30 @@ export default function OrderListPage({ title, fetchOrders, showRenter = false }
   const [page, setPage] = useState(0);
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const params = { page, size: PAGE_SIZE, sortBy: 'createdAt', direction: 'desc' };
-      if (status) params.status = status;
-      setData(await fetchOrders(params));
-    } catch (err) {
-      setError(getErrorMessage(err));
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchOrders, page, status]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let ignore = false;
+    const params = { page, size: PAGE_SIZE, sortBy: 'createdAt', direction: 'desc' };
+    if (status) params.status = status;
+    fetchOrders(params)
+      .then((result) => {
+        if (ignore) return;
+        setData(result);
+        setError('');
+      })
+      .catch((err) => {
+        if (ignore) return;
+        setError(getErrorMessage(err));
+        setData(null);
+      })
+      .finally(() => {
+        if (!ignore) setLoaded(true);
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [fetchOrders, page, status]);
 
   return (
     <Card>
@@ -56,7 +60,7 @@ export default function OrderListPage({ title, fetchOrders, showRenter = false }
         </Row>
 
         {error && <Alert variant="danger">{error}</Alert>}
-        {loading && <Spinner animation="border" size="sm" />}
+        {!loaded && <Spinner animation="border" size="sm" />}
 
         {data && (
           <>
