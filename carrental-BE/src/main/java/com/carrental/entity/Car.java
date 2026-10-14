@@ -1,30 +1,19 @@
 package com.carrental.entity;
 
 import com.carrental.enums.CarStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.carrental.enums.CarType;
+import com.carrental.enums.FuelType;
+import com.carrental.enums.Transmission;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-/**
- * TẠM THỜI cho Function 3 - chủ sở hữu thật là Function 2.
- * Function 3 chỉ đọc: chủ xe (owner) để kiểm tra quyền xác nhận đơn, tiền cọc để chụp vào đơn.
- * Khi Function 2 merge entity Car đầy đủ, xóa file này (giữ tên field owner, depositAmount, status).
- */
 @Entity
 @Table(name = "cars")
 @Getter
@@ -38,11 +27,15 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private Customer owner;
 
-    @Column(name = "license_plate", nullable = false, length = 20)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "driver_id", unique = true)
+    private Driver driver;
+
+    @Column(name = "license_plate", nullable = false, unique = true, length = 20)
     private String licensePlate;
 
     @Column(name = "brand", nullable = false, length = 50)
@@ -51,10 +44,76 @@ public class Car {
     @Column(name = "model", nullable = false, length = 50)
     private String model;
 
-    @Column(name = "deposit_amount", nullable = false, precision = 14)
-    private BigDecimal depositAmount;
+    @Column(name = "manufacture_year", nullable = false)
+    private Integer manufactureYear;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "car_type", nullable = false, length = 20)
+    private CarType carType;
+
+    @Column(name = "seats", nullable = false)
+    private Integer seats;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "transmission", nullable = false, length = 20)
+    private Transmission transmission;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fuel_type", nullable = false, length = 20)
+    private FuelType fuelType;
+
+    @Column(name = "color", length = 30)
+    private String color;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "features", nullable = false, columnDefinition = "jsonb")
+    @Builder.Default
+    private String features = "[]";
+
+    @Column(name = "city", nullable = false, length = 100)
+    private String city;
+
+    @Column(name = "district", length = 100)
+    private String district;
+
+    @Column(name = "pickup_address", nullable = false, length = 300)
+    private String pickupAddress;
+
+    @Column(name = "latitude", precision = 9, scale = 6)
+    private BigDecimal latitude;
+
+    @Column(name = "longitude", precision = 9, scale = 6)
+    private BigDecimal longitude;
+
+    @Column(name = "price_per_hour", nullable = false, precision = 14, scale = 0)
+    private BigDecimal pricePerHour;
+
+    @Column(name = "price_per_day", nullable = false, precision = 14, scale = 0)
+    private BigDecimal pricePerDay;
+
+    @Column(name = "deposit_amount", nullable = false, precision = 14, scale = 0)
+    @Builder.Default
+    private BigDecimal depositAmount = BigDecimal.ZERO;
+
+    @Column(name = "km_limit_per_day")
+    private Integer kmLimitPerDay;
+
+    @Column(name = "extra_km_fee", precision = 14, scale = 0)
+    private BigDecimal extraKmFee;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private CarStatus status;
+    @Builder.Default
+    private CarStatus status = CarStatus.PENDING_APPROVAL;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }

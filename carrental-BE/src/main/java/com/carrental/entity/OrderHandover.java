@@ -1,32 +1,12 @@
 package com.carrental.entity;
 
 import com.carrental.enums.HandoverType;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
 
-/** Biên bản bàn giao xe: PICKUP (nhận xe) hoặc RETURN (trả xe). */
 @Entity
 @Table(name = "order_handovers")
 @Getter
@@ -40,7 +20,7 @@ public class OrderHandover {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     private RentalOrder order;
 
@@ -66,27 +46,7 @@ public class OrderHandover {
     @Column(name = "owner_confirmed_at")
     private LocalDateTime ownerConfirmedAt;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @OneToMany(mappedBy = "handover", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<HandoverImage> images = new ArrayList<>();
-
-    public void addImage(HandoverImage image) {
-        image.setHandover(this);
-        images.add(image);
-    }
-
-    /** Biên bản chỉ có hiệu lực khi cả người thuê và chủ xe đều đã xác nhận. */
-    public boolean isFullyConfirmed() {
-        return renterConfirmedAt != null && ownerConfirmedAt != null;
-    }
-
-    @PrePersist
-    void onCreate() {
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        if (createdAt == null) createdAt = now;
-        if (handedAt == null) handedAt = now;
-    }
 }

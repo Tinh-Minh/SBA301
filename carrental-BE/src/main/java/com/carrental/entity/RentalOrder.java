@@ -3,35 +3,14 @@ package com.carrental.entity;
 import com.carrental.enums.OrderStatus;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.RentalType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import jakarta.persistence.Version;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 
-/**
- * Đơn thuê xe. Quy ước tiền:
- * rental_amount = unit_price * quantity; total_amount = rental_amount - discount_amount;
- * deposit_amount thu riêng và hoàn khi trả xe.
- */
 @Entity
 @Table(name = "rental_orders")
 @Getter
@@ -48,16 +27,15 @@ public class RentalOrder {
     @Column(name = "order_code", nullable = false, unique = true, length = 30)
     private String orderCode;
 
-    /** Người thuê. */
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car_id", nullable = false)
     private Car car;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car_slot_id", nullable = false)
     private CarSlot carSlot;
 
@@ -81,33 +59,36 @@ public class RentalOrder {
     @Column(name = "actual_end_time")
     private LocalDateTime actualEndTime;
 
-    @Column(name = "unit_price", nullable = false, precision = 14)
+    @Column(name = "unit_price", nullable = false, precision = 14, scale = 0)
     private BigDecimal unitPrice;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @Column(name = "rental_amount", nullable = false, precision = 14)
+    @Column(name = "rental_amount", nullable = false, precision = 14, scale = 0)
     private BigDecimal rentalAmount;
 
-    @Column(name = "discount_amount", nullable = false, precision = 14)
-    private BigDecimal discountAmount;
+    @Column(name = "discount_amount", nullable = false, precision = 14, scale = 0)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
-    @Column(name = "total_amount", nullable = false, precision = 14)
+    @Column(name = "total_amount", nullable = false, precision = 14, scale = 0)
     private BigDecimal totalAmount;
 
-    @Column(name = "deposit_amount", nullable = false, precision = 14)
-    private BigDecimal depositAmount;
+    @Column(name = "deposit_amount", nullable = false, precision = 14, scale = 0)
+    @Builder.Default
+    private BigDecimal depositAmount = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private OrderStatus status;
+    @Builder.Default
+    private OrderStatus status = OrderStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false, length = 20)
-    private PaymentStatus paymentStatus;
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
-    /** Hạn chủ xe phải xác nhận đơn PENDING, quá hạn hệ thống chuyển EXPIRED. */
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
 
@@ -128,31 +109,19 @@ public class RentalOrder {
     private String note;
 
     @Column(name = "commission_rate", nullable = false, precision = 5, scale = 2)
-    private BigDecimal commissionRate;
+    @Builder.Default
+    private BigDecimal commissionRate = new BigDecimal("10.00");
 
     @Version
     @Column(name = "version", nullable = false)
-    private Long version;
+    @Builder.Default
+    private Long version = 0L;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
-
-    @PrePersist
-    void onCreate() {
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        if (createdAt == null) createdAt = now;
-        updatedAt = now;
-        if (status == null) status = OrderStatus.PENDING;
-        if (paymentStatus == null) paymentStatus = PaymentStatus.UNPAID;
-        if (discountAmount == null) discountAmount = BigDecimal.ZERO;
-        if (depositAmount == null) depositAmount = BigDecimal.ZERO;
-    }
-
-    @PreUpdate
-    void onUpdate() {
-        updatedAt = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-    }
 }

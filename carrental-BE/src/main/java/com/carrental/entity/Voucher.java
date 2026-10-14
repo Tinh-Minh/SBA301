@@ -2,28 +2,14 @@ package com.carrental.entity;
 
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.VoucherStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/**
- * TẠM THỜI cho Function 3 - chủ sở hữu thật là Function 1 (admin quản lý voucher).
- * Function 3 đọc điều kiện voucher để tính giảm giá và tăng/giảm used_count khi đặt/huỷ đơn.
- * Khi Function 1 merge entity Voucher đầy đủ, xóa file này.
- */
 @Entity
 @Table(name = "vouchers")
 @Getter
@@ -37,21 +23,25 @@ public class Voucher {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, length = 50)
+    @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
+
+    @Column(name = "description", length = 300)
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "discount_type", nullable = false, length = 10)
     private DiscountType discountType;
 
-    @Column(name = "discount_value", nullable = false, precision = 14)
+    @Column(name = "discount_value", nullable = false, precision = 14, scale = 0)
     private BigDecimal discountValue;
 
-    @Column(name = "max_discount", precision = 14)
+    @Column(name = "max_discount", precision = 14, scale = 0)
     private BigDecimal maxDiscount;
 
-    @Column(name = "min_order_amount", nullable = false, precision = 14)
-    private BigDecimal minOrderAmount;
+    @Column(name = "min_order_amount", nullable = false, precision = 14, scale = 0)
+    @Builder.Default
+    private BigDecimal minOrderAmount = BigDecimal.ZERO;
 
     @Column(name = "start_at", nullable = false)
     private LocalDateTime startAt;
@@ -63,12 +53,23 @@ public class Voucher {
     private Integer usageLimit;
 
     @Column(name = "per_user_limit", nullable = false)
-    private Integer perUserLimit;
+    @Builder.Default
+    private Integer perUserLimit = 1;
 
     @Column(name = "used_count", nullable = false)
-    private Integer usedCount;
+    @Builder.Default
+    private Integer usedCount = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private VoucherStatus status;
+    @Builder.Default
+    private VoucherStatus status = VoucherStatus.ACTIVE;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }
