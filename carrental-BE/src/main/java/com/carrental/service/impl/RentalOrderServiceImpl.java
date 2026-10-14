@@ -21,6 +21,7 @@ import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;
+import com.carrental.service.OrderStatusRules;
 import com.carrental.service.PricingService;
 import com.carrental.service.RentalOrderService;
 import org.springframework.beans.factory.annotation.Value;
@@ -99,7 +100,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
 
         // Chống trùng lịch ở tầng service (DB còn EXCLUDE rental_orders_no_overlap làm lớp cuối).
         if (rentalOrderRepository.existsOverlapping(slot.getCar().getId(), request.getStartTime(),
-                request.getEndTime(), OrderStatus.ACTIVE_STATUSES)) {
+                request.getEndTime(), OrderStatusRules.ACTIVE_STATUSES)) {
             throw new ConflictException("Xe đã có người đặt trong khoảng thời gian này");
         }
 
@@ -291,7 +292,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
     /** Đổi trạng thái theo bảng chuyển hợp lệ trong OrderStatus; trả về trạng thái cũ. */
     OrderStatus changeStatus(RentalOrder order, OrderStatus target) {
         OrderStatus from = order.getStatus();
-        if (!from.canTransitionTo(target)) {
+        if (!OrderStatusRules.canTransition(from, target)) {
             throw new ConflictException("Không thể chuyển đơn từ " + from + " sang " + target);
         }
         order.setStatus(target);

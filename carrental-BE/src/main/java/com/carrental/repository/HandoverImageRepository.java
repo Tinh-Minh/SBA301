@@ -7,5 +7,5 @@ import java.util.List;
 
 public interface HandoverImageRepository extends JpaRepository<HandoverImage, Long> {
 
-    List<HandoverImage> findByHandoverId(Long handoverId);
+    List<HandoverImage> findByHandoverIdOrderByIdAsc(Long handoverId);
 }

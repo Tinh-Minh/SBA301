@@ -10,33 +10,29 @@ import com.carrental.service.ActionLogService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class ActionLogServiceImpl implements ActionLogService {
 
     private final ActionLogRepository actionLogRepository;
-    private final Clock clock;
 
-    public ActionLogServiceImpl(ActionLogRepository actionLogRepository, Clock clock) {
+    public ActionLogServiceImpl(ActionLogRepository actionLogRepository) {
         this.actionLogRepository = actionLogRepository;
-        this.clock = clock;
     }
 
     @Override
     @Transactional
     public void log(RentalOrder order, Customer actor, String action,
                     OrderStatus fromStatus, OrderStatus toStatus, String note) {
+        // Entity ActionLog dùng chung lưu trạng thái dạng chuỗi; created_at do @CreationTimestamp tự điền.
         actionLogRepository.save(ActionLog.builder()
                 .order(order)
                 .actor(actor)
                 .action(action)
-                .fromStatus(fromStatus)
-                .toStatus(toStatus)
+                .fromStatus(fromStatus == null ? null : fromStatus.name())
+                .toStatus(toStatus == null ? null : toStatus.name())
                 .note(truncate(note))
-                .createdAt(LocalDateTime.now(clock))
                 .build());
     }
 

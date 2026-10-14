@@ -1,7 +1,6 @@
 package com.carrental.dto.response;
 
 import com.carrental.entity.ActionLog;
-import com.carrental.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,8 +18,8 @@ public class ActionLogDTO {
     private Long actorId;
     private String actorName;
     private String action;
-    private OrderStatus fromStatus;
-    private OrderStatus toStatus;
+    private String fromStatus;
+    private String toStatus;
     private String note;
     private LocalDateTime createdAt;
 

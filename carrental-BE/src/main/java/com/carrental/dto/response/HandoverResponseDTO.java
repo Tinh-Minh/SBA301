@@ -43,7 +43,13 @@ public class HandoverResponseDTO {
         }
     }
 
-    public static HandoverResponseDTO fromEntity(OrderHandover h) {
+    /** Biên bản chỉ có hiệu lực khi cả người thuê và chủ xe đều đã xác nhận. */
+    public static boolean isFullyConfirmed(OrderHandover h) {
+        return h.getRenterConfirmedAt() != null && h.getOwnerConfirmedAt() != null;
+    }
+
+    /** Entity OrderHandover dùng chung không giữ danh sách ảnh nên ảnh được truyền vào riêng. */
+    public static HandoverResponseDTO fromEntity(OrderHandover h, List<HandoverImage> images) {
         return HandoverResponseDTO.builder()
                 .id(h.getId())
                 .orderId(h.getOrder().getId())
@@ -54,9 +60,9 @@ public class HandoverResponseDTO {
                 .handedAt(h.getHandedAt())
                 .renterConfirmedAt(h.getRenterConfirmedAt())
                 .ownerConfirmedAt(h.getOwnerConfirmedAt())
-                .fullyConfirmed(h.isFullyConfirmed())
+                .fullyConfirmed(isFullyConfirmed(h))
                 .createdAt(h.getCreatedAt())
-                .images(h.getImages().stream().map(Image::fromEntity).toList())
+                .images(images.stream().map(Image::fromEntity).toList())
                 .build();
     }
 }

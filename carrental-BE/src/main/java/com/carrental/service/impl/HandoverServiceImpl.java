@@ -14,17 +14,20 @@ import com.carrental.exception.BadRequestException;
 import com.carrental.exception.ConflictException;
 import com.carrental.exception.ForbiddenException;
 import com.carrental.exception.ResourceNotFoundException;
+import com.carrental.repository.HandoverImageRepository;
 import com.carrental.repository.OrderHandoverRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.HandoverService;
+import com.carrental.service.OrderStatusRules;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +35,7 @@ import java.util.Objects;
 public class HandoverServiceImpl implements HandoverService {
 
     private final OrderHandoverRepository handoverRepository;
+    private final HandoverImageRepository handoverImageRepository;
     private final RentalOrderRepository rentalOrderRepository;
     private final ActionLogService actionLogService;
     private final CurrentUserService currentUserService;
@@ -46,11 +50,13 @@ public class HandoverServiceImpl implements HandoverService {
     private boolean requirePaymentBeforePickup;
 
     public HandoverServiceImpl(OrderHandoverRepository handoverRepository,
+                               HandoverImageRepository handoverImageRepository,
                                RentalOrderRepository rentalOrderRepository,
                                ActionLogService actionLogService,
                                CurrentUserService currentUserService,
                                Clock clock) {
         this.handoverRepository = handoverRepository;
+        this.handoverImageRepository = handoverImageRepository;
         this.rentalOrderRepository = rentalOrderRepository;
         this.actionLogService = actionLogService;
         this.currentUserService = currentUserService;
@@ -86,22 +92,25 @@ public class HandoverServiceImpl implements HandoverService {
                 .fuelPercent(request.getFuelPercent())
                 .conditionNote(request.getConditionNote())
                 .handedAt(now)
-                .createdAt(now)
                 .renterConfirmedAt(renter ? now : null)
                 .ownerConfirmedAt(owner ? now : null)
                 .build();
+        handover = handoverRepository.save(handover);
+        // Entity OrderHandover dùng chung không cascade ảnh nên lưu ảnh riêng qua repository.
+        List<HandoverImage> images = new ArrayList<>();
         if (request.getImages() != null) {
             for (HandoverImageRequestDTO img : request.getImages()) {
-                handover.addImage(HandoverImage.builder()
+                images.add(HandoverImage.builder()
+                        .handover(handover)
                         .imageUrl(img.getImageUrl().trim())
                         .caption(img.getCaption())
                         .build());
             }
+            images = handoverImageRepository.saveAll(images);
         }
-        handover = handoverRepository.save(handover);
         actionLogService.log(order, user, ActionLogService.HANDOVER_CREATE, order.getStatus(), order.getStatus(),
                 "Lập biên bản " + type + (renter ? " (người thuê)" : " (chủ xe)"));
-        return HandoverResponseDTO.fromEntity(handover);
+        return HandoverResponseDTO.fromEntity(handover, images);
     }
 
     @Override
@@ -129,12 +138,12 @@ public class HandoverServiceImpl implements HandoverService {
         actionLogService.log(order, user, ActionLogService.HANDOVER_CONFIRM, order.getStatus(), order.getStatus(),
                 "Xác nhận biên bản " + handover.getHandoverType());
 
-        if (handover.isFullyConfirmed()) {
+        if (HandoverResponseDTO.isFullyConfirmed(handover)) {
             applyHandover(order, handover, user);
         }
         handoverRepository.save(handover);
         rentalOrderRepository.saveAndFlush(order);
-        return HandoverResponseDTO.fromEntity(handover);
+        return toResponse(handover);
     }
 
     @Override
@@ -146,11 +155,16 @@ public class HandoverServiceImpl implements HandoverService {
             throw new ForbiddenException("Bạn không có quyền xem biên bản của đơn này");
         }
         return handoverRepository.findByOrderIdOrderByHandedAtAsc(orderId).stream()
-                .map(HandoverResponseDTO::fromEntity)
+                .map(this::toResponse)
                 .toList();
     }
 
     // ------------------------------------------------------------------ helpers
+
+    private HandoverResponseDTO toResponse(OrderHandover handover) {
+        return HandoverResponseDTO.fromEntity(handover,
+                handoverImageRepository.findByHandoverIdOrderByIdAsc(handover.getId()));
+    }
 
     private void validatePickup(RentalOrder order, LocalDateTime now) {
         if (order.getStatus() != OrderStatus.CONFIRMED) {
@@ -198,7 +212,7 @@ public class HandoverServiceImpl implements HandoverService {
     }
 
     private static void changeStatus(RentalOrder order, OrderStatus target) {
-        if (!order.getStatus().canTransitionTo(target)) {
+        if (!OrderStatusRules.canTransition(order.getStatus(), target)) {
             throw new ConflictException("Không thể chuyển đơn từ " + order.getStatus() + " sang " + target);
         }
         order.setStatus(target);
