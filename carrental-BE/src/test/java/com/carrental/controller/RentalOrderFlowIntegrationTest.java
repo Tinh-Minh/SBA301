@@ -5,12 +5,15 @@ import com.carrental.entity.CarSlot;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.CarStatus;
+import com.carrental.enums.CarType;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
+import com.carrental.enums.FuelType;
 import com.carrental.enums.OrderStatus;
 import com.carrental.enums.RentalOption;
 import com.carrental.enums.Role;
 import com.carrental.enums.SlotStatus;
+import com.carrental.enums.Transmission;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.VoucherRepository;
@@ -100,6 +103,9 @@ class RentalOrderFlowIntegrationTest {
             Customer admin = persist(customer("Admin", "admin@test.vn", "0900000005", Role.ADMIN));
 
             Car car = persist(Car.builder().owner(owner).licensePlate("51A-12345").brand("Toyota").model("Vios")
+                    .manufactureYear(2022).carType(CarType.SEDAN).seats(5).transmission(Transmission.AUTOMATIC)
+                    .fuelType(FuelType.GASOLINE).city("Hồ Chí Minh").pickupAddress("1 Lê Lợi, Quận 1")
+                    .pricePerHour(new BigDecimal("100000")).pricePerDay(new BigDecimal("800000"))
                     .depositAmount(new BigDecimal("2000000")).status(CarStatus.ACTIVE).build());
             CarSlot slot = persist(CarSlot.builder().car(car)
                     .startTime(LocalDateTime.of(2026, 11, 2, 0, 0))
@@ -374,8 +380,8 @@ class RentalOrderFlowIntegrationTest {
     }
 
     private static Customer customer(String name, String email, String phone, Role role) {
-        return Customer.builder().fullName(name).email(email).phone(phone).role(role)
-                .status(CustomerStatus.ACTIVE).build();
+        return Customer.builder().fullName(name).email(email).phone(phone).passwordHash("{noop}test")
+                .role(role).status(CustomerStatus.ACTIVE).build();
     }
 
     private <T> T persist(T entity) {
