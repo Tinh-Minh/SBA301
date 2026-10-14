@@ -48,12 +48,14 @@ Mọi response theo `ApiResponseDTO { status, message, data }`.
 
 | File | Thay bởi |
 |---|---|
-| `entity/Customer`, `repository/CustomerRepository` | Function 1 |
-| `entity/Voucher`, `repository/VoucherRepository` (giữ `increaseUsage`, `decreaseUsage`) | Function 1 |
-| `entity/Car`, `entity/CarSlot`, `repository/CarSlotRepository` | Function 2 |
+| `repository/CustomerRepository` | Function 1 |
+| `repository/VoucherRepository` (giữ `increaseUsage`, `decreaseUsage`) | Function 1 |
+| `repository/CarSlotRepository` | Function 2 |
 | `service/impl/HeaderCurrentUserServiceImpl` (header `X-User-Id`) | Function 1: cài `CurrentUserService` đọc từ JWT |
 | `config/TempSecurityConfig`, `config/TempSwaggerHeaderConfig` | Function 1: SecurityConfig + SwaggerConfig thật |
 | FE: ô "User ID (tạm)" trên `AppNavbar`, header `X-User-Id` trong `services/api.js` | Function 1: trang đăng nhập, lưu `token` |
+
+Entity và enum dùng chung (`Customer`, `Car`, `CarSlot`, `Voucher`, `RentalOrder`, `ActionLog`, `OrderHandover`, `HandoverImage`...) lấy từ nhánh `BE` của Minh, Function 3 không sửa. Quy tắc chuyển trạng thái đơn nằm ở `service/OrderStatusRules`; ảnh bàn giao lưu qua `HandoverImageRepository`.
 
 ## Cấu hình (`application.properties`)
 
