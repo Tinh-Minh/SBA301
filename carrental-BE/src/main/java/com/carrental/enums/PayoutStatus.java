@@ -7,14 +7,16 @@ public enum PayoutStatus {
     PENDING,
     PROCESSING,
     COMPLETED,
-    REJECTED;
+    PAID,
+    REJECTED,
+    FAILED;
 
     public boolean canTransitionTo(PayoutStatus next) {
         if (this == PENDING) {
-            return next == PROCESSING || next == REJECTED;
+            return next == PROCESSING || next == REJECTED || next == FAILED;
         }
         if (this == PROCESSING) {
-            return next == COMPLETED || next == REJECTED;
+            return next == COMPLETED || next == PAID || next == REJECTED || next == FAILED;
         }
         return false;
     }
