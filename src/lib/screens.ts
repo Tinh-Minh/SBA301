@@ -25,6 +25,7 @@ import PaymentFailed from "@/views/PaymentFailed";
 import Handover from "@/views/Handover";
 import Return from "@/views/Return";
 import Review from "@/views/Review";
+import Dispute from "@/views/Dispute";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -53,4 +54,5 @@ export const screens: Record<string, ComponentType> = {
   "ban-giao/nhan-xe": Handover,
   "ban-giao/tra-xe": Return,
   "danh-gia": Review,
+  "tranh-chap": Dispute,
 };
