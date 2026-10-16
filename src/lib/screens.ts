@@ -8,6 +8,7 @@ import Account from "@/views/Account";
 import AccountOrders from "@/views/AccountOrders";
 import History from "@/views/History";
 import Verification from "@/views/Verification";
+import VerificationCollapsed from "@/views/VerificationCollapsed";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -19,4 +20,5 @@ export const screens: Record<string, ComponentType> = {
   "tai-khoan/don-thue": AccountOrders,
   "tai-khoan/lich-su": History,
   "tai-khoan/xac-minh": Verification,
+  "tai-khoan/xac-minh/thu-gon": VerificationCollapsed,
 };
