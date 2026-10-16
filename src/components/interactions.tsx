@@ -29,7 +29,7 @@ export function Interactions({children}:{children:ReactNode}){
   const params=new URLSearchParams(window.location.search);if(params.get("filter"))filterCars(params.get("filter")!);
   if(params.has("cancelled"))notify("Đã hủy yêu cầu thuê xe.");
   const scope=root.current;if(!scope)return;
-  scope.querySelectorAll<HTMLElement>("[data-handler='toggleCard']").forEach(el=>{el.tabIndex=0;el.setAttribute("role","button");el.setAttribute("aria-expanded",String(!el.closest("[id^='card-']")?.querySelector(".card-body")?.classList.contains("hidden")));});
+  scope.querySelectorAll<HTMLElement>("[data-handler='toggleCard']").forEach(el=>{el.tabIndex=0;el.setAttribute("role","button");el.setAttribute("aria-expanded",String(!el.closest("[id^='card-']")?.querySelector(".card-body,.card-content")?.classList.contains("hidden")));});
   scope.querySelectorAll<HTMLInputElement>("input:not([id])").forEach((input,index)=>input.id=`cardb-field-${index}`);
   scope.querySelectorAll<HTMLElement>("[data-star]").forEach(el=>el.setAttribute("aria-label",`${el.dataset.star} sao`));
   scope.querySelectorAll<HTMLElement>("[data-val]").forEach(el=>el.setAttribute("aria-label",`Đánh giá ${el.dataset.val} sao`));
