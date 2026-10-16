@@ -21,6 +21,7 @@ import Order from "@/views/Order";
 import ConfirmedOrder from "@/views/ConfirmedOrder";
 import Payment from "@/views/Payment";
 import PaymentSuccess from "@/views/PaymentSuccess";
+import PaymentFailed from "@/views/PaymentFailed";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -45,4 +46,5 @@ export const screens: Record<string, ComponentType> = {
   "don-thue/CDB-ORD-20261026-904/da-xac-nhan": ConfirmedOrder,
   "thanh-toan": Payment,
   "thanh-toan/thanh-cong": PaymentSuccess,
+  "thanh-toan/that-bai": PaymentFailed,
 };
