@@ -14,6 +14,7 @@ import Banks from "@/views/Banks";
 import BanksAlternative from "@/views/BanksAlternative";
 import AddBank from "@/views/AddBank";
 import DefaultBank from "@/views/DefaultBank";
+import Checkout from "@/views/Checkout";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -31,4 +32,5 @@ export const screens: Record<string, ComponentType> = {
   "mau-thiet-ke/ngan-hang": BanksAlternative,
   "tai-khoan/ngan-hang/them": AddBank,
   "tai-khoan/ngan-hang/mac-dinh": DefaultBank,
+  "dat-xe/xac-nhan": Checkout,
 };
