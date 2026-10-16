@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-export default function HeaderShowcase() { return (<div className="cardb-screen screen-headershowcase  p-8 md:p-12 flex flex-col justify-center items-center">
+export default function HeaderShowcase() { return (<main className="pt-20"><div className="cardb-screen screen-headershowcase  p-8 md:p-12 flex flex-col justify-center items-center">
 <div className="w-full max-w-6xl space-y-12">
 
 <div className="flex flex-col md:flex-row md:items-end justify-between border-b border-gray-200 pb-5">
 <div>
 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-brand-orange text-xs font-semibold uppercase tracking-wider mb-2">
 <span className="w-2 h-2 rounded-full bg-brand-orange animate-pulse"></span>{"\n          Thành phần Giao diện Dùng chung (Shared Components)\n        "}</div>
-<h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{"CarDB Customer Header Showcase"}</h1>
+<h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">{"Các trạng thái điều hướng CarDB"}</h1>
 <p className="text-sm text-gray-500 mt-1">{"Chuẩn thiết kế Modern Automotive Luxury • Header (Khách vãng lai & Đã đăng nhập) & Footer Hệ thống"}</p>
 </div>
 <div className="mt-4 md:mt-0 flex items-center gap-3">
@@ -21,7 +21,7 @@ export default function HeaderShowcase() { return (<div className="cardb-screen 
 <div className="flex items-center justify-between px-1">
 <div className="flex items-center gap-2">
 <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-xs font-bold flex items-center justify-center">{"1"}</span>
-<h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">{"Khách vãng lai (Chưa đăng nhập — Guest / Not Logged In)"}</h2>
+<h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">{"Khách chưa đăng nhập"}</h2>
 </div>
 <span className="text-xs text-gray-500 font-mono">{"Variant: Guest CTA"}</span>
 </div>
@@ -76,7 +76,7 @@ export default function HeaderShowcase() { return (<div className="cardb-screen 
 <div className="flex items-center justify-between px-1">
 <div className="flex items-center gap-2">
 <span className="w-6 h-6 rounded-full bg-brand-orange text-white text-xs font-bold flex items-center justify-center">{"2"}</span>
-<h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">{"Khách hàng Đã đăng nhập (Customer — Logged In)"}</h2>
+<h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">{"Khách đã đăng nhập"}</h2>
 </div>
 <span className="text-xs text-brand-orange font-semibold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">{"Active User State"}</span>
 </div>
@@ -143,7 +143,7 @@ export default function HeaderShowcase() { return (<div className="cardb-screen 
 <div className="flex items-center justify-between px-1">
 <div className="flex items-center gap-2">
 <span className="w-6 h-6 rounded-full bg-brand-orange text-white text-xs font-bold flex items-center justify-center">{"3"}</span>
-<h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">{"Thành phần Chân trang Dùng chung (Shared Footer — All Pages)"}</h2>
+<h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">{"Chân trang dùng chung"}</h2>
 </div>
 <span className="text-xs text-brand-orange font-semibold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">{"Shared Component"}</span>
 </div>
@@ -234,4 +234,4 @@ export default function HeaderShowcase() { return (<div className="cardb-screen 
 </div>
 </div>
 </div>
-</div>); }
+</div></main>); }
