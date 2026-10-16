@@ -9,7 +9,7 @@ export default function PaymentSuccess() { return (<div className="cardb-screen 
 <span>{"Chuyến xe của tôi"}</span>
 </Link>
 <span className="material-symbols-outlined text-[14px] text-gray-400">{"chevron_right"}</span>
-<Link className="hover:text-orange-brand transition-colors" data-path="chi-tiet-don-thue" href="/chi-tiet-don-thue">{"\n          Chi tiết đơn thuê\n        "}</Link>
+<Link className="hover:text-orange-brand transition-colors" data-path="chi-tiet-don-thue" href="/don-thue/CDB-ORD-20261026-904">{"\n          Chi tiết đơn thuê\n        "}</Link>
 <span className="material-symbols-outlined text-[14px] text-gray-400">{"chevron_right"}</span>
 <span className="text-subtext">{"Thanh toán"}</span>
 <span className="material-symbols-outlined text-[14px] text-gray-400">{"chevron_right"}</span>
@@ -256,7 +256,7 @@ export default function PaymentSuccess() { return (<div className="cardb-screen 
 <section className="mt-2 flex flex-col items-center gap-3 pb-8">
 <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4">
 
-<Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-brand hover:bg-orange-hover text-white font-semibold text-sm shadow-md transition-all cursor-pointer text-center" data-path="chi-tiet-don-thue" href="/chi-tiet-don-thue">
+<Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-brand hover:bg-orange-hover text-white font-semibold text-sm shadow-md transition-all cursor-pointer text-center" data-path="chi-tiet-don-thue" href="/don-thue/CDB-ORD-20261026-904">
 <span>{"Xem chi tiết đơn thuê"}</span>
 <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
 </Link>

@@ -404,7 +404,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 <span>{"Thời hạn thanh toán còn lại: "}<strong>{"11 giờ 24 phút"}</strong>{". Vui lòng thanh toán để xác nhận giữ xe thành công."}</span>
 </div>
 
-<Link className="w-full py-4 px-6 rounded-xl bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-base text-center flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all" href="/lien-he">
+<Link className="w-full py-4 px-6 rounded-xl bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-base text-center flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all" href="/thanh-toan">
 <span className="material-symbols-outlined text-[20px]">{"payment"}</span>
 <span>{"Thanh toán ngay 3.700.000 đ ➔"}</span>
 </Link>
