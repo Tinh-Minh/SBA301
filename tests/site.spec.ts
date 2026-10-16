@@ -1,114 +1,89 @@
 import { test, expect } from "@playwright/test";
-
-const pages = ["/", "/thue-xe-tu-lai", "/xe-kem-tai-xe", "/bang-gia-dong-xe", "/uu-dai", "/ve-kanow", "/xe/vinfast-vf8-plus-2024", "/tai-xe/tran-minh-tuan", "/dang-ky", "/dang-nhap", "/thanh-toan-dat-coc", "/tai-khoan", "/mau-thiet-ke/trang-chu", "/mau-thiet-ke/tu-lai", "/mau-thiet-ke/tai-xe", "/mau-thiet-ke/bang-gia"];
+import routes from "./routes.json" with { type: "json" };
 
 for (const width of [375, 768, 1440]) {
-  test(`All pages render without horizontal overflow at ${width}px`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 900 });
-    const errors: string[] = [];
-    page.on("pageerror", error => errors.push(error.message));
-    for (const route of pages) {
-      const response = await page.goto(route);
-      expect(response?.status(), route).toBe(200);
-      await expect(page.locator("main")).toBeVisible();
-      await expect(page.locator("html")).toHaveAttribute("lang", "vi");
-      const overflow = await page.evaluate(() => ({ width: innerWidth, scroll: document.documentElement.scrollWidth }));
-      expect(overflow.scroll, `${route}: ${JSON.stringify(overflow)}`).toBeLessThanOrEqual(width + 1);
-      const brokenImages = await page.locator("main img").evaluateAll(images => images.filter(image => (image as HTMLImageElement).complete && !(image as HTMLImageElement).naturalWidth).map(image => (image as HTMLImageElement).src));
-      expect(brokenImages, route).toEqual([]);
-    }
-    expect(errors).toEqual([]);
-  });
+ test(`All CarDB screens render at ${width}px`, async ({ page }) => {
+  await page.setViewportSize({ width, height: 900 });
+  const errors: string[] = [];
+  page.on("pageerror", error => errors.push(error.message));
+  for (const route of routes) {
+   const response = await page.goto(route);
+   expect(response?.status(), route).toBe(200);
+   await expect(page.locator("main").first(), route).toBeVisible();
+   const dimensions=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth}));
+   expect(dimensions.scroll,route+JSON.stringify(dimensions)).toBeLessThanOrEqual(width+1);
+   await expect(page.locator("html")).toHaveAttribute("lang","vi");
+   const broken=await page.locator("main img").evaluateAll(images=>images.filter(image=>(image as HTMLImageElement).complete&&!(image as HTMLImageElement).naturalWidth).map(image=>(image as HTMLImageElement).src));
+   expect(broken,route).toEqual([]);
+  }
+  expect(errors).toEqual([]);
+ });
 }
 
-test("Mobile navigation opens and follows Vietnamese links", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/");
-  await page.getByRole("button", { name: "Mở menu", exact: true }).click();
-  await page.locator("#mobile-navigation").getByRole("link", { name: "Ưu đãi" }).click();
-  await expect(page).toHaveURL(/uu-dai/);
-  await expect(page.locator("#mobile-navigation")).toHaveCount(0);
+test("Mobile menu and homepage search navigate",async({page})=>{
+ await page.setViewportSize({width:375,height:812});await page.goto("/");
+ await page.getByRole("button",{name:"Mở menu",exact:true}).click();
+ await page.locator("#mobile-navigation").getByRole("link",{name:"Khám phá xe",exact:true}).click();
+ await expect(page).toHaveURL(/kham-pha-xe/);
+ await page.goto("/");await page.getByRole("button",{name:"Tìm xe ngay",exact:true}).click();
+ await expect(page).toHaveURL(/kham-pha-xe\?location=/);
 });
 
-test("Search validates dates and connects to filtered cars", async ({ page }) => {
-  await page.goto("/");
-  await page.getByRole("textbox", { name: "Thời gian trả xe" }).count();
-  await page.locator('input[name="end"]').fill("2026-10-23T20:00");
-  await page.getByRole("button", { name: "Tìm xe ngay", exact: true }).click();
-  await expect(page.locator("#search-service-panel [role='alert']")).toContainText("Thời gian trả xe phải sau");
-  await page.locator('input[name="end"]').fill("2026-10-27T20:00");
-  await page.getByRole("button", { name: "Xe điện (EV)", exact: true }).click();
-  await page.getByRole("button", { name: "Tìm xe ngay", exact: true }).click();
-  await expect(page).toHaveURL(/thue-xe-tu-lai.*filter=ev/);
-  await expect(page.locator('[data-vehicle-card="ev"]')).toBeVisible();
-  await expect(page.locator('[data-vehicle-card="sedan"]').first()).toBeHidden();
+test("Demo auth updates account navigation and persists",async({page})=>{
+ await page.goto("/dang-nhap");await page.locator("#login-account").fill("demo");await page.locator("#login-password").fill("123");
+ await page.locator("#view-login button[type='submit']").click();await expect(page).toHaveURL(/tai-khoan$/);
+ const account=page.locator("header").getByRole("button",{name:"Tài khoản Nguyễn Hoàng Minh",exact:true});
+ await expect(account).toBeVisible();await page.reload();await expect(account).toBeVisible();
+ await account.click();await page.locator("#account-menu").getByRole("button",{name:"Đăng xuất",exact:true}).click();
+ await expect(page.locator("header").getByRole("link",{name:"Đăng nhập",exact:true})).toBeVisible();
 });
 
-test("Price estimate recalculates, FAQ expands, offers filter", async ({ page }) => {
-  await page.goto("/bang-gia-dong-xe");
-  const before = await page.locator("#receipt-grand-total").innerText();
-  await page.locator("#rental-days-range").fill("10");
-  await expect(page.locator("#days-display")).toHaveText("10");
-  await expect(page.locator("#receipt-grand-total")).not.toHaveText(before);
-  await page.goto("/");
-  const faq = page.locator('[data-handler="toggleFaq"]').first();
-  await faq.click();
-  await expect(faq).toHaveAttribute("aria-expanded", "true");
-  await expect(page.locator("#home-answer-0")).toBeVisible();
-  await page.goto("/uu-dai");
-  await page.getByRole("button", { name: "Khách hàng mới" }).click();
-  await expect(page.locator('.voucher-card[data-filter-hidden="false"]')).toHaveCount(2);
+test("FAQ, favorites, vehicle filters, and gallery work",async({page})=>{
+ await page.goto("/");const faq=page.locator("details").first();await faq.locator("summary").click();await expect(faq).toHaveAttribute("open","");
+ await page.locator('[data-action="favorite"]').first().click();await expect(page.locator('[data-favorite="true"]')).toHaveCount(1);
+ await page.goto("/kham-pha-xe");await page.getByRole("button",{name:"Áp dụng bộ lọc",exact:true}).click();
+ await expect(page.getByRole("status").filter({hasText:"Đã áp dụng bộ lọc"})).toBeVisible();
+ await page.goto("/xe/vinfast-vf8-plus-2024");await page.locator("main img").first().click();await expect(page.getByRole("dialog")).toBeVisible();await page.keyboard.press("Escape");await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-test("Payment requires holding; early release never confirms", async ({ page }) => {
-  let dialogs = 0;
-  page.on("dialog", async dialog => { dialogs++; await dialog.dismiss(); });
-  await page.goto("/thanh-toan-dat-coc");
-  const confirm = page.getByRole("button", { name: "Giữ để xác nhận thanh toán", exact: true });
-  await confirm.click();
-  await expect(page.getByText("Đã xác nhận thanh toán mẫu", { exact: true })).toHaveCount(0);
-  await confirm.focus();
-  await page.keyboard.down("Enter");
-  await page.waitForTimeout(1800);
-  await page.keyboard.up("Enter");
-  await expect(page.getByText("Đã xác nhận thanh toán mẫu", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Xem lại thao tác" }).click();
-  const cancel = page.getByRole("button", { name: "Giữ để hủy đặt xe", exact: true });
-  await cancel.focus();
-  await page.keyboard.down("Space");
-  await page.waitForTimeout(1800);
-  await page.keyboard.up("Space");
-  await expect(page.getByText("Đã hủy đặt xe mẫu", { exact: true })).toBeVisible();
-  expect(dialogs).toBe(0);
+test("Rental request connects to success and order pages",async({page})=>{
+ await page.goto("/dat-xe/xac-nhan");await page.locator("#btn-submit-booking").click();await expect(page).toHaveURL(/dat-xe\/thanh-cong/);
+ await page.goto("/don-thue/CDB-ORD-20261026-904/da-xac-nhan");
+ await page.getByRole("link",{name:/Thanh toán ngay/}).click();await expect(page).toHaveURL(/thanh-toan$/);
 });
 
-test("Demo login updates navigation, persists on refresh, and logs out", async ({ page }) => {
-  await page.goto("/dang-nhap");
-  await page.locator("#loginIdentity").fill("demo");
-  await page.locator("#loginPassword").fill("123");
-  await page.getByRole("button", { name: /Đăng nhập ngay/ }).click();
-  await expect(page).toHaveURL(/tai-khoan/);
-  await expect(page.locator("header").getByRole("link", { name: "Tài khoản Nguyễn Văn An", exact: true })).toBeVisible();
-  await expect(page.locator("header").getByRole("link", { name: "Đăng nhập", exact: true })).toHaveCount(0);
-  await page.reload();
-  await expect(page.locator("header").getByRole("link", { name: "Tài khoản Nguyễn Văn An", exact: true })).toBeVisible();
-  await page.locator("header").getByRole("button", { name: "Đăng xuất", exact: true }).click();
-  await expect(page.locator("header").getByRole("link", { name: "Đăng nhập", exact: true })).toBeVisible();
+test("Payment requires holding, early release never confirms",async({page})=>{
+ let dialogs=0;page.on("dialog",async dialog=>{dialogs++;await dialog.dismiss();});
+ await page.goto("/thanh-toan");const confirm=page.getByRole("button",{name:"Giữ để xác nhận thanh toán",exact:true});
+ await confirm.click();await expect(page).toHaveURL(/thanh-toan$/);
+ await confirm.focus();await page.keyboard.down("Enter");await page.waitForTimeout(1800);await page.keyboard.up("Enter");
+ await expect(page).toHaveURL(/thanh-toan\/thanh-cong/);expect(dialogs).toBe(0);
+ await page.goto("/thanh-toan");const cancel=page.getByRole("button",{name:"Giữ để hủy đặt xe",exact:true});
+ await cancel.focus();await page.keyboard.down("Space");await page.waitForTimeout(1800);await page.keyboard.up("Space");
+ await expect(page).toHaveURL(/chuyen-xe-cua-toi\?cancelled=1/);
 });
 
-test("Pointer hold confirms only after full duration", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/thanh-toan-dat-coc");
-  const button = page.getByRole("button", { name: "Giữ để xác nhận thanh toán", exact: true });
-  await button.scrollIntoViewIfNeeded();
-  const bounds = (await button.boundingBox())!;
-  await page.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
-  await page.mouse.down();
-  await page.waitForTimeout(400);
-  await page.mouse.up();
-  await expect(page.getByText("Đã xác nhận thanh toán mẫu", { exact: true })).toHaveCount(0);
-  await page.mouse.down();
-  await page.waitForTimeout(1800);
-  await page.mouse.up();
-  await expect(page.getByText("Đã xác nhận thanh toán mẫu", { exact: true })).toBeVisible();
+test("Pointer hold confirms payment on mobile",async({page})=>{
+ await page.setViewportSize({width:375,height:812});await page.goto("/thanh-toan");
+ const button=page.getByRole("button",{name:"Giữ để xác nhận thanh toán",exact:true});await button.scrollIntoViewIfNeeded();
+ const box=(await button.boundingBox())!;await page.mouse.move(box.x+box.width/2,box.y+box.height/2);
+ await page.mouse.down();await page.waitForTimeout(400);await page.mouse.up();await expect(page).toHaveURL(/thanh-toan$/);
+ await page.mouse.down();await page.waitForTimeout(1800);await page.mouse.up();await expect(page).toHaveURL(/thanh-toan\/thanh-cong/);
+});
+
+test("Bank dialog, review, and dispute flows respond",async({page})=>{
+ await page.goto("/tai-khoan/ngan-hang/them");await expect(page.getByRole("dialog")).toBeVisible();
+ await page.locator("#account-number").fill("0123456789");await page.getByRole("button",{name:"Lưu tài khoản",exact:true}).click();await expect(page).toHaveURL(/tai-khoan\/ngan-hang$/);
+ await page.goto("/danh-gia");await page.locator('[data-star="5"]').click();await page.locator("#review-content").fill("Xe sạch, nhận xe đúng giờ.");await page.locator("#submit-review-btn").click();await expect(page).toHaveURL(/tai-khoan\/lich-su$/);
+ await page.goto("/tranh-chap");await page.locator("#dispute-detail").fill("Đề nghị đối chiếu lại ảnh bàn giao và khoản phí vệ sinh.");await page.locator("#submit-dispute-btn").click();await expect(page).toHaveURL(/don-thue\/CDB-ORD-20261026-904$/);
+});
+
+test("Document sections expand and order cancellation requires hold",async({page})=>{
+ await page.goto("/tai-khoan/xac-minh/thu-gon");
+ const card=page.locator("#card-cccd");const section=card.locator(".card-content");const toggle=card.getByRole("button").first();
+ await expect(section).toBeHidden();await toggle.click();await expect(section).toBeVisible();await expect(toggle).toHaveAttribute("aria-expanded","true");
+ await page.goto("/don-thue/CDB-ORD-20261026-904");await page.locator('[data-handler="toggleCancelModal"][data-args="true"]').first().click();
+ const dialog=page.getByRole("dialog");await expect(dialog).toBeVisible();
+ const cancel=dialog.getByRole("button",{name:"Giữ để hủy đặt xe",exact:true});await cancel.click();await expect(dialog).toBeVisible();
+ await cancel.focus();await page.keyboard.down("Enter");await page.waitForTimeout(1800);await page.keyboard.up("Enter");await expect(page).toHaveURL(/chuyen-xe-cua-toi\?cancelled=1/);
 });
