@@ -5,6 +5,7 @@ import Vehicle from "@/views/Vehicle";
 import Login from "@/views/Login";
 import Register from "@/views/Register";
 import Account from "@/views/Account";
+import AccountOrders from "@/views/AccountOrders";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -13,4 +14,5 @@ export const screens: Record<string, ComponentType> = {
   "dang-nhap": Login,
   "dang-ky": Register,
   "tai-khoan": Account,
+  "tai-khoan/don-thue": AccountOrders,
 };

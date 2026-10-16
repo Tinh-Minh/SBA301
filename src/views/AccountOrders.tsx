@@ -1,0 +1,181 @@
+import Link from "next/link";
+import type { CSSProperties } from "react";
+
+export default function AccountOrders() { return (<div className="cardb-screen screen-accountorders bg-background font-body-md text-body-md text-on-surface antialiased"><main className="w-full  bg-background pt-20"><div className="flex flex-col w-full">
+<div className="max-w-7xl mx-auto w-full px-margin-mobile md:px-margin py-space-lg">
+
+<nav className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm mb-space-md">
+<Link className="hover:text-primary-container transition-colors" href="/">{"Trang chủ"}</Link>
+<span className="material-symbols-outlined text-[16px] text-outline-variant">{"chevron_right"}</span>
+<Link className="hover:text-primary-container transition-colors" href="/lien-he">{"Hồ sơ & Tài khoản"}</Link>
+<span className="material-symbols-outlined text-[16px] text-outline-variant">{"chevron_right"}</span>
+<span className="text-on-surface font-semibold">{"Đơn thuê xe"}</span>
+</nav>
+
+<div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+
+<aside className="lg:col-span-4 xl:col-span-3 space-y-space-md">
+
+<div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
+<div className="flex items-center gap-space-md">
+<div className="relative">
+<div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center font-headline-sm text-headline-sm text-primary-container font-bold overflow-hidden shadow-inner">
+<span className="material-symbols-outlined text-[32px] text-primary">{"person"}</span>
+</div>
+<span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-primary-container rounded-full ring-2 ring-surface-container-lowest"></span>
+</div>
+<div className="min-w-0 flex-1">
+<div className="flex items-center gap-space-xs">
+<h3 className="font-title text-title text-on-surface font-bold truncate">{"Nguyễn Hoàng Minh"}</h3>
+</div>
+<p className="font-technical-data text-technical-data text-on-surface-variant">{"CDB-VN-88492"}</p>
+<div className="mt-space-xs inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-fixed/50 text-secondary font-label-sm text-label-sm">
+<span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span className="">{"Hội viên VIP • Hoạt động"}</span>
+</div>
+</div>
+</div>
+</div>
+
+<div className="bg-surface-container-lowest rounded-xl p-space-sm shadow-sm space-y-space-md">
+
+<div>
+<div className="px-space-sm pt-space-xs pb-space-xs">
+<span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">{"Cài đặt tài khoản"}</span>
+</div>
+<div className="space-y-1 mt-1">
+<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan">
+<div className="flex items-center gap-space-sm">
+<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"badge"}</span>
+<span className="font-label-md text-label-md">{"Thông tin cá nhân"}</span>
+</div>
+<span className="font-technical-data text-[11px] text-outline-variant">{"C05-1"}</span>
+</Link>
+<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/xac-minh">
+<div className="flex items-center gap-space-sm">
+<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"verified_user"}</span>
+<span className="font-label-md text-label-md">{"Xác minh giấy tờ"}</span>
+</div>
+<span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant">{"1"}</span>
+</Link>
+<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/ho-so-tai-xe">
+<div className="flex items-center gap-space-sm">
+<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"airline_seat_recline_normal"}</span>
+<span className="font-label-md text-label-md">{"Hồ sơ tài xế"}</span>
+</div>
+<span className="w-2 h-2 rounded-full bg-primary-container"></span>
+</Link>
+<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/ngan-hang">
+<div className="flex items-center gap-space-sm">
+<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"account_balance"}</span>
+<span className="font-label-md text-label-md">{"Tài khoản ngân hàng"}</span>
+</div>
+<span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant">{"2"}</span>
+</Link>
+</div>
+</div>
+
+<div className="h-[1px] bg-surface-container-high mx-space-sm"></div>
+
+<div>
+<div className="px-space-sm pt-space-xs pb-space-xs">
+<span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">{"Quản lý chuyến đi"}</span>
+</div>
+<div className="space-y-1 mt-1">
+
+<Link className="flex items-center justify-between px-space-sm py-2.5 rounded bg-primary-fixed/40 text-on-primary-container transition-colors relative" href="/tai-khoan/don-thue">
+<span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-primary-container rounded-r-full"></span>
+<div className="flex items-center gap-space-sm pl-1.5">
+<span className="material-symbols-outlined text-[20px] text-primary-container" style={{"fontVariationSettings": "'FILL' 1"} as CSSProperties}>{"car_rental"}</span>
+<span className="font-label-md text-label-md font-bold text-primary-container">{"Đơn thuê xe"}</span>
+</div>
+<span className="px-2 py-0.5 rounded text-[11px] font-bold bg-primary-container text-on-primary">{"1"}</span>
+</Link>
+
+<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/lich-su">
+<div className="flex items-center gap-space-sm">
+<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"history"}</span>
+<span className="font-label-md text-label-md">{"Lịch sử chuyến đi"}</span>
+</div>
+<span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant">{"1"}</span>
+</Link>
+</div>
+</div>
+</div>
+
+<div className="bg-surface-container-low rounded-xl p-space-md space-y-space-xs">
+<div className="flex items-center gap-space-xs text-primary-container font-label-sm text-label-sm uppercase font-semibold">
+<span className="material-symbols-outlined text-[18px]">{"support_agent"}</span>
+<span className="">{"Hỗ trợ khách hàng 24/7"}</span>
+</div>
+<p className="font-body-sm text-body-sm text-on-surface-variant">{"Hỗ trợ khẩn cấp thủ tục bàn giao, đối soát hợp đồng và gia hạn xe tức thời."}</p>
+<div className="pt-space-xs">
+<a className="inline-flex items-center gap-space-xs font-technical-data text-technical-data text-on-surface hover:text-primary-container transition-colors" href="tel:19008899">
+<span className="material-symbols-outlined text-[16px] text-primary-container">{"call"}</span>{"\n              1900 8899\n            "}</a>
+</div>
+</div>
+</aside>
+
+<section className="lg:col-span-8 xl:col-span-9 space-y-space-lg">
+
+<div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div className="space-y-space-xs">
+<div className="flex items-center gap-space-sm">
+<h1 className="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">{"Đơn thuê xe"}</h1>
+<span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-technical-data text-label-sm font-bold">{"1 YÊU CẦU"}</span>
+</div>
+<p className="font-body-md text-body-md text-on-surface-variant max-w-2xl leading-relaxed">{"\n              Theo dõi tiến trình xét duyệt, trạng thái thanh toán và thông tin giao nhận xe cho các đơn thuê đang hoạt động trong hệ thống CarDB.\n            "}</p>
+</div>
+<div className="flex items-center gap-space-xs">
+<Link className="inline-flex items-center gap-space-xs px-space-md py-2.5 rounded-xl bg-surface-container-low text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors shadow-sm" href="/lien-he">
+<span className="material-symbols-outlined text-[18px] text-primary-container">{"search"}</span>
+<span className="">{"Tìm thêm xe"}</span>
+</Link>
+</div>
+</div>
+
+<div className="flex items-center gap-2 border-b border-surface-container-high/80 overflow-x-auto pb-0 px-1"><button className="relative -mb-[1px] px-space-md py-2.5 rounded-t-xl bg-surface-container-lowest border border-surface-container-high/80 border-b-surface-container-lowest font-label-md text-label-md text-primary-container font-bold flex items-center gap-2 shadow-sm cursor-pointer shrink-0" type="button" aria-label="Đang xử lý1"><span className="">{"Đang xử lý"}</span><span className="px-2 py-0.5 rounded-full bg-primary-container text-on-primary text-[11px] font-bold inline-flex items-center justify-center">{"1"}</span></button><button className="px-space-md py-2.5 rounded-t-xl font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 cursor-pointer shrink-0" type="button" aria-label="Sắp nhận xe1"><span className="">{"Sắp nhận xe"}</span><span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-semibold inline-flex items-center justify-center">{"1"}</span></button><button className="px-space-md py-2.5 rounded-t-xl font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 cursor-pointer shrink-0" type="button" aria-label="Đang thuê1"><span className="">{"Đang thuê"}</span><span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-semibold inline-flex items-center justify-center">{"1"}</span></button></div>
+
+<div className="bg-surface-container-lowest rounded-xl shadow-md overflow-hidden relative">
+
+<div className="h-1 bg-gradient-to-r from-primary via-primary-container to-secondary-container"></div>
+
+<div className="p-space-md bg-surface-container-low/60 flex flex-wrap items-center justify-between gap-space-sm">
+<div className="flex flex-wrap items-center gap-space-md text-on-surface-variant font-body-sm text-body-sm">
+<div className="flex items-center gap-space-xs">
+<span className="text-on-surface-variant font-label-sm text-label-sm uppercase">{"Mã đơn:"}</span>
+<span className="font-technical-data text-technical-data text-on-surface">{"CDB-ORD-20261026-904"}</span>
+</div>
+<span className="text-outline-variant">{"•"}</span>
+<div className="flex items-center gap-space-xs">
+<span className="material-symbols-outlined text-[16px] text-outline">{"schedule"}</span>
+<span className="">{"Khởi tạo: Hôm nay, 10:45"}</span>
+</div>
+</div>
+
+<div className="flex items-center gap-space-xs">
+<span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-semibold">
+<span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>{"\n                Chờ chủ xe xác nhận\n              "}</span>
+<span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm">
+<span className="material-symbols-outlined text-[14px]">{"lock"}</span>{"\n                Chưa thanh toán\n              "}</span>
+</div>
+</div>
+
+<div className="p-space-lg space-y-space-lg"><div className="bg-surface-container-low/50 rounded-xl p-space-md border border-surface-container-high/60 space-y-space-xs"><div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2"><div className="flex items-center gap-space-xs"><span className="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider">{"VinFast"}</span><h2 className="font-headline-sm text-headline-sm text-on-surface font-bold leading-tight">{"VF 9 Plus AWD"}</h2></div><div className="flex items-baseline gap-1"><span className="font-headline-md text-headline-md text-primary font-bold">{"3.700.000"}</span><span className="font-label-md text-label-md text-on-surface font-bold">{"đ"}</span></div></div><div className="flex items-center gap-space-xs text-on-surface-variant font-body-md text-body-md"><span className="material-symbols-outlined text-[18px] text-primary-container shrink-0">{"pin_drop"}</span><span className="text-on-surface font-medium truncate">{"128 Thảo Điền, P. Thảo Điền, TP. Thủ Đức, TP. Hồ Chí Minh"}</span></div><div className="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm"><span className="material-symbols-outlined text-[16px] text-primary-container shrink-0">{"schedule"}</span><span className="">{"(08:00 • Thứ Bảy, 26/10/2026 — 08:00 • Thứ Hai, 28/10/2026 • 2 ngày (48 giờ))"}</span></div></div><div className="grid grid-cols-1 md:grid-cols-12 gap-space-lg"><div className="md:col-span-5 space-y-space-sm"><div className="relative w-full aspect-[16/10] rounded-xl overflow-hidden bg-surface-container"><img className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" src="/images/cardb-536bade8c0abc9b8.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async" /><div className="absolute top-2 left-2 px-2 py-0.5 rounded bg-on-surface/80 backdrop-blur-md text-on-primary font-technical-data text-[11px] uppercase tracking-wider">{"Full-Size Electric SUV"}</div></div><div className="grid grid-cols-3 gap-1 bg-surface-container-low p-2 rounded-xl text-center"><div><span className="font-label-sm text-[11px] text-on-surface-variant block">{"Chỗ ngồi"}</span><span className="font-technical-data text-technical-data text-on-surface">{"7 Chỗ"}</span></div><div><span className="font-label-sm text-[11px] text-on-surface-variant block">{"Hệ dẫn động"}</span><span className="font-technical-data text-technical-data text-on-surface">{"AWD Điện"}</span></div><div><span className="font-label-sm text-[11px] text-on-surface-variant block">{"Tăng tốc"}</span><span className="font-technical-data text-technical-data text-primary-container">{"6.5s"}</span></div></div><div className="flex items-center justify-between p-space-xs bg-surface-container-lowest rounded-xl border border-surface-container-high/60"><div className="flex items-center gap-space-xs"><div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center font-bold text-on-surface-variant text-[13px]">{"N"}</div><div><p className="font-label-sm text-label-sm text-on-surface font-semibold">{"Trần Đức Nam"}</p><p className="font-body-sm text-[11px] text-on-surface-variant">{"Chủ xe đối tác Pro"}</p></div></div><div className="flex items-center gap-0.5 text-secondary font-technical-data text-technical-data"><span className="material-symbols-outlined text-[16px]" style={{"fontVariationSettings": "'FILL' 1"} as CSSProperties}>{"star"}</span><span className="">{"5.0"}</span></div></div></div><div className="md:col-span-7 bg-surface-container-low/50 rounded-xl p-space-md flex flex-col justify-between space-y-space-md"><div className="space-y-space-sm"><div className="flex items-center justify-between pb-space-xs border-b border-surface-container-high/60"><span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">{"Chi phí dự toán"}</span><span className="font-label-sm text-label-sm text-primary font-semibold">{"VND"}</span></div><div className="space-y-space-xs font-body-sm text-body-sm"><div className="flex justify-between text-on-surface-variant"><span className="">{"Đơn giá (2 ngày x 1.950.000đ)"}</span><span className="font-technical-data text-on-surface">{"3.900.000 đ"}</span></div><div className="flex justify-between text-primary"><span className="flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">{"sell"}</span>{"Khuyến mãi CARDBWELCOME"}</span><span className="font-technical-data font-bold">{"-200.000 đ"}</span></div><div className="flex justify-between text-on-surface-variant"><span className="">{"Bảo hiểm vật chất 2 chiều"}</span><span className="font-label-sm text-secondary font-semibold">{"Được tặng kèm"}</span></div></div><div className="p-space-xs bg-surface-container rounded flex items-center justify-between font-body-sm text-body-sm"><span className="text-on-surface-variant flex items-center gap-1 text-[12px]"><span className="material-symbols-outlined text-[14px] text-outline">{"shield"}</span>{"Tiền cọc thế chấp:"}</span><span className="font-technical-data text-technical-data text-on-surface">{"15.000.000 đ"}</span></div><p className="font-body-sm text-[11px] text-on-surface-variant italic">{"* Khoản cọc thế chấp sẽ thực hiện trực tiếp khi lập biên bản bàn giao xe."}</p></div><div className="space-y-space-xs pt-space-xs"><Link className="w-full h-12 rounded-xl bg-primary-container text-on-primary font-label-md text-label-md font-bold flex items-center justify-center gap-space-xs hover:bg-primary transition-colors shadow-sm" href="/xe/vinfast-vf8-plus-2024"><span className="">{"Xem chi tiết đơn thuê"}</span><span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span></Link><div className="grid grid-cols-2 gap-space-xs"><button className="h-10 rounded-xl bg-surface-container-lowest text-on-surface hover:bg-surface-container font-label-md text-label-md font-semibold flex items-center justify-center gap-1 transition-colors border border-surface-container-high/60" type="button" aria-label="Chủ xe"><span className="material-symbols-outlined text-[18px] text-primary-container">{"chat"}</span><span className="">{"Chủ xe"}</span></button><button className="h-10 rounded-xl bg-surface-container-lowest text-error hover:bg-error-container/40 font-label-md text-label-md font-semibold flex items-center justify-center gap-1 transition-colors border border-surface-container-high/60" type="button" aria-label="Hủy yêu cầu" data-action="cancel-order"><span className="material-symbols-outlined text-[18px]">{"close"}</span><span className="">{"Hủy yêu cầu"}</span></button></div></div></div></div><div className="h-[1px] bg-surface-container-high/60"></div><div className="space-y-space-sm"><div className="flex items-center justify-between"><span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant font-semibold">{"Tiến trình đơn thuê • 4 Bước"}</span><span className="font-technical-data text-technical-data text-primary-container">{"Bước 2 / 4"}</span></div><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-space-sm relative"><div className="bg-surface-container-lowest p-space-sm rounded-xl relative flex items-start gap-space-sm border border-surface-container-high/60"><div className="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-[20px]">{"check"}</span></div><div className="min-w-0"><div className="flex items-center gap-1"><p className="font-label-md text-label-md text-on-surface font-bold">{"1. Gửi yêu cầu"}</p></div><p className="font-body-sm text-[12px] text-on-surface-variant">{"Hoàn tất lúc 10:45"}</p></div></div><div className="bg-primary-fixed/30 p-space-sm rounded-xl relative flex items-start gap-space-sm ring-1 ring-primary-container"><div className="w-8 h-8 rounded-full bg-primary-container text-on-primary flex items-center justify-center shrink-0 animate-pulse"><span className="material-symbols-outlined text-[18px]">{"hourglass_top"}</span></div><div className="min-w-0"><div className="flex items-center gap-1"><p className="font-label-md text-label-md text-on-primary-container font-bold">{"2. Chủ xe xác nhận"}</p></div><p className="font-body-sm text-[12px] text-primary-container font-semibold">{"Đang xử lý (Tối đa 60p)"}</p></div></div><div className="bg-surface-container-low/60 p-space-sm rounded-xl relative flex items-start gap-space-sm opacity-60"><div className="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-[18px]">{"lock"}</span></div><div className="min-w-0"><p className="font-label-md text-label-md text-on-surface font-bold">{"3. Thanh toán tiền thuê"}</p><p className="font-body-sm text-[12px] text-on-surface-variant">{"Chờ duyệt bước 2"}</p></div></div><div className="bg-surface-container-low/60 p-space-sm rounded-xl relative flex items-start gap-space-sm opacity-60"><div className="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center shrink-0"><span className="material-symbols-outlined text-[18px]">{"key"}</span></div><div className="min-w-0"><p className="font-label-md text-label-md text-on-surface font-bold">{"4. Bàn giao & Ký biên bản"}</p><p className="font-body-sm text-[12px] text-on-surface-variant">{"Tại 128 Thảo Điền"}</p></div></div></div></div><div className="p-space-md rounded-xl bg-secondary-fixed/30 flex items-start gap-space-md"><div className="w-9 h-9 rounded-full bg-secondary-fixed flex items-center justify-center shrink-0 text-secondary"><span className="material-symbols-outlined text-[20px]">{"info"}</span></div><div className="min-w-0 flex-1"><h4 className="font-label-md text-label-md text-on-secondary-fixed-variant font-bold">{"Thông báo tiếp theo"}</h4><p className="font-body-sm text-body-sm text-on-secondary-fixed-variant mt-0.5 leading-relaxed">{"Chủ xe "}<span className="font-semibold text-on-surface">{"Trần Đức Nam"}</span>{" đang tiến hành kiểm tra lịch bảo dưỡng và trạng thái sạc pin của xe. Cổng thanh toán trực tuyến sẽ tự động mở ngay khi chủ xe phê duyệt (thời hạn phản hồi cam kết tối đa 60 phút)."}</p></div><div className="hidden sm:flex items-center gap-1 font-technical-data text-technical-data text-secondary shrink-0 pt-0.5"><span className="material-symbols-outlined text-[16px]">{"timer"}</span><span className="">{"Còn 42:18"}</span></div></div></div>
+</div>
+
+<div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm space-y-space-sm">
+<div className="flex items-center justify-between">
+<div className="flex items-center gap-space-xs">
+<span className="material-symbols-outlined text-primary-container text-[20px]">{"event_upcoming"}</span>
+<h3 className="font-title text-title text-on-surface font-bold">{"Đơn thuê sắp tới (Đã thanh toán)"}</h3>
+</div>
+<Link className="font-label-sm text-label-sm text-primary-container font-semibold hover:underline" href="/lien-he">{"Xem tất cả lịch trình"}</Link>
+</div>
+<div className="p-space-sm bg-surface-container-low rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-space-md"><div className="flex flex-col md:flex-row md:items-start gap-space-md flex-1"><div className="w-16 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0"><img className="w-full h-full object-cover" src="/images/cardb-3767cd2cfe1a04e5.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async" /></div><div className="flex-1 space-y-0.5"><div className="flex items-center justify-between flex-wrap gap-2"><div className="flex items-center gap-space-xs"><span className="font-label-md text-label-md text-on-surface font-bold">{"Porsche Taycan 4S"}</span><span className="px-2 py-0.5 rounded text-[11px] font-bold bg-secondary-fixed text-on-secondary-fixed">{"Sắp nhận xe"}</span></div><span className="font-technical-data text-technical-data text-on-surface">{"5.800.000 đ"}</span></div><p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[15px] text-primary-container shrink-0">{"pin_drop"}</span><span className="">{"Hà Nội (Giao xe tận nơi)"}</span></p><p className="font-body-sm text-[12px] text-on-surface-variant">{"(Nhận xe: 05/11/2026 • Mã: CDB-ORD-20261105-112)"}</p></div></div><div className="flex items-center gap-space-sm self-end md:self-center"><Link className="px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold hover:bg-surface-container transition-colors shadow-sm" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết"}</Link></div></div>
+</div>
+</section>
+</div>
+</div>
+</div></main>
+</div>); }
