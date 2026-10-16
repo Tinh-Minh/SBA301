@@ -13,6 +13,7 @@ import DriverProfile from "@/views/DriverProfile";
 import Banks from "@/views/Banks";
 import BanksAlternative from "@/views/BanksAlternative";
 import AddBank from "@/views/AddBank";
+import DefaultBank from "@/views/DefaultBank";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -29,4 +30,5 @@ export const screens: Record<string, ComponentType> = {
   "tai-khoan/ngan-hang": Banks,
   "mau-thiet-ke/ngan-hang": BanksAlternative,
   "tai-khoan/ngan-hang/them": AddBank,
+  "tai-khoan/ngan-hang/mac-dinh": DefaultBank,
 };
