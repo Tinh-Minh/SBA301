@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SBA301 Supabase" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.carrental.CarRentalApplication" />
+    <module name="carrental-be" />
+    <option name="PROGRAM_PARAMETERS" value="--spring.profiles.active=supabase" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
