@@ -171,7 +171,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <button className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
 <span className="material-symbols-outlined text-[16px]">{"favorite"}</span>
 </button>
-<img src="/images/cardb-e5cfa07014e754d6.webp" alt="Mercedes GLC 300" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async" />
+<img src="/images/cardb-1ec43e930558b9f7.webp" alt="Mercedes GLC 300" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async" />
 </div>
 <div className="p-4 space-y-2">
 <div className="flex items-center justify-between text-xs">
@@ -204,7 +204,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <button className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
 <span className="material-symbols-outlined text-[16px]">{"favorite"}</span>
 </button>
-<img src="/images/cardb-e5cfa07014e754d6.webp" alt="Hyundai Santa Fe" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async" />
+<img src="/images/9aa3d9bc2c6c3ec1.webp" alt="Hyundai Santa Fe" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async" />
 </div>
 <div className="p-4 space-y-2">
 <div className="flex items-center justify-between text-xs">
@@ -237,7 +237,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <button className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
 <span className="material-symbols-outlined text-[16px]">{"favorite"}</span>
 </button>
-<img src="/images/cardb-e5cfa07014e754d6.webp" alt="Porsche Macan GTS" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async" />
+<img src="/images/cardb-346d18fc6de163c0.webp" alt="Porsche Macan GTS" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async" />
 </div>
 <div className="p-4 space-y-2">
 <div className="flex items-center justify-between text-xs">
