@@ -2,7 +2,7 @@ package com.carrental.dto.response;
 
 import com.carrental.entity.DisputeEvidence;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record DisputeEvidenceResponse(
         Long id,
@@ -12,7 +12,7 @@ public record DisputeEvidenceResponse(
         String fileUrl,
         String fileType,
         String description,
-        Instant createdAt
+        LocalDateTime createdAt
 ) {
     public static DisputeEvidenceResponse from(DisputeEvidence de) {
         if (de == null) return null;
@@ -22,7 +22,7 @@ public record DisputeEvidenceResponse(
                 de.getUploadedBy() != null ? de.getUploadedBy().getId() : null,
                 de.getUploadedBy() != null ? de.getUploadedBy().getFullName() : null,
                 de.getFileUrl(),
-                de.getFileType(),
+                de.getFileType() != null ? de.getFileType().name() : null,
                 de.getDescription(),
                 de.getCreatedAt()
         );

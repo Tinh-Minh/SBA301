@@ -1,0 +1,1083 @@
+{
+  "info": {
+    "_postman_id": "a9b8c7d6-e5f4-4321-ba98-123456789abc",
+    "name": "SBA301 Car Rental API Collection",
+    "description": "Bộ sưu tập Postman chuẩn kiểm thử toàn bộ API Backend carrental-BE (Function 4: Transactions, Payouts, Extra Fees, Disputes, Reviews).\n\nCó sẵn các biến môi trường collection và Test Scripts tự động trích xuất ID (transactionId, payoutId, extraFeeId, disputeId, reviewId) để chạy luồng kiểm thử liên tục.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "transactionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "failedTransactionId",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "payoutId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "extraFeeId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "disputeId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Transactions (Giao dịch & Cổng thanh toán)",
+      "item": [
+        {
+          "name": "1.1 Tạo giao dịch Đặt cọc (Deposit)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Tạo giao dịch thành công (success = true)\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"transactionId\", jsonData.data.id);",
+                  "    console.log(\"Saved transactionId: \" + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"amount\": 2000000,\n  \"method\": \"MOCK_GATEWAY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/deposit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "deposit"]
+            },
+            "description": "Tạo giao dịch đặt cọc cho đơn thuê xe (orderId = 1). Trạng thái ban đầu: PENDING. Tự động lưu transactionId vào biến collection."
+          }
+        },
+        {
+          "name": "1.2 Tạo giao dịch Thanh toán tiền thuê (Payment)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Tạo thanh toán thành công (success = true)\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"failedTransactionId\", jsonData.data.id);",
+                  "    console.log(\"Saved failedTransactionId: \" + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"amount\": 1200000,\n  \"method\": \"MOCK_GATEWAY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "payment"]
+            },
+            "description": "Tạo giao dịch thanh toán tiền thuê xe."
+          }
+        },
+        {
+          "name": "1.3 Giả lập Cổng thanh toán - Thành công (Simulate Gateway)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Trạng thái giao dịch chuyển sang SUCCESS\", function () {",
+                  "    pm.expect(jsonData.data.status).to.eql(\"SUCCESS\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"simulateSuccess\": true,\n  \"providerRef\": \"VNPAY_TRANS_8888\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/{{transactionId}}/simulate-gateway",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "{{transactionId}}", "simulate-gateway"]
+            },
+            "description": "Giả lập phản hồi từ cổng thanh toán thành công. Tự động chuyển status của transaction sang SUCCESS và cập nhật paymentStatus của rental_orders."
+          }
+        },
+        {
+          "name": "1.4 Giả lập Cổng thanh toán - Thất bại",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Trạng thái giao dịch chuyển sang FAILED\", function () {",
+                  "    pm.expect(jsonData.data.status).to.eql(\"FAILED\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"simulateSuccess\": false,\n  \"providerRef\": \"FAILED_GATEWAY_TIMEOUT\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/{{failedTransactionId}}/simulate-gateway",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "{{failedTransactionId}}", "simulate-gateway"]
+            },
+            "description": "Giả lập lỗi từ cổng thanh toán (chuyển sang FAILED)."
+          }
+        },
+        {
+          "name": "1.5 Hoàn tiền giao dịch (Refund)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Tạo giao dịch REFUND thành công\", function () {",
+                  "    pm.expect(jsonData.data.transactionType).to.eql(\"REFUND\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentTransactionId\": {{transactionId}},\n  \"amount\": 2000000,\n  \"reason\": \"Hoàn tiền cọc sau khi kết thúc chuyến đi an toàn\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/refund",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "refund"]
+            },
+            "description": "Tạo giao dịch hoàn tiền cho khách dựa trên parentTransactionId (giao dịch cọc/thanh toán trước đó)."
+          }
+        },
+        {
+          "name": "1.6 Xem chi tiết giao dịch theo ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "{{transactionId}}"]
+            },
+            "description": "Lấy chi tiết giao dịch theo ID."
+          }
+        },
+        {
+          "name": "1.7 Lấy danh sách giao dịch phân trang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?orderId=1&page=0&size=10&sort=id,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                {
+                  "key": "orderId",
+                  "value": "1"
+                },
+                {
+                  "key": "type",
+                  "value": "DEPOSIT",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "SUCCESS",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "id,desc"
+                }
+              ]
+            },
+            "description": "Lấy danh sách các giao dịch thanh toán kèm phân trang và lọc theo điều kiện."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Payouts (Chi trả cho chủ xe)",
+      "item": [
+        {
+          "name": "2.1 Tạo yêu cầu chi trả (Create Payout)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"payoutId\", jsonData.data.id);",
+                  "    console.log(\"Saved payoutId: \" + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"recipientId\": 2,\n  \"bankAccountId\": 1,\n  \"grossAmount\": 1200000,\n  \"platformFee\": 120000,\n  \"note\": \"Chi trả tiền thuê xe cho chuyến đi ORD-2026-001 (khấu trừ 10% phí nền tảng)\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payouts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payouts"]
+            },
+            "description": "Tạo yêu cầu chi trả cho chủ xe (recipientId = 2). Hệ thống tự tính netAmount = grossAmount - platformFee."
+          }
+        },
+        {
+          "name": "2.2 Cập nhật trạng thái chi trả - Đang xử lý (PROCESSING)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Trạng thái Payout chuyển sang PROCESSING\", function () {",
+                  "    pm.expect(jsonData.data.status).to.eql(\"PROCESSING\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PROCESSING\",\n  \"note\": \"Kế toán đang tiến hành lệnh chuyển khoản ngân hàng\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payouts/{{payoutId}}/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payouts", "{{payoutId}}", "process"]
+            },
+            "description": "Cập nhật yêu cầu chi trả từ PENDING sang PROCESSING."
+          }
+        },
+        {
+          "name": "2.3 Cập nhật trạng thái chi trả - Hoàn tất (COMPLETED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Trạng thái Payout chuyển sang COMPLETED\", function () {",
+                  "    pm.expect(jsonData.data.status).to.eql(\"COMPLETED\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Đã chuyển khoản thành công vào tài khoản chủ xe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payouts/{{payoutId}}/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payouts", "{{payoutId}}", "process"]
+            },
+            "description": "Cập nhật yêu cầu chi trả sang COMPLETED (hệ thống tự động ghi nhận thời gian paidAt)."
+          }
+        },
+        {
+          "name": "2.4 Xem chi tiết chi trả theo ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payouts/{{payoutId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payouts", "{{payoutId}}"]
+            },
+            "description": "Xem chi tiết một yêu cầu chi trả."
+          }
+        },
+        {
+          "name": "2.5 Lấy danh sách chi trả phân trang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payouts?recipientId=2&page=0&size=10&sort=id,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "payouts"],
+              "query": [
+                {
+                  "key": "recipientId",
+                  "value": "2"
+                },
+                {
+                  "key": "orderId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "COMPLETED",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "id,desc"
+                }
+              ]
+            },
+            "description": "Lấy danh sách các lệnh chi trả theo recipientId hoặc orderId."
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Extra Fees (Phí phát sinh)",
+      "item": [
+        {
+          "name": "3.1 Tạo phí phát sinh (Create Extra Fee)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"extraFeeId\", jsonData.data.id);",
+                  "    console.log(\"Saved extraFeeId: \" + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"createdById\": 2,\n  \"feeType\": \"CLEANING\",\n  \"amount\": 150000,\n  \"description\": \"Phí rửa xe do khoang hành khách bám bùn đất sau chuyến đi\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/extra-fees",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "extra-fees"]
+            },
+            "description": "Tạo khoản phí phát sinh (feeType: CLEANING, LATE_RETURN, DAMAGE, TRAFFIC_FINE, EXTRA_KM, OTHER). Trạng thái ban đầu: PENDING."
+          }
+        },
+        {
+          "name": "3.2 Thanh toán phí phát sinh (Pay Extra Fee)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Phí phát sinh chuyển sang PAID\", function () {",
+                  "    pm.expect(jsonData.data.status).to.eql(\"PAID\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"method\": \"MOCK_GATEWAY\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/extra-fees/{{extraFeeId}}/pay",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "extra-fees", "{{extraFeeId}}", "pay"]
+            },
+            "description": "Khách thanh toán khoản phí phát sinh. Chuyển status sang PAID và tạo transaction EXTRA_FEE."
+          }
+        },
+        {
+          "name": "3.3 Miễn trừ phí phát sinh (Waive Extra Fee)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Phí phát sinh chuyển sang WAIVED\", function () {",
+                  "    pm.expect(jsonData.data.status).to.eql(\"WAIVED\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/extra-fees/{{extraFeeId}}/waive?note=Khách thân thiết hỗ trợ miễn phí",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "extra-fees", "{{extraFeeId}}", "waive"],
+              "query": [
+                {
+                  "key": "note",
+                  "value": "Khách thân thiết hỗ trợ miễn phí"
+                }
+              ]
+            },
+            "description": "Chủ xe hoặc Admin miễn trừ khoản phí phát sinh (chuyển sang WAIVED)."
+          }
+        },
+        {
+          "name": "3.4 Xem chi tiết phí phát sinh theo ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/extra-fees/{{extraFeeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "extra-fees", "{{extraFeeId}}"]
+            },
+            "description": "Lấy chi tiết phí phát sinh theo ID."
+          }
+        },
+        {
+          "name": "3.5 Lấy danh sách phí phát sinh phân trang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/extra-fees?orderId=1&page=0&size=10&sort=id,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "extra-fees"],
+              "query": [
+                {
+                  "key": "orderId",
+                  "value": "1"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDING",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "id,desc"
+                }
+              ]
+            },
+            "description": "Lấy danh sách các khoản phí phát sinh kèm phân trang."
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Disputes (Khiếu nại & Bằng chứng)",
+      "item": [
+        {
+          "name": "4.1 Mở khiếu nại (Create Dispute kèm Evidences)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"disputeId\", jsonData.data.id);",
+                  "    console.log(\"Saved disputeId: \" + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"extraFeeId\": {{extraFeeId}},\n  \"raisedById\": 1,\n  \"reason\": \"Phí vệ sinh không hợp lý\",\n  \"description\": \"Lúc nhận xe ghế đã có vết ố sẵn từ trước, không phải do khách làm dơ\",\n  \"evidences\": [\n    {\n      \"uploadedById\": 1,\n      \"fileUrl\": \"https://storage.carrental.vn/evidence/photo_before_trip.jpg\",\n      \"fileType\": \"IMAGE\",\n      \"description\": \"Ảnh chụp thảm xe lúc bàn giao ban đầu\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/disputes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "disputes"]
+            },
+            "description": "Mở khiếu nại đối với đơn thuê hoặc phí phát sinh. Trạng thái ban đầu: OPEN."
+          }
+        },
+        {
+          "name": "4.2 Bổ sung bằng chứng vào khiếu nại (Add Evidence)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"uploadedById\": 1,\n  \"fileUrl\": \"https://storage.carrental.vn/evidence/handover_video.mp4\",\n  \"fileType\": \"VIDEO\",\n  \"description\": \"Video quay cận cảnh lúc nhận xe\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/disputes/{{disputeId}}/evidences",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "disputes", "{{disputeId}}", "evidences"]
+            },
+            "description": "Bổ sung hình ảnh hoặc video bằng chứng vào một khiếu nại đã mở."
+          }
+        },
+        {
+          "name": "4.3.1 Chuyển trạng thái khiếu nại sang Đang xem xét (UNDER_REVIEW)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"UNDER_REVIEW\",\n  \"resolutionNote\": \"Admin đang tiếp nhận và xem xét bằng chứng video đính kèm\",\n  \"resolvedById\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/disputes/{{disputeId}}/resolve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "disputes", "{{disputeId}}", "resolve"]
+            },
+            "description": "Bước trung gian hợp lệ theo máy trạng thái DisputeStatus: OPEN -> UNDER_REVIEW."
+          }
+        },
+        {
+          "name": "4.3.2 Giải quyết khiếu nại - Hoàn tiền (RESOLVED_REFUND)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RESOLVED_REFUND\",\n  \"resolutionNote\": \"Đã xem xét bằng chứng, chấp nhận hủy phí vệ sinh và hoàn tiền cho khách\",\n  \"resolvedById\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/disputes/{{disputeId}}/resolve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "disputes", "{{disputeId}}", "resolve"]
+            },
+            "description": "Giải quyết khiếu nại: Chuyển sang RESOLVED_REFUND (hoặc RESOLVED_PAYOUT, REJECTED)."
+          }
+        },
+        {
+          "name": "4.4 Xem chi tiết khiếu nại theo ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/disputes/{{disputeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "disputes", "{{disputeId}}"]
+            },
+            "description": "Lấy chi tiết khiếu nại kèm danh sách bằng chứng liên quan."
+          }
+        },
+        {
+          "name": "4.5 Lấy danh sách khiếu nại phân trang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/disputes?orderId=1&page=0&size=10&sort=id,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "disputes"],
+              "query": [
+                {
+                  "key": "orderId",
+                  "value": "1"
+                },
+                {
+                  "key": "raisedById",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "status",
+                  "value": "OPEN",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "id,desc"
+                }
+              ]
+            },
+            "description": "Lấy danh sách các khiếu nại kèm phân trang và bộ lọc."
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Reviews (Đánh giá sau chuyến đi)",
+      "item": [
+        {
+          "name": "5.1 Gửi đánh giá sau chuyến (Create Review)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"reviewId\", jsonData.data.id);",
+                  "    console.log(\"Saved reviewId: \" + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": 1,\n  \"reviewerId\": 1,\n  \"revieweeId\": 2,\n  \"rating\": 5,\n  \"comment\": \"Chủ xe giao xe đúng giờ, nhiệt tình, xe đi rất êm và tiết kiệm nhiên liệu!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"]
+            },
+            "description": "Gửi đánh giá sau chuyến đi (1-5 sao). Có cơ chế kiểm tra chống trùng lặp đánh giá cho cùng 1 đơn hàng."
+          }
+        },
+        {
+          "name": "5.2 Xem chi tiết đánh giá theo ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "{{reviewId}}"]
+            },
+            "description": "Lấy thông tin chi tiết một đánh giá."
+          }
+        },
+        {
+          "name": "5.3 Lấy danh sách đánh giá phân trang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews?revieweeId=2&page=0&size=10&sort=id,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"],
+              "query": [
+                {
+                  "key": "orderId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "revieweeId",
+                  "value": "2"
+                },
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "id,desc"
+                }
+              ]
+            },
+            "description": "Lấy danh sách đánh giá nhận được của chủ xe (revieweeId) hoặc theo đơn thuê (orderId)."
+          }
+        }
+      ]
+    }
+  ]
+}

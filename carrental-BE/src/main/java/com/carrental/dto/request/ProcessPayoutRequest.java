@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -17,17 +17,17 @@ public class ProcessPayoutRequest {
     private String note;
 
     public void applyTo(Payout payout) {
-        PayoutStatus current = PayoutStatus.valueOf(payout.getStatus());
-        PayoutStatus next = PayoutStatus.valueOf(this.status);
+        PayoutStatus current = payout.getStatus();
+        PayoutStatus next = PayoutStatus.valueOf(this.status.toUpperCase());
         current.validateTransitionTo(next);
 
-        payout.setStatus(next.name());
+        payout.setStatus(next);
         if (this.note != null && !this.note.isBlank()) {
             payout.setNote(this.note);
         }
-        if (next == PayoutStatus.COMPLETED) {
-            payout.setPaidAt(Instant.now());
+        if (next == PayoutStatus.COMPLETED || next == PayoutStatus.PAID) {
+            payout.setPaidAt(LocalDateTime.now());
         }
-        payout.setUpdatedAt(Instant.now());
+        payout.setUpdatedAt(LocalDateTime.now());
     }
 }

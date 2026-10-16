@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -19,13 +19,13 @@ public class ResolveDisputeRequest {
     private Long resolvedById;
 
     public void applyTo(Dispute dispute) {
-        DisputeStatus current = DisputeStatus.valueOf(dispute.getStatus());
-        DisputeStatus next = DisputeStatus.valueOf(this.status);
+        DisputeStatus current = dispute.getStatus();
+        DisputeStatus next = DisputeStatus.valueOf(this.status.toUpperCase());
         current.validateTransitionTo(next);
 
-        dispute.setStatus(next.name());
+        dispute.setStatus(next);
         dispute.setResolutionNote(this.resolutionNote);
-        dispute.setResolvedAt(Instant.now());
-        dispute.setUpdatedAt(Instant.now());
+        dispute.setResolvedAt(LocalDateTime.now());
+        dispute.setUpdatedAt(LocalDateTime.now());
     }
 }

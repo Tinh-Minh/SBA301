@@ -3,7 +3,7 @@ package com.carrental.dto.response;
 import com.carrental.entity.ExtraFee;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record ExtraFeeResponse(
         Long id,
@@ -15,7 +15,7 @@ public record ExtraFeeResponse(
         BigDecimal amount,
         String description,
         String status,
-        Instant createdAt
+        LocalDateTime createdAt
 ) {
     public static ExtraFeeResponse from(ExtraFee ef) {
         if (ef == null) return null;
@@ -25,10 +25,10 @@ public record ExtraFeeResponse(
                 ef.getOrder() != null ? ef.getOrder().getOrderCode() : null,
                 ef.getCreatedBy() != null ? ef.getCreatedBy().getId() : null,
                 ef.getCreatedBy() != null ? ef.getCreatedBy().getFullName() : null,
-                ef.getFeeType(),
+                ef.getFeeType() != null ? ef.getFeeType().name() : null,
                 ef.getAmount(),
                 ef.getDescription(),
-                ef.getStatus(),
+                ef.getStatus() != null ? ef.getStatus().name() : null,
                 ef.getCreatedAt()
         );
     }

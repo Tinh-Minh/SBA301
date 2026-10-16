@@ -8,7 +8,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -37,11 +37,11 @@ public class CreatePayoutRequest {
         BigDecimal fee = this.platformFee != null ? this.platformFee : BigDecimal.ZERO;
         payout.setPlatformFee(fee);
         payout.setNetAmount(this.netAmount != null ? this.netAmount : this.grossAmount.subtract(fee));
-        payout.setStatus(PayoutStatus.PENDING.name());
+        payout.setStatus(PayoutStatus.PENDING);
         payout.setNote(this.note);
         payout.setVersion(0L);
-        payout.setCreatedAt(Instant.now());
-        payout.setUpdatedAt(Instant.now());
+        payout.setCreatedAt(LocalDateTime.now());
+        payout.setUpdatedAt(LocalDateTime.now());
         return payout;
     }
 }

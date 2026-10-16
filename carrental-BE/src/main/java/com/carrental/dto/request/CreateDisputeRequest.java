@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -32,9 +32,9 @@ public class CreateDisputeRequest {
         Dispute dispute = new Dispute();
         dispute.setReason(this.reason);
         dispute.setDescription(this.description);
-        dispute.setStatus(DisputeStatus.OPEN.name());
-        dispute.setCreatedAt(Instant.now());
-        dispute.setUpdatedAt(Instant.now());
+        dispute.setStatus(DisputeStatus.OPEN);
+        dispute.setCreatedAt(LocalDateTime.now());
+        dispute.setUpdatedAt(LocalDateTime.now());
         return dispute;
     }
 }

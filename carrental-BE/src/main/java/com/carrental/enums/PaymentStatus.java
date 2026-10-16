@@ -2,6 +2,8 @@ package com.carrental.enums;
 
 public enum PaymentStatus {
     UNPAID,
+    DEPOSITED,
     PAID,
-    REFUNDED
+    REFUNDED,
+    DEPOSIT_REFUNDED
 }

@@ -1,65 +1,105 @@
 # Hướng dẫn kiểm thử API trên Postman – SBA301 Car Rental (Function 4)
 
-Tài liệu này hướng dẫn chi tiết cách thiết lập, gửi Request và kiểm tra Response chuẩn cho toàn bộ các API thuộc **Function 4**:
-- Thanh toán & Cọc (`transactions`)
-- Giả lập cổng thanh toán (`simulate-gateway`)
-- Hoàn tiền (`refund`)
-- Chi trả cho chủ xe (`payouts`)
-- Phí phát sinh (`extra_fees`)
-- Tranh chấp & Bằng chứng (`disputes`, `dispute_evidences`)
-- Đánh giá sau chuyến (`reviews`)
+Tài liệu này cung cấp hướng dẫn toàn diện để kiểm thử toàn bộ API thuộc **Function 4 (Thanh toán, Chi trả, Phí phát sinh, Khiếu nại & Đánh giá)**.
+
+> [!TIP]
+> **Nhập nhanh vào Postman:** Thư mục này đã có sẵn file bộ sưu tập chuẩn Postman v2.1.0:  
+> 📁 **[carrental_postman_collection.json](file:///d:/Study/SBA302/project/SBA301/docs/carrental_postman_collection.json)**  
+> Mở Postman -> Chọn **Import** -> Kéo thả file `carrental_postman_collection.json` vào là có đầy đủ toàn bộ 19 Request kèm biến `baseUrl` = `http://localhost:8080`.
 
 ---
 
-## I. Chuẩn bị môi trường & Dữ liệu mồi
+## I. Chuẩn bị môi trường & Dữ liệu mồi (Database Seeding)
 
 ### 1. Khởi động Backend
-- **IDE:** Mở project `carrental-BE` trong IntelliJ IDEA và bấm **Run `CarrentalApplication`**.
-- **CLI:** Chạy lệnh `.\mvnw.cmd spring-boot:run` tại thư mục `carrental-BE`.
-- **Cổng mặc định:** `http://localhost:8080`.
+- **Chạy bằng CLI:**
+  ```powershell
+  cd d:\Study\SBA302\project\SBA301\carrental-BE
+  .\mvnw.cmd spring-boot:run
+  ```
+- **Cổng mặc định:** `http://localhost:8080`
 
 ### 2. Dữ liệu mồi trong Database (PostgreSQL `carrental`)
-Vì các API liên kết khóa ngoại với đơn thuê (`rental_orders`) và khách hàng (`customers`), hãy mở pgAdmin (Query Tool) chạy đoạn SQL sau để chuẩn bị dữ liệu test:
+Vì các API liên kết khóa ngoại với các bảng gốc (`customers`, `cars`, `car_slots`, `rental_orders`, `bank_accounts`), hãy mở pgAdmin (Query Tool) và chạy đoạn SQL sau để đảm bảo đầy đủ các ràng buộc NOT NULL:
 
 ```sql
--- 1. Tạo 2 khách hàng test (Người thuê và Chủ xe)
-INSERT INTO customers (id, full_name, email, phone, password_hash, email_verified, kyc_status, role, status)
+-- 1. Tạo 2 tài khoản khách hàng test (Người thuê xe và Chủ xe)
+INSERT INTO customers (full_name, email, phone, password_hash, email_verified, kyc_status, role, status, created_at, updated_at)
 VALUES 
-(1, 'Nguyen Van Khach', 'khach@gmail.com', '0901234567', 'hash123', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(2, 'Tran Van ChuXe', 'chuxe@gmail.com', '0909876543', 'hash123', true, 'VERIFIED', 'OWNER', 'ACTIVE')
-ON CONFLICT (id) DO NOTHING;
+('Nguyen Van Khach', 'khach@gmail.com', '0901234567', '$2a$10$hashDemo123', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE', NOW(), NOW()),
+('Tran Van ChuXe', 'chuxe@gmail.com', '0909876543', '$2a$10$hashDemo123', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE', NOW(), NOW())
+ON CONFLICT (email) DO UPDATE 
+SET full_name = EXCLUDED.full_name, phone = EXCLUDED.phone, role = 'CUSTOMER';
 
--- 2. Tạo xe và slot xe cơ bản
-INSERT INTO cars (id, owner_id, license_plate, brand, model, manufacture_year, car_type)
-VALUES (1, 2, '51H-99999', 'Toyota', 'Vios', 2022, 'SEDAN')
-ON CONFLICT (id) DO NOTHING;
+-- 2. Tạo tài khoản ngân hàng cho Chủ xe (lấy ID chủ xe theo email 'chuxe@gmail.com')
+INSERT INTO bank_accounts (customer_id, bank_name, account_number, account_holder, is_default, created_at)
+VALUES (
+    (SELECT id FROM customers WHERE email = 'chuxe@gmail.com' LIMIT 1),
+    'Vietcombank', 
+    '0071000888999', 
+    'TRAN VAN CHUXE', 
+    true, 
+    NOW()
+)
+ON CONFLICT (account_number) DO NOTHING;
 
-INSERT INTO car_slots (id, car_id, start_time, end_time, price_per_hour, price_per_day, rental_option, min_rental_hours, status)
-VALUES (1, 1, NOW(), NOW() + interval '3 days', 50000, 600000, 'DAY', 1, 'OPEN')
-ON CONFLICT (id) DO NOTHING;
+-- 3. Tạo xe cho chủ xe
+INSERT INTO cars (
+    owner_id, license_plate, brand, model, manufacture_year, 
+    car_type, seats, transmission, fuel_type, city, pickup_address, 
+    price_per_hour, price_per_day, deposit_amount, features, status, created_at, updated_at
+)
+VALUES (
+    (SELECT id FROM customers WHERE email = 'chuxe@gmail.com' LIMIT 1), 
+    '51H-99999', 'Toyota', 'Vios', 2022, 
+    'SEDAN', 5, 'AUTOMATIC', 'GASOLINE', 'TP. Hồ Chí Minh', '123 Nguyen Van Linh, Quan 7', 
+    50000, 600000, 2000000, '["GPS", "Bluetooth", "Camera lùi"]'::jsonb, 'ACTIVE', NOW(), NOW()
+)
+ON CONFLICT (license_plate) DO UPDATE
+SET status = 'ACTIVE';
 
--- 3. Tạo 1 đơn thuê xe
-INSERT INTO rental_orders (id, order_code, customer_id, car_slots_id, rental_type, start_time, end_time, unit_price, quantity, rental_amount, discount_amount, total_amount, deposit_amount, status, payment_status, commission_rate, version)
-VALUES (1, 'ORD-2026-001', 1, 1, 'DAY', NOW(), NOW() + interval '2 days', 600000, 2, 1200000, 0, 1200000, 2000000, 'CONFIRMED', 'UNPAID', 10.00, 0)
-ON CONFLICT (id) DO NOTHING;
+-- 4. Tạo khung giờ thuê xe (Slot)
+INSERT INTO car_slots (
+    car_id, start_time, end_time, price_per_hour, price_per_day, rental_option, min_rental_hours, status, created_at, updated_at
+)
+VALUES (
+    (SELECT id FROM cars WHERE license_plate = '51H-99999' LIMIT 1), 
+    NOW() - interval '1 day', NOW() + interval '5 days', 
+    50000, 600000, 'BOTH', 1, 'OPEN', NOW(), NOW()
+);
+
+-- 5. Tạo đơn thuê xe test (liên kết qua subquery để đảm bảo đúng ID ngoại khóa)
+INSERT INTO rental_orders (
+    order_code, customer_id, car_id, car_slot_id, rental_type, 
+    start_time, end_time, unit_price, quantity, rental_amount, discount_amount, total_amount, deposit_amount, 
+    status, payment_status, commission_rate, version, created_at, updated_at
+)
+VALUES (
+    'ORD-2026-001', 
+    (SELECT id FROM customers WHERE email = 'khach@gmail.com' LIMIT 1), 
+    (SELECT id FROM cars WHERE license_plate = '51H-99999' LIMIT 1), 
+    (SELECT id FROM car_slots WHERE car_id = (SELECT id FROM cars WHERE license_plate = '51H-99999' LIMIT 1) ORDER BY id DESC LIMIT 1), 
+    'DAILY', 
+    NOW(), NOW() + interval '2 days', 600000, 2, 1200000, 0, 1200000, 2000000, 
+    'CONFIRMED', 'UNPAID', 10.00, 0, NOW(), NOW()
+)
+ON CONFLICT (order_code) DO UPDATE 
+SET rental_type = 'DAILY', payment_status = 'UNPAID', total_amount = 1200000, deposit_amount = 2000000;
 ```
 
-### 3. Cấu hình Headers chung trong Postman
-Tất cả các request `POST` và `PUT` đều cần Header:
-- `Content-Type`: `application/json`
+---
+
+## II. Chi tiết 19 API Function 4
 
 ---
 
-## II. Chi tiết Request & Response từng API
-
----
-
-### 1. Luồng Thanh toán, Cọc & Cổng thanh toán (`/api/transactions`)
+### 1. Phân hệ Giao dịch & Cổng thanh toán (`/api/transactions`)
 
 #### 1.1. Tạo giao dịch Đặt cọc (Deposit)
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/transactions/deposit`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/transactions/deposit`
+- **Headers:** `Content-Type: application/json`
+- **Body:**
   ```json
   {
     "orderId": 1,
@@ -67,7 +107,7 @@ Tất cả các request `POST` và `PUT` đều cần Header:
     "method": "MOCK_GATEWAY"
   }
   ```
-- **Response đúng (HTTP 200):**
+- **Response (HTTP 200):**
   ```json
   {
     "success": true,
@@ -76,55 +116,30 @@ Tất cả các request `POST` và `PUT` đều cần Header:
       "id": 1,
       "orderId": 1,
       "orderCode": "ORD-2026-001",
-      "parentTransactionId": null,
       "transactionType": "DEPOSIT",
       "amount": 2000000,
       "method": "MOCK_GATEWAY",
-      "status": "PENDING",
-      "providerRef": null,
-      "paidAt": null,
-      "createdAt": "2026-10-13T09:50:00Z"
+      "status": "PENDING"
     }
   }
   ```
 
----
-
 #### 1.2. Giả lập Cổng thanh toán xử lý thành công (Simulate Gateway)
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/transactions/1/simulate-gateway`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/transactions/1/simulate-gateway`
+- **Body:**
   ```json
   {
     "simulateSuccess": true,
     "providerRef": "VNPAY_TRANS_8888"
   }
   ```
-- **Response đúng (HTTP 200):**
-  *(Giao dịch chuyển sang `SUCCESS`, cập nhật `paidAt`, đồng thời tự đổi trạng thái đơn thuê sang `DEPOSITED`)*
-  ```json
-  {
-    "success": true,
-    "message": "Xử lý cổng thanh toán thành công",
-    "data": {
-      "id": 1,
-      "orderId": 1,
-      "orderCode": "ORD-2026-001",
-      "transactionType": "DEPOSIT",
-      "amount": 2000000,
-      "status": "SUCCESS",
-      "providerRef": "VNPAY_TRANS_8888",
-      "paidAt": "2026-10-13T09:51:00Z"
-    }
-  }
-  ```
-
----
+- **Response (HTTP 200):** Giao dịch chuyển sang `SUCCESS`, cập nhật `paidAt`, đồng thời tự cập nhật `paymentStatus` của đơn thuê sang `DEPOSITED`.
 
 #### 1.3. Thanh toán tiền thuê (Payment)
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/transactions/payment`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/transactions/payment`
+- **Body:**
   ```json
   {
     "orderId": 1,
@@ -132,205 +147,134 @@ Tất cả các request `POST` và `PUT` đều cần Header:
     "method": "MOCK_GATEWAY"
   }
   ```
-- **Response đúng (HTTP 200):**
-  *(Giao dịch thanh toán được tạo với `status: "PENDING"`, sau đó có thể gọi lại API `simulate-gateway` với id tương ứng để hoàn tất thanh toán tiền thuê).*
-
----
+- **Response (HTTP 200):** Tạo giao dịch thanh toán tiền thuê với trạng thái `PENDING`. Có thể gọi `simulate-gateway` để chuyển thành `SUCCESS` (cập nhật đơn thuê sang `PAID`).
 
 #### 1.4. Hoàn tiền cọc sau chuyến đi (Refund)
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/transactions/refund`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/transactions/refund`
+- **Body:**
   ```json
   {
     "parentTransactionId": 1,
     "amount": 2000000,
-    "reason": "Hoàn đủ cọc xe sau khi khách trả xe nguyên vẹn"
+    "reason": "Hoàn tiền cọc sau khi kiểm tra xe nguyên vẹn"
   }
   ```
-- **Response đúng (HTTP 200):**
-  ```json
-  {
-    "success": true,
-    "message": "Hoàn tiền thành công",
-    "data": {
-      "id": 3,
-      "orderId": 1,
-      "parentTransactionId": 1,
-      "transactionType": "REFUND",
-      "amount": 2000000,
-      "status": "SUCCESS"
-    }
-  }
-  ```
+- **Response (HTTP 200):** Tạo giao dịch loại `REFUND`, cập nhật đơn thuê sang `DEPOSIT_REFUNDED`.
 
----
-
-#### 1.5. Lấy danh sách giao dịch (Phân trang)
+#### 1.5. Xem chi tiết giao dịch theo ID
 - **Method:** `GET`
-- **URL:** `http://localhost:8080/api/transactions?orderId=1&page=0&size=10&sort=id,desc`
-- **Response đúng (HTTP 200):**
-  ```json
-  {
-    "success": true,
-    "message": "OK",
-    "data": {
-      "content": [
-        { "id": 3, "transactionType": "REFUND", "status": "SUCCESS" },
-        { "id": 2, "transactionType": "PAYMENT", "status": "PENDING" },
-        { "id": 1, "transactionType": "DEPOSIT", "status": "SUCCESS" }
-      ],
-      "page": 0,
-      "size": 10,
-      "totalElements": 3,
-      "totalPages": 1
-    }
-  }
-  ```
+- **URL:** `{{baseUrl}}/api/transactions/1`
+- **Response (HTTP 200):** Trả về chi tiết bản ghi Transaction.
+
+#### 1.6. Lấy danh sách giao dịch (Phân trang & Bộ lọc)
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/transactions?orderId=1&type=DEPOSIT&status=SUCCESS&page=0&size=10&sort=id,desc`
 
 ---
 
-### 2. Luồng Chi trả cho chủ xe (`/api/payouts`)
+### 2. Phân hệ Chi trả cho chủ xe (`/api/payouts`)
 
 #### 2.1. Tạo yêu cầu chi trả
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/payouts`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/payouts`
+- **Body:**
   ```json
   {
     "orderId": 1,
     "recipientId": 2,
+    "bankAccountId": 1,
     "grossAmount": 1200000,
     "platformFee": 120000,
     "note": "Chi trả tiền thuê chuyến đi ORD-2026-001 (khấu trừ 10% phí sàn)"
   }
   ```
-- **Response đúng (HTTP 200):**
-  *(Hệ thống tự tính `netAmount` = `grossAmount` - `platformFee` = 1,080,000)*
-  ```json
-  {
-    "success": true,
-    "message": "Tạo yêu cầu chi trả thành công",
-    "data": {
-      "id": 1,
-      "orderId": 1,
-      "recipientId": 2,
-      "recipientName": "Tran Van ChuXe",
-      "grossAmount": 1200000,
-      "platformFee": 120000,
-      "netAmount": 1080000,
-      "status": "PENDING"
-    }
-  }
-  ```
-
----
+- **Response (HTTP 200):** Tự động tính `netAmount` = `grossAmount` - `platformFee` = `1080000`. Trạng thái: `PENDING`.
 
 #### 2.2. Xử lý chuyển đổi trạng thái chi trả
 - **Method:** `PUT`
-- **URL:** `http://localhost:8080/api/payouts/1/process`
-- **Body (raw JSON) - Bước 1: Đang duyệt:**
+- **URL:** `{{baseUrl}}/api/payouts/1/process`
+- **Body (Chuyển sang PROCESSING):**
   ```json
   {
     "status": "PROCESSING",
-    "note": "Kế toán đang tiến hành lệnh chuyển khoản"
+    "note": "Kế toán đang tiến hành lệnh chuyển khoản ngân hàng"
   }
   ```
-- **Body (raw JSON) - Bước 2: Hoàn tất:**
+- **Body (Chuyển sang COMPLETED):**
   ```json
   {
     "status": "COMPLETED",
     "note": "Đã chuyển tiền vào tài khoản chủ xe thành công"
   }
   ```
-- **Response đúng (HTTP 200):** Trả về `status: "COMPLETED"`, cập nhật thời gian `paidAt`.
 
----
-
-#### 2.3. Lấy danh sách chi trả của chủ xe (Phân trang)
+#### 2.3. Xem chi tiết chi trả theo ID
 - **Method:** `GET`
-- **URL:** `http://localhost:8080/api/payouts?recipientId=2&page=0&size=10`
-- **Response đúng (HTTP 200):** Trả về cấu trúc `PageResponse` chứa các bản ghi chi trả.
+- **URL:** `{{baseUrl}}/api/payouts/1`
+
+#### 2.4. Lấy danh sách chi trả phân trang
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/payouts?recipientId=2&status=COMPLETED&page=0&size=10&sort=id,desc`
 
 ---
 
-### 3. Luồng Phí phát sinh (`/api/extra-fees`)
+### 3. Phân hệ Phí phát sinh (`/api/extra-fees`)
 
 #### 3.1. Tạo phí phát sinh
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/extra-fees`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/extra-fees`
+- **Body:**
   ```json
   {
     "orderId": 1,
     "createdById": 2,
     "feeType": "CLEANING",
     "amount": 150000,
-    "description": "Phí rửa xe do khoang hành khách bám bùn đất"
+    "description": "Phí rửa xe do khoang hành khách bám bùn đất sau chuyến đi"
   }
   ```
-- **Response đúng (HTTP 200):**
-  ```json
-  {
-    "success": true,
-    "message": "Tạo phí phát sinh thành công",
-    "data": {
-      "id": 1,
-      "orderId": 1,
-      "createdById": 2,
-      "feeType": "CLEANING",
-      "amount": 150000,
-      "status": "PENDING"
-    }
-  }
-  ```
-
----
+- *(Các loại phí hợp lệ trong `feeType`: `LATE_RETURN`, `CLEANING`, `DAMAGE`, `EXTRA_KM`, `OTHER`)*
 
 #### 3.2. Thanh toán phí phát sinh
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/extra-fees/1/pay`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/extra-fees/1/pay`
+- **Body:**
   ```json
   {
     "method": "MOCK_GATEWAY"
   }
   ```
-- **Response đúng (HTTP 200):**
-  *(Trạng thái phí đổi sang `PAID`, đồng thời tự động sinh thêm 1 bản ghi `Transaction` loại `EXTRA_FEE` tương ứng)*
-  ```json
-  {
-    "success": true,
-    "message": "Thanh toán phí phát sinh thành công",
-    "data": {
-      "id": 1,
-      "status": "PAID"
-    }
-  }
-  ```
+- **Response (HTTP 200):** Trạng thái phí đổi sang `PAID`, đồng thời tự động sinh thêm 1 bản ghi `Transaction` loại `EXTRA_FEE`.
 
----
-
-#### 3.3. Hoặc Miễn trừ phí phát sinh (Waive)
+#### 3.3. Miễn trừ phí phát sinh (Waive)
 - **Method:** `PUT`
-- **URL:** `http://localhost:8080/api/extra-fees/1/waive?note=Khách thân thiết hỗ trợ miễn phí`
-- **Response đúng (HTTP 200):** Trả về `status: "WAIVED"`.
+- **URL:** `{{baseUrl}}/api/extra-fees/1/waive?note=Hỗ trợ khách hàng thân thiết`
+- **Response (HTTP 200):** Trạng thái phí đổi sang `WAIVED`.
+
+#### 3.4. Xem chi tiết phí phát sinh theo ID
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/extra-fees/1`
+
+#### 3.5. Lấy danh sách phí phát sinh phân trang
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/extra-fees?orderId=1&status=PENDING&page=0&size=10&sort=id,desc`
 
 ---
 
-### 4. Luồng Khiếu nại & Bằng chứng (`/api/disputes`)
+### 4. Phân hệ Khiếu nại & Bằng chứng (`/api/disputes`)
 
 #### 4.1. Mở khiếu nại (kèm bằng chứng ban đầu)
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/disputes`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/disputes`
+- **Body:**
   ```json
   {
     "orderId": 1,
     "extraFeeId": 1,
     "raisedById": 1,
     "reason": "Phí vệ sinh không hợp lý",
-    "description": "Lúc nhận xe ghế đã có vết ố sẵn từ trước",
+    "description": "Lúc nhận xe ghế đã có vết ố sẵn từ trước, không phải do khách làm dơ",
     "evidences": [
       {
         "uploadedById": 1,
@@ -341,36 +285,12 @@ Tất cả các request `POST` và `PUT` đều cần Header:
     ]
   }
   ```
-- **Response đúng (HTTP 200):**
-  ```json
-  {
-    "success": true,
-    "message": "Mở khiếu nại thành công",
-    "data": {
-      "id": 1,
-      "orderId": 1,
-      "raisedById": 1,
-      "reason": "Phí vệ sinh không hợp lý",
-      "status": "OPEN",
-      "evidences": [
-        {
-          "id": 1,
-          "disputeId": 1,
-          "fileUrl": "https://storage.carrental.vn/evidence/photo_before_trip.jpg",
-          "fileType": "IMAGE"
-        }
-      ]
-    }
-  }
-  ```
-
----
+- *(Nếu có `extraFeeId`, phí phát sinh tương ứng sẽ tự động chuyển trạng thái sang `DISPUTED`)*
 
 #### 4.2. Bổ sung thêm bằng chứng vào khiếu nại
-*(Theo Quy ước 5: bảng con `dispute_evidences` được quản lý trực tiếp qua `DisputeController`)*
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/disputes/1/evidences`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/disputes/1/evidences`
+- **Body:**
   ```json
   {
     "uploadedById": 1,
@@ -379,78 +299,82 @@ Tất cả các request `POST` và `PUT` đều cần Header:
     "description": "Video quay cận cảnh lúc nhận xe"
   }
   ```
-- **Response đúng (HTTP 200):**
-  ```json
-  {
-    "success": true,
-    "message": "Thêm bằng chứng khiếu nại thành công",
-    "data": {
-      "id": 2,
-      "disputeId": 1,
-      "fileUrl": "https://storage.carrental.vn/evidence/handover_video.mp4",
-      "fileType": "VIDEO"
-    }
-  }
-  ```
-
----
 
 #### 4.3. Giải quyết khiếu nại
 - **Method:** `PUT`
-- **URL:** `http://localhost:8080/api/disputes/1/resolve`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/disputes/1/resolve`
+- **Body:**
   ```json
   {
     "status": "RESOLVED_REFUND",
-    "resolutionNote": "Đã xem bằng chứng video, chấp nhận hủy phí vệ sinh cho khách",
+    "resolutionNote": "Đã xem bằng chứng video, chấp nhận hủy phí vệ sinh cho khách hàng",
     "resolvedById": 2
   }
   ```
-- **Response đúng (HTTP 200):** Khiếu nại chuyển trạng thái `RESOLVED_REFUND` (hoặc `RESOLVED_PAYOUT`, `REJECTED`), cập nhật `resolutionNote` và `resolvedAt`.
+- *(Các trạng thái giải quyết hợp lệ: `RESOLVED_REFUND`, `RESOLVED_PAYOUT`, `REJECTED`)*
+
+#### 4.4. Xem chi tiết khiếu nại theo ID
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/disputes/1`
+- **Response (HTTP 200):** Trả về chi tiết khiếu nại và toàn bộ danh sách bằng chứng (`evidences`) đính kèm.
+
+#### 4.5. Lấy danh sách khiếu nại phân trang
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/disputes?orderId=1&status=OPEN&page=0&size=10&sort=id,desc`
 
 ---
 
-### 5. Luồng Đánh giá sau chuyến (`/api/reviews`)
+### 5. Phân hệ Đánh giá sau chuyến đi (`/api/reviews`)
 
 #### 5.1. Gửi đánh giá
 - **Method:** `POST`
-- **URL:** `http://localhost:8080/api/reviews`
-- **Body (raw JSON):**
+- **URL:** `{{baseUrl}}/api/reviews`
+- **Body:**
   ```json
   {
     "orderId": 1,
     "reviewerId": 1,
     "revieweeId": 2,
     "rating": 5,
-    "comment": "Chủ xe giao xe đúng giờ, nhiệt tình, xe đi rất êm và tiết kiệm xăng!"
+    "comment": "Chủ xe giao xe đúng giờ, nhiệt tình, xe đi rất êm và tiết kiệm nhiên liệu!"
   }
   ```
-- **Response đúng (HTTP 200):**
-  ```json
-  {
-    "success": true,
-    "message": "Gửi đánh giá thành công",
-    "data": {
-      "id": 1,
-      "orderId": 1,
-      "orderCode": "ORD-2026-001",
-      "reviewerId": 1,
-      "reviewerName": "Nguyen Van Khach",
-      "revieweeId": 2,
-      "revieweeName": "Tran Van ChuXe",
-      "rating": 5,
-      "comment": "Chủ xe giao xe đúng giờ, nhiệt tình, xe đi rất êm và tiết kiệm xăng!",
-      "createdAt": "2026-10-13T09:55:00Z"
-    }
-  }
-  ```
+- **Quy tắc kiểm tra (Anti-duplicate):** Nếu cùng 1 `reviewerId` gửi đánh giá lần thứ 2 cho cùng 1 `orderId`, hệ thống sẽ trả về mã HTTP 400: `"Bạn đã gửi đánh giá cho đơn thuê này rồi"`.
 
-> [!NOTE]
-> Hệ thống có kiểm tra chống gửi đánh giá trùng: Nếu cùng 1 `reviewerId` gửi đánh giá lần 2 trên cùng 1 `orderId`, API sẽ trả về lỗi HTTP 400: `"Bạn đã gửi đánh giá cho đơn thuê này rồi"`.
+#### 5.2. Xem chi tiết đánh giá theo ID
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/reviews/1`
+
+#### 5.3. Lấy danh sách đánh giá phân trang
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/reviews?revieweeId=2&page=0&size=10&sort=id,desc`
 
 ---
 
-#### 5.2. Lấy danh sách đánh giá của chủ xe (Phân trang)
-- **Method:** `GET`
-- **URL:** `http://localhost:8080/api/reviews?revieweeId=2&page=0&size=10`
-- **Response đúng (HTTP 200):** Trả về `PageResponse<ReviewResponse>`.
+## III. Tóm tắt danh mục Endpoint
+
+| STT | Phân hệ | Phương thức | Endpoint | Chức năng |
+|---|---|---|---|---|
+| 1 | Transactions | POST | `/api/transactions/deposit` | Tạo giao dịch đặt cọc |
+| 2 | Transactions | POST | `/api/transactions/payment` | Tạo giao dịch thanh toán đơn |
+| 3 | Transactions | POST | `/api/transactions/{id}/simulate-gateway` | Giả lập cổng thanh toán |
+| 4 | Transactions | POST | `/api/transactions/refund` | Hoàn tiền giao dịch |
+| 5 | Transactions | GET | `/api/transactions/{id}` | Lấy chi tiết giao dịch |
+| 6 | Transactions | GET | `/api/transactions` | Lấy danh sách giao dịch (phân trang) |
+| 7 | Payouts | POST | `/api/payouts` | Tạo yêu cầu chi trả |
+| 8 | Payouts | PUT | `/api/payouts/{id}/process` | Cập nhật trạng thái chi trả |
+| 9 | Payouts | GET | `/api/payouts/{id}` | Lấy chi tiết chi trả |
+| 10 | Payouts | GET | `/api/payouts` | Lấy danh sách chi trả (phân trang) |
+| 11 | Extra Fees | POST | `/api/extra-fees` | Tạo phí phát sinh |
+| 12 | Extra Fees | POST | `/api/extra-fees/{id}/pay` | Thanh toán phí phát sinh |
+| 13 | Extra Fees | PUT | `/api/extra-fees/{id}/waive` | Miễn trừ phí phát sinh |
+| 14 | Extra Fees | GET | `/api/extra-fees/{id}` | Lấy chi tiết phí phát sinh |
+| 15 | Extra Fees | GET | `/api/extra-fees` | Lấy danh sách phí phát sinh (phân trang) |
+| 16 | Disputes | POST | `/api/disputes` | Mở khiếu nại (kèm bằng chứng) |
+| 17 | Disputes | POST | `/api/disputes/{id}/evidences` | Thêm bằng chứng khiếu nại |
+| 18 | Disputes | PUT | `/api/disputes/{id}/resolve` | Giải quyết khiếu nại |
+| 19 | Disputes | GET | `/api/disputes/{id}` | Lấy chi tiết khiếu nại & bằng chứng |
+| 20 | Disputes | GET | `/api/disputes` | Lấy danh sách khiếu nại (phân trang) |
+| 21 | Reviews | POST | `/api/reviews` | Gửi đánh giá sau chuyến đi |
+| 22 | Reviews | GET | `/api/reviews/{id}` | Lấy chi tiết đánh giá |
+| 23 | Reviews | GET | `/api/reviews` | Lấy danh sách đánh giá (phân trang) |

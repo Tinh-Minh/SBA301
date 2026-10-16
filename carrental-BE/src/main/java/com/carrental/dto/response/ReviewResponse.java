@@ -2,7 +2,7 @@ package com.carrental.dto.response;
 
 import com.carrental.entity.Review;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record ReviewResponse(
         Long id,
@@ -14,7 +14,7 @@ public record ReviewResponse(
         String revieweeName,
         Integer rating,
         String comment,
-        Instant createdAt
+        LocalDateTime createdAt
 ) {
     public static ReviewResponse from(Review r) {
         if (r == null) return null;

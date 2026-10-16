@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -32,7 +32,7 @@ public class CreateReviewRequest {
         Review review = new Review();
         review.setRating(this.rating);
         review.setComment(this.comment);
-        review.setCreatedAt(Instant.now());
+        review.setCreatedAt(LocalDateTime.now());
         return review;
     }
 }

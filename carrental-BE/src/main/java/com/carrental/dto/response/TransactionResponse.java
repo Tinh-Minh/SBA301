@@ -3,7 +3,7 @@ package com.carrental.dto.response;
 import com.carrental.entity.Transaction;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record TransactionResponse(
         Long id,
@@ -15,8 +15,8 @@ public record TransactionResponse(
         String method,
         String status,
         String providerRef,
-        Instant paidAt,
-        Instant createdAt
+        LocalDateTime paidAt,
+        LocalDateTime createdAt
 ) {
     public static TransactionResponse from(Transaction t) {
         if (t == null) return null;
@@ -24,11 +24,11 @@ public record TransactionResponse(
                 t.getId(),
                 t.getOrder() != null ? t.getOrder().getId() : null,
                 t.getOrder() != null ? t.getOrder().getOrderCode() : null,
-                t.getTransactions() != null ? t.getTransactions().getId() : null,
-                t.getTransactionType(),
+                t.getRefundOf() != null ? t.getRefundOf().getId() : null,
+                t.getTransactionType() != null ? t.getTransactionType().name() : null,
                 t.getAmount(),
-                t.getMethod(),
-                t.getStatus(),
+                t.getMethod() != null ? t.getMethod().name() : null,
+                t.getStatus() != null ? t.getStatus().name() : null,
                 t.getProviderRef(),
                 t.getPaidAt(),
                 t.getCreatedAt()

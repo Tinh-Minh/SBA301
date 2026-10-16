@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -25,12 +25,19 @@ public class CreateDepositRequest {
 
     public Transaction toEntity() {
         Transaction transaction = new Transaction();
-        transaction.setTransactionType(TransactionType.DEPOSIT.name());
+        transaction.setTransactionType(TransactionType.DEPOSIT);
         transaction.setAmount(this.amount);
-        transaction.setMethod(this.method != null ? this.method : PaymentMethod.MOCK_GATEWAY.name());
-        transaction.setStatus(TransactionStatus.PENDING.name());
-        transaction.setCreatedAt(Instant.now());
-        transaction.setUpdatedAt(Instant.now());
+
+        PaymentMethod paymentMethod = PaymentMethod.MOCK_GATEWAY;
+        if (this.method != null) {
+            try {
+                paymentMethod = PaymentMethod.valueOf(this.method.toUpperCase());
+            } catch (IllegalArgumentException ignored) {}
+        }
+        transaction.setMethod(paymentMethod);
+        transaction.setStatus(TransactionStatus.PENDING);
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setUpdatedAt(LocalDateTime.now());
         return transaction;
     }
 }
