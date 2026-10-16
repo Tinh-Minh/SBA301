@@ -19,6 +19,7 @@ import RequestSuccess from "@/views/RequestSuccess";
 import Trips from "@/views/Trips";
 import Order from "@/views/Order";
 import ConfirmedOrder from "@/views/ConfirmedOrder";
+import Payment from "@/views/Payment";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -41,4 +42,5 @@ export const screens: Record<string, ComponentType> = {
   "chuyen-xe-cua-toi": Trips,
   "don-thue/CDB-ORD-20261026-904": Order,
   "don-thue/CDB-ORD-20261026-904/da-xac-nhan": ConfirmedOrder,
+  "thanh-toan": Payment,
 };
