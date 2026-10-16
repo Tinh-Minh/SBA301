@@ -22,6 +22,7 @@ import ConfirmedOrder from "@/views/ConfirmedOrder";
 import Payment from "@/views/Payment";
 import PaymentSuccess from "@/views/PaymentSuccess";
 import PaymentFailed from "@/views/PaymentFailed";
+import Handover from "@/views/Handover";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -47,4 +48,5 @@ export const screens: Record<string, ComponentType> = {
   "thanh-toan": Payment,
   "thanh-toan/thanh-cong": PaymentSuccess,
   "thanh-toan/that-bai": PaymentFailed,
+  "ban-giao/nhan-xe": Handover,
 };
