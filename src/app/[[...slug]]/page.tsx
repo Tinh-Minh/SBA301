@@ -10,7 +10,8 @@ export function generateStaticParams() { return Object.keys(pageTitles).map(path
 export async function generateMetadata({ params }: Props): Promise<Metadata> { return { title: pageTitles[(await params).slug?.join("/") ?? ""] ?? "Không tìm thấy trang" }; }
 export default async function Page({ params }: Props) {
   const path = (await params).slug?.join("/") ?? "";
-  if (aliases[path]) redirect(aliases[path]);
+  const designAliases: Record<string, string> = { "booking-detail-c08": "/don-thue/CDB-ORD-20261026-904", "chi-tiet-don-thue": "/don-thue/CDB-ORD-20261026-904", "handover-protocol-c10": "/ban-giao/nhan-xe", "thanh-toan-lai": "/thanh-toan", "privacy-policy": "/chinh-sach-bao-mat", "terms-of-service": "/dieu-khoan-su-dung" };
+  if (aliases[path] || designAliases[path]) redirect(aliases[path] || designAliases[path]);
   const Screen = screens[path];
   if (Screen) return <Screen />;
   if (pageTitles[path]) return <InformationPage slug={path} title={pageTitles[path]} />;
