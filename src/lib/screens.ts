@@ -6,6 +6,7 @@ import Login from "@/views/Login";
 import Register from "@/views/Register";
 import Account from "@/views/Account";
 import AccountOrders from "@/views/AccountOrders";
+import History from "@/views/History";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -15,4 +16,5 @@ export const screens: Record<string, ComponentType> = {
   "dang-ky": Register,
   "tai-khoan": Account,
   "tai-khoan/don-thue": AccountOrders,
+  "tai-khoan/lich-su": History,
 };
