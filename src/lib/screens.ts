@@ -11,6 +11,7 @@ import Verification from "@/views/Verification";
 import VerificationCollapsed from "@/views/VerificationCollapsed";
 import DriverProfile from "@/views/DriverProfile";
 import Banks from "@/views/Banks";
+import BanksAlternative from "@/views/BanksAlternative";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -25,4 +26,5 @@ export const screens: Record<string, ComponentType> = {
   "tai-khoan/xac-minh/thu-gon": VerificationCollapsed,
   "tai-khoan/ho-so-tai-xe": DriverProfile,
   "tai-khoan/ngan-hang": Banks,
+  "mau-thiet-ke/ngan-hang": BanksAlternative,
 };
