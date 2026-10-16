@@ -23,7 +23,7 @@ export default function HeaderShowcase() { return (<main className="pt-20"><div 
 <span className="w-6 h-6 rounded-full bg-gray-200 text-gray-700 text-xs font-bold flex items-center justify-center">{"1"}</span>
 <h2 className="text-sm font-bold uppercase tracking-wider text-gray-700">{"Khách chưa đăng nhập"}</h2>
 </div>
-<span className="text-xs text-gray-500 font-mono">{"Variant: Guest CTA"}</span>
+<span className="text-xs text-gray-500 font-mono">{"Trạng thái khách chưa đăng nhập"}</span>
 </div>
 
 <header className="w-full bg-white rounded-2xl border border-[#E9E9E7] shadow-sm hover:shadow-md transition-shadow px-6 py-3.5 flex items-center justify-between">
