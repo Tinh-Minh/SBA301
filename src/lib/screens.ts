@@ -10,6 +10,7 @@ import History from "@/views/History";
 import Verification from "@/views/Verification";
 import VerificationCollapsed from "@/views/VerificationCollapsed";
 import DriverProfile from "@/views/DriverProfile";
+import Banks from "@/views/Banks";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -23,4 +24,5 @@ export const screens: Record<string, ComponentType> = {
   "tai-khoan/xac-minh": Verification,
   "tai-khoan/xac-minh/thu-gon": VerificationCollapsed,
   "tai-khoan/ho-so-tai-xe": DriverProfile,
+  "tai-khoan/ngan-hang": Banks,
 };
