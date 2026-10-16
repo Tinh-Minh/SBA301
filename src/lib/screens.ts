@@ -1,2 +1,6 @@
 import type { ComponentType } from "react";
-export const screens: Record<string, ComponentType> = {};
+import Home from "@/views/Home";
+
+export const screens: Record<string, ComponentType> = {
+  "": Home,
+};
