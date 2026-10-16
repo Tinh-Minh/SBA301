@@ -17,6 +17,7 @@ import DefaultBank from "@/views/DefaultBank";
 import Checkout from "@/views/Checkout";
 import RequestSuccess from "@/views/RequestSuccess";
 import Trips from "@/views/Trips";
+import Order from "@/views/Order";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -37,4 +38,5 @@ export const screens: Record<string, ComponentType> = {
   "dat-xe/xac-nhan": Checkout,
   "dat-xe/thanh-cong": RequestSuccess,
   "chuyen-xe-cua-toi": Trips,
+  "don-thue/CDB-ORD-20261026-904": Order,
 };
