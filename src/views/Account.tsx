@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 export default function Account() { return (<div className="cardb-screen screen-account bg-[#FFFFFF] font-body-md text-body-md text-[#292929] antialiased selection:bg-primary-container selection:text-white"><main className="w-full  bg-[#FFFFFF] min-h-screen pt-20"><div className="flex flex-col w-full">
 
 <div className="relative w-full max-w-[1440px] mx-auto px-margin py-space-xl">
-<div className="absolute -top-24 left-1/4 w-[480px] h-[360px] bg-[#FC6C26]/5 rounded-full blur-[140px] pointer-events-none -z-10"></div>
+<div className="absolute -top-24 left-1/4 w-[min(480px,75vw)] h-[360px] bg-[#FC6C26]/5 rounded-full blur-[140px] pointer-events-none -z-10"></div>
 <div className="absolute top-1/2 right-0 w-[420px] h-[420px] bg-[#FEAE2C]/5 rounded-full blur-[160px] pointer-events-none -z-10"></div>
 
 <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-xl pb-space-lg"><div className="flex flex-col gap-space-xs"><div className="flex items-center gap-space-sm"><span className="inline-flex items-center px-space-sm py-0.5 rounded-full bg-[#F7F7F5] border border-[#E9E9E7] text-[#666666] font-label-sm text-label-sm uppercase tracking-wider font-medium">{"Hồ sơ & eKYC CarDB"}</span><span className="text-[#E9E9E7] font-label-sm text-label-sm">{"/"}</span><span className="font-label-sm text-label-sm text-[#FC6C26] font-semibold">{"Khách hàng định danh"}</span></div><h1 className="font-headline-lg text-headline-lg text-[#292929] tracking-tight font-bold">{"Hồ sơ cá nhân"}</h1><p className="font-body-md text-body-md text-[#666666] max-w-2xl">{"Quản lý thông tin tài khoản, mức độ tín nhiệm lái xe và chứng thực hồ sơ pháp lý chuẩn mực."}</p></div></div>
