@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-const key = "kanow:session:v1";
+const key = "cardb:session:v1";
 const AuthContext = createContext({ loggedIn: false, login: () => {}, logout: () => {} });
 
 export function AuthProvider({ children }: { children: ReactNode }) {

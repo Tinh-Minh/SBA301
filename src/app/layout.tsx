@@ -7,11 +7,11 @@ import { AuthProvider } from "@/components/auth-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "Kanow — Đồng hành mọi chuyến đi", template: "%s | Kanow" },
-  description: "Thuê xe tự lái, xe kèm tài xế và đưa đón sân bay. Đội xe đời mới, giá minh bạch, giao xe tận nơi cùng Kanow.",
+  title: { default: "CarDB — Đồng hành mọi chuyến đi", template: "%s | CarDB" },
+  description: "Thuê xe tự lái, xe cao cấp theo ngày và theo giờ. Đội xe đời mới, giá minh bạch, giao xe tận nơi cùng CarDB.",
   icons: { icon: "/icon.svg" },
 };
-export const viewport: Viewport = { themeColor: "#003d42" };
+export const viewport: Viewport = { themeColor: "#FC6C26" };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return <html lang="vi"><body className="bg-surface-canvas font-body-md text-body-md text-on-surface antialiased">

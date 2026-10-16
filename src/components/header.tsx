@@ -3,50 +3,35 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
-import { Icon } from "./icon";
 import { useAuth } from "./auth-provider";
+import { Icon } from "./icon";
 
-const navigation = [
-  ["/thue-xe-tu-lai", "Thuê xe tự lái", "directions_car"],
-  ["/xe-kem-tai-xe", "Xe kèm tài xế", "person_pin_circle"],
-  ["/bang-gia-dong-xe", "Bảng giá & Dòng xe", "sell"],
-  ["/uu-dai", "Ưu đãi", "local_offer"],
-  ["/ve-kanow", "Về Kanow", "verified_user"],
-] as const;
+const navigation = [["/kham-pha-xe", "Khám phá xe"], ["/chuyen-xe-cua-toi", "Chuyến xe của tôi"], ["/cho-thue-xe", "Cho thuê xe"]] as const;
+const accountLinks = [["/tai-khoan", "Hồ sơ cá nhân", "badge"], ["/tai-khoan/don-thue", "Đơn thuê xe", "receipt_long"], ["/tai-khoan/lich-su", "Lịch sử chuyến đi", "history"], ["/tai-khoan/ngan-hang", "Tài khoản ngân hàng", "account_balance"]] as const;
 
 export function Header() {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-  const { loggedIn, logout } = useAuth();
+  const path = usePathname();
   const router = useRouter();
-  function signOut() { logout(); setOpen(false); router.push("/"); }
-  return (
-    <header className="site-header fixed inset-x-0 top-0 z-50 border-b border-border-subtle bg-surface-canvas/95 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-8">
-        <Link href="/" onClick={() => setOpen(false)} aria-label="Kanow — Trang chủ" className="flex shrink-0 items-center gap-2 text-primary">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-white"><Icon name="directions_car" /></span>
-          <span className="text-[25px] font-bold tracking-[-1.4px]">kanow<span className="text-accent">.</span></span>
-        </Link>
-        <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 min-[1200px]:flex">
-          {navigation.map(([href, label, icon]) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined} className={`nav-link flex items-center gap-1.5 border-b-2 px-3 py-2 text-[12px] font-semibold transition-colors ${pathname === href ? "border-primary text-primary" : "border-transparent text-on-surface-variant hover:border-primary/30 hover:text-primary"}`}>
-            {label}
-          </Link>)}
-        </nav>
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <a href="tel:19008888" className="hidden items-center gap-1.5 text-xs font-bold text-primary min-[1400px]:flex"><Icon name="support_agent" className="text-[20px]" />1900 8888</a>
-          {loggedIn ? <>
-            <Link href="/tai-khoan" aria-label="Tài khoản Nguyễn Văn An" className="flex items-center gap-2 rounded-md py-1.5 pl-1.5 pr-3 text-xs font-semibold text-primary"><span className="flex size-8 items-center justify-center rounded-full bg-primary text-[11px] text-white">AN</span><span className="hidden sm:inline">Nguyễn Văn An</span></Link>
-            <button type="button" onClick={signOut} aria-label="Đăng xuất" className="hidden size-9 items-center justify-center rounded-full text-primary hover:bg-surface-tint sm:flex"><Icon name="logout" className="text-[19px]" /></button>
-          </> : <><Link href="/dang-ky" className="hidden rounded-md px-2 py-2 text-xs font-semibold text-primary sm:inline-flex">Đăng ký</Link>
-          <Link href="/dang-nhap" className="rounded-md bg-primary px-4 py-2.5 text-xs font-semibold text-white transition-colors hover:bg-primary-container">Đăng nhập</Link>
-          <Link href="/tai-khoan" aria-label="Tài khoản cá nhân" className="hidden size-9 items-center justify-center rounded-full border border-border-subtle text-primary sm:flex"><Icon name="person" className="text-[20px]" /></Link></>}
-          <button type="button" aria-label={open ? "Đóng menu" : "Mở menu"} aria-controls="mobile-navigation" aria-expanded={open} onClick={() => setOpen(value => !value)} className="flex size-10 items-center justify-center rounded-md bg-surface-tint text-primary min-[1200px]:hidden"><Icon name={open ? "close" : "menu"} /></button>
-        </div>
+  const { loggedIn, logout } = useAuth();
+  const [menu, setMenu] = useState(false);
+  const [account, setAccount] = useState(false);
+  function close() { setMenu(false); setAccount(false); }
+  function signOut() { logout(); close(); router.push("/"); }
+  return <header className="site-header fixed inset-x-0 top-0 z-50 border-b border-border-light bg-white/95 backdrop-blur-xl">
+    <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-8 lg:px-10">
+      <Link href="/" aria-label="CarDB — Trang chủ" onClick={close} className="flex shrink-0 items-center gap-2.5">
+        <span className="flex size-9 items-center justify-center rounded-lg bg-brand-accent text-white shadow-sm"><Icon name="directions_car" className="text-[22px]" /></span>
+        <span className="flex flex-col"><span className="text-[22px] leading-none font-bold tracking-tight text-text-primary">Car<span className="text-brand-accent">DB</span></span><span className="mt-1 text-[8px] font-medium tracking-[.1em] text-text-secondary">Di chuyển cao cấp</span></span>
+      </Link>
+      <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 lg:flex">{navigation.map(([href,label]) => <Link key={href} href={href} onClick={close} aria-current={path.startsWith(href)?"page":undefined} className={`rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${path.startsWith(href)?"border-brand-accent/20 bg-accent-soft text-brand-accent":"border-transparent text-text-primary hover:bg-section-bg hover:text-brand-accent"}`}>{label}</Link>)}</nav>
+      <div className="flex items-center gap-2 sm:gap-4">
+        <a href="tel:19008899" className="hidden items-center gap-1.5 text-xs text-text-secondary xl:flex"><Icon name="support_agent" className="text-[18px] text-brand-accent" />Hỗ trợ: <strong className="text-text-primary">1900 8899</strong></a>
+        {loggedIn ? <div className="relative"><button type="button" aria-label="Tài khoản Nguyễn Hoàng Minh" aria-expanded={account} aria-controls="account-menu" onClick={() => {setAccount(value=>!value);setMenu(false);}} className="flex items-center gap-2 rounded-lg px-1 py-2 text-left"><span className="hidden flex-col sm:flex"><span className="text-xs font-bold text-text-primary">Nguyễn Hoàng Minh</span><span className="mt-0.5 text-[10px] text-text-secondary">CDB-VN-88492</span></span><span className="flex size-9 items-center justify-center rounded-full border border-brand-accent/20 bg-accent-soft text-brand-accent"><Icon name="person" className="text-[20px]" /></span><Icon name="expand_more" className="text-[18px] text-text-secondary" /></button>
+          {account ? <><button type="button" tabIndex={-1} aria-label="Đóng menu tài khoản" onClick={()=>setAccount(false)} className="fixed inset-0 z-[-1] cursor-default" /><nav id="account-menu" aria-label="Tài khoản" onKeyDown={event=>{if(event.key==="Escape")setAccount(false);}} className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-border-light bg-white p-2 shadow-xl">{accountLinks.map(([href,label,icon])=><Link key={href} href={href} onClick={close} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-text-primary hover:bg-accent-soft hover:text-brand-accent"><Icon name={icon} className="text-[18px]" />{label}</Link>)}<button type="button" onClick={signOut} className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-border-light px-3 py-2.5 text-sm text-error hover:bg-error-container/30"><Icon name="logout" className="text-[18px]" />Đăng xuất</button></nav></> : null}
+        </div> : <><Link href="/dang-nhap" className="rounded-lg px-2 py-2 text-xs font-semibold text-text-primary hover:text-brand-accent sm:text-sm">Đăng nhập</Link><Link href="/dang-ky" className="hidden rounded-lg bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover sm:block">Đăng ký</Link></>}
+        <button type="button" aria-label={menu?"Đóng menu":"Mở menu"} aria-expanded={menu} aria-controls="mobile-navigation" onClick={()=>{setMenu(value=>!value);setAccount(false);}} className="flex size-9 items-center justify-center rounded-lg border border-border-light text-text-primary lg:hidden"><Icon name={menu?"close":"menu"} /></button>
       </div>
-      {open ? <nav id="mobile-navigation" aria-label="Điều hướng di động" className="mobile-menu border-t border-border-subtle bg-white px-4 py-4 shadow-xl min-[1200px]:hidden">
-        {navigation.map(([href, label, icon]) => <Link key={href} href={href} onClick={() => setOpen(false)} aria-current={pathname === href ? "page" : undefined} className={`mb-1 flex items-center gap-3 rounded-xl px-4 py-3 font-medium ${pathname === href ? "bg-primary text-white" : "text-primary hover:bg-surface-tint"}`}><Icon name={icon} className="text-[20px]" />{label}</Link>)}
-        <div className="mt-2 flex gap-3 border-t border-border-subtle px-4 pt-4">{loggedIn ? <button type="button" onClick={signOut} className="text-error">Đăng xuất</button> : <Link href="/dang-ky" onClick={() => setOpen(false)}>Đăng ký</Link>}<Link href="/tai-khoan" onClick={() => setOpen(false)}>Tài khoản</Link><a href="tel:19008888" className="ml-auto font-bold text-primary">1900 8888</a></div>
-      </nav> : null}
-    </header>
-  );
+    </div>
+    {menu ? <nav id="mobile-navigation" aria-label="Điều hướng di động" className="border-t border-border-light bg-white px-4 py-3 shadow-lg lg:hidden">{navigation.map(([href,label])=><Link key={href} href={href} onClick={close} className="block rounded-lg px-4 py-3 text-sm font-semibold text-text-primary hover:bg-accent-soft hover:text-brand-accent">{label}</Link>)}<div className="mt-2 flex justify-between border-t border-border-light px-4 pt-4 text-sm"><Link href={loggedIn?"/tai-khoan":"/dang-ky"} onClick={close}>{loggedIn?"Hồ sơ cá nhân":"Đăng ký tài khoản"}</Link><a href="tel:19008899" className="font-semibold text-brand-accent">1900 8899</a></div></nav> : null}
+  </header>;
 }
