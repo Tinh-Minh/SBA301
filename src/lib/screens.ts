@@ -4,6 +4,7 @@ import Explore from "@/views/Explore";
 import Vehicle from "@/views/Vehicle";
 import Login from "@/views/Login";
 import Register from "@/views/Register";
+import Account from "@/views/Account";
 
 export const screens: Record<string, ComponentType> = {
   "": Home,
@@ -11,4 +12,5 @@ export const screens: Record<string, ComponentType> = {
   "xe/vinfast-vf8-plus-2024": Vehicle,
   "dang-nhap": Login,
   "dang-ky": Register,
+  "tai-khoan": Account,
 };
