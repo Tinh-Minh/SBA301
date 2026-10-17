@@ -47,7 +47,7 @@ test("FAQ, favorites, vehicle filters, and gallery work",async({page})=>{
 });
 
 test("Rental request connects to success and order pages",async({page})=>{
- await page.goto("/dat-xe/xac-nhan");await page.locator("#btn-submit-booking").click();await expect(page).toHaveURL(/dat-xe\/thanh-cong/);
+ await page.goto("/xe/vinfast-vf8-plus-2024");await page.getByRole("link",{name:"Tiến hành đặt xe ngay",exact:true}).click();await expect(page).toHaveURL(/dat-xe\/xac-nhan/);await page.locator("#btn-submit-booking").click();await expect(page).toHaveURL(/dat-xe\/thanh-cong/);
  await page.goto("/don-thue/CDB-ORD-20261026-904/da-xac-nhan");
  await page.getByRole("link",{name:/Thanh toán ngay/}).click();await expect(page).toHaveURL(/thanh-toan$/);
 });
@@ -86,4 +86,31 @@ test("Document sections expand and order cancellation requires hold",async({page
  const dialog=page.getByRole("dialog");await expect(dialog).toBeVisible();
  const cancel=dialog.getByRole("button",{name:"Giữ để hủy đặt xe",exact:true});await cancel.click();await expect(dialog).toBeVisible();
  await cancel.focus();await page.keyboard.down("Enter");await page.waitForTimeout(1800);await page.keyboard.up("Enter");await expect(page).toHaveURL(/chuyen-xe-cua-toi\?cancelled=1/);
+});
+
+
+test("Mobile discovery reaches checkout through vehicle booking", async ({ page }) => {
+ await page.setViewportSize({ width: 375, height: 900 });
+ await page.goto("/");
+ await page.getByRole("button", { name: "Tìm xe ngay", exact: true }).click();
+ await expect(page).toHaveURL(/kham-pha-xe/);
+ await page.locator('a[href="/xe/vinfast-vf8-plus-2024"]').first().click();
+ await page.getByRole("link", { name: "Tiến hành đặt xe ngay", exact: true }).click();
+ await expect(page).toHaveURL(/dat-xe\/xac-nhan/);
+ await expect(page.locator("#btn-submit-booking")).toBeVisible();
+});
+
+test("Profile navigation shares verification styling and selected route", async ({ page }) => {
+ for (const width of [375, 1024]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto("/tai-khoan");
+  for (const [name, path] of [["Thông tin cá nhân", "/tai-khoan"], ["Xác minh giấy tờ", "/tai-khoan/xac-minh"], ["Hồ sơ tài xế", "/tai-khoan/ho-so-tai-xe"], ["Tài khoản ngân hàng", "/tai-khoan/ngan-hang"], ["Đơn thuê xe", "/tai-khoan/don-thue"], ["Lịch sử chuyến đi", "/tai-khoan/lich-su"]]) {
+   const nav = page.getByRole("navigation", { name: "Hồ sơ và tài khoản", exact: true });
+   await nav.getByRole("link", { name: new RegExp(name) }).click();
+   await expect(page).toHaveURL(new RegExp(path+"$"));
+   await expect(nav.locator('a[aria-current="page"]')).toHaveAttribute("href", path);
+   await expect(nav.getByRole("link")).toHaveCount(6);
+   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  }
+ }
 });
