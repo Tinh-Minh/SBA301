@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { HeroCarScene } from "@/components/hero-car-scene";
 
 export default function Home() { return (<div className="cardb-screen screen-home bg-page-bg font-sans text-text-primary antialiased selection:bg-brand-accent selection:text-white  flex flex-col justify-between">
 
@@ -20,15 +21,13 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 
 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 z-10 pointer-events-none"></div>
 
-<div className="relative w-full aspect-[21/9] md:aspect-[16/7] overflow-hidden flex items-center justify-center">
-<img src="/images/cardb-02d5cb41aa8f9514.webp" alt="VinFast VF 9 Plus AWD Luxury" className="w-full h-full object-cover object-center car-motion scale-[1.02] transition-transform duration-700" loading="eager" fetchPriority="high" decoding="async" />
-</div>
+<HeroCarScene />
 
-<div className="absolute inset-0 z-20 pointer-events-none p-5 flex flex-col justify-between">
+<div className="hero-car-hud absolute inset-0 z-20 pointer-events-none p-5 flex flex-col justify-between">
 <div className="flex items-center justify-between text-[11px] font-mono text-white/80">
 <span className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>{"\n                HỆ THỐNG VẬN HÀNH CARDB\n              "}</span>
-<span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">{"\n                TỐC ĐỘ: 105 KM/H • SPORT+\n              "}</span>
+<span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">{"\n                CHẾ ĐỘ TRƯNG BÀY • SPORT+\n              "}</span>
 </div>
 
 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
