@@ -85,7 +85,7 @@ public class ExtraFeeServiceImpl implements ExtraFeeService {
             transaction.setTransactionType(TransactionType.EXTRA_FEE);
             transaction.setAmount(extraFee.getAmount());
 
-            PaymentMethod method = PaymentMethod.MOCK_GATEWAY;
+            PaymentMethod method = PaymentMethod.VNPAY;
             if (request != null && request.getMethod() != null) {
                 try {
                     method = PaymentMethod.valueOf(request.getMethod().toUpperCase());

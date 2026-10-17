@@ -28,7 +28,7 @@ public class CreateDepositRequest {
         transaction.setTransactionType(TransactionType.DEPOSIT);
         transaction.setAmount(this.amount);
 
-        PaymentMethod paymentMethod = PaymentMethod.MOCK_GATEWAY;
+        PaymentMethod paymentMethod = PaymentMethod.VNPAY;
         if (this.method != null) {
             try {
                 paymentMethod = PaymentMethod.valueOf(this.method.toUpperCase());

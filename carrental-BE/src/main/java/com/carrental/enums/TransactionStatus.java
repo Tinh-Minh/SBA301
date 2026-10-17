@@ -6,12 +6,11 @@ import org.springframework.http.HttpStatus;
 public enum TransactionStatus {
     PENDING,
     SUCCESS,
-    FAILED,
-    CANCELLED;
+    FAILED;
 
     public boolean canTransitionTo(TransactionStatus next) {
         if (this == PENDING) {
-            return next == SUCCESS || next == FAILED || next == CANCELLED;
+            return next == SUCCESS || next == FAILED;
         }
         return false;
     }

@@ -6,17 +6,15 @@ import org.springframework.http.HttpStatus;
 public enum PayoutStatus {
     PENDING,
     PROCESSING,
-    COMPLETED,
     PAID,
-    REJECTED,
     FAILED;
 
     public boolean canTransitionTo(PayoutStatus next) {
         if (this == PENDING) {
-            return next == PROCESSING || next == REJECTED || next == FAILED;
+            return next == PROCESSING || next == PAID || next == FAILED;
         }
         if (this == PROCESSING) {
-            return next == COMPLETED || next == PAID || next == REJECTED || next == FAILED;
+            return next == PAID || next == FAILED;
         }
         return false;
     }

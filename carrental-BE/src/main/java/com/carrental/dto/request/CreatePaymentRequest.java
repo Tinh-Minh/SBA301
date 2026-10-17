@@ -25,10 +25,10 @@ public class CreatePaymentRequest {
 
     public Transaction toEntity() {
         Transaction transaction = new Transaction();
-        transaction.setTransactionType(TransactionType.PAYMENT);
+        transaction.setTransactionType(TransactionType.RENTAL_PAYMENT);
         transaction.setAmount(this.amount);
 
-        PaymentMethod paymentMethod = PaymentMethod.MOCK_GATEWAY;
+        PaymentMethod paymentMethod = PaymentMethod.VNPAY;
         if (this.method != null) {
             try {
                 paymentMethod = PaymentMethod.valueOf(this.method.toUpperCase());

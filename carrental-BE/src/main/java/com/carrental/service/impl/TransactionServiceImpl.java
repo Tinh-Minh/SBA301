@@ -113,13 +113,11 @@ public class TransactionServiceImpl implements TransactionService {
                 transaction.setPaidAt(LocalDateTime.now());
                 RentalOrder order = transaction.getOrder();
                 if (order != null) {
-                    if (transaction.getTransactionType() == TransactionType.DEPOSIT) {
-                        order.setPaymentStatus(PaymentStatus.DEPOSITED);
-                    } else if (transaction.getTransactionType() == TransactionType.PAYMENT || transaction.getTransactionType() == TransactionType.RENTAL_PAYMENT) {
+                    if (transaction.getTransactionType() == TransactionType.RENTAL_PAYMENT) {
                         order.setPaymentStatus(PaymentStatus.PAID);
+                        order.setUpdatedAt(LocalDateTime.now());
+                        rentalOrderRepository.save(order);
                     }
-                    order.setUpdatedAt(LocalDateTime.now());
-                    rentalOrderRepository.save(order);
                 }
             }
 
@@ -165,8 +163,8 @@ public class TransactionServiceImpl implements TransactionService {
             refundTx.setUpdatedAt(LocalDateTime.now());
 
             RentalOrder order = parent.getOrder();
-            if (order != null && parent.getTransactionType() == TransactionType.DEPOSIT) {
-                order.setPaymentStatus(PaymentStatus.DEPOSIT_REFUNDED);
+            if (order != null) {
+                order.setPaymentStatus(PaymentStatus.REFUNDED);
                 order.setUpdatedAt(LocalDateTime.now());
                 rentalOrderRepository.save(order);
             }

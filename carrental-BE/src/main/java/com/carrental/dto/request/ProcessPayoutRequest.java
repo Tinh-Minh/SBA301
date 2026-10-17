@@ -25,7 +25,7 @@ public class ProcessPayoutRequest {
         if (this.note != null && !this.note.isBlank()) {
             payout.setNote(this.note);
         }
-        if (next == PayoutStatus.COMPLETED || next == PayoutStatus.PAID) {
+        if (next == PayoutStatus.PAID) {
             payout.setPaidAt(LocalDateTime.now());
         }
         payout.setUpdatedAt(LocalDateTime.now());
