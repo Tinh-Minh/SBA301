@@ -1,5 +1,6 @@
 /* CarDB shared Tailwind color tokens. */
 :root {
+  --color-cinematic: 0 0 0;
   --color-brand-darkest: 0 20 18;
   --color-brand-dark: 4 28 25;
   --color-brand-card: 6 38 34;

@@ -17,6 +17,8 @@ test("Hero respects reduced motion and pauses outside viewport", async ({ page }
   await page.goto("/");
   const video = page.locator(".hero-car-video");
   await expect(video).toHaveAttribute("poster", "/images/hero-car-rain.webp");
+  await expect(page.locator(".home-entry-grid")).toBeHidden();
+  await expect(page.locator(".site-header")).toHaveCSS("opacity", "1");
   expect(await video.evaluate(el => (el as HTMLVideoElement).paused)).toBe(true);
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).currentTime)).toBeGreaterThan(.1);
@@ -58,4 +60,33 @@ test("Grid follows page scrolling beneath a stationary cursor", async ({ page })
   await page.evaluate(() => window.dispatchEvent(new Event("blur")));
   await expect(grid).toHaveAttribute("data-glowing", "false");
   await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "0");
+});
+
+
+test("Entrance shows video on black, then grid, then light", async ({ page }) => {
+ await page.goto("/");
+ async function frame(time: number) {
+  await page.evaluate(value => {
+   for (const animation of document.getAnimations()) {
+    if (animation instanceof CSSAnimation && animation.animationName.startsWith("home-")) {
+     animation.pause(); animation.currentTime = value;
+    }
+   }
+  }, time);
+ }
+ await frame(350);
+ await expect(page.locator("body")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+ await expect(page.locator(".site-header")).toHaveCSS("opacity", "0");
+ await expect(page.locator(".home-entry-grid")).toHaveCSS("opacity", "0");
+ await frame(1200);
+ await expect(page.locator("body")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+ expect(await page.locator(".home-entry-grid").evaluate(el => Number(getComputedStyle(el).opacity))).toBeGreaterThan(.9);
+ await expect(page.locator(".home-entry-light")).toHaveCSS("opacity", "0");
+ await frame(2100);
+ expect(await page.locator(".home-entry-light").evaluate(el => Number(getComputedStyle(el).opacity))).toBeGreaterThan(.1);
+ await frame(3200);
+ await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+ await expect(page.locator(".site-header")).toHaveCSS("opacity", "1");
+ await expect(page.locator("#home-search")).toHaveCSS("opacity", "1");
+ await expect(page.locator(".home-entry-grid")).toHaveCSS("opacity", "0");
 });

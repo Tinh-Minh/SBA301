@@ -9,6 +9,8 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <main className="w-full flex-1 flex flex-col pt-20">
 
 <InteractiveGrid>
+<div className="home-entry-grid" aria-hidden="true" />
+<div className="home-entry-light" aria-hidden="true" />
 <section className="relative z-10 w-full pt-8 pb-4" id="hero-section">
 <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 flex flex-col items-center">
 
