@@ -217,7 +217,7 @@ export default function Checkout() { return (<div className="cardb-screen screen
 <div className="space-y-3 font-body-sm text-body-sm">
 <div className="flex items-center justify-between gap-2 text-[#666666]">
 <span>{"Đơn giá thuê (1.950.000 đ × 2 ngày)"}</span>
-<span className="text-[#292929] font-semibold shrink-0 text-right whitespace-nowrap">{"3.900.000 đ"}</span>
+<span className="ui-money text-[#292929] font-semibold shrink-0 text-right whitespace-nowrap">{"3.900.000 đ"}</span>
 </div>
 <div className="flex items-center justify-between gap-2 text-[#666666]">
 <span>{"Thời lượng tính phí"}</span>
@@ -229,18 +229,18 @@ export default function Checkout() { return (<div className="cardb-screen screen
 </div>
 <div className="flex items-center justify-between gap-2 text-[#666666]">
 <span>{"Mã ưu đãi (CARDBWELCOME)"}</span>
-<span className="text-[#10B981] font-bold shrink-0 text-right whitespace-nowrap">{"-200.000 đ"}</span>
+<span className="ui-money text-[#10B981] font-bold shrink-0 text-right whitespace-nowrap">{"-200.000 đ"}</span>
 </div>
 <div className="pt-3 border-t border-[#E9E9E7] flex items-center justify-between gap-2">
 <span className="font-label-lg text-label-lg text-[#292929] font-bold">{"Tổng tiền thuê xe (2 ngày)"}</span>
-<span className="text-[22px] text-[#FC6C26] font-bold shrink-0 text-right whitespace-nowrap">{"3.700.000 đ"}</span>
+<span className="ui-money text-[22px] text-[#FC6C26] font-bold shrink-0 text-right whitespace-nowrap">{"3.700.000 đ"}</span>
 </div>
 </div>
 
 <div className="p-3.5 rounded-xl bg-[#FFFBEB] border border-[#FDE68A] flex flex-col gap-1.5">
 <div className="flex items-center justify-between gap-2">
 <span className="font-label-md text-label-md text-[#92400E] font-bold">{"Tiền cọc thế chấp:"}</span>
-<span className="font-label-lg text-label-lg text-[#FC6C26] font-extrabold shrink-0 text-right whitespace-nowrap">{"15.000.000 đ"}</span>
+<span className="ui-money font-label-lg text-label-lg text-[#FC6C26] font-extrabold shrink-0 text-right whitespace-nowrap">{"15.000.000 đ"}</span>
 </div>
 <span className="font-label-sm text-label-sm text-[#78350F] leading-relaxed">{"(Chưa thu - Khách bàn giao trực tiếp tại bãi nhận xe. Hoàn trả 100% sau khi đối soát xe)."}</span>
 </div>
