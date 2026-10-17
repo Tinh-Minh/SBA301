@@ -669,7 +669,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <div className="flex items-center gap-1.5">
 <button className="flex h-9 px-3 items-center gap-1 rounded-xl bg-[#f6f3f2] text-xs font-semibold text-[#8d7166] opacity-50 cursor-not-allowed border border-[#E9E9E7]" disabled={true} type="button" aria-label="Trước">
 <span className="material-symbols-outlined text-[16px]">{"arrow_back"}</span>
-<span>{"Trước"}</span>
+<span><span className="hidden sm:inline">{"Trước"}</span></span>
 </button>
 <button className="h-9 w-9 rounded-xl bg-[#1E1E1E] text-xs font-bold text-white shadow-sm" type="button" aria-label="1">{"\n1\n"}</button>
 <button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="2">{"\n2\n"}</button>
@@ -677,7 +677,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <span className="px-1 text-[#8d7166]">{"..."}</span>
 <button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="5">{"\n5\n"}</button>
 <button className="flex h-9 px-3 items-center gap-1 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Tiếp">
-<span>{"Tiếp"}</span>
+<span><span className="hidden sm:inline">{"Tiếp"}</span></span>
 <span className="material-symbols-outlined text-[16px]">{"arrow_forward"}</span>
 </button>
 </div>
