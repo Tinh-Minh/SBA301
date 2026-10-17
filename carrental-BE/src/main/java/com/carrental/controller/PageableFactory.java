@@ -15,6 +15,7 @@ final class PageableFactory {
     private static final int MAX_SIZE = 100;
 
     private PageableFactory() {
+
     }
 
     static Pageable forOrders(int page, int size, String sortBy, String direction) {
