@@ -142,9 +142,9 @@ export default function Review() { return (<div className="cardb-screen screen-r
 <p className="text-[13px] text-charcoal leading-relaxed">{"\n              Vui lòng đánh giá trung thực, văn minh và không chia sẻ thông tin cá nhân bí mật (CMND/CCCD, mã thẻ tín dụng, số điện thoại) để đảm bảo tuân thủ tiêu chuẩn cộng đồng CarDB.\n            "}</p>
 </div>
 
-<div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-border-subtle">
+<div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-border-subtle">
 <Link className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-subtle text-charcoal font-medium text-sm hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2" href="/chuyen-xe-cua-toi">{"\n              ← Quay lại chi tiết đơn\n            "}</Link>
-<button className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-primary hover:bg-primary-hover text-[#FFFFFF] font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer" id="submit-review-btn" type="button" aria-label="Gửi đánh giá chuyến đi" data-action="review">
+<button className="ui-action w-full sm:w-auto px-4 py-3.5 sm:px-6 rounded-xl bg-primary hover:bg-primary-hover text-[#FFFFFF] font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer" id="submit-review-btn" type="button" aria-label="Gửi đánh giá chuyến đi" data-action="review">
 <span>{"Gửi đánh giá chuyến đi"}</span>
 <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
 </button>
