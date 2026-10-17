@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-export function InteractiveGrid({ children }) {
+export function InteractiveGrid({ children, as: Element = "section", id, className = "" }) {
     const root = useRef(null);
     useEffect(() => {
         const zone = root.current;
@@ -52,8 +52,8 @@ export function InteractiveGrid({ children }) {
             document.documentElement.removeEventListener("pointerleave", leave);
         };
     }, []);
-    return (<section ref={root} id="interactive-grid-zone" className="square-grid-container">
+    return (<Element ref={root} id={id} className={`square-grid-container ${className}`}>
       <div className="grid-reveal" aria-hidden="true"/>
       {children}
-    </section>);
+    </Element>);
 }

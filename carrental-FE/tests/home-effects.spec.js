@@ -32,7 +32,7 @@ test("Grid lights orange under cursor and fades on exit", async ({ page }) => {
     const bounds = (await grid.boundingBox());
     await page.mouse.move(bounds.x + 72, bounds.y + 240);
     await expect(grid).toHaveAttribute("data-glowing", "true");
-    await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "1");
+    await expect(grid.locator(".grid-reveal")).toHaveCSS("opacity", "1");
     expect(await grid.evaluate(el => el.style.getPropertyValue("--grid-x"))).toBe("72px");
     expect(await grid.evaluate(el => el.style.getPropertyValue("--grid-y"))).toBe("240px");
     const photo = (await page.locator(".hero-car-video").boundingBox());
@@ -40,7 +40,7 @@ test("Grid lights orange under cursor and fades on exit", async ({ page }) => {
     await expect(grid).toHaveAttribute("data-glowing", "true");
     await page.mouse.move(-1, -1);
     await expect(grid).toHaveAttribute("data-glowing", "false");
-    await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "0");
+    await expect(grid.locator(".grid-reveal")).toHaveCSS("opacity", "0");
     await page.getByRole("button", { name: "Tìm xe ngay", exact: true }).click();
     await expect(page).toHaveURL(/kham-pha-xe\?location=/);
 });
@@ -55,7 +55,7 @@ test("Grid follows page scrolling beneath a stationary cursor", async ({ page })
         .toBeCloseTo(350 - (await grid.boundingBox()).y, 0);
     await page.evaluate(() => window.dispatchEvent(new Event("blur")));
     await expect(grid).toHaveAttribute("data-glowing", "false");
-    await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "0");
+    await expect(grid.locator(".grid-reveal")).toHaveCSS("opacity", "0");
 });
 test("Entrance shows video on black, then grid, then light", async ({ page }) => {
     await page.goto("/");
@@ -155,3 +155,25 @@ for (const input of ["wheel", "keyboard", "touch", "scrollbar"]) {
             await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
     });
 }
+
+
+test("All grey homepage sections share the hover grid, with no grid on other footers", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator(".hero-car-card")).toHaveAttribute("data-entry-ready", "true");
+    await page.mouse.wheel(0, 1);
+    await expect(page.locator(".square-grid-container")).toHaveCount(3);
+    for (const selector of ["#interactive-grid-zone", "#instructions-section", "#home-footer-grid"]) {
+        const zone = page.locator(selector);
+        await zone.scrollIntoViewIfNeeded();
+        const bounds = await zone.boundingBox();
+        const y = Math.max(100, bounds.y + 40);
+        await page.mouse.move(bounds.x + 12, y);
+        await expect(zone).toHaveAttribute("data-glowing", "true");
+        await expect(zone.locator(".grid-reveal")).toHaveCSS("opacity", "1");
+        await expect(zone.locator(".grid-reveal")).toHaveCSS("pointer-events", "none");
+        expect(await zone.locator(".grid-reveal").evaluate(el => Math.abs(el.getBoundingClientRect().height - el.parentElement.clientHeight) < 1)).toBe(true);
+    }
+    await page.locator("footer").getByRole("link", { name: "Bảng giá & Cách tính", exact: true }).click();
+    await expect(page).toHaveURL(/cach-tinh-gia$/);
+    await expect(page.locator("footer.square-grid-container")).toHaveCount(0);
+});

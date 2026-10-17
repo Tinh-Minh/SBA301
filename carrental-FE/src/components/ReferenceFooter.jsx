@@ -1,3 +1,4 @@
+import { InteractiveGrid } from "@/components/InteractiveGrid.jsx";
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
@@ -6,9 +7,10 @@ const groups = [
     { title: "Chính sách & Hỗ trợ", links: [["Bảo hiểm chuyến đi", "/chinh-sach-bao-hiem"], ["Quy định đặt cọc", "/quy-dinh-dat-coc"], ["Chính sách hoàn hủy", "/chinh-sach-huy-chuyen"], ["Câu hỏi thường gặp", "/cau-hoi-thuong-gap"]] },
     { title: "Về CarDB", links: [["Ưu đãi khách hàng", "/uu-dai"], ["Tuyển dụng tài xế", "/lien-he"], ["Liên hệ hợp tác", "/cho-thue-xe"]] },
 ];
-export function ReferenceFooter() {
-    return <footer className="relative z-10 border-t border-border-light bg-section-bg px-6 pt-12 pb-8 text-text-primary md:px-10">
-    <div className="mx-auto max-w-[1440px]">
+export function ReferenceFooter({ animatedGrid = false }) {
+    const Surface = animatedGrid ? InteractiveGrid : "footer";
+    return <Surface as={animatedGrid ? "footer" : undefined} id={animatedGrid ? "home-footer-grid" : undefined} className="relative z-10 border-t border-border-light bg-section-bg px-6 pt-12 pb-8 text-text-primary md:px-10">
+    <div className="relative z-10 mx-auto max-w-[1440px]">
       <div className="flex flex-col justify-between gap-10 border-b border-border-light pb-10 xl:flex-row">
         <div className="max-w-sm space-y-4">
           <SiteBrand />
@@ -22,5 +24,5 @@ export function ReferenceFooter() {
         <nav aria-label="Chính sách" className="flex flex-wrap justify-center gap-x-6 gap-y-3"><Link to="/dieu-khoan-su-dung" className="hover:text-brand-accent">Điều khoản dịch vụ</Link><Link to="/chinh-sach-bao-mat" className="hover:text-brand-accent">Chính sách bảo mật</Link><Link to="/dieu-khoan-su-dung" className="hover:text-brand-accent">Quy chế hoạt động</Link></nav>
       </div>
     </div>
-  </footer>;
+  </Surface>;
 }
