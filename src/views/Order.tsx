@@ -353,7 +353,7 @@ export default function Order() { return (<div className="cardb-screen screen-or
 </div>
 <div className="flex items-center justify-between text-[#666666]">
 <span>{"Tiền thuê trước giảm giá"}</span>
-<span className="text-[#292929] font-semibold">{"3.900.000 đ"}</span>
+<span className="ui-money text-[#292929] font-semibold">{"3.900.000 đ"}</span>
 </div>
 
 <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#D1FAE5] border border-[#10B981] text-[#10B981]">
@@ -361,7 +361,7 @@ export default function Order() { return (<div className="cardb-screen screen-or
 <span className="material-symbols-outlined text-[16px]">{"sell"}</span>
 <span className="tracking-wider">{"CARDBWELCOME"}</span>
 </div>
-<span className="font-bold text-sm">{"-200.000 đ"}</span>
+<span className="ui-money font-bold text-sm">{"-200.000 đ"}</span>
 </div>
 
 <div className="pt-3 flex items-center justify-between bg-[#F7F7F5] border border-[#E9E9E7] p-3.5 rounded-xl mt-1">
@@ -370,7 +370,7 @@ export default function Order() { return (<div className="cardb-screen screen-or
 <span className="text-xs text-[#666666]">{"Đã bao gồm VAT & bảo hiểm"}</span>
 </div>
 <div className="text-right">
-<span className="text-2xl font-bold text-[#FC6C26] tracking-tight whitespace-nowrap">{"3.700.000 đ"}</span>
+<span className="ui-money text-2xl font-bold text-[#FC6C26] tracking-tight whitespace-nowrap">{"3.700.000 đ"}</span>
 </div>
 </div>
 </div>
@@ -381,7 +381,7 @@ export default function Order() { return (<div className="cardb-screen screen-or
 <span className="material-symbols-outlined text-[#F5A623] text-[18px]">{"account_balance_wallet"}</span>
 <span className="text-xs font-bold uppercase tracking-wider whitespace-nowrap">{"TIỀN CỌC THẾ CHẤP"}</span>
 </div>
-<span className="text-base font-bold text-[#292929] whitespace-nowrap">{"15.000.000 đ"}</span>
+<span className="ui-money text-base font-bold text-[#292929] whitespace-nowrap">{"15.000.000 đ"}</span>
 </div>
 <p className="text-xs text-[#292929] leading-relaxed">{"Khoản tiền cọc được hoàn trả đầy đủ khi khách hàng trả xe theo quy trình kiểm tra bàn giao."}</p>
 </div>
@@ -391,7 +391,7 @@ export default function Order() { return (<div className="cardb-screen screen-or
 <span className="text-xs font-semibold text-[#292929]">{"Tổng nghĩa vụ tài chính dự kiến"}</span>
 <span className="text-[11px] text-[#666666]">{"(Thuê xe + Cọc thế chấp)"}</span>
 </div>
-<span className="text-xl font-bold text-[#FC6C26]">{"18.700.000 đ"}</span>
+<span className="ui-money text-xl font-bold text-[#FC6C26]">{"18.700.000 đ"}</span>
 </div>
 
 <div className="flex items-center justify-between px-1 pt-1">
