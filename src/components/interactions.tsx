@@ -35,6 +35,10 @@ export function Interactions({children}:{children:ReactNode}){
   scope.querySelectorAll<HTMLElement>("[data-val]").forEach(el=>el.setAttribute("aria-label",`Đánh giá ${el.dataset.val} sao`));
   const dialog=scope.querySelector<HTMLElement>("#modal-add-bank,#change-default-bank-modal");
   if(dialog){dialog.setAttribute("role","dialog");dialog.setAttribute("aria-modal","true");dialog.setAttribute("aria-label",path.endsWith("/them")?"Thêm tài khoản ngân hàng":"Đổi tài khoản mặc định");dialog.querySelector<HTMLElement>("input,button")?.focus();}
+  if(path.endsWith("ngan-hang/them")&&params.get("edit")==="1"){
+   const heading=dialog?.querySelector("h2,h3");if(heading)heading.textContent="Chỉnh sửa tài khoản ngân hàng";
+   const number=document.getElementById("account-number") as HTMLInputElement|null;if(number)number.value="0071001234982";
+  }
   if(path==="/tai-khoan")try{const saved=JSON.parse(localStorage.getItem("cardb:profile:v1")??"{}");for(const [id,value] of Object.entries(saved)){const field=document.getElementById(id);if(field instanceof HTMLInputElement)field.value=String(value);else if(field)field.textContent=String(value);}}catch{}
  },[path]);
  async function copy(value:string){try{await navigator.clipboard.writeText(value);notify("Đã sao chép: "+value);}catch{setModal({kind:"info",title:"Thông tin cần sao chép",body:value});}}
@@ -47,7 +51,7 @@ export function Interactions({children}:{children:ReactNode}){
  }
  function click(event:MouseEvent<HTMLDivElement>){
   const target=event.target as HTMLElement;if(target.closest("[data-hold-control]"))return;
-  const button=target.closest<HTMLElement>("button,a,[data-handler],[data-tab-target]");
+  const button=target.closest<HTMLElement>("button,a,[data-action],[data-handler],[data-tab-target]");
   if(!button){if(target.tagName==="IMG"&&target.closest("main")&&!path.includes("dang-")&&!target.closest("a")){const img=target as HTMLImageElement;setModal({kind:"image",title:img.alt||"Hình ảnh xe",image:img.src});}return;}
   if(button.getAttribute("type")==="submit")return;
   const text=(button.getAttribute("aria-label")||button.textContent||"").trim();const handler=button.dataset.handler??"";const arg=button.dataset.args?.match(/['"]([^'"]+)['"]/)?.[1]??"";const action=button.dataset.action;
@@ -65,6 +69,35 @@ export function Interactions({children}:{children:ReactNode}){
   }
   if(handler==="copyOrderCode"||handler==="navigator.clipboard.writeText"||action==="copy"){void copy(arg||"CDB-ORD-20261026-904");return;}
   if(handler==="window.print"||action==="receipt"){window.print();return;}
+  if(action==="trip-filter"){
+   const status=button.dataset.statusFilter;activate(button);
+   root.current?.querySelectorAll<HTMLElement>("[data-trip-card]").forEach(card=>card.dataset.filterHidden=String(status!=="all"&&card.dataset.tripStatus!==status));
+   setEmpty(!root.current?.querySelector('[data-trip-card]:not([data-filter-hidden="true"])'));return;
+  }
+  if(action==="choice"){activate(button);notify(`Đã chọn ${text.replace(/^\+\s*/,"")}.`);return;}
+  if(action==="page"){activate(button);notify(/^[1-9]\d*$/.test(text)?`Đã chọn trang ${text}. Các mục hiện có được hiển thị trong danh sách.`:"Danh sách hiện đã hiển thị các mục có sẵn.");return;}
+  if(action==="view-layout"){
+   const card=root.current?.querySelector<HTMLElement>("[data-vehicle-card]");if(card?.parentElement)card.parentElement.dataset.resultsLayout=button.dataset.layout;activate(button);return;
+  }
+  if(action==="edit-search"){root.current?.querySelector("section")?.scrollIntoView({behavior:"smooth",block:"start"});notify("Chọn lại ngày nhận, ngày trả xe và nhấn Cập nhật.");return;}
+  if(action==="refresh-list"){router.refresh();notify("Đã làm mới danh sách chuyến xe.");return;}
+  if(action==="download-report"){
+   const lines=root.current?.querySelector("main")?.innerText.split("\n").filter(Boolean)??[];
+   const csv="\ufeffNội dung\n"+lines.map(line=>'"'+line.replaceAll('"','""')+'"').join("\n");
+   const url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));const download=document.createElement("a");download.href=url;download.download="cardb-lich-su.csv";download.click();setTimeout(()=>URL.revokeObjectURL(url),1000);notify("Đã xuất lịch sử dạng CSV, có thể mở bằng Excel.");return;
+  }
+  if(action==="media-info"){setModal({kind:"info",title:text,body:"Nội dung này đang được cập nhật. Bạn có thể xem ảnh thực tế trong thư viện xe hoặc liên hệ 1900 8899 để được hỗ trợ."});return;}
+  if(action==="contact-owner"){setModal({kind:"info",title:"Liên hệ chủ xe",body:"Liên hệ tổng đài CarDB 1900 8899 để được kết nối với chủ xe và tư vấn lịch trình."});return;}
+  if(action==="preview-attachment"){setModal({kind:"info",title:"Bằng chứng đính kèm",body:"anh_taplo_dong_ho_tra_xe_08h00.jpg — Tải lên ảnh từ thiết bị để đính kèm bằng chứng của bạn."});return;}
+  if(action==="remove-attachment"){button.closest("[data-attachment]")?.remove();setText("attachment-count",`Tài liệu đã chuẩn bị đính kèm (${root.current?.querySelectorAll("[data-attachment]").length??0})`);notify("Đã xóa tệp đính kèm.");return;}
+  if(action==="remove-voucher"||action==="apply-voucher"){
+   const input=document.getElementById("voucher-input") as HTMLInputElement|null;const apply=action==="apply-voucher";
+   if(apply&&!input?.value.trim()){notify("Nhập mã ưu đãi trước khi áp dụng.");input?.focus();return;}
+   const total=apply?3700000:3900000;root.current?.querySelectorAll<HTMLElement>("[data-checkout-total]").forEach(el=>el.textContent=el.dataset.checkoutTotal==="number"?total.toLocaleString("vi-VN"):money(total));
+   const discount=root.current?.querySelector<HTMLElement>("[data-voucher-discount]");if(discount)discount.textContent=money(apply?-200000:0);
+   const status=document.getElementById("voucher-status-box");if(status){status.style.display=apply?"":"none";const code=status.querySelector("strong");if(code&&input)code.textContent=input.value.toUpperCase();}
+   if(!apply&&input)input.value="";setText("btn-apply-voucher",apply?"Đã áp dụng":"Áp dụng");notify(apply?"Đã áp dụng mã ưu đãi.":"Đã bỏ mã ưu đãi.");return;
+  }
   if(action==="search"){search(button);return;}
   if(action==="rental-mode"){activate(button);return;}
   if(action==="filter"){
@@ -101,7 +134,16 @@ export function Interactions({children}:{children:ReactNode}){
    const input=(button.closest("section")?.querySelector('input[type="file"]')??document.querySelector('input[type="file"]')) as HTMLInputElement|null;
    if(input)input.click();else{const picker=document.createElement("input");picker.type="file";picker.accept="image/*,.pdf";picker.multiple=true;picker.onchange=()=>notify(`Đã chọn ${picker.files?.length??0} tệp cho bản xem trước.`);picker.click();}return;
   }
-  if(action==="default-bank"){notify("Đã đổi tài khoản nhận chi trả mặc định.");return;}
+  if(action==="default-bank"){router.push("/tai-khoan/ngan-hang/mac-dinh");return;}
+  if(action==="bank-details"){
+   const card=button.closest("article")??button.closest("[data-purpose='bank-card']");
+   setModal({kind:"info",title:"Thông tin tài khoản ngân hàng",body:(card?.querySelector("h3")?.textContent?.trim()||"Tài khoản đã liên kết")+" — Thông tin nhận chi trả được mã hóa. Bạn có thể chỉnh sửa hoặc chọn làm tài khoản mặc định."});return;
+  }
+  if(action==="preview-image"){
+   const scope=button.closest("[id^='card-']")??button.closest("section")??root.current;
+   const img=button.parentElement?.querySelector<HTMLImageElement>("img")??scope?.querySelector<HTMLImageElement>("img");
+   if(img)setModal({kind:"image",title:img.alt||"Ảnh đối chiếu",image:img.src});else notify("Chưa có ảnh đối chiếu cho mục này.");return;
+  }
   if(action==="remove-bank"){setModal({kind:"info",title:"Gỡ liên kết tài khoản",body:"Tài khoản mẫu đã được gỡ liên kết trong phiên xem trước."});return;}
   if(action==="handover"||(/Xác nhận của tôi/.test(text)&&path==="/ban-giao/nhan-xe")){notify("Đã xác nhận biên bản nhận xe.");router.push("/chuyen-xe-cua-toi");return;}
   if(action==="return"||(/Xác nhận của tôi/.test(text)&&path==="/ban-giao/tra-xe")){notify("Đã xác nhận biên bản trả xe.");router.push("/danh-gia");return;}
@@ -128,7 +170,7 @@ export function Interactions({children}:{children:ReactNode}){
   if(event.key==="Escape"&&path.includes("ngan-hang/"))router.push("/tai-khoan/ngan-hang");
  }}>
   {children}
-  {empty?<p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc.</p>:null}
+  {empty?<p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path==="/kham-pha-xe"?"Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc.":"Chưa có chuyến xe ở trạng thái này."}</p>:null}
   {toast?<div role="status" className="toast fixed inset-x-4 bottom-5 z-[150] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-xl border border-border-light bg-text-primary px-5 py-4 text-sm text-white shadow-xl"><Icon name="check_circle" className="text-[20px] text-brand-accent" />{toast}<button type="button" aria-label="Đóng thông báo" onClick={()=>setToast("")}><Icon name="close" className="text-[18px]" /></button></div>:null}
   {modal?<Modal title={modal.title} close={()=>setModal(null)}>{modal.kind==="image"?<img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/>:<p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind==="cancel"?<div className="mt-5"><HoldButton danger onComplete={()=>{setModal(null);router.push("/chuyen-xe-cua-toi?cancelled=1");notify("Đã hủy yêu cầu thuê xe.");}}>Giữ để hủy đặt xe</HoldButton></div>:null}</Modal>:null}
  </div>;

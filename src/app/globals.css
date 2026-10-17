@@ -39,6 +39,8 @@
 .cardb-screen main section { scroll-margin-top:96px; }
 .table-scroll { max-width:100%;overflow-x:auto; }
 [data-filter-hidden="true"] { display:none!important; }
+[data-results-layout="list"] { grid-template-columns:1fr; }
+[data-results-layout="list"] [data-car-image] { max-height:260px; }
 [data-active="true"] { border-color:rgb(var(--color-brand-accent))!important;background:rgb(var(--color-accent-soft))!important;color:rgb(var(--color-brand-accent))!important; }
 [data-favorite="true"] { color:rgb(var(--color-brand-accent))!important;font-variation-settings:"FILL" 1; }
 [data-action="rental-mode"][data-active="false"] { background:transparent!important;color:rgb(var(--color-text-secondary))!important;box-shadow:none!important; }
