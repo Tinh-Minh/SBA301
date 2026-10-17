@@ -1,5 +1,5 @@
 import { ProfileLayout } from "@/components/profile-layout";
-import Link from "next/link";
+import { Link } from "react-router";
 import type { CSSProperties } from "react";
 
 export default function Verification() { return (<div className="cardb-screen screen-verification bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="verification" title="Xác minh giấy tờ" description="Cập nhật và quản lý các giấy tờ định danh pháp lý để đủ điều kiện kích hoạt dịch vụ tự lái độc quyền và bảo hiểm vật chất cao cấp trên CarDB." actions={<><div className="flex items-center gap-space-sm bg-surface-container-low px-space-md py-space-sm rounded-xl">

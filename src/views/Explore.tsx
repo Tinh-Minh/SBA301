@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router";
 import type { CSSProperties } from "react";
 
 export default function Explore() { return (<div className="cardb-screen screen-explore bg-[#fcf9f8] font-body-md text-[#1b1c1c] antialiased  flex flex-col justify-between selection:bg-[#fc6c26] selection:text-white">
@@ -13,7 +13,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 
 <div className="flex flex-col gap-2">
 <nav className="flex items-center gap-2 font-label-md text-sm text-[#594138]">
-<Link className="transition-colors hover:text-[#fc6c26]" href="/">{"Trang chủ"}</Link>
+<Link className="transition-colors hover:text-[#fc6c26]" to="/">{"Trang chủ"}</Link>
 <span className="text-[#8d7166]">{"/"}</span>
 <span className="font-semibold text-[#fc6c26]">{"Khám phá xe"}</span>
 </nav>
@@ -338,7 +338,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
 </div>
 </div>
-<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
 </div>
 </div>
 </article>
@@ -398,7 +398,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
 </div>
 </div>
-<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
 </div>
 </div>
 </article>
@@ -458,7 +458,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
 </div>
 </div>
-<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
 </div>
 </div>
 </article>
@@ -518,7 +518,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
 </div>
 </div>
-<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
 </div>
 </div>
 </article>
@@ -578,7 +578,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
 </div>
 </div>
-<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
 </div>
 </div>
 </article>
@@ -637,7 +637,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
 </div>
 </div>
-<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+<Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
 </div>
 </div>
 </article>

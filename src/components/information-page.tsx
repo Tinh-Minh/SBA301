@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router";
 import { Icon } from "./icon";
 
 const details: Record<string, { intro: string; sections: [string, string][] }> = {
@@ -15,14 +15,14 @@ export function InformationPage({ slug, title }: { slug: string; title: string }
   const content = details[slug];
   return <main className="min-h-[75vh] bg-gradient-to-b from-surface-tint to-surface-canvas pt-20">
     <div className="mx-auto max-w-[1000px] px-4 py-12 sm:px-8 sm:py-16">
-      <Link href="/" className="mb-6 inline-flex items-center gap-1 text-sm text-secondary"><Icon name="chevron_left" className="text-[18px]" />Trang chủ</Link>
+      <Link to="/" className="mb-6 inline-flex items-center gap-1 text-sm text-secondary"><Icon name="chevron_left" className="text-[18px]" />Trang chủ</Link>
       <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-primary sm:text-4xl">{title}</h1>
       <p className="mt-4 max-w-2xl text-base leading-7 text-on-surface-variant">{content?.intro ?? (slug === "thue-xe-dai-han" ? "Giải pháp xe linh hoạt cho doanh nghiệp và hành trình dài ngày. Nhận báo giá theo nhu cầu thực tế của bạn." : "Đội ngũ CarDB sẵn sàng lắng nghe và hỗ trợ hành trình của bạn.")}</p>
       {content ? <div className="mt-10 space-y-4">{content.sections.map(([heading, body]) => <section key={heading} className="rounded-2xl border border-border-subtle bg-white p-6 sm:p-8"><h2 className="text-xl font-semibold text-primary">{heading}</h2><p className="mt-3 max-w-3xl leading-7 text-on-surface-variant">{body}</p></section>)}</div> : slug === "quen-mat-khau" ? <form className="mt-10 max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-sm" data-form="recovery"><label className="block text-sm font-semibold text-primary">Email hoặc số điện thoại<input required name="contact" placeholder="Email hoặc số điện thoại đã đăng ký" className="mt-2 w-full rounded-xl border border-border-subtle bg-surface-tint p-3 font-normal" /></label><button type="submit" className="rounded-full bg-primary px-6 py-3 font-semibold text-white">Gửi hướng dẫn khôi phục</button></form> : <div className="mt-10 grid gap-6 md:grid-cols-2">
         <section className="rounded-2xl bg-primary p-8 text-white"><Icon name="support_agent" className="text-[40px]" /><h2 className="mt-4 text-2xl font-semibold">Hỗ trợ 24/7</h2><p className="mt-3 text-primary-fixed">Tư vấn chọn xe, lịch trình và thủ tục thuê xe.</p><a href="tel:19008899" className="mt-6 inline-flex rounded-full bg-white px-6 py-3 font-semibold text-primary">Gọi 1900 8899</a><p className="mt-6 text-sm text-primary-fixed">TP. Hồ Chí Minh · Hà Nội · Đà Nẵng · Cần Thơ · Nha Trang</p></section>
         <form data-form="contact" className="space-y-4 rounded-2xl border border-border-subtle bg-white p-6 sm:p-8"><h2 className="text-xl font-semibold text-primary">Để lại thông tin tư vấn</h2><label className="block text-sm">Họ và tên<input required name="name" placeholder="Nguyễn Văn An" className="mt-1.5 w-full rounded-xl border border-border-subtle bg-surface-container-low p-3" /></label><label className="block text-sm">Số điện thoại<input required name="phone" type="tel" pattern="[+0-9\s]{9,15}" placeholder="09xx xxx xxx" className="mt-1.5 w-full rounded-xl border border-border-subtle bg-surface-container-low p-3" /></label><label className="block text-sm">Nhu cầu của bạn<textarea name="message" rows={3} placeholder="Dòng xe, thời gian thuê, địa điểm…" className="mt-1.5 w-full rounded-xl border border-border-subtle bg-surface-container-low p-3" /></label><button type="submit" className="w-full rounded-full bg-primary py-3 font-semibold text-white">Gửi thông tin tư vấn</button></form>
       </div>}
-      <div className="mt-10 flex flex-wrap gap-3"><Link href="/kham-pha-xe" className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white">Khám phá đội xe</Link><Link href="/lien-he" className="rounded-full border border-primary px-6 py-3 text-sm font-semibold text-primary">Liên hệ hỗ trợ</Link></div>
+      <div className="mt-10 flex flex-wrap gap-3"><Link to="/kham-pha-xe" className="rounded-full bg-primary px-6 py-3 text-sm font-semibold text-white">Khám phá đội xe</Link><Link to="/lien-he" className="rounded-full border border-primary px-6 py-3 text-sm font-semibold text-primary">Liên hệ hỗ trợ</Link></div>
     </div>
   </main>;
 }

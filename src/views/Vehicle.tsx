@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router";
 import type { CSSProperties } from "react";
 
 export default function Vehicle() { return (<div className="cardb-screen screen-vehicle  text-gray-800 antialiased selection:bg-orange-100 selection:text-orange-900">
@@ -349,7 +349,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 </div>
 </div>
 
-<Link href="/dat-xe/xac-nhan" className="w-full mt-4 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-extrabold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-orange-600/30 transition-all flex items-center justify-center gap-2 group" aria-label="Tiến hành đặt xe ngay">
+<Link to="/dat-xe/xac-nhan" className="w-full mt-4 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-extrabold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-orange-600/30 transition-all flex items-center justify-center gap-2 group" aria-label="Tiến hành đặt xe ngay">
 <span className="">{"Đặt xe ngay"}</span>
 <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
 <path d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
@@ -382,7 +382,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <span className="text-xs uppercase font-extrabold text-orange-600 tracking-wider">{"Đề xuất cùng phân khúc"}</span>
 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight mt-0.5">{"Dòng Xe Tương Tự Phù Hợp Cho Chuyến Đi"}</h2>
 </div>
-<Link className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-orange-600 flex items-center gap-1 group" href="/kham-pha-xe">{"\n          Xem toàn bộ đội xe\n          "}<svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
+<Link className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-orange-600 flex items-center gap-1 group" to="/kham-pha-xe">{"\n          Xem toàn bộ đội xe\n          "}<svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
 </Link>
 </div>
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -409,7 +409,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <span className="ui-money text-base font-extrabold text-orange-600">{"1.050.000đ"}</span>
 <span className="text-xs text-gray-400">{"/ngày"}</span>
 </div>
-<Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
+<Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
 </div>
 </div>
 
@@ -435,7 +435,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <span className="ui-money text-base font-extrabold text-orange-600">{"1.400.000đ"}</span>
 <span className="text-xs text-gray-400">{"/ngày"}</span>
 </div>
-<Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
+<Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
 </div>
 </div>
 
@@ -461,7 +461,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <span className="ui-money text-base font-extrabold text-orange-600">{"1.850.000đ"}</span>
 <span className="text-xs text-gray-400">{"/ngày"}</span>
 </div>
-<Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
+<Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
 </div>
 </div>
 </div>

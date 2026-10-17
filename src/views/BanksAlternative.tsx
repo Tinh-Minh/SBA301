@@ -1,5 +1,5 @@
 import { ProfileLayout } from "@/components/profile-layout";
-import Link from "next/link";
+import { Link } from "react-router";
 import type { CSSProperties } from "react";
 
 export default function BanksAlternative() { return (<div className="cardb-screen screen-banksalternative bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold tracking-wide hover:bg-primary transition-all duration-200 active:scale-95 shadow-md shrink-0" type="button" aria-label="Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
@@ -138,7 +138,7 @@ export default function BanksAlternative() { return (<div className="cardb-scree
 <p className="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed max-w-3xl">{"\n                Tài khoản ngân hàng được sử dụng để nhận các khoản chi trả khi bạn cho thuê xe trên CarDB. Hệ thống tự động chuyển khoản tới tài khoản có đánh dấu mặc định theo chu kỳ thanh toán vào ngày 05 và ngày 20 hàng tháng.\n              "}</p>
 </div>
 </div>
-<Link className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-primary font-label-md text-label-md font-semibold whitespace-nowrap transition-colors shrink-0" href="/tai-khoan/don-thue">
+<Link className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-primary font-label-md text-label-md font-semibold whitespace-nowrap transition-colors shrink-0" to="/tai-khoan/don-thue">
 <span>{"Xem doanh thu cho thuê xe"}</span>
 <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
 </Link>

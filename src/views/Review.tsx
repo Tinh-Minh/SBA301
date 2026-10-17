@@ -1,14 +1,14 @@
-import Link from "next/link";
+import { Link } from "react-router";
 import type { CSSProperties } from "react";
 
 export default function Review() { return (<div className="cardb-screen screen-review bg-[#F7F7F5] font-sans text-charcoal antialiased  flex flex-col justify-between"><main className="w-full  bg-[#F7F7F5] flex-1 pt-20"><div className="w-full max-w-[1440px] mx-auto px-6 lg:px-12 py-10">
 
 <div className="flex flex-col gap-2 mb-8">
 <nav className="flex items-center gap-2 text-sm text-muted-gray">
-<Link className="hover:text-primary transition-colors flex items-center gap-1.5" href="/chuyen-xe-cua-toi">
+<Link className="hover:text-primary transition-colors flex items-center gap-1.5" to="/chuyen-xe-cua-toi">
 <span className="material-symbols-outlined text-[16px]">{"history_edu"}</span>{"\n          Chuyến xe của tôi\n        "}</Link>
 <span className="text-border-subtle">{"/"}</span>
-<Link className="hover:text-primary transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
+<Link className="hover:text-primary transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
 <span className="text-border-subtle">{"/"}</span>
 <span className="text-primary font-semibold">{"Đánh giá chuyến thuê"}</span>
 </nav>
@@ -143,7 +143,7 @@ export default function Review() { return (<div className="cardb-screen screen-r
 </div>
 
 <div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-border-subtle">
-<Link className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-subtle text-charcoal font-medium text-sm hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2" href="/chuyen-xe-cua-toi">{"\n              ← Quay lại chi tiết đơn\n            "}</Link>
+<Link className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-subtle text-charcoal font-medium text-sm hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2" to="/chuyen-xe-cua-toi">{"\n              ← Quay lại chi tiết đơn\n            "}</Link>
 <button className="ui-action w-full sm:w-auto px-4 py-3.5 sm:px-6 rounded-xl bg-primary hover:bg-primary-hover text-[#FFFFFF] font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer" id="submit-review-btn" type="button" aria-label="Gửi đánh giá chuyến đi" data-action="review">
 <span>{"Gửi đánh giá chuyến đi"}</span>
 <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>

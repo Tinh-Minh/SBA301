@@ -1,7 +1,5 @@
-"use client";
-
 import { useEffect, useRef, useState, type ReactNode, type MouseEvent, type FormEvent } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useLocation, useNavigate, useRevalidator } from "react-router";
 import { useAuth } from "./auth-provider";
 import { HoldButton } from "./hold-button";
 import { Icon } from "./icon";
@@ -18,7 +16,7 @@ function Modal({title,close,children}:{title:string;close:()=>void;children:Reac
 }
 
 export function Interactions({children}:{children:ReactNode}){
- const router=useRouter();const path=usePathname();const {login,logout}=useAuth();
+ const navigate = useNavigate();const revalidator=useRevalidator();const path=useLocation().pathname;const {login,logout}=useAuth();
  const root=useRef<HTMLDivElement>(null);const toastTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [toast,setToast]=useState("");const [modal,setModal]=useState<{kind:"cancel"|"image"|"info";title:string;body?:string;image?:string}|null>(null);
  const [empty,setEmpty]=useState(false);const [rating,setRating]=useState(0);
@@ -47,7 +45,7 @@ export function Interactions({children}:{children:ReactNode}){
   const fields=container?.querySelectorAll<HTMLInputElement>('input[type="text"]');
   const params=new URLSearchParams({location,start:fields?.[0]?.value??"08:00, 25/10/2026",end:fields?.[1]?.value??"20:00, 27/10/2026"});
   if(path==="/kham-pha-xe"){notify("Đã cập nhật thời gian tìm xe.");return;}
-  router.push("/kham-pha-xe?"+params);
+  navigate("/kham-pha-xe?"+params);
  }
  function click(event:MouseEvent<HTMLDivElement>){
   const target=event.target as HTMLElement;if(target.closest("[data-hold-control]"))return;
@@ -56,8 +54,8 @@ export function Interactions({children}:{children:ReactNode}){
   if(button.getAttribute("type")==="submit")return;
   const text=(button.getAttribute("aria-label")||button.textContent||"").trim();const handler=button.dataset.handler??"";const arg=button.dataset.args?.match(/['"]([^'"]+)['"]/)?.[1]??"";const action=button.dataset.action;
   if(handler==="toggleCancelModal"&&button.dataset.args?.includes("true")||action==="cancel-order"){setModal({kind:"cancel",title:"Hủy yêu cầu thuê xe",body:"Giữ nút bên dưới để xác nhận hủy. Thả tay trước khi hết thời gian để giữ nguyên yêu cầu."});return;}
-  if(button.dataset.route){router.push(button.dataset.route);return;}
-  if(handler==="switchAuthTab"){router.push(arg==="register"?"/dang-ky":"/dang-nhap");return;}
+  if(button.dataset.route){navigate(button.dataset.route);return;}
+  if(handler==="switchAuthTab"){navigate(arg==="register"?"/dang-ky":"/dang-nhap");return;}
   if(handler==="togglePasswordVisibility"||action==="password"){
    const input=(arg?document.getElementById(arg):button.parentElement?.querySelector("input")) as HTMLInputElement|null;if(input)input.type=input.type==="password"?"text":"password";return;
   }
@@ -80,7 +78,7 @@ export function Interactions({children}:{children:ReactNode}){
    const card=root.current?.querySelector<HTMLElement>("[data-vehicle-card]");if(card?.parentElement)card.parentElement.dataset.resultsLayout=button.dataset.layout;activate(button);return;
   }
   if(action==="edit-search"){root.current?.querySelector("section")?.scrollIntoView({behavior:"smooth",block:"start"});notify("Chọn lại ngày nhận, ngày trả xe và nhấn Cập nhật.");return;}
-  if(action==="refresh-list"){router.refresh();notify("Đã làm mới danh sách chuyến xe.");return;}
+  if(action==="refresh-list"){void revalidator.revalidate();notify("Đã làm mới danh sách chuyến xe.");return;}
   if(action==="download-report"){
    const lines=root.current?.querySelector("main")?.innerText.split("\n").filter(Boolean)??[];
    const csv="\ufeffNội dung\n"+lines.map(line=>'"'+line.replaceAll('"','""')+'"').join("\n");
@@ -113,7 +111,7 @@ export function Interactions({children}:{children:ReactNode}){
   if(action==="favorite"){
    button.dataset.favorite=String(button.dataset.favorite!=="true");button.setAttribute("aria-pressed",button.dataset.favorite);notify(button.dataset.favorite==="true"?"Đã lưu xe yêu thích.":"Đã bỏ lưu xe.");return;
   }
-  if(action==="demo-login"){login();router.push("/tai-khoan");notify("Đăng nhập thành công.");return;}
+  if(action==="demo-login"){login();navigate("/tai-khoan");notify("Đăng nhập thành công.");return;}
   if(action==="edit-profile"||button.id==="btnEditProfile"){
    for(const id of ["fieldFullName","fieldPhone","fieldDob","fieldAddress"]){const field=document.getElementById(id);if(field instanceof HTMLInputElement){field.readOnly=false;field.disabled=false;field.focus();}else if(field){field.contentEditable="true";field.classList.add("outline","outline-brand-accent");}}
    setText("editBtnText","Đang chỉnh sửa");notify("Bạn có thể chỉnh sửa thông tin cá nhân.");return;
@@ -126,15 +124,15 @@ export function Interactions({children}:{children:ReactNode}){
    const score=Number(button.dataset.star||button.dataset.val);if(button.dataset.star)setRating(score);
    button.parentElement?.querySelectorAll<HTMLElement>("button").forEach(el=>el.dataset.ratingActive=String(Number(el.dataset.star||el.dataset.val)<=score));setText("rating-feedback-label",`${score} sao — ${score>=4?"Hài lòng":"Đã ghi nhận lựa chọn"}`);return;
   }
-  if(action==="review"||button.id==="submit-review-btn"){if(!rating){notify("Vui lòng chọn số sao đánh giá.");return;}notify("Đã gửi đánh giá chuyến đi.");router.push("/tai-khoan/lich-su");return;}
+  if(action==="review"||button.id==="submit-review-btn"){if(!rating){notify("Vui lòng chọn số sao đánh giá.");return;}notify("Đã gửi đánh giá chuyến đi.");navigate("/tai-khoan/lich-su");return;}
   if(action==="dispute"||button.id==="submit-dispute-btn"){
-   const reason=document.getElementById("dispute-detail") as HTMLTextAreaElement|null;if(!reason?.value.trim()){notify("Vui lòng nhập nội dung cần xem xét.");reason?.focus();return;}notify("Đã gửi yêu cầu xem xét.");router.push("/don-thue/CDB-ORD-20261026-904");return;
+   const reason=document.getElementById("dispute-detail") as HTMLTextAreaElement|null;if(!reason?.value.trim()){notify("Vui lòng nhập nội dung cần xem xét.");reason?.focus();return;}notify("Đã gửi yêu cầu xem xét.");navigate("/don-thue/CDB-ORD-20261026-904");return;
   }
   if(action==="upload"){
    const input=(button.closest("section")?.querySelector('input[type="file"]')??document.querySelector('input[type="file"]')) as HTMLInputElement|null;
    if(input)input.click();else{const picker=document.createElement("input");picker.type="file";picker.accept="image/*,.pdf";picker.multiple=true;picker.onchange=()=>notify(`Đã chọn ${picker.files?.length??0} tệp cho bản xem trước.`);picker.click();}return;
   }
-  if(action==="default-bank"){router.push("/tai-khoan/ngan-hang/mac-dinh");return;}
+  if(action==="default-bank"){navigate("/tai-khoan/ngan-hang/mac-dinh");return;}
   if(action==="bank-details"){
    const card=button.closest("article")??button.closest("[data-purpose='bank-card']");
    setModal({kind:"info",title:"Thông tin tài khoản ngân hàng",body:(card?.querySelector("h3")?.textContent?.trim()||"Tài khoản đã liên kết")+" — Thông tin nhận chi trả được mã hóa. Bạn có thể chỉnh sửa hoặc chọn làm tài khoản mặc định."});return;
@@ -145,13 +143,13 @@ export function Interactions({children}:{children:ReactNode}){
    if(img)setModal({kind:"image",title:img.alt||"Ảnh đối chiếu",image:img.src});else notify("Chưa có ảnh đối chiếu cho mục này.");return;
   }
   if(action==="remove-bank"){setModal({kind:"info",title:"Gỡ liên kết tài khoản",body:"Tài khoản mẫu đã được gỡ liên kết trong phiên xem trước."});return;}
-  if(action==="handover"||(/Xác nhận của tôi/.test(text)&&path==="/ban-giao/nhan-xe")){notify("Đã xác nhận biên bản nhận xe.");router.push("/chuyen-xe-cua-toi");return;}
-  if(action==="return"||(/Xác nhận của tôi/.test(text)&&path==="/ban-giao/tra-xe")){notify("Đã xác nhận biên bản trả xe.");router.push("/danh-gia");return;}
-  if(path.includes("ngan-hang/")&&/Hủy|Đóng/.test(text)){router.push("/tai-khoan/ngan-hang");return;}
-  if(path.endsWith("ngan-hang/mac-dinh")&&/Xác nhận|Lưu/.test(text)){notify("Đã đổi tài khoản mặc định.");router.push("/tai-khoan/ngan-hang");return;}
+  if(action==="handover"||(/Xác nhận của tôi/.test(text)&&path==="/ban-giao/nhan-xe")){notify("Đã xác nhận biên bản nhận xe.");navigate("/chuyen-xe-cua-toi");return;}
+  if(action==="return"||(/Xác nhận của tôi/.test(text)&&path==="/ban-giao/tra-xe")){notify("Đã xác nhận biên bản trả xe.");navigate("/danh-gia");return;}
+  if(path.includes("ngan-hang/")&&/Hủy|Đóng/.test(text)){navigate("/tai-khoan/ngan-hang");return;}
+  if(path.endsWith("ngan-hang/mac-dinh")&&/Xác nhận|Lưu/.test(text)){notify("Đã đổi tài khoản mặc định.");navigate("/tai-khoan/ngan-hang");return;}
   if(/Lưu bản nháp/.test(text)){notify("Đã lưu bản nháp biên bản.");return;}
   if(button.tagName==="A")return;
-  if(/Quay lại|Trở về/.test(text)){router.push("/chuyen-xe-cua-toi");return;}
+  if(/Quay lại|Trở về/.test(text)){navigate("/chuyen-xe-cua-toi");return;}
   if(/Áp dụng/.test(text)){notify("Đã áp dụng mã ưu đãi.");return;}
   if(/Chọn|Thêm|Xác nhận|Lưu/.test(text)){activate(button);notify("Đã cập nhật lựa chọn.");}
  }
@@ -159,19 +157,19 @@ export function Interactions({children}:{children:ReactNode}){
   event.preventDefault();const form=event.target as HTMLFormElement;
   if(path==="/dang-nhap"||path==="/dang-ky"){
    const password=document.getElementById("reg-password") as HTMLInputElement|null;const confirm=document.getElementById("reg-confirm-password") as HTMLInputElement|null;
-   if(path==="/dang-ky"&&password?.value!==confirm?.value){notify("Mật khẩu xác nhận chưa khớp.");return;}login();router.push("/tai-khoan");notify("Đăng nhập thành công.");return;
+   if(path==="/dang-ky"&&password?.value!==confirm?.value){notify("Mật khẩu xác nhận chưa khớp.");return;}login();navigate("/tai-khoan");notify("Đăng nhập thành công.");return;
   }
-  if(path.includes("ngan-hang/")){try{localStorage.setItem("cardb:bank:v1",JSON.stringify({name:(form.querySelector('#bank-name') as HTMLSelectElement)?.value,number:(form.querySelector('#account-number') as HTMLInputElement)?.value}));}catch{}notify("Đã lưu tài khoản ngân hàng mẫu.");router.push("/tai-khoan/ngan-hang");return;}
-  if(path==="/dat-xe/xac-nhan"){router.push("/dat-xe/thanh-cong");return;}
+  if(path.includes("ngan-hang/")){try{localStorage.setItem("cardb:bank:v1",JSON.stringify({name:(form.querySelector('#bank-name') as HTMLSelectElement)?.value,number:(form.querySelector('#account-number') as HTMLInputElement)?.value}));}catch{}notify("Đã lưu tài khoản ngân hàng mẫu.");navigate("/tai-khoan/ngan-hang");return;}
+  if(path==="/dat-xe/xac-nhan"){navigate("/dat-xe/thanh-cong");return;}
   notify("Đã lưu thông tin trong bản xem trước.");
  }
  return <div ref={root} onClick={click} onSubmit={submit} onInput={event=>{const el=event.target as HTMLTextAreaElement;if(["review-content","dispute-detail"].includes(el.id))setText("char-counter",`${el.value.length}/1000`);}} onChange={event=>{const el=event.target as HTMLInputElement;if(el.type==="file")notify(`Đã chọn ${el.files?.length??0} tệp.`);}} onKeyDown={event=>{
   const el=event.target as HTMLElement;if(el.getAttribute("role")==="button"&&["Enter"," "].includes(event.key)){event.preventDefault();el.click();}
-  if(event.key==="Escape"&&path.includes("ngan-hang/"))router.push("/tai-khoan/ngan-hang");
+  if(event.key==="Escape"&&path.includes("ngan-hang/"))navigate("/tai-khoan/ngan-hang");
  }}>
   {children}
   {empty?<p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path==="/kham-pha-xe"?"Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc.":"Chưa có chuyến xe ở trạng thái này."}</p>:null}
   {toast?<div role="status" className="toast fixed inset-x-4 bottom-5 z-[150] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-xl border border-border-light bg-text-primary px-5 py-4 text-sm text-white shadow-xl"><Icon name="check_circle" className="text-[20px] text-brand-accent" />{toast}<button type="button" aria-label="Đóng thông báo" onClick={()=>setToast("")}><Icon name="close" className="text-[18px]" /></button></div>:null}
-  {modal?<Modal title={modal.title} close={()=>setModal(null)}>{modal.kind==="image"?<img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/>:<p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind==="cancel"?<div className="mt-5"><HoldButton danger onComplete={()=>{setModal(null);router.push("/chuyen-xe-cua-toi?cancelled=1");notify("Đã hủy yêu cầu thuê xe.");}}>Giữ để hủy đặt xe</HoldButton></div>:null}</Modal>:null}
+  {modal?<Modal title={modal.title} close={()=>setModal(null)}>{modal.kind==="image"?<img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/>:<p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind==="cancel"?<div className="mt-5"><HoldButton danger onComplete={()=>{setModal(null);navigate("/chuyen-xe-cua-toi?cancelled=1");notify("Đã hủy yêu cầu thuê xe.");}}>Giữ để hủy đặt xe</HoldButton></div>:null}</Modal>:null}
  </div>;
 }

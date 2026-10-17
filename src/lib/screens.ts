@@ -1,62 +1,34 @@
 import type { ComponentType } from "react";
-import Home from "@/views/Home";
-import Pricing from "@/views/Pricing";
-import Explore from "@/views/Explore";
-import Vehicle from "@/views/Vehicle";
-import Login from "@/views/Login";
-import Register from "@/views/Register";
-import Account from "@/views/Account";
-import AccountOrders from "@/views/AccountOrders";
-import History from "@/views/History";
-import Verification from "@/views/Verification";
-import VerificationCollapsed from "@/views/VerificationCollapsed";
-import DriverProfile from "@/views/DriverProfile";
-import Banks from "@/views/Banks";
-import BanksAlternative from "@/views/BanksAlternative";
-import AddBank from "@/views/AddBank";
-import DefaultBank from "@/views/DefaultBank";
-import Checkout from "@/views/Checkout";
-import RequestSuccess from "@/views/RequestSuccess";
-import Trips from "@/views/Trips";
-import Order from "@/views/Order";
-import ConfirmedOrder from "@/views/ConfirmedOrder";
-import Payment from "@/views/Payment";
-import PaymentSuccess from "@/views/PaymentSuccess";
-import PaymentFailed from "@/views/PaymentFailed";
-import Handover from "@/views/Handover";
-import Return from "@/views/Return";
-import Review from "@/views/Review";
-import Dispute from "@/views/Dispute";
-import HeaderShowcase from "@/views/HeaderShowcase";
 
-export const screens: Record<string, ComponentType> = {
-  "": Home,
-  "cach-tinh-gia": Pricing,
-  "kham-pha-xe": Explore,
-  "xe/vinfast-vf8-plus-2024": Vehicle,
-  "dang-nhap": Login,
-  "dang-ky": Register,
-  "tai-khoan": Account,
-  "tai-khoan/don-thue": AccountOrders,
-  "tai-khoan/lich-su": History,
-  "tai-khoan/xac-minh": Verification,
-  "tai-khoan/xac-minh/thu-gon": VerificationCollapsed,
-  "tai-khoan/ho-so-tai-xe": DriverProfile,
-  "tai-khoan/ngan-hang": Banks,
-  "mau-thiet-ke/ngan-hang": BanksAlternative,
-  "tai-khoan/ngan-hang/them": AddBank,
-  "tai-khoan/ngan-hang/mac-dinh": DefaultBank,
-  "dat-xe/xac-nhan": Checkout,
-  "dat-xe/thanh-cong": RequestSuccess,
-  "chuyen-xe-cua-toi": Trips,
-  "don-thue/CDB-ORD-20261026-904": Order,
-  "don-thue/CDB-ORD-20261026-904/da-xac-nhan": ConfirmedOrder,
-  "thanh-toan": Payment,
-  "thanh-toan/thanh-cong": PaymentSuccess,
-  "thanh-toan/that-bai": PaymentFailed,
-  "ban-giao/nhan-xe": Handover,
-  "ban-giao/tra-xe": Return,
-  "danh-gia": Review,
-  "tranh-chap": Dispute,
-  "thanh-phan/dieu-huong": HeaderShowcase,
+// Explicit imports let Vite split every screen into its own bundle.
+export const screenLoaders: Record<string, () => Promise<{ default: ComponentType }>> = {
+  "": () => import("@/views/Home"),
+  "cach-tinh-gia": () => import("@/views/Pricing"),
+  "kham-pha-xe": () => import("@/views/Explore"),
+  "xe/vinfast-vf8-plus-2024": () => import("@/views/Vehicle"),
+  "dang-nhap": () => import("@/views/Login"),
+  "dang-ky": () => import("@/views/Register"),
+  "tai-khoan": () => import("@/views/Account"),
+  "tai-khoan/don-thue": () => import("@/views/AccountOrders"),
+  "tai-khoan/lich-su": () => import("@/views/History"),
+  "tai-khoan/xac-minh": () => import("@/views/Verification"),
+  "tai-khoan/xac-minh/thu-gon": () => import("@/views/VerificationCollapsed"),
+  "tai-khoan/ho-so-tai-xe": () => import("@/views/DriverProfile"),
+  "tai-khoan/ngan-hang": () => import("@/views/Banks"),
+  "mau-thiet-ke/ngan-hang": () => import("@/views/BanksAlternative"),
+  "tai-khoan/ngan-hang/them": () => import("@/views/AddBank"),
+  "tai-khoan/ngan-hang/mac-dinh": () => import("@/views/DefaultBank"),
+  "dat-xe/xac-nhan": () => import("@/views/Checkout"),
+  "dat-xe/thanh-cong": () => import("@/views/RequestSuccess"),
+  "chuyen-xe-cua-toi": () => import("@/views/Trips"),
+  "don-thue/CDB-ORD-20261026-904": () => import("@/views/Order"),
+  "don-thue/CDB-ORD-20261026-904/da-xac-nhan": () => import("@/views/ConfirmedOrder"),
+  "thanh-toan": () => import("@/views/Payment"),
+  "thanh-toan/thanh-cong": () => import("@/views/PaymentSuccess"),
+  "thanh-toan/that-bai": () => import("@/views/PaymentFailed"),
+  "ban-giao/nhan-xe": () => import("@/views/Handover"),
+  "ban-giao/tra-xe": () => import("@/views/Return"),
+  "danh-gia": () => import("@/views/Review"),
+  "tranh-chap": () => import("@/views/Dispute"),
+  "thanh-phan/dieu-huong": () => import("@/views/HeaderShowcase"),
 };

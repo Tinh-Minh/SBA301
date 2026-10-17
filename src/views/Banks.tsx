@@ -1,5 +1,5 @@
 import { ProfileLayout } from "@/components/profile-layout";
-import Link from "next/link";
+import { Link } from "react-router";
 import type { CSSProperties } from "react";
 
 export default function Banks() { return (<div className="cardb-screen screen-banks bg-background font-body-md text-body-md text-on-surface antialiased">
@@ -152,7 +152,7 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 <p className="text-xs text-[#666666] mt-1 leading-relaxed max-w-2xl">{"\nTài khoản ngân hàng được sử dụng để nhận các khoản chi trả khi bạn cho thuê xe trên CarDB. Hệ thống tự động chuyển khoản tới tài khoản có đánh dấu mặc định theo chu kỳ thanh toán.\n"}</p>
 </div>
 </div>
-<Link className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#292929] hover:text-[#FC6C26] bg-white hover:border-[#FC6C26] border border-[#E9E9E7] px-4 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap" href="/tai-khoan/don-thue">
+<Link className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#292929] hover:text-[#FC6C26] bg-white hover:border-[#FC6C26] border border-[#E9E9E7] px-4 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap" to="/tai-khoan/don-thue">
 <span>{"Xem doanh thu cho thuê xe"}</span>
 <span className="text-sm text-[#FC6C26]">{"→"}</span>
 </Link>

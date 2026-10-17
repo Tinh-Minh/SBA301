@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router";
 import type { CSSProperties } from "react";
 
 export default function Return() { return (<div className="cardb-screen screen-return bg-[#F7F7F5] font-['Be_Vietnam_Pro'] text-[#292929] antialiased selection:bg-[#FC6C26] selection:text-white"><main className="w-full  bg-[#F7F7F5] min-h-[calc(100vh-80px)] pt-20"><div className="flex flex-col w-full pb-16">
@@ -7,9 +7,9 @@ export default function Return() { return (<div className="cardb-screen screen-r
 
 <div className="flex flex-col gap-space-xs">
 <nav className="flex items-center gap-space-xs text-[#666666] text-sm">
-<Link className="hover:text-[#FC6C26] transition-colors" href="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+<Link className="hover:text-[#FC6C26] transition-colors" to="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
 <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
-<Link className="hover:text-[#FC6C26] transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
+<Link className="hover:text-[#FC6C26] transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
 <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
 <span className="text-[#FC6C26] font-medium">{"Bàn giao trả xe"}</span>
 </nav>
@@ -93,7 +93,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-xs text-[#FC6C26] uppercase font-bold tracking-wider">{"SUV 7 Chỗ Thương Gia"}</span>
 <h2 className="text-xl md:text-2xl font-bold text-[#292929]">{"VinFast VF 9 Plus AWD"}</h2>
 </div>
-<Link className="text-sm font-semibold text-[#FC6C26] hover:underline flex items-center gap-1" href="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết đơn thuê\n                "}<span className="material-symbols-outlined text-[16px]">{"arrow_forward"}</span>
+<Link className="text-sm font-semibold text-[#FC6C26] hover:underline flex items-center gap-1" to="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết đơn thuê\n                "}<span className="material-symbols-outlined text-[16px]">{"arrow_forward"}</span>
 </Link>
 </div>
 <div className="grid grid-cols-1 md:grid-cols-2 gap-space-sm pt-space-xs">
