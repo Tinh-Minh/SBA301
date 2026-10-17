@@ -1,45 +1,14 @@
-import { ProfileSidebar } from "@/components/profile-sidebar";
+import { ProfileLayout } from "@/components/profile-layout";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-export default function History() { return (<div className="cardb-screen screen-history bg-background font-body-md text-body-md text-on-surface antialiased"><main className="w-full  bg-background pt-20"><div className="flex flex-col w-full">
-
-<div className="relative w-full overflow-hidden bg-background">
-<div className="absolute top-0 right-0 w-[550px] h-[550px] bg-primary/5 rounded-full blur-[140px] pointer-events-none -mr-40 -mt-20"></div>
-<div className="absolute top-96 left-12 w-[350px] h-[350px] bg-secondary-container/5 rounded-full blur-[120px] pointer-events-none"></div>
-
-<div className="max-w-[1440px] mx-auto px-margin-mobile md:px-margin py-space-lg lg:py-space-xl relative z-10">
-
-<nav aria-label="Breadcrumb" className="flex items-center gap-space-xs text-on-surface-variant mb-space-lg">
-<Link className="font-body-sm text-body-sm hover:text-primary transition-colors" href="/">{"Trang chủ"}</Link>
-<span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
-<Link className="font-body-sm text-body-sm hover:text-primary transition-colors" href="/tai-khoan">{"Hồ sơ & Tài khoản"}</Link>
-<span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
-<span className="font-label-md text-label-md text-on-surface font-semibold">{"Lịch sử chuyến đi"}</span>
-</nav>
-
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter lg:gap-space-xl items-start">
-
-<ProfileSidebar active="history" className="lg:col-span-4 xl:col-span-3" />
-
-<section className="lg:col-span-8 xl:col-span-9 flex flex-col gap-space-lg">
-
-<div className="flex flex-col xl:flex-row xl:items-end justify-between gap-space-md">
-<div>
-<div className="flex items-center gap-space-xs mb-1">
-<span className="w-2 h-2 rounded-full bg-primary-container"></span>
-<span className="font-label-sm text-label-sm uppercase tracking-widest text-primary font-bold">{"Lưu trữ hành trình CarDB"}</span>
-</div>
-<h1 className="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">{"Lịch sử chuyến đi"}</h1>
-<p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-1">{"\n                Tra cứu lịch sử các chuyến thuê đã hoàn tất, xuất hóa đơn VAT điện tử và quản lý biên bản bàn giao xe chính xác theo chuẩn C10-B.\n              "}</p>
-</div>
-<div className="flex-wrap gap-y-2 flex items-center gap-space-sm self-start xl:self-end">
+export default function History() { return (<div className="cardb-screen screen-history bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="history" title="Lịch sử chuyến đi" description="Tra cứu lịch sử các chuyến thuê đã hoàn tất, xuất hóa đơn VAT điện tử và quản lý biên bản bàn giao xe chính xác theo chuẩn C10-B." actions={<><div className="flex-wrap gap-y-2 flex items-center gap-space-sm self-start xl:self-end">
 <button className="ui-action px-space-md py-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Xuất báo cáo PDF / Excel" data-action="download-report">
 <span className="material-symbols-outlined text-[18px]">{"download"}</span>
 <span className="">{"Xuất báo cáo PDF / Excel"}</span>
 </button>
-</div>
-</div>
+</div></>}>
+
 
 <div className="grid grid-cols-1 sm:grid-cols-3 gap-space-md">
 
@@ -382,9 +351,6 @@ export default function History() { return (<div className="cardb-screen screen-
 </button>
 </div>
 </div>
-</section>
-</div>
-</div>
-</div>
-</div></main>
+
+</ProfileLayout>
 </div>); }
