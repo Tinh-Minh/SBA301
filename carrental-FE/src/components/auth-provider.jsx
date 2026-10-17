@@ -1,14 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useMemo, useState } from "react";
 const key = "cardb:session:v1";
 const AuthContext = createContext({ loggedIn: false, login: () => { }, logout: () => { } });
 export function AuthProvider({ children }) {
-    const [loggedIn, setLoggedIn] = useState(false);
-    useEffect(() => {
+    const [loggedIn, setLoggedIn] = useState(() => {
         try {
-            setLoggedIn(localStorage.getItem(key) === "demo");
+            return localStorage.getItem(key) === "demo";
         }
-        catch { /* Storage is optional for the prototype. */ }
-    }, []);
+        catch {
+            return false;
+        }
+    });
     const login = useCallback(() => {
         setLoggedIn(true);
         try {
