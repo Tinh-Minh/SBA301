@@ -1,24 +1,23 @@
-# CarDB
+# CarDB – carrental-FE
 
-Prototype thuê xe cao cấp bằng tiếng Việt, dựng lại từ bộ thiết kế CarDB cập nhật. Next.js 16.4.0 Active LTS, React 19.3, Tailwind CSS 4.3.3 và Node.js 24.21.0 LTS. Phiên bản được khóa trong `package-lock.json` và `.nvmrc`.
+Giao diện thuê xe bằng tiếng Việt cho dự án SBA301, dựng từ bộ thiết kế CarDB. Theo hướng dẫn của môn học: **React 19 + Vite**, điều hướng bằng **react-router-dom**, gọi API bằng **axios**, viết bằng **TypeScript** và tạo style bằng **Tailwind CSS 4**.
 
 ## Chạy dự án
 
 ```sh
-npm ci
+npm install
 npm run dev
 ```
 
-Mở http://localhost:3000. Để chạy production và kiểm tra:
+Mở http://localhost:5173. Các lệnh khác:
 
 ```sh
-npm run typecheck
-npm run build
-npm start
-npm test
+npm run typecheck   # kiểm tra kiểu TypeScript
+npm run build       # typecheck + build ra thư mục dist/
+npm run preview     # chạy thử bản build
 ```
 
-Build sử dụng webpack để tương thích môi trường hạn chế worker Turbopack. Playwright dùng Chromium hệ thống tại `/usr/bin/chromium`; có thể đặt biến `CHROMIUM_PATH` để dùng vị trí khác.
+Gọi backend: copy `.env.example` thành `.env` và chỉnh `VITE_API_BASE_URL` (mặc định `http://localhost:8080/api`).
 
 ## Các màn hình
 
@@ -40,24 +39,29 @@ Các trạng thái bổ sung: `/tai-khoan/xac-minh/thu-gon`, `/mau-thiet-ke/ngan
 
 ## Cấu trúc và thiết kế
 
-Thư mục `src/` sắp xếp theo yêu cầu của môn học:
+Sắp xếp theo yêu cầu của môn học:
 
 ```
-carrental-FE/src/
-├── app/          # Định tuyến Next.js (chỉ các file *.next.tsx): layout, not-found, [[...slug]]
-├── components/   # Thành phần dùng lại: header, footer, sidebar hồ sơ, tương tác, nút giữ...
-├── pages/        # Các màn hình (Home, Explore, Order, Handover...) + index.ts đăng ký đường dẫn -> màn hình
-├── services/     # Xử lý dữ liệu và gọi API: api.ts (axios), orderService.ts (Function 3), pricingService.ts, pageService.ts
-├── interfaces/   # Kiểu TypeScript, tương đương DTO của backend: api.ts, order.ts, auth.ts, pricing.ts...
-├── hooks/        # Custom hook: useAuth
-└── styles/       # style.css (file style duy nhất: màu, font, nền) + tokens.json (token Tailwind)
+carrental-FE/
+├── index.html        # Trang HTML gốc của Vite
+├── vite.config.ts    # Cấu hình Vite: plugin React, Tailwind, alias "@" -> src
+├── tsconfig.json     # Cấu hình TypeScript
+├── package.json      # Thư viện và lệnh npm
+├── .env.example      # Mẫu biến môi trường (VITE_API_BASE_URL)
+├── public/           # Ảnh WebP, video, font Be Vietnam Pro, icon
+└── src/
+    ├── main.tsx      # Điểm vào: bọc App trong BrowserRouter
+    ├── App.tsx       # Bố cục chung (header, footer) + khai báo Routes
+    ├── components/   # Thành phần dùng lại: header, footer, sidebar hồ sơ, tương tác, nút giữ...
+    ├── pages/        # Các màn hình (Home, Explore, Order, Handover, NotFound...) + index.ts nối đường dẫn -> màn hình
+    ├── services/     # Xử lý dữ liệu và gọi API: api.ts (axios), orderService.ts (Function 3), pricingService.ts, pageService.ts
+    ├── interfaces/   # Kiểu TypeScript, tương đương DTO của backend: api.ts, order.ts, auth.ts, pricing.ts...
+    ├── hooks/        # Custom hook: useAuth, useDocumentTitle, useScrollToTop
+    └── styles/       # style.css (file style duy nhất: màu, font, nền) + tokens.json + tailwind.config.ts
 ```
 
-- `next.config.ts` đặt `pageExtensions: ["next.tsx", "next.ts"]`. Nhờ vậy `src/pages` chỉ chứa component màn hình, không bị Next.js hiểu là Pages Router.
 - `src/styles/style.css` gom toàn bộ màu, font và style chung, dùng cùng Tailwind (`tokens.json` -> `tailwind.config.ts`) để giao diện nhất quán.
-- Gọi backend: copy `.env.example` thành `.env` và chỉnh `NEXT_PUBLIC_API_BASE_URL` (mặc định `http://localhost:8080/api`).
-- `public/`: ảnh WebP, font Be Vietnam Pro và bộ icon tự lưu trữ.
-- `tests/`: kiểm tra 29 màn hình ở 375, 768 và 1440 px cùng các luồng tương tác.
+- Mỗi màn hình trong `src/pages` được tải riêng khi mở (`React.lazy`), nên trang đầu tải nhanh.
 
 Thiết kế dùng nền trắng/đá ấm, chữ than và cam chủ đạo. Lưới sáng phản hồi con trỏ, ảnh xe phóng nhẹ, gallery/lightbox, nền toàn trang và bề mặt kính mờ. Tôn trọng `prefers-reduced-motion`.
 
@@ -71,9 +75,7 @@ Video trang chủ: [Erik Mclean trên Pexels](https://www.pexels.com/video/a-whi
 
 Thanh toán và hủy yêu cầu phải giữ nút 1,6 giây bằng chuột, cảm ứng hoặc Enter/Space. Thả sớm sẽ dừng thao tác. Thông báo nằm trong trang; không sử dụng `alert()`, `confirm()` hoặc `prompt()`.
 
-Website không kết nối máy chủ xác thực, email/SMS, thanh toán hoặc đặt xe thực tế. Thông tin ngân hàng và giao dịch là dữ liệu mẫu; tệp chỉ được chọn trên thiết bị. Nhánh `prototype` dùng để tích hợp giao diện vào nhánh `FE`.
-
-Các kiểm tra trình duyệt bao gồm đường đi từ tìm xe đến xác nhận thuê, hồ sơ và ngân hàng, giữ nút thanh toán/hủy, đối soát trả xe, tranh chấp, đặt lại xe, mã ưu đãi và xuất báo cáo CSV. Kiểm tra chữ ở 320, 375, 768, 1024 và 1440 px.
+Website không kết nối máy chủ xác thực, email/SMS, thanh toán hoặc đặt xe thực tế. Thông tin ngân hàng và giao dịch là dữ liệu mẫu; tệp chỉ được chọn trên thiết bị.
 
 Phân trang phản hồi lựa chọn trên bộ dữ liệu mẫu; chưa tải thêm trang từ máy chủ. Ảnh 360° và video kiểm định chưa có tài nguyên tương ứng, nên nút mở thông báo và hướng dẫn xem thư viện ảnh. Xuất báo cáo hiện dùng CSV tương thích Excel.
 
