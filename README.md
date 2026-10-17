@@ -1,6 +1,6 @@
 # Car rental prototype
 
-Giao diện React của CarDB nằm trong `carrental-FE/`, cùng cấu trúc thư mục frontend của nhánh `DEV`.
+Giao diện React của CarDB nằm trong `carrental-FE/`, tổ chức theo cấu trúc frontend của nhánh `F3+F4`.
 
 ```sh
 cd carrental-FE

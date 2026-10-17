@@ -41,11 +41,18 @@ Các trạng thái bổ sung: `/tai-khoan/xac-minh/thu-gon`, `/mau-thiet-ke/ngan
 
 ## Cấu trúc và thiết kế
 
-- `src/views/`: các màn hình React chạy trên trình duyệt.
-- `src/main.jsx`, `src/app.jsx`: khởi động React và bố cục dùng chung.
-- `src/router.jsx`: React Router, tiêu đề trang, chuyển hướng và khôi phục vị trí cuộn.
-- `src/lib/screens.js`: đăng ký các màn hình tải riêng theo đường dẫn.
-- `src/components/`: điều hướng, trạng thái đăng nhập mẫu, tương tác, lightbox và nút giữ.
+Tổ chức thư mục tham chiếu nhánh `F3+F4`: `pages/user`, `pages/auth`, `layouts`, `routes`, `components`, `storage` và `utils`. Các đường dẫn tiếng Việt và hành vi prototype được giữ nguyên.
+
+- `src/pages/user/`: các trang người thuê xe, đặt xe, hồ sơ và thanh toán.
+- `src/pages/auth/`: đăng nhập và đăng ký.
+- `src/pages/`: trang thông tin, trang không tìm thấy và xem trước điều hướng.
+- `src/main.jsx`, `src/App.jsx`: khởi động React và ứng dụng.
+- `src/layouts/`: bố cục chính và bố cục hồ sơ dùng chung.
+- `src/routes/`: React Router, màn hình tải riêng, tiêu đề trang và các chuyển hướng.
+- `src/storage/`: đọc/ghi phiên đăng nhập mẫu trên trình duyệt.
+- `src/utils/`: dữ liệu và công thức tính giá thuê.
+- `src/components/`: các thành phần tái sử dụng, điều hướng, trạng thái đăng nhập, lightbox và nút giữ.
+- `src/index.css`: điểm nhập CSS toàn cục; bảng màu vẫn nằm ở `src/styles/colors.css`.
 - `src/styles/colors.css`: màu dùng chung qua biến RGB, hỗ trợ opacity Tailwind.
 - `src/styles/tokens.json`: ánh xạ Tailwind, typography, khoảng cách và bo góc.
 - `public/`: ảnh WebP, font Be Vietnam Pro và bộ icon tự lưu trữ.
