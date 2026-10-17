@@ -414,7 +414,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 <span>{"← Quay lại Chuyến xe của tôi"}</span>
 </Link>
 <div className="text-center">
-<Link className="text-xs text-[#666666] hover:text-[#FC6C26] underline font-medium" href="/lien-he">{"Xem danh sách xe khác"}</Link>
+<Link className="text-xs text-[#666666] hover:text-[#FC6C26] underline font-medium" href="/kham-pha-xe">{"Xem danh sách xe khác"}</Link>
 </div>
 
 <div className="pt-3 border-t border-[#E9E9E7] flex items-center justify-between text-xs">
