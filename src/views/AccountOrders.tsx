@@ -1,39 +1,14 @@
-import { ProfileSidebar } from "@/components/profile-sidebar";
+import { ProfileLayout } from "@/components/profile-layout";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-export default function AccountOrders() { return (<div className="cardb-screen screen-accountorders bg-background font-body-md text-body-md text-on-surface antialiased"><main className="w-full  bg-background pt-20"><div className="flex flex-col w-full">
-<div className="max-w-7xl mx-auto w-full px-margin-mobile md:px-margin py-space-lg">
-
-<nav className="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm mb-space-md">
-<Link className="hover:text-primary-container transition-colors" href="/">{"Trang chủ"}</Link>
-<span className="material-symbols-outlined text-[16px] text-outline-variant">{"chevron_right"}</span>
-<Link className="hover:text-primary-container transition-colors" href="/tai-khoan">{"Hồ sơ & Tài khoản"}</Link>
-<span className="material-symbols-outlined text-[16px] text-outline-variant">{"chevron_right"}</span>
-<span className="text-on-surface font-semibold">{"Đơn thuê xe"}</span>
-</nav>
-
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
-
-<ProfileSidebar active="orders" className="lg:col-span-4 xl:col-span-3" />
-
-<section className="lg:col-span-8 xl:col-span-9 space-y-space-lg">
-
-<div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-space-md">
-<div className="space-y-space-xs">
-<div className="flex items-center gap-space-sm">
-<h1 className="font-headline-md text-headline-md text-on-surface font-bold tracking-tight">{"Đơn thuê xe"}</h1>
-<span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary-fixed text-primary font-technical-data text-label-sm font-bold">{"1 YÊU CẦU"}</span>
-</div>
-<p className="font-body-md text-body-md text-on-surface-variant max-w-2xl leading-relaxed">{"\n              Theo dõi tiến trình xét duyệt, trạng thái thanh toán và thông tin giao nhận xe cho các đơn thuê đang hoạt động trong hệ thống CarDB.\n            "}</p>
-</div>
-<div className="flex items-center gap-space-xs">
+export default function AccountOrders() { return (<div className="cardb-screen screen-accountorders bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="orders" title="Đơn thuê xe" description="Theo dõi tiến trình xét duyệt, trạng thái thanh toán và thông tin giao nhận xe cho các đơn thuê đang hoạt động trong hệ thống CarDB." actions={<><div className="flex items-center gap-space-xs">
 <Link className="inline-flex items-center gap-space-xs px-space-md py-2.5 rounded-xl bg-surface-container-low text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors shadow-sm" href="/kham-pha-xe">
 <span className="material-symbols-outlined text-[18px] text-primary-container">{"search"}</span>
 <span className="">{"Tìm thêm xe"}</span>
 </Link>
-</div>
-</div>
+</div></>}>
+
 
 <div className="flex items-center gap-2 border-b border-surface-container-high/80 overflow-x-auto pb-0 px-1"><button className="relative -mb-[1px] px-space-md py-2.5 rounded-t-xl bg-surface-container-lowest border border-surface-container-high/80 border-b-surface-container-lowest font-label-md text-label-md text-primary-container font-bold flex items-center gap-2 shadow-sm cursor-pointer shrink-0" type="button" aria-label="Đang xử lý1" data-action="trip-filter" data-status-filter="pending"><span className="">{"Đang xử lý"}</span><span className="px-2 py-0.5 rounded-full bg-primary-container text-on-primary text-[11px] font-bold inline-flex items-center justify-center">{"1"}</span></button><button className="px-space-md py-2.5 rounded-t-xl font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 cursor-pointer shrink-0" type="button" aria-label="Sắp nhận xe1" data-action="trip-filter" data-status-filter="confirmed"><span className="">{"Sắp nhận xe"}</span><span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-semibold inline-flex items-center justify-center">{"1"}</span></button><button className="px-space-md py-2.5 rounded-t-xl font-label-md text-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors flex items-center gap-2 cursor-pointer shrink-0" type="button" aria-label="Đang thuê1" data-action="trip-filter" data-status-filter="active"><span className="">{"Đang thuê"}</span><span className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[11px] font-semibold inline-flex items-center justify-center">{"1"}</span></button></div>
 
@@ -75,8 +50,6 @@ export default function AccountOrders() { return (<div className="cardb-screen s
 </div>
 <div className="p-space-sm bg-surface-container-low rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-space-md"><div className="flex flex-col md:flex-row md:items-start gap-space-md flex-1"><div className="w-16 h-12 rounded-lg bg-surface-container overflow-hidden shrink-0"><img className="w-full h-full object-cover" src="/images/cardb-3767cd2cfe1a04e5.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async" /></div><div className="flex-1 space-y-0.5"><div className="flex items-center justify-between flex-wrap gap-2"><div className="flex items-center gap-space-xs"><span className="font-label-md text-label-md text-on-surface font-bold">{"Porsche Taycan 4S"}</span><span className="px-2 py-0.5 rounded text-[11px] font-bold bg-secondary-fixed text-on-secondary-fixed">{"Sắp nhận xe"}</span></div><span className="ui-money font-technical-data text-technical-data text-on-surface">{"5.800.000 đ"}</span></div><p className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1"><span className="material-symbols-outlined text-[15px] text-primary-container shrink-0">{"pin_drop"}</span><span className="">{"Hà Nội (Giao xe tận nơi)"}</span></p><p className="font-body-sm text-[12px] text-on-surface-variant">{"(Nhận xe: 05/11/2026 • Mã: CDB-ORD-20261105-112)"}</p></div></div><div className="flex items-center gap-space-sm self-end md:self-center"><Link className="px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-on-surface font-label-sm text-label-sm font-semibold hover:bg-surface-container transition-colors shadow-sm" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết"}</Link></div></div>
 </div>
-</section>
-</div>
-</div>
-</div></main>
+
+</ProfileLayout>
 </div>); }
