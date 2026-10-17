@@ -41,6 +41,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
+    /** Lỗi nghiệp vụ của Function 4 (AppException mang sẵn HttpStatus). */
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<ApiResponseDTO<Void>> handleAppException(AppException ex) {
+        return build(ex.getStatus(), ex.getMessage());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponseDTO<Map<String, String>>> handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new LinkedHashMap<>();

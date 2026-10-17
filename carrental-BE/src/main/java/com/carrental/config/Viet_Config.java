@@ -8,28 +8,19 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.time.Clock;
 import java.time.ZoneId;
-import java.util.List;
 
 /**
- * Cấu hình của Function 3 (nhánh Viet-Function-3), gồm 4 phần:
+ * Cấu hình của Function 3, gồm 3 phần:
  * <ol>
  *   <li>Đồng hồ giờ Việt Nam - LÂU DÀI</li>
  *   <li>Bật job chạy định kỳ (tự chuyển đơn EXPIRED) - LÂU DÀI</li>
- *   <li>Security mở toàn bộ API + CORS cho FE - TẠM THỜI</li>
  *   <li>Ô nhập header X-User-Id trên Swagger - TẠM THỜI</li>
  * </ol>
- * Khi Function 1 đưa SecurityConfig + JwtAuthenticationFilter + SwaggerConfig thật vào,
- * XÓA phần 3 và phần 4 (các bean securityFilterChain, corsConfigurationSource, userIdHeaderCustomizer)
- * để không bị trùng bean.
+ * Security + CORS dùng chung {@link SecurityConfig}, không khai báo lại ở đây để tránh trùng bean.
+ * Khi Function 1 đưa JWT + SwaggerConfig thật vào, XÓA phần 3 (bean userIdHeaderCustomizer).
  */
 @Configuration
 public class Viet_Config {
@@ -59,30 +50,7 @@ public class Viet_Config {
     static class SchedulingConfig {
     }
 
-    // ===================================================================== 3. Security (TẠM THỜI)
-
-    /** Mở toàn bộ API, tắt CSRF, bật CORS cho FE (Vite :5173). Function 1 xóa khi có JWT. */
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        return http.build();
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
-
-    // ===================================================================== 4. Swagger (TẠM THỜI)
+    // ===================================================================== 3. Swagger (TẠM THỜI)
 
     /** Thêm ô nhập header X-User-Id vào mọi API trên Swagger UI để test khi chưa có JWT. */
     @Bean
