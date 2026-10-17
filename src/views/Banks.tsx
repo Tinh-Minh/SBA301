@@ -1,39 +1,19 @@
-import { ProfileSidebar } from "@/components/profile-sidebar";
+import { ProfileLayout } from "@/components/profile-layout";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-export default function Banks() { return (<div className="cardb-screen screen-banks bg-white text-[#292929] font-sans  flex flex-col antialiased">
+export default function Banks() { return (<div className="cardb-screen screen-banks bg-background font-body-md text-body-md text-on-surface antialiased">
 
 
 
 
-<main className="flex-1 max-w-[1440px] w-full mx-auto px-6 py-8 pt-20">
-<div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
-
-<ProfileSidebar active="banks" className="col-span-1 lg:col-span-3" />
-
-
-<section className="col-span-1 lg:col-span-9 space-y-6" data-purpose="bank-account-content">
-
-<div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-<div>
-
-<div className="flex items-center space-x-2 text-[10px] tracking-wider uppercase font-semibold text-[#666666]">
-<span>{"HỒ SƠ & TÀI KHOẢN CARDB"}</span>
-<span className="text-[#E9E9E7]">{"/"}</span>
-<span className="text-[#FC6C26]">{"QUẢN LÝ TÀI KHOẢN NGÂN HÀNG"}</span>
-</div>
-<h1 className="text-2xl sm:text-3xl font-extrabold text-[#292929] mt-2 tracking-tight">{"Tài khoản ngân hàng"}</h1>
-<p className="text-xs sm:text-sm text-[#666666] mt-1 max-w-2xl leading-relaxed">{"\nQuản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh.\n"}</p>
-</div>
-
-<button className="inline-flex items-center justify-center space-x-2 bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-[#FC6C26]/20 transition-all flex-shrink-0 cursor-pointer" type="button" aria-label="+ Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
+<ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center space-x-2 bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-[#FC6C26]/20 transition-all flex-shrink-0 cursor-pointer" type="button" aria-label="+ Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
 <svg className="w-4 h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"></path>
 </svg>
 <span>{"+ Thêm tài khoản ngân hàng"}</span>
-</button>
-</div>
+</button></>}>
+
 
 <div className="flex items-center justify-between pt-2 border-t border-[#E9E9E7]">
 <div className="flex items-center space-x-2.5">
@@ -178,10 +158,7 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 </Link>
 </div>
 
-</section>
-
-</div>
-</main>
+</ProfileLayout>
 
 
 
