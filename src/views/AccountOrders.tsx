@@ -1,3 +1,4 @@
+import { ProfileSidebar } from "@/components/profile-sidebar";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
@@ -14,107 +15,7 @@ export default function AccountOrders() { return (<div className="cardb-screen s
 
 <div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
 
-<aside className="lg:col-span-4 xl:col-span-3 space-y-space-md">
-
-<div className="bg-surface-container-lowest rounded-xl p-space-md shadow-sm">
-<div className="flex items-center gap-space-md">
-<div className="relative">
-<div className="w-14 h-14 rounded-full bg-surface-container flex items-center justify-center font-headline-sm text-headline-sm text-primary-container font-bold overflow-hidden shadow-inner">
-<span className="material-symbols-outlined text-[32px] text-primary">{"person"}</span>
-</div>
-<span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-primary-container rounded-full ring-2 ring-surface-container-lowest"></span>
-</div>
-<div className="min-w-0 flex-1">
-<div className="flex items-center gap-space-xs">
-<h3 className="font-title text-title text-on-surface font-bold truncate">{"Nguyễn Hoàng Minh"}</h3>
-</div>
-<p className="font-technical-data text-technical-data text-on-surface-variant">{"CDB-VN-88492"}</p>
-<div className="mt-space-xs inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-secondary-fixed/50 text-secondary font-label-sm text-label-sm">
-<span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-<span className="">{"Hội viên VIP • Hoạt động"}</span>
-</div>
-</div>
-</div>
-</div>
-
-<div className="bg-surface-container-lowest rounded-xl p-space-sm shadow-sm space-y-space-md">
-
-<div>
-<div className="px-space-sm pt-space-xs pb-space-xs">
-<span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">{"Cài đặt tài khoản"}</span>
-</div>
-<div className="space-y-1 mt-1">
-<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"badge"}</span>
-<span className="font-label-md text-label-md">{"Thông tin cá nhân"}</span>
-</div>
-<span className="font-technical-data text-[11px] text-outline-variant">{"C05-1"}</span>
-</Link>
-<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/xac-minh">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"verified_user"}</span>
-<span className="font-label-md text-label-md">{"Xác minh giấy tờ"}</span>
-</div>
-<span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant">{"1"}</span>
-</Link>
-<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/ho-so-tai-xe">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"airline_seat_recline_normal"}</span>
-<span className="font-label-md text-label-md">{"Hồ sơ tài xế"}</span>
-</div>
-<span className="w-2 h-2 rounded-full bg-primary-container"></span>
-</Link>
-<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/ngan-hang">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"account_balance"}</span>
-<span className="font-label-md text-label-md">{"Tài khoản ngân hàng"}</span>
-</div>
-<span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant">{"2"}</span>
-</Link>
-</div>
-</div>
-
-<div className="h-[1px] bg-surface-container-high mx-space-sm"></div>
-
-<div>
-<div className="px-space-sm pt-space-xs pb-space-xs">
-<span className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">{"Quản lý chuyến đi"}</span>
-</div>
-<div className="space-y-1 mt-1">
-
-<Link className="flex items-center justify-between px-space-sm py-2.5 rounded bg-primary-fixed/40 text-on-primary-container transition-colors relative" href="/tai-khoan/don-thue">
-<span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-primary-container rounded-r-full"></span>
-<div className="flex items-center gap-space-sm pl-1.5">
-<span className="material-symbols-outlined text-[20px] text-primary-container" style={{"fontVariationSettings": "'FILL' 1"} as CSSProperties}>{"car_rental"}</span>
-<span className="font-label-md text-label-md font-bold text-primary-container">{"Đơn thuê xe"}</span>
-</div>
-<span className="px-2 py-0.5 rounded text-[11px] font-bold bg-primary-container text-on-primary">{"1"}</span>
-</Link>
-
-<Link className="flex items-center justify-between px-space-sm py-2 rounded hover:bg-surface-container-low transition-colors text-on-surface-variant group" href="/tai-khoan/lich-su">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-[20px] text-on-surface-variant group-hover:text-primary-container transition-colors">{"history"}</span>
-<span className="font-label-md text-label-md">{"Lịch sử chuyến đi"}</span>
-</div>
-<span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-surface-container text-on-surface-variant">{"1"}</span>
-</Link>
-</div>
-</div>
-</div>
-
-<div className="bg-surface-container-low rounded-xl p-space-md space-y-space-xs">
-<div className="flex items-center gap-space-xs text-primary-container font-label-sm text-label-sm uppercase font-semibold">
-<span className="material-symbols-outlined text-[18px]">{"support_agent"}</span>
-<span className="">{"Hỗ trợ khách hàng 24/7"}</span>
-</div>
-<p className="font-body-sm text-body-sm text-on-surface-variant">{"Hỗ trợ khẩn cấp thủ tục bàn giao, đối soát hợp đồng và gia hạn xe tức thời."}</p>
-<div className="pt-space-xs">
-<a className="inline-flex items-center gap-space-xs font-technical-data text-technical-data text-on-surface hover:text-primary-container transition-colors" href="tel:19008899">
-<span className="material-symbols-outlined text-[16px] text-primary-container">{"call"}</span>{"\n              1900 8899\n            "}</a>
-</div>
-</div>
-</aside>
+<ProfileSidebar active="orders" className="lg:col-span-4 xl:col-span-3" />
 
 <section className="lg:col-span-8 xl:col-span-9 space-y-space-lg">
 
