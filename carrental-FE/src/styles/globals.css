@@ -183,6 +183,11 @@ body:has(.screen-home) footer { animation:home-content-enter .8s ease 2.2s both;
  body:has([data-trip-document]) .cardb-modal-backdrop { display:none; }
 }
 
+/* Hold-to-cancel traces a red perimeter from the top center. */
+[data-hold-control] .hold-outline { opacity:0; }
+[data-hold-control] [data-holding="true"] .hold-outline { opacity:1; }
+[data-hold-outline] { stroke:rgb(var(--color-status-error));stroke-width:2;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;filter:drop-shadow(0 0 2px rgb(var(--color-status-error) / .2)); }
+
 /* User preferences and print */
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 @media print{.site-header,footer,[data-hold-control],.app-toast{display:none!important}.cardb-screen main{padding-top:0!important}}

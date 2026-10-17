@@ -1,0 +1,34 @@
+import { test, expect } from "@playwright/test";
+
+test("Cancel outline starts at the top center, slows continuously, and resets on release", async ({ page }) => {
+    await page.goto("/tai-khoan/don-thue?status=pending");
+    await page.getByRole("button", { name: "Hủy yêu cầu", exact: true }).click();
+    const dialog = page.getByRole("dialog");
+    const button = dialog.locator('[data-hold-control] button');
+    const path = button.locator('[data-hold-outline]');
+    const geometry = () => path.evaluate(el => ({ start: { x: el.getPointAtLength(0).x, y: el.getPointAtLength(0).y }, width: el.ownerSVGElement.getBoundingClientRect().width }));
+    await expect(path).toHaveAttribute("d", /^M /);
+    let shape = await geometry();
+    expect(Math.abs(shape.start.x - shape.width / 2)).toBeLessThan(1);
+    expect(shape.start.y).toBe(1.5);
+    await page.setViewportSize({ width: 375, height: 900 });
+    await expect.poll(async () => { const g = await geometry(); return Math.abs(g.start.x - g.width / 2); }).toBeLessThan(1);
+    await expect(path).toHaveCSS("stroke", "rgb(239, 68, 68)");
+    await button.focus();
+    await page.keyboard.down("Enter");
+    const progress = () => path.evaluate(el => 1 - Number.parseFloat(getComputedStyle(el).strokeDashoffset));
+    await page.waitForTimeout(300);
+    const first = await progress();
+    await page.waitForTimeout(300);
+    const second = await progress();
+    await page.waitForTimeout(300);
+    const third = await progress();
+    expect(first).toBeGreaterThan(.1);
+    expect(second).toBeGreaterThan(first);
+    expect(third).toBeGreaterThan(second);
+    expect(third - second).toBeLessThan(second - first + .03);
+    await page.keyboard.up("Enter");
+    await expect(dialog).toBeVisible();
+    expect(await path.evaluate(el => Number.parseFloat(getComputedStyle(el).strokeDashoffset))).toBe(1);
+    await expect(button.locator("svg.hold-outline")).toHaveCSS("opacity", "0");
+});

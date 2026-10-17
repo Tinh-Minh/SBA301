@@ -1,9 +1,11 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 export function HoldButton({ children, onComplete, danger = false, disabled = false }) {
     const hint = useId();
     const [holding, setHolding] = useState(false);
     const fill = useRef(null);
+    const button = useRef(null);
+    const outline = useRef(null);
     const frame = useRef(null);
     const started = useRef(null);
     const complete = useRef(onComplete);
@@ -14,8 +16,8 @@ export function HoldButton({ children, onComplete, danger = false, disabled = fa
         frame.current = null;
         started.current = null;
         setHolding(false);
-        if (fill.current)
-            fill.current.style.transform = "scaleX(0)";
+        if (fill.current) fill.current.style.transform = "scaleX(0)";
+        if (outline.current) outline.current.style.strokeDashoffset = "1";
     }
     function start() {
         if (disabled || started.current !== null)
@@ -26,8 +28,9 @@ export function HoldButton({ children, onComplete, danger = false, disabled = fa
             if (started.current === null)
                 return;
             const progress = Math.min((now - started.current) / 1600, 1);
-            if (fill.current)
-                fill.current.style.transform = `scaleX(${progress})`;
+            if (fill.current) fill.current.style.transform = `scaleX(${progress})`;
+            // A continuous ease-out keeps the final stretch slower without changing hold time.
+            if (outline.current) outline.current.style.strokeDashoffset = String((1 - progress) ** 2);
             if (progress >= 1) {
                 stop();
                 complete.current();
@@ -37,10 +40,26 @@ export function HoldButton({ children, onComplete, danger = false, disabled = fa
         }
         frame.current = requestAnimationFrame(tick);
     }
+    useLayoutEffect(() => {
+        if (!danger || !button.current || !outline.current) return;
+        const element = button.current;
+        const path = outline.current;
+        function resizeOutline() {
+            const { width, height } = path.ownerSVGElement.getBoundingClientRect();
+            const inset = 1.5;
+            const radius = Math.max(0, Math.min(width, height) / 2 - inset);
+            // Begin at twelve o'clock and follow the rounded perimeter clockwise.
+            path.setAttribute("d", `M ${width / 2} ${inset} H ${width - radius - inset} A ${radius} ${radius} 0 0 1 ${width - inset} ${radius + inset} V ${height - radius - inset} A ${radius} ${radius} 0 0 1 ${width - radius - inset} ${height - inset} H ${radius + inset} A ${radius} ${radius} 0 0 1 ${inset} ${height - radius - inset} V ${radius + inset} A ${radius} ${radius} 0 0 1 ${radius + inset} ${inset} H ${width / 2} Z`);
+        }
+        resizeOutline();
+        const observer = new ResizeObserver(resizeOutline);
+        observer.observe(element);
+        return () => observer.disconnect();
+    }, [danger]);
     useEffect(() => () => { if (frame.current !== null)
         cancelAnimationFrame(frame.current); }, []);
     return <div className="w-full" data-hold-control="true">
-    <button type="button" disabled={disabled} aria-describedby={hint} onPointerDown={event => {
+    <button ref={button} type="button" data-holding={holding} disabled={disabled} aria-describedby={hint} onPointerDown={event => {
             if (event.button !== 0)
                 return;
             event.currentTarget.setPointerCapture(event.pointerId);
@@ -54,7 +73,7 @@ export function HoldButton({ children, onComplete, danger = false, disabled = fa
         event.preventDefault();
         stop();
     } }} className={`relative flex w-full touch-none select-none items-center justify-center gap-2 overflow-hidden rounded-full px-3 py-4 text-xs font-bold sm:px-6 sm:text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${danger ? "border border-error/25 bg-error-container/40 text-error hover:bg-error-container/70" : "bg-primary text-white shadow-md hover:bg-primary-container"}`}>
-      <span ref={fill} aria-hidden="true" className={`pointer-events-none absolute inset-0 origin-left scale-x-0 ${danger ? "bg-error/15" : "bg-secondary-fixed/25"}`}/>
+      {danger ? <svg aria-hidden="true" focusable="false" className="hold-outline pointer-events-none absolute inset-0 h-full w-full"><path ref={outline} data-hold-outline pathLength="1" fill="none" vectorEffect="non-scaling-stroke"/></svg> : <span ref={fill} aria-hidden="true" className="pointer-events-none absolute inset-0 origin-left scale-x-0 bg-secondary-fixed/25"/>}
       <span className="relative flex items-center justify-center gap-2 whitespace-nowrap"><Icon name={danger ? "cancel" : "verified"} className="text-[20px]"/>{holding ? "Tiếp tục giữ…" : children}</span>
     </button>
     <p id={hint} className="mt-2 text-center text-[11px] leading-5 text-text-muted">Giữ 1,6 giây để {danger ? "hủy" : "xác nhận"}. Thả tay để dừng. Bàn phím: giữ Enter hoặc Space.</p>
