@@ -12,33 +12,18 @@ export default function VerificationPage() {
         </div>
         </div></>}>
 
-    <div className="space-y-space-md">
+    <div className="space-y-3" data-purpose="verification-documents">
 
     <div className="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all duration-200" id="card-cccd">
 
-    <button className="w-full text-left p-space-md md:p-space-lg flex items-center justify-between gap-space-md hover:bg-surface-container-low/30 transition-colors" type="button" aria-label="Căn cước công dân (CCCD gắn chip) Bắt buộc •••••••••089 Đã duyệt" data-handler="toggleCard" data-args="'card-cccd'">
-    <div className="flex items-center gap-space-md min-w-0">
-    <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-    <span className="material-symbols-outlined text-[28px]">{"badge"}</span>
-    </div>
-    <div className="min-w-0">
-    <div className="flex flex-wrap items-center gap-space-xs">
-    <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">{"Căn cước công dân (CCCD gắn chip)"}</h2>
-    <span className="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm text-[11px] uppercase">{"Bắt buộc"}</span>
-    </div>
-    <p className="font-technical-data text-technical-data text-on-surface-variant tracking-wider mt-0.5">{"•••••••••089"}</p>
-    </div>
-    </div>
-    <div className="flex items-center gap-space-md shrink-0">
-    <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-label-md text-label-md inline-flex items-center gap-1.5 shadow-sm">
-    <span className="material-symbols-outlined text-[18px]">{"verified"}</span>{"\n                  Đã duyệt\n                "}</span>
-    <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm chevron-toggle">
-    <span className="material-symbols-outlined text-[20px] transition-transform duration-300 icon-arrow">{"expand_less"}</span>
-    </div>
-    </div>
+    <button className="document-toggle w-full text-left hover:bg-surface-container-low/30 transition-colors" type="button" aria-label="Căn cước công dân: Đã duyệt" aria-expanded="false" aria-controls="card-cccd-content" data-handler="toggleCard" data-args="'card-cccd'">
+      <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700"><span className="material-symbols-outlined text-[18px]">{"badge"}</span></span>
+      <span className="min-w-0"><span className="block truncate text-[13px] font-semibold text-on-surface" title="Căn cước công dân">{"Căn cước công dân"}</span><span className="mt-0.5 block whitespace-nowrap font-mono text-[10px] text-text-secondary">{"•••• ••• 089"}</span></span>
+      <span className="whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold bg-emerald-50 text-emerald-700">{"Đã duyệt"}</span>
+      <span className="material-symbols-outlined icon-arrow text-[18px] text-text-secondary transition-transform">{"expand_more"}</span>
     </button>
 
-    <div className="card-content px-space-md md:px-space-lg pb-space-lg pt-space-xs space-y-space-md">
+    <div id="card-cccd-content" className="card-content hidden px-space-md md:px-space-lg pb-space-lg pt-space-xs space-y-space-md">
     <div className="h-px bg-surface-container-high"></div>
 
     <div className="grid grid-cols-2 md:grid-cols-4 gap-space-md bg-surface-container-low p-space-md rounded-xl">
@@ -71,8 +56,8 @@ export default function VerificationPage() {
     <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-label-sm text-label-sm text-[11px] flex items-center gap-1">
     <span className="material-symbols-outlined text-[14px]">{"check_circle"}</span>{" Khớp định danh\n                      "}</span>
     </div>
-    <div className="relative w-full h-44 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center shadow-inner">
-    <img className="w-full h-full object-cover filter blur-[2px] transition duration-300 group-hover:blur-0" src="/images/cardb-45b100b705e1821d.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async"/>
+    <div className="relative w-full h-32 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center shadow-inner">
+    <img className="w-full h-full object-cover filter blur-[2px] transition duration-300 group-hover:blur-0" src="/images/cardb-45b100b705e1821d.webp" alt="Ảnh giấy tờ định danh" loading="lazy" decoding="async"/>
 
     <div className="absolute inset-0 bg-surface-container-highest/20 pointer-events-none"></div>
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none rotate-[-12deg]">
@@ -94,8 +79,8 @@ export default function VerificationPage() {
     <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-label-sm text-label-sm text-[11px] flex items-center gap-1">
     <span className="material-symbols-outlined text-[14px]">{"check_circle"}</span>{" Hợp lệ\n                      "}</span>
     </div>
-    <div className="relative w-full h-44 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center shadow-inner">
-    <img className="w-full h-full object-cover filter blur-[2px] transition duration-300 group-hover:blur-0" src="/images/cardb-ff82b3a38801642d.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async"/>
+    <div className="relative w-full h-32 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center shadow-inner">
+    <img className="w-full h-full object-cover filter blur-[2px] transition duration-300 group-hover:blur-0" src="/images/cardb-ff82b3a38801642d.webp" alt="Ảnh giấy tờ định danh" loading="lazy" decoding="async"/>
     <div className="absolute inset-0 bg-surface-container-highest/20 pointer-events-none"></div>
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none rotate-[-12deg]">
     <span className="font-technical-data text-white/90 text-sm tracking-widest px-3 py-1 bg-black/40 backdrop-blur-md rounded border border-white/20 uppercase shadow-lg">{"\n                          CARDB EKYC BẢO MẬT\n                        "}</span>
@@ -120,29 +105,14 @@ export default function VerificationPage() {
 
     <div className="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all duration-200" id="card-gplx">
 
-    <button className="w-full text-left p-space-md md:p-space-lg flex items-center justify-between gap-space-md hover:bg-surface-container-low/30 transition-colors" type="button" aria-label="Giấy phép lái xe (GPLX) Bắt buộc •••••••••123 Chờ quản trị viên duyệt" data-handler="toggleCard" data-args="'card-gplx'">
-    <div className="flex items-center gap-space-md min-w-0">
-    <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-    <span className="material-symbols-outlined text-[28px]">{"sports_score"}</span>
-    </div>
-    <div className="min-w-0">
-    <div className="flex flex-wrap items-center gap-space-xs">
-    <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">{"Giấy phép lái xe (GPLX)"}</h2>
-    <span className="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm text-[11px] uppercase">{"Bắt buộc"}</span>
-    </div>
-    <p className="font-technical-data text-technical-data text-on-surface-variant tracking-wider mt-0.5">{"•••••••••123"}</p>
-    </div>
-    </div>
-    <div className="flex items-center gap-space-md shrink-0">
-    <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-800 font-label-md text-label-md inline-flex items-center gap-1.5 shadow-sm">
-    <span className="material-symbols-outlined text-[18px] text-amber-500 animate-spin">{"sync"}</span>{"\n                  Chờ quản trị viên duyệt\n                "}</span>
-    <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm chevron-toggle">
-    <span className="material-symbols-outlined text-[20px] transition-transform duration-300 icon-arrow">{"expand_less"}</span>
-    </div>
-    </div>
+    <button className="document-toggle w-full text-left hover:bg-surface-container-low/30 transition-colors" type="button" aria-label="Giấy phép lái xe: Chờ duyệt" aria-expanded="false" aria-controls="card-gplx-content" data-handler="toggleCard" data-args="'card-gplx'">
+      <span className="flex size-8 items-center justify-center rounded-lg bg-status-amber-bg text-status-amber-strong"><span className="material-symbols-outlined text-[18px]">{"sports_score"}</span></span>
+      <span className="min-w-0"><span className="block truncate text-[13px] font-semibold text-on-surface" title="Giấy phép lái xe">{"Giấy phép lái xe"}</span><span className="mt-0.5 block whitespace-nowrap font-mono text-[10px] text-text-secondary">{"•••• ••• 123"}</span></span>
+      <span className="whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold bg-status-amber-bg text-status-amber-strong">{"Chờ duyệt"}</span>
+      <span className="material-symbols-outlined icon-arrow text-[18px] text-text-secondary transition-transform">{"expand_more"}</span>
     </button>
 
-    <div className="card-content px-space-md md:px-space-lg pb-space-lg pt-space-xs space-y-space-md">
+    <div id="card-gplx-content" className="card-content hidden px-space-md md:px-space-lg pb-space-lg pt-space-xs space-y-space-md">
     <div className="h-px bg-surface-container-high"></div>
 
     <div className="grid grid-cols-2 md:grid-cols-5 gap-space-md bg-surface-container-low p-space-md rounded-xl">
@@ -179,8 +149,8 @@ export default function VerificationPage() {
     <span className="font-label-sm text-label-sm text-on-surface font-medium">{"GPLX Mặt trước (Thẻ PET)"}</span>
     <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-label-sm text-label-sm text-[11px]">{"Đang đối soát"}</span>
     </div>
-    <div className="relative w-full h-44 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center">
-    <img className="w-full h-full object-cover filter blur-[1px]" src="/images/cardb-60ebbd843c1b4bf7.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async"/>
+    <div className="relative w-full h-32 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center">
+    <img className="w-full h-full object-cover filter blur-[1px]" src="/images/cardb-60ebbd843c1b4bf7.webp" alt="Ảnh giấy tờ định danh" loading="lazy" decoding="async"/>
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none rotate-[-12deg]">
     <span className="font-technical-data text-white/90 text-sm tracking-widest px-3 py-1 bg-black/40 backdrop-blur-md rounded border border-white/20 uppercase">{"\n                          CARDB EKYC ĐANG DUYỆT\n                        "}</span>
     </div>
@@ -196,8 +166,8 @@ export default function VerificationPage() {
     <span className="font-label-sm text-label-sm text-on-surface font-medium">{"GPLX Mặt sau (Bảng phân hạng)"}</span>
     <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-label-sm text-label-sm text-[11px]">{"Đang đối soát"}</span>
     </div>
-    <div className="relative w-full h-44 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center">
-    <img className="w-full h-full object-cover filter blur-[1px]" src="/images/cardb-c397a9bb6c2e5ff8.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async"/>
+    <div className="relative w-full h-32 rounded-lg overflow-hidden bg-surface-container-high flex items-center justify-center">
+    <img className="w-full h-full object-cover filter blur-[1px]" src="/images/cardb-c397a9bb6c2e5ff8.webp" alt="Ảnh giấy tờ định danh" loading="lazy" decoding="async"/>
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none rotate-[-12deg]">
     <span className="font-technical-data text-white/90 text-sm tracking-widest px-3 py-1 bg-black/40 backdrop-blur-md rounded border border-white/20 uppercase">{"\n                          CARDB EKYC ĐANG DUYỆT\n                        "}</span>
     </div>
@@ -228,29 +198,14 @@ export default function VerificationPage() {
 
     <div className="bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden transition-all duration-200" id="card-passport">
 
-    <button className="w-full text-left p-space-md md:p-space-lg flex items-center justify-between gap-space-md hover:bg-surface-container-low/30 transition-colors" type="button" aria-label="Hộ chiếu (Passport Việt Nam) Tùy chọn ••••••284 Bị từ chối (Cần tải lại)" data-handler="toggleCard" data-args="'card-passport'">
-    <div className="flex items-center gap-space-md min-w-0">
-    <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-    <span className="material-symbols-outlined text-[28px]">{"flight_takeoff"}</span>
-    </div>
-    <div className="min-w-0">
-    <div className="flex flex-wrap items-center gap-space-xs">
-    <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold truncate">{"Hộ chiếu (Passport Việt Nam)"}</h2>
-    <span className="px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm text-[11px] uppercase">{"Tùy chọn"}</span>
-    </div>
-    <p className="font-technical-data text-technical-data text-on-surface-variant tracking-wider mt-0.5">{"••••••284"}</p>
-    </div>
-    </div>
-    <div className="flex items-center gap-space-md shrink-0">
-    <span className="px-3 py-1 rounded-full bg-red-50 text-red-700 font-label-md text-label-md inline-flex items-center gap-1.5 shadow-sm">
-    <span className="material-symbols-outlined text-[18px]">{"error"}</span>{"\n                  Bị từ chối (Cần tải lại)\n                "}</span>
-    <div className="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm chevron-toggle">
-    <span className="material-symbols-outlined text-[20px] transition-transform duration-300 icon-arrow">{"expand_less"}</span>
-    </div>
-    </div>
+    <button className="document-toggle w-full text-left hover:bg-surface-container-low/30 transition-colors" type="button" aria-label="Hộ chiếu: Cần tải lại" aria-expanded="false" aria-controls="card-passport-content" data-handler="toggleCard" data-args="'card-passport'">
+      <span className="flex size-8 items-center justify-center rounded-lg bg-error-container text-error"><span className="material-symbols-outlined text-[18px]">{"flight_takeoff"}</span></span>
+      <span className="min-w-0"><span className="block truncate text-[13px] font-semibold text-on-surface" title="Hộ chiếu">{"Hộ chiếu"}</span><span className="mt-0.5 block whitespace-nowrap font-mono text-[10px] text-text-secondary">{"••••••284"}</span></span>
+      <span className="whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold bg-error-container text-error">{"Cần tải lại"}</span>
+      <span className="material-symbols-outlined icon-arrow text-[18px] text-text-secondary transition-transform">{"expand_more"}</span>
     </button>
 
-    <div className="card-content px-space-md md:px-space-lg pb-space-lg pt-space-xs space-y-space-md">
+    <div id="card-passport-content" className="card-content hidden px-space-md md:px-space-lg pb-space-lg pt-space-xs space-y-space-md">
     <div className="h-px bg-surface-container-high"></div>
 
     <div className="bg-red-50/80 p-space-md rounded-xl space-y-space-xs">

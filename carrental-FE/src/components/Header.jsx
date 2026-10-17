@@ -4,7 +4,7 @@ import { useId, useState } from "react";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
-const navigation = [["/kham-pha-xe", "Khám phá xe"], ["/chuyen-xe-cua-toi", "Chuyến xe của tôi"], ["/cho-thue-xe", "Cho thuê xe"], ["/cach-tinh-gia", "Cách tính giá"]];
+const navigation = [["/kham-pha-xe", "Khám phá xe"], ["/cho-thue-xe", "Cho thuê xe"], ["/cach-tinh-gia", "Cách tính giá"]];
 const accountLinks = [["/tai-khoan", "Hồ sơ cá nhân", "badge"], ["/tai-khoan/don-thue", "Đơn thuê xe", "receipt_long"], ["/tai-khoan/lich-su", "Lịch sử chuyến đi", "history"], ["/tai-khoan/ngan-hang", "Tài khoản ngân hàng", "account_balance"]];
 export function Header({ previewState } = {}) {
     const instance = useId();
@@ -14,7 +14,7 @@ export function Header({ previewState } = {}) {
     const navigate = useNavigate();
     const { loggedIn: authenticated, logout } = useAuth();
     const loggedIn = previewState ?? authenticated;
-    const activePath = previewState === undefined ? path : loggedIn ? "/chuyen-xe-cua-toi" : "/kham-pha-xe";
+    const activePath = previewState === undefined ? path : loggedIn ? "/tai-khoan/don-thue" : "/kham-pha-xe";
     const [menu, setMenu] = useState(false);
     const [account, setAccount] = useState(false);
     function close() { setMenu(false); setAccount(false); }

@@ -87,7 +87,7 @@ test("Payment requires holding, early release never confirms", async ({ page }) 
     await page.keyboard.down("Space");
     await page.waitForTimeout(1800);
     await page.keyboard.up("Space");
-    await expect(page).toHaveURL(/chuyen-xe-cua-toi\?cancelled=1/);
+    await expect(page).toHaveURL(/tai-khoan\/don-thue\?cancelled=1/);
 });
 test("Pointer hold confirms payment on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 812 });
@@ -141,7 +141,7 @@ test("Document sections expand and order cancellation requires hold", async ({ p
     await page.keyboard.down("Enter");
     await page.waitForTimeout(1800);
     await page.keyboard.up("Enter");
-    await expect(page).toHaveURL(/chuyen-xe-cua-toi\?cancelled=1/);
+    await expect(page).toHaveURL(/tai-khoan\/don-thue\?cancelled=1/);
 });
 test("Mobile discovery reaches checkout through vehicle booking", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 900 });

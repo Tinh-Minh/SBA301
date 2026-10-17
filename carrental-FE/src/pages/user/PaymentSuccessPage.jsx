@@ -3,7 +3,7 @@ export default function PaymentSuccessPage() {
     return (<div className="cardb-screen screen-paymentsuccess bg-soft-bg font-sans text-charcoal antialiased"><main className="w-full  bg-soft-bg min-h-[calc(100vh-140px)] pt-20"><div className="flex flex-col w-full"><div className="max-w-6xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6 relative z-10 w-full">
 
     <nav aria-label="Đường dẫn trang" className="flex items-center gap-1.5 text-subtext text-xs md:text-sm">
-    <Link className="hover:text-orange-brand transition-colors flex items-center gap-1" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
+    <Link className="hover:text-orange-brand transition-colors flex items-center gap-1" data-path="chuyen-xe-cua-toi" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[16px]">{"directions_car"}</span>
     <span>{"Chuyến xe của tôi"}</span>
     </Link>
@@ -260,7 +260,7 @@ export default function PaymentSuccessPage() {
     <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
     </Link>
 
-    <Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-page-bg border border-card-border text-charcoal hover:bg-gray-50 font-medium text-sm shadow-xs transition-all cursor-pointer text-center" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
+    <Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-page-bg border border-card-border text-charcoal hover:bg-gray-50 font-medium text-sm shadow-xs transition-all cursor-pointer text-center" data-path="chuyen-xe-cua-toi" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[18px] text-subtext">{"calendar_month"}</span>
     <span>{"Chuyến xe của tôi"}</span>
     </Link>

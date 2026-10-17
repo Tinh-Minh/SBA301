@@ -54,7 +54,7 @@ export default function BanksPage() {
     <div className="mt-6 space-y-3">
     <div className="flex items-baseline justify-between border-b border-border-light pb-2">
     <span className="text-[11px] text-text-secondary uppercase font-medium">{"SỐ TÀI KHOẢN"}</span>
-    <span className="text-base sm:text-lg font-mono font-bold tracking-wider text-text-primary">{"007100••••982"}</span>
+    <span className="text-base sm:text-lg font-mono font-bold tracking-wider text-text-primary">{"••• 982"}</span>
     </div>
     <div className="flex items-center justify-between text-xs">
     <span className="text-text-secondary text-[11px]">{"CHỦ TÀI KHOẢN"}</span>
@@ -78,8 +78,8 @@ export default function BanksPage() {
     <span>{"Tài khoản mặc định hiện tại"}</span>
     </div>
     <div className="flex-wrap gap-y-2 flex items-center space-x-2">
-    <button className="ui-action px-2.5 py-1 text-xs font-medium text-text-secondary hover:text-brand-accent transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-action="bank-details">{"Xem chi tiết"}</button>
-    <button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-brand-accent text-text-primary border border-border-light transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-route="/tai-khoan/ngan-hang/them?edit=1">{"Chỉnh sửa"}</button>
+
+
     </div>
     </div>
     </article>
@@ -107,7 +107,7 @@ export default function BanksPage() {
     <div className="mt-6 space-y-3">
     <div className="flex items-baseline justify-between border-b border-border-light pb-2">
     <span className="text-[11px] text-text-secondary uppercase font-medium">{"SỐ TÀI KHOẢN"}</span>
-    <span className="text-base sm:text-lg font-mono font-bold tracking-wider text-text-primary">{"190368••••456"}</span>
+    <span className="text-base sm:text-lg font-mono font-bold tracking-wider text-text-primary">{"••• 456"}</span>
     </div>
     <div className="flex items-center justify-between text-xs">
     <span className="text-text-secondary text-[11px]">{"CHỦ TÀI KHOẢN"}</span>
@@ -131,8 +131,8 @@ export default function BanksPage() {
     <span>{"Đặt làm mặc định"}</span>
     </button>
     <div className="flex-wrap gap-y-2 flex items-center space-x-2">
-    <button className="ui-action px-2.5 py-1 text-xs font-medium text-text-secondary hover:text-brand-accent transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-action="bank-details">{"Xem chi tiết"}</button>
-    <button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-brand-accent text-text-primary border border-border-light transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-route="/tai-khoan/ngan-hang/them?edit=1">{"Chỉnh sửa"}</button>
+
+
     </div>
     </div>
     </article>

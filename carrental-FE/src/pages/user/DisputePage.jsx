@@ -7,7 +7,7 @@ export default function DisputePage() {
     <header className="flex flex-col gap-space-sm mb-8">
 
     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[13px] text-text-secondary">
-    <Link className="hover:text-brand-accent transition-colors flex items-center gap-1" to="/chuyen-xe-cua-toi">
+    <Link className="hover:text-brand-accent transition-colors flex items-center gap-1" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[16px]">{"arrow_back"}</span>
     <span>{"Chuyến xe của tôi"}</span>
     </Link>

@@ -6,7 +6,7 @@ export default function ReturnPage() {
 
     <div className="flex flex-col gap-space-xs">
     <nav className="flex items-center gap-space-xs text-text-secondary text-sm">
-    <Link className="hover:text-brand-accent transition-colors" to="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-brand-accent transition-colors" to="/tai-khoan/don-thue">{"Chuyến xe của tôi"}</Link>
     <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
     <Link className="hover:text-brand-accent transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
     <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>

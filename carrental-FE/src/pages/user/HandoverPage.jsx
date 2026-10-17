@@ -7,7 +7,7 @@ export default function HandoverPage() {
 
     <div className="flex flex-wrap items-center justify-between gap-4">
     <nav className="flex items-center gap-2 text-xs text-muted font-medium">
-    <Link className="hover:text-primary transition-colors" to="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-primary transition-colors" to="/tai-khoan/don-thue">{"Chuyến xe của tôi"}</Link>
     <span className="text-border-light">{"/"}</span>
     <Link className="hover:text-primary transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
     <span className="text-border-light">{"/"}</span>

@@ -1,4 +1,6 @@
 export const routeAliases = {
+    "tai-khoan/xac-minh/thu-gon": "/tai-khoan/xac-minh",
+    "chuyen-xe-cua-toi": "/tai-khoan/don-thue",
     "trang-chu": "/",
     "thue-xe-tu-lai": "/kham-pha-xe",
     "dang-nhap-dat-xe": "/dang-nhap",

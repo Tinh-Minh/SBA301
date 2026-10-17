@@ -264,7 +264,7 @@ export default function BookingPage() {
     <span>{"Gửi yêu cầu thuê xe"}</span>
     <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
     </button>
-    <Link className="w-full py-2.5 px-4 rounded-xl bg-white border border-border-light hover:bg-section-bg text-text-primary font-label-md text-label-md font-bold text-center transition-colors flex items-center justify-center gap-1.5" to="/chuyen-xe-cua-toi">
+    <Link className="w-full py-2.5 px-4 rounded-xl bg-white border border-border-light hover:bg-section-bg text-text-primary font-label-md text-label-md font-bold text-center transition-colors flex items-center justify-center gap-1.5" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[16px]">{"arrow_back"}</span>
     <span>{"Quay lại chi tiết xe"}</span>
     </Link>

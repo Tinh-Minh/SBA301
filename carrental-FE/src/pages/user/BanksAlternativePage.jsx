@@ -47,7 +47,7 @@ export default function BanksAlternativePage() {
     <div className="flex flex-col">
     <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">{"Số tài khoản"}</span>
     <div className="flex items-center justify-between mt-1">
-    <span className="font-headline-md text-headline-md font-bold tracking-widest text-on-surface">{"•••• •••• •982"}</span>
+    <span className="font-headline-md text-headline-md font-bold tracking-widest text-on-surface">{"••• 982"}</span>
     <span className="material-symbols-outlined text-outline-variant text-[22px]" title="Được bảo vệ mã hóa">{"lock"}</span>
     </div>
     </div>
@@ -98,7 +98,7 @@ export default function BanksAlternativePage() {
     <div className="flex flex-col">
     <span className="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">{"Số tài khoản"}</span>
     <div className="flex items-center justify-between mt-1">
-    <span className="font-headline-md text-headline-md font-bold tracking-widest text-on-surface">{"•••• •••• •456"}</span>
+    <span className="font-headline-md text-headline-md font-bold tracking-widest text-on-surface">{"••• 456"}</span>
     <span className="material-symbols-outlined text-outline-variant text-[22px]" title="Được bảo vệ mã hóa">{"lock"}</span>
     </div>
     </div>

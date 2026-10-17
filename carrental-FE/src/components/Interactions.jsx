@@ -1,6 +1,7 @@
-import BootstrapModal from "react-bootstrap/Modal";
+import { Modal } from "@/components/Modal.jsx";
+import { cancelTrip } from "@/storage/tripStorage.js";
 import { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useRevalidator } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { HoldButton } from "@/components/HoldButton.jsx";
 import { Icon } from "@/components/Icon.jsx";
@@ -9,34 +10,9 @@ function setText(id, text) { const el = document.getElementById(id); if (el)
     el.textContent = text; }
 function activate(button) { button.parentElement?.querySelectorAll(":scope > button").forEach(el => { el.dataset.active = String(el === button); el.setAttribute("aria-pressed", String(el === button)); }); }
 function filterCars(category) { document.querySelectorAll("[data-vehicle-card]").forEach(card => { card.dataset.filterHidden = String(category !== "all" && card.dataset.vehicleCard !== category); }); }
-function Modal({ title, close, children }) {
-    function wrapFocus(event) {
-        if (event.key !== "Tab") return;
-        const dialog = event.currentTarget;
-        const controls = [...dialog.querySelectorAll("button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex='-1'])")]
-            .filter(element => element.tabIndex >= 0 && element.getClientRects().length);
-        const first = controls[0];
-        const last = controls.at(-1);
-        // Keep Tab inside the dialog when the next stop would be browser chrome.
-        if (!event.shiftKey && document.activeElement === last || event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
-            event.preventDefault();
-            (event.shiftKey ? last : first)?.focus();
-        }
-    }
-    return <BootstrapModal show centered animation={false} onKeyDown={wrapFocus} onHide={close} aria-labelledby="app-dialog-title" className="cardb-modal" backdropClassName="cardb-modal-backdrop" dialogClassName="mx-auto my-4 w-[calc(100%-2rem)] max-w-2xl" contentClassName="rounded-xl border border-border-light bg-white p-0 text-text-primary shadow-2xl">
-      <div className="p-5 sm:p-7">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <h2 id="app-dialog-title" className="text-xl font-bold">{title}</h2>
-          <button type="button" aria-label="Đóng hộp thoại" onClick={close} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-section-bg"><Icon name="close" className="text-[20px]"/></button>
-        </div>
-        {children}
-      </div>
-    </BootstrapModal>;
-}
 
 export function Interactions({ children, className = "" }) {
     const navigate = useNavigate();
-    const revalidator = useRevalidator();
     const path = useLocation().pathname;
     const { login, logout } = useAuth();
     const root = useRef(null);
@@ -72,14 +48,6 @@ export function Interactions({ children, className = "" }) {
             dialog.setAttribute("aria-label", path.endsWith("/them") ? "Thêm tài khoản ngân hàng" : "Đổi tài khoản mặc định");
             dialog.querySelector("input,button")?.focus();
         }
-        if (path.endsWith("ngan-hang/them") && params.get("edit") === "1") {
-            const heading = dialog?.querySelector("h2,h3");
-            if (heading)
-                heading.textContent = "Chỉnh sửa tài khoản ngân hàng";
-            const number = document.getElementById("account-number");
-            if (number)
-                number.value = "0071001234982";
-        }
         if (path === "/tai-khoan")
             try {
                 const saved = JSON.parse(localStorage.getItem("cardb:profile:v1") ?? "{}");
@@ -113,6 +81,7 @@ export function Interactions({ children, className = "" }) {
     }
     function click(event) {
         const target = event.target;
+        if (target.closest("[data-managed-interactions]")) return;
         if (target.closest("[data-hold-control]"))
             return;
         const button = target.closest("button,a,[data-action],[data-handler],[data-tab-target]");
@@ -172,13 +141,6 @@ export function Interactions({ children, className = "" }) {
             window.print();
             return;
         }
-        if (action === "trip-filter") {
-            const status = button.dataset.statusFilter;
-            activate(button);
-            root.current?.querySelectorAll("[data-trip-card]").forEach(card => card.dataset.filterHidden = String(status !== "all" && card.dataset.tripStatus !== status));
-            setEmpty(!root.current?.querySelector('[data-trip-card]:not([data-filter-hidden="true"])'));
-            return;
-        }
         if (action === "choice") {
             activate(button);
             notify(`Đã chọn ${text.replace(/^\+\s*/, "")}.`);
@@ -199,23 +161,6 @@ export function Interactions({ children, className = "" }) {
         if (action === "edit-search") {
             root.current?.querySelector("section")?.scrollIntoView({ behavior: "smooth", block: "start" });
             notify("Chọn lại ngày nhận, ngày trả xe và nhấn Cập nhật.");
-            return;
-        }
-        if (action === "refresh-list") {
-            void revalidator.revalidate();
-            notify("Đã làm mới danh sách chuyến xe.");
-            return;
-        }
-        if (action === "download-report") {
-            const lines = root.current?.querySelector("main")?.innerText.split("\n").filter(Boolean) ?? [];
-            const csv = "\ufeffNội dung\n" + lines.map(line => '"' + line.replaceAll('"', '""') + '"').join("\n");
-            const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
-            const download = document.createElement("a");
-            download.href = url;
-            download.download = "cardb-lich-su.csv";
-            download.click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
-            notify("Đã xuất lịch sử dạng CSV, có thể mở bằng Excel.");
             return;
         }
         if (action === "media-info") {
@@ -383,11 +328,7 @@ export function Interactions({ children, className = "" }) {
             navigate("/tai-khoan/ngan-hang/mac-dinh");
             return;
         }
-        if (action === "bank-details") {
-            const card = button.closest("article") ?? button.closest("[data-purpose='bank-card']");
-            setModal({ kind: "info", title: "Thông tin tài khoản ngân hàng", body: (card?.querySelector("h3")?.textContent?.trim() || "Tài khoản đã liên kết") + " — Thông tin nhận chi trả được mã hóa. Bạn có thể chỉnh sửa hoặc chọn làm tài khoản mặc định." });
-            return;
-        }
+
         if (action === "preview-image") {
             const scope = button.closest("[id^='card-']") ?? button.closest("section") ?? root.current;
             const img = button.parentElement?.querySelector("img") ?? scope?.querySelector("img");
@@ -403,7 +344,7 @@ export function Interactions({ children, className = "" }) {
         }
         if (action === "handover" || (/Xác nhận của tôi/.test(text) && path === "/ban-giao/nhan-xe")) {
             notify("Đã xác nhận biên bản nhận xe.");
-            navigate("/chuyen-xe-cua-toi");
+            navigate("/tai-khoan/don-thue");
             return;
         }
         if (action === "return" || (/Xác nhận của tôi/.test(text) && path === "/ban-giao/tra-xe")) {
@@ -427,7 +368,7 @@ export function Interactions({ children, className = "" }) {
         if (button.tagName === "A")
             return;
         if (/Quay lại|Trở về/.test(text)) {
-            navigate("/chuyen-xe-cua-toi");
+            navigate("/tai-khoan/don-thue");
             return;
         }
         if (/Áp dụng/.test(text)) {
@@ -483,6 +424,6 @@ export function Interactions({ children, className = "" }) {
   {children}
   {empty ? <p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path === "/kham-pha-xe" ? "Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc." : "Chưa có chuyến xe ở trạng thái này."}</p> : null}
   {toast ? <div role="status" className="app-toast fixed inset-x-4 bottom-5 z-[150] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-xl border border-border-light bg-text-primary px-5 py-4 text-sm text-white shadow-xl"><Icon name="check_circle" className="text-[20px] text-brand-accent"/>{toast}<button type="button" aria-label="Đóng thông báo" onClick={() => setToast("")}><Icon name="close" className="text-[18px]"/></button></div> : null}
-  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { setModal(null); navigate("/chuyen-xe-cua-toi?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy đặt xe</HoldButton></div> : null}</Modal> : null}
+  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { cancelTrip("CDB-ORD-20261026-904"); setModal(null); navigate("/tai-khoan/don-thue?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy đặt xe</HoldButton></div> : null}</Modal> : null}
  </div>;
 }

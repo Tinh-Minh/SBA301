@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 test("Nested routes survive reload and legacy redirects retain query parameters", async ({ page }) => {
-    await page.goto("/tai-khoan/ngan-hang/them?edit=1");
-    await expect(page.getByRole("dialog")).toContainText("Chỉnh sửa tài khoản ngân hàng");
+    await page.goto("/tai-khoan/ngan-hang/them");
+    await expect(page.getByRole("dialog")).toContainText("Thêm tài khoản ngân hàng");
     await page.reload();
-    await expect(page.getByRole("dialog")).toContainText("Chỉnh sửa tài khoản ngân hàng");
+    await expect(page.getByRole("dialog")).toContainText("Thêm tài khoản ngân hàng");
     await page.goto("/bang-gia-dong-xe?source=footer");
     await expect(page).toHaveURL(/cach-tinh-gia\?source=footer$/);
     await expect(page).toHaveTitle("Cách tính giá thuê xe | CarDB");

@@ -5,11 +5,11 @@ export default function ConfirmedOrderPage() {
     <section className="flex flex-col gap-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-text-secondary">
-    <Link className="hover:text-brand-accent transition-colors flex items-center gap-1" to="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-brand-accent transition-colors flex items-center gap-1" to="/tai-khoan/don-thue">{"Chuyến xe của tôi"}</Link>
     <span className="text-border-light">{"/"}</span>
     <span className="text-brand-accent font-semibold">{"Chi tiết đơn thuê"}</span>
     </nav>
-    <Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-border-light text-text-primary hover:bg-gray-50 text-sm font-medium transition-all shadow-xs" to="/chuyen-xe-cua-toi">
+    <Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-border-light text-text-primary hover:bg-gray-50 text-sm font-medium transition-all shadow-xs" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
     <span>{"Quay lại Chuyến xe của tôi"}</span>
     </Link>
@@ -408,7 +408,7 @@ export default function ConfirmedOrderPage() {
     <span>{"Thanh toán ngay 3.700.000 đ ➔"}</span>
     </Link>
 
-    <Link className="w-full py-3 px-6 rounded-xl bg-white hover:bg-gray-50 border border-border-light text-text-primary font-medium text-sm text-center flex items-center justify-center gap-2 transition-all shadow-xs" to="/chuyen-xe-cua-toi">
+    <Link className="w-full py-3 px-6 rounded-xl bg-white hover:bg-gray-50 border border-border-light text-text-primary font-medium text-sm text-center flex items-center justify-center gap-2 transition-all shadow-xs" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
     <span>{"← Quay lại Chuyến xe của tôi"}</span>
     </Link>

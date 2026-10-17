@@ -8,13 +8,13 @@ export default function OrderDetailPage() {
 
     <div className="flex flex-wrap items-center justify-between gap-3">
     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-text-secondary">
-    <Link className="hover:text-brand-accent transition-colors flex items-center gap-1 font-medium" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
+    <Link className="hover:text-brand-accent transition-colors flex items-center gap-1 font-medium" data-path="chuyen-xe-cua-toi" to="/tai-khoan/don-thue">
     <span>{"Chuyến xe của tôi"}</span>
     </Link>
     <span className="text-border-light font-normal">{"/"}</span>
     <span className="text-brand-accent font-semibold">{"Chi tiết đơn thuê"}</span>
     </nav>
-    <Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-section-bg text-text-primary hover:border-brand-accent border border-border-light text-sm font-medium transition-all shadow-sm" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
+    <Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-section-bg text-text-primary hover:border-brand-accent border border-border-light text-sm font-medium transition-all shadow-sm" data-path="chuyen-xe-cua-toi" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
     <span>{"← Quay lại Chuyến xe của tôi"}</span>
     </Link>
@@ -412,7 +412,7 @@ export default function OrderDetailPage() {
     </div>
     </div>
 
-    <Link className="w-full py-3.5 px-4 rounded-xl bg-brand-accent hover:bg-primary-hover text-white font-bold text-center flex items-center justify-center gap-2 shadow-md transition-all text-sm" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
+    <Link className="w-full py-3.5 px-4 rounded-xl bg-brand-accent hover:bg-primary-hover text-white font-bold text-center flex items-center justify-center gap-2 shadow-md transition-all text-sm" data-path="chuyen-xe-cua-toi" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[20px]">{"directions_car"}</span>
     <span>{"← Quay lại Chuyến xe của tôi"}</span>
     </Link>

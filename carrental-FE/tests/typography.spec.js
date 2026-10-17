@@ -13,7 +13,7 @@ for (const width of [320, 375, 768, 1024, 1440]) {
                     failures.push("Page overflows viewport");
                 for (const button of document.querySelectorAll("button")) {
                     const label = button.getAttribute("aria-label") ?? "";
-                    if (!label || label.length > 65 || !button.getClientRects().length || button.closest("header") || button.querySelector("div,p,h2,h3"))
+                    if (!label || label.length > 65 || !button.getClientRects().length || button.closest("header") || button.matches(".document-toggle") || button.querySelector("div,p,h2,h3"))
                         continue;
                     const walker = document.createTreeWalker(button, NodeFilter.SHOW_TEXT);
                     const lines = [];

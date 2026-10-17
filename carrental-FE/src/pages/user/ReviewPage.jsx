@@ -4,7 +4,7 @@ export default function ReviewPage() {
 
     <div className="flex flex-col gap-2 mb-8">
     <nav className="flex items-center gap-2 text-sm text-muted-gray">
-    <Link className="hover:text-primary transition-colors flex items-center gap-1.5" to="/chuyen-xe-cua-toi">
+    <Link className="hover:text-primary transition-colors flex items-center gap-1.5" to="/tai-khoan/don-thue">
     <span className="material-symbols-outlined text-[16px]">{"history_edu"}</span>{"\n          Chuyến xe của tôi\n        "}</Link>
     <span className="text-border-subtle">{"/"}</span>
     <Link className="hover:text-primary transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
@@ -142,7 +142,7 @@ export default function ReviewPage() {
     </div>
 
     <div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-border-subtle">
-    <Link className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-subtle text-charcoal font-medium text-sm hover:bg-section-bg transition-all flex items-center justify-center gap-2" to="/chuyen-xe-cua-toi">{"\n              ← Quay lại chi tiết đơn\n            "}</Link>
+    <Link className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-subtle text-charcoal font-medium text-sm hover:bg-section-bg transition-all flex items-center justify-center gap-2" to="/tai-khoan/don-thue">{"\n              ← Quay lại chi tiết đơn\n            "}</Link>
     <button className="ui-action w-full sm:w-auto px-4 py-3.5 sm:px-6 rounded-xl bg-primary hover:bg-primary-hover text-page-bg font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer" id="submit-review-btn" type="button" aria-label="Gửi đánh giá chuyến đi" data-action="review">
     <span>{"Gửi đánh giá chuyến đi"}</span>
     <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>

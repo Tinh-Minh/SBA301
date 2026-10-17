@@ -1,3 +1,4 @@
+import { trips } from "@/utils/trips.js";
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 const groups = [
@@ -8,7 +9,7 @@ const groups = [
             { section: "banks", href: "/tai-khoan/ngan-hang", label: "Tài khoản ngân hàng", icon: "account_balance", count: "2" },
         ] },
     { title: "Quản lý chuyến đi", links: [
-            { section: "orders", href: "/tai-khoan/don-thue", label: "Đơn thuê xe", icon: "directions_car", count: "1" },
+            { section: "orders", href: "/tai-khoan/don-thue", label: "Đơn thuê xe", icon: "directions_car", count: String(trips.length) },
             { section: "history", href: "/tai-khoan/lich-su", label: "Lịch sử chuyến đi", icon: "history" },
         ] },
 ];

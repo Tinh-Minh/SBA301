@@ -24,12 +24,12 @@ test("Account dropdown supports keyboard navigation, Escape, and outside clicks"
 for (const width of [375, 1440]) {
     test(`Modal traps focus and restores it when dismissed at ${width}px`, async ({ page }) => {
         await page.setViewportSize({ width, height: 900 });
-        await page.goto("/tai-khoan/ngan-hang");
-        const trigger = page.getByRole("button", { name: "Xem chi tiết", exact: true }).first();
+        await page.goto("/tai-khoan/don-thue?status=pending");
+        const trigger = page.getByRole("link", { name: "Chi tiết đơn thuê VinFast VF 9 Plus AWD", exact: true });
         await trigger.click();
         const dialog = page.getByRole("dialog");
         await expect(dialog).toBeVisible();
-        await expect(dialog).toHaveAccessibleName("Thông tin tài khoản ngân hàng");
+        await expect(dialog).toHaveAccessibleName("Chi tiết đơn thuê");
         const bounds = await dialog.locator(".modal-content").boundingBox();
         expect(bounds.width).toBeLessThanOrEqual(width - 30);
         expect(bounds.x).toBeGreaterThanOrEqual(15);
