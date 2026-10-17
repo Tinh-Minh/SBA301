@@ -8,7 +8,8 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 
 <main className="w-full flex-1 flex flex-col pt-20">
 
-<section className="relative w-full pt-8 pb-4 bg-white overflow-hidden" id="hero-section">
+<InteractiveGrid>
+<section className="relative z-10 w-full pt-8 pb-4" id="hero-section">
 <div className="w-full max-w-[1440px] mx-auto px-6 md:px-10 flex flex-col items-center">
 
 <div className="text-center max-w-3xl space-y-2 mb-4">
@@ -17,7 +18,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <p className="text-xs md:text-sm text-text-secondary max-w-xl mx-auto leading-relaxed">{"\n            Trải nghiệm các dòng xe tự lái cao cấp tiện lợi, minh bạch từng chi phí. Nhận xe linh hoạt theo giờ hoặc theo ngày tại TP. Hồ Chí Minh và toàn quốc.\n          "}</p>
 </div>
 
-<div className="relative w-full max-w-5xl rounded-2xl overflow-hidden border border-border-light shadow-xl bg-[#09151A] group">
+<div className="hero-car-card relative w-full max-w-5xl rounded-2xl overflow-hidden border border-border-light bg-[#09151A] group">
 
 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 z-10 pointer-events-none"></div>
 
@@ -53,7 +54,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </section>
 
-<InteractiveGrid>
+<section className="relative z-10 w-full px-6 pt-8 pb-12 md:px-10" id="home-search">
 <div className="relative z-10 w-full max-w-5xl mx-auto">
 <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-border-light hover:border-brand-accent/40 transition-colors">
 
@@ -104,6 +105,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </div>
 </div>
+</section>
 </InteractiveGrid>
 
 <section className="w-full py-12 px-6 md:px-10 bg-white">

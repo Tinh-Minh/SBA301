@@ -24,13 +24,19 @@ test("Hero respects reduced motion", async ({ page }) => {
 test("Grid lights orange under cursor and fades on exit", async ({ page }) => {
   await page.goto("/");
   const grid = page.locator("#interactive-grid-zone");
+  await expect(grid.locator("#hero-section")).toBeVisible();
+  await expect(grid.locator("#home-search")).toBeVisible();
   await grid.scrollIntoViewIfNeeded();
   const bounds = (await grid.boundingBox())!;
-  await page.mouse.move(bounds.x + 48, bounds.y + 24);
+  await page.mouse.move(bounds.x + 72, bounds.y + 240);
   await expect(grid).toHaveAttribute("data-glowing", "true");
   await expect(page.locator(".grid-active-cell")).toHaveCSS("opacity", "1");
-  expect(await grid.evaluate(el => el.style.getPropertyValue("--cell-x"))).toBe("32px");
-  expect(await grid.evaluate(el => el.style.getPropertyValue("--cell-y"))).toBe("0px");
+  expect(await grid.evaluate(el => el.style.getPropertyValue("--cell-x"))).toBe("48px");
+  expect(await grid.evaluate(el => el.style.getPropertyValue("--cell-y"))).toBe("240px");
+  await expect.poll(() => page.locator(".grid-trail-cell").evaluateAll(cells => cells.some(cell => Number(getComputedStyle(cell).opacity) > 0))).toBe(true);
+  const photo = (await page.locator(".hero-car-photo").boundingBox())!;
+  await page.mouse.move(photo.x + photo.width / 2, photo.y + photo.height / 2);
+  await expect(grid).toHaveAttribute("data-glowing", "true");
   await page.mouse.move(1, 1);
   await expect(grid).toHaveAttribute("data-glowing", "false");
   await expect(page.locator(".grid-active-cell")).toHaveCSS("opacity", "0");
