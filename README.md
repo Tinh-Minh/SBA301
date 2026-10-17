@@ -22,11 +22,12 @@ Build sử dụng webpack để tương thích môi trường hạn chế worker
 
 ## Các màn hình
 
-28 màn hình bao gồm trang chủ, khám phá xe, chi tiết xe, đăng nhập/đăng ký, hồ sơ cá nhân, đơn thuê, lịch sử, xác minh giấy tờ, hồ sơ tài xế, ngân hàng và các hộp thoại, xác nhận yêu cầu, thông báo thành công, chuyến xe, chi tiết đơn, thanh toán/thành công/thất bại, biên bản nhận/trả xe, đánh giá và tranh chấp.
+30 màn hình bao gồm cách tính giá, giới thiệu CarDB, trang chủ, khám phá xe, chi tiết xe, đăng nhập/đăng ký, hồ sơ cá nhân, đơn thuê, lịch sử, xác minh giấy tờ, hồ sơ tài xế, ngân hàng và các hộp thoại, xác nhận yêu cầu, thông báo thành công, chuyến xe, chi tiết đơn, thanh toán/thành công/thất bại, biên bản nhận/trả xe, đánh giá và tranh chấp.
 
 Các đường dẫn chính:
 
 - `/`, `/kham-pha-xe`, `/xe/vinfast-vf8-plus-2024`
+- `/cach-tinh-gia`, `/ve-cardb`
 - `/dang-nhap`, `/dang-ky`, `/tai-khoan`
 - `/tai-khoan/don-thue`, `/tai-khoan/lich-su`, `/tai-khoan/xac-minh`, `/tai-khoan/ho-so-tai-xe`
 - `/tai-khoan/ngan-hang`, `/tai-khoan/ngan-hang/them`, `/tai-khoan/ngan-hang/mac-dinh`
@@ -45,7 +46,7 @@ Các trạng thái bổ sung: `/tai-khoan/xac-minh/thu-gon`, `/mau-thiet-ke/ngan
 - `src/styles/colors.css`: màu dùng chung qua biến RGB, hỗ trợ opacity Tailwind.
 - `src/styles/tokens.json`: ánh xạ Tailwind, typography, khoảng cách và bo góc.
 - `public/`: ảnh WebP, font Be Vietnam Pro và bộ icon tự lưu trữ.
-- `tests/`: kiểm tra 28 màn hình ở 375, 768 và 1440 px cùng các luồng tương tác.
+- `tests/`: kiểm tra 30 màn hình ở 375, 768 và 1440 px cùng các luồng tương tác.
 
 Thiết kế dùng nền trắng/đá ấm, chữ than và cam chủ đạo. Lưới sáng phản hồi con trỏ, ảnh xe phóng nhẹ, gallery/lightbox, nền toàn trang và bề mặt kính mờ. Tôn trọng `prefers-reduced-motion`.
 
@@ -59,8 +60,10 @@ Video trang chủ: [Erik Mclean trên Pexels](https://www.pexels.com/video/a-whi
 
 Thanh toán và hủy yêu cầu phải giữ nút 1,6 giây bằng chuột, cảm ứng hoặc Enter/Space. Thả sớm sẽ dừng thao tác. Thông báo nằm trong trang; không sử dụng `alert()`, `confirm()` hoặc `prompt()`.
 
-Website không kết nối máy chủ xác thực, email/SMS, thanh toán hoặc đặt xe thực tế. Thông tin ngân hàng và giao dịch là dữ liệu mẫu; tệp chỉ được chọn trên thiết bị. Các commit giữ ở local để chủ dự án tự push.
+Website không kết nối máy chủ xác thực, email/SMS, thanh toán hoặc đặt xe thực tế. Thông tin ngân hàng và giao dịch là dữ liệu mẫu; tệp chỉ được chọn trên thiết bị. Nhánh `prototype` dùng để tích hợp giao diện vào nhánh `FE`.
 
 Các kiểm tra trình duyệt bao gồm đường đi từ tìm xe đến xác nhận thuê, hồ sơ và ngân hàng, giữ nút thanh toán/hủy, đối soát trả xe, tranh chấp, đặt lại xe, mã ưu đãi và xuất báo cáo CSV. Kiểm tra chữ ở 320, 375, 768, 1024 và 1440 px.
 
 Phân trang phản hồi lựa chọn trên bộ dữ liệu mẫu; chưa tải thêm trang từ máy chủ. Ảnh 360° và video kiểm định chưa có tài nguyên tương ứng, nên nút mở thông báo và hướng dẫn xem thư viện ảnh. Xuất báo cáo hiện dùng CSV tương thích Excel.
+
+Trang cách tính giá có lọc phân khúc, hình thức thuê và dự toán từng khoản. Dữ liệu minh họa giảm 10% tiền thuê từ 7 ngày, 25% từ 30 ngày (không cộng dồn), cộng tài xế/dịch vụ tùy chọn rồi tính thuế minh họa 8%. Cọc thế chấp không cộng vào tổng chi phí. Ảnh sedan lấy từ mẫu HTML do chủ dự án cung cấp; các ảnh khác dùng lại tài nguyên của dự án.
