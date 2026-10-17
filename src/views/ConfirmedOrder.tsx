@@ -113,7 +113,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 
 <div className="p-4 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] flex items-start gap-3">
 <span className="material-symbols-outlined text-[#FC6C26] text-[22px] shrink-0 mt-0.5">{"info"}</span>
-<p className="text-sm text-[#292929] leading-relaxed">{"\nChủ xe "}<strong className="text-[#FC6C26] font-bold">{"Trần Đức Nam"}</strong>{" đã xác nhận đồng ý cho thuê xe! Lịch hẹn xe của bạn được tạm giữ đến "}<strong className="text-[#292929] font-bold">{"23:59 hôm nay"}</strong>{". Vui lòng hoàn tất thanh toán tiền thuê "}<strong className="text-[#FC6C26] font-bold">{"3.700.000 đ"}</strong>{" để kích hoạt mã bàn giao và hợp đồng điện tử.\n"}</p>
+<p className="text-sm text-[#292929] leading-relaxed">{"\nChủ xe "}<strong className="text-[#FC6C26] font-bold">{"Trần Đức Nam"}</strong>{" đã xác nhận đồng ý cho thuê xe! Lịch hẹn xe của bạn được tạm giữ đến "}<strong className="text-[#292929] font-bold">{"23:59 hôm nay"}</strong>{". Vui lòng hoàn tất thanh toán tiền thuê "}<strong className="ui-money text-[#FC6C26] font-bold">{"3.700.000 đ"}</strong>{" để kích hoạt mã bàn giao và hợp đồng điện tử.\n"}</p>
 </div>
 </section>
 
@@ -352,7 +352,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 </div>
 <div className="flex items-baseline justify-between gap-4 text-[#666666]">
 <span>{"Tiền thuê trước giảm giá"}</span>
-<span className="text-[#292929] font-semibold">{"3.900.000 đ"}</span>
+<span className="ui-money text-[#292929] font-semibold">{"3.900.000 đ"}</span>
 </div>
 
 <div className="flex items-center justify-between gap-4 p-2.5 rounded-xl bg-[#DCFCE7] text-[#16A34A] border border-emerald-200">
@@ -360,7 +360,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 <span className="material-symbols-outlined text-[16px]">{"sell"}</span>
 <span>{"Voucher (CARDBWELCOME)"}</span>
 </div>
-<span className="font-bold text-sm">{"-200.000 đ"}</span>
+<span className="ui-money font-bold text-sm">{"-200.000 đ"}</span>
 </div>
 
 <div className="p-4 rounded-xl bg-[#FFF7ED] border border-[#FED7AA] flex items-center justify-between gap-4">
@@ -368,7 +368,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 <span className="text-xs font-bold text-[#292929]">{"Tiền thuê xe sau ưu đãi"}</span>
 <span className="text-[11px] text-[#666666]">{"Đã bao gồm VAT & bảo hiểm"}</span>
 </div>
-<span className="text-2xl font-bold text-[#FC6C26]">{"3.700.000 đ"}</span>
+<span className="ui-money text-2xl font-bold text-[#FC6C26]">{"3.700.000 đ"}</span>
 </div>
 </div>
 
@@ -378,7 +378,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 <span className="material-symbols-outlined text-[18px]">{"account_balance_wallet"}</span>
 <span>{"Tiền cọc thế chấp"}</span>
 </div>
-<span className="text-lg font-bold text-[#D97706]">{"15.000.000 đ"}</span>
+<span className="ui-money text-lg font-bold text-[#D97706]">{"15.000.000 đ"}</span>
 </div>
 <p className="text-xs text-[#666666] leading-relaxed">{"\nKhoản tiền cọc được hoàn trả đầy đủ khi khách hàng trả xe theo quy trình kiểm tra bàn giao. Thu trực tiếp tại bãi xe.\n"}</p>
 </div>
@@ -389,7 +389,7 @@ export default function ConfirmedOrder() { return (<div className="cardb-screen 
 <span className="text-xs font-bold text-[#292929]">{"Tổng nghĩa vụ tài chính dự kiến"}</span>
 <span className="text-[11px] text-[#666666]">{"(Thuê xe + Cọc thế chấp)"}</span>
 </div>
-<span className="text-xl font-bold text-[#FC6C26]">{"18.700.000 đ"}</span>
+<span className="ui-money text-xl font-bold text-[#FC6C26]">{"18.700.000 đ"}</span>
 </div>
 <span className="text-[11px] text-[#666666] italic">{"* Khoản tiền cọc thu riêng khi bàn giao thực tế xe, không phải thanh toán ngay lúc này."}</span>
 </div>
