@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode, type MouseEvent, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useAuth } from "./auth-provider";
+import { useAuth } from "@/hooks/useAuth";
 import { HoldButton } from "./hold-button";
 import { Icon } from "./icon";
 
@@ -18,7 +18,7 @@ function Modal({title,close,children}:{title:string;close:()=>void;children:Reac
 }
 
 export function Interactions({children}:{children:ReactNode}){
- const router=useRouter();const path=usePathname();const {login,logout}=useAuth();
+ const router=useRouter();const path=usePathname()??"/";const {login,logout}=useAuth();
  const root=useRef<HTMLDivElement>(null);const toastTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [toast,setToast]=useState("");const [modal,setModal]=useState<{kind:"cancel"|"image"|"info";title:string;body?:string;image?:string}|null>(null);
  const [empty,setEmpty]=useState(false);const [rating,setRating]=useState(0);

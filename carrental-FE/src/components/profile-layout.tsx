@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Icon } from "./icon";
-import { ProfileSidebar, type ProfileSection } from "./profile-sidebar";
+import { ProfileSidebar } from "./profile-sidebar";
+import type { ProfileSection } from "@/interfaces/profile";
 import "../styles/profile.css";
 
 const labels: Record<ProfileSection, string> = {

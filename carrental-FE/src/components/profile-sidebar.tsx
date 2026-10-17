@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Icon } from "./icon";
+import type { ProfileSection } from "@/interfaces/profile";
 
-export type ProfileSection = "account" | "verification" | "driver" | "banks" | "orders" | "history";
 const groups = [
   { title: "Cài đặt tài khoản", links: [
     { section: "account", href: "/tai-khoan", label: "Thông tin cá nhân", icon: "person" },

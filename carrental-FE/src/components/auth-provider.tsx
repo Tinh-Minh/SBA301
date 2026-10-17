@@ -1,9 +1,9 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { AuthContext } from "@/hooks/useAuth";
 
 const key = "cardb:session:v1";
-const AuthContext = createContext({ loggedIn: false, login: () => {}, logout: () => {} });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -21,5 +21,3 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ loggedIn, login, logout }), [loggedIn, login, logout]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
-export const useAuth = () => useContext(AuthContext);

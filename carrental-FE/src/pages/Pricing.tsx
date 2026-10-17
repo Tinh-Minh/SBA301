@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Icon } from "@/components/icon";
 import { PricingExplorer } from "@/components/pricing-explorer";
-import { formatPrice, pricingSegments } from "@/lib/pricing";
+import { formatPrice, pricingSegments } from "@/services/pricingService";
 
 const fees = [
   { icon: "person", title: "Tài xế riêng", price: "350.000 đ/ngày", detail: "Khung phục vụ tham khảo 10 giờ/ngày. Lưu trú và ngoài giờ được thống nhất riêng trước chuyến đi." },

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useId, useState } from "react";
-import { useAuth } from "./auth-provider";
+import { useAuth } from "@/hooks/useAuth";
 import { Icon } from "./icon";
 import { SiteBrand } from "./site-brand";
 
@@ -14,7 +14,7 @@ export function Header({ previewState }: { previewState?: boolean } = {}) {
   const instance = useId();
   const mobileId = previewState === undefined ? "mobile-navigation" : `mobile-navigation-${instance}`;
   const accountId = previewState === undefined ? "account-menu" : `account-menu-${instance}`;
-  const path = usePathname();
+  const path = usePathname() ?? "/";
   const router = useRouter();
   const { loggedIn: authenticated, logout } = useAuth();
   const loggedIn = previewState ?? authenticated;

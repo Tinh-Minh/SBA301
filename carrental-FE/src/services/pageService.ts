@@ -1,4 +1,6 @@
-export const pageTitles: Record<string, string> = {
+import type { PageTitleMap } from "@/interfaces/page";
+
+export const pageTitles: PageTitleMap = {
   "": "Mở lối mọi hành trình",
   "cach-tinh-gia": "Cách tính giá thuê xe",
   "kham-pha-xe": "Khám phá xe",

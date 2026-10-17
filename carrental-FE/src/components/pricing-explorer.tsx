@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Icon } from "./icon";
-import { formatPrice, pricingSegments, rentalDiscount } from "@/lib/pricing";
+import { formatPrice, pricingSegments, rentalDiscount } from "@/services/pricingService";
 
 const modes = [{ id: "self", label: "Thuê tự lái", icon: "key" }, { id: "driver", label: "Kèm tài xế", icon: "person" }, { id: "month", label: "Thuê theo tháng", icon: "garage_home" }] as const;
 
