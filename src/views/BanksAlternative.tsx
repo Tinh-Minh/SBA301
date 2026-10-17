@@ -1,32 +1,13 @@
-import { ProfileSidebar } from "@/components/profile-sidebar";
+import { ProfileLayout } from "@/components/profile-layout";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-export default function BanksAlternative() { return (<div className="cardb-screen screen-banksalternative bg-background font-body-md text-on-surface antialiased min-h-full flex flex-col"><main className="w-full  bg-background flex-1 pt-20"><div className="flex flex-col w-full">
-<div className="max-w-7xl mx-auto w-full px-6 lg:px-12 py-8">
-<div className="flex flex-col lg:flex-row gap-8 items-start">
-
-<ProfileSidebar active="banks" className="w-full lg:w-[280px]" />
-
-<section className="flex-1 w-full flex flex-col gap-6 min-w-0">
-
-<nav className="flex items-center gap-2 text-[12px] font-label-sm text-outline tracking-wider uppercase">
-<Link className="hover:text-on-surface transition-colors" href="/tai-khoan">{"Hồ sơ & Tài khoản CarDB"}</Link>
-<span>{"/"}</span>
-<span className="text-on-surface font-semibold">{"Quản lý tài khoản ngân hàng"}</span>
-</nav>
-
-<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-<div>
-<h1 className="font-headline-lg text-headline-lg font-bold text-on-surface tracking-tight">{"Tài khoản ngân hàng"}</h1>
-<p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl">{"\n              Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh.\n            "}</p>
-</div>
-
-<button className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold tracking-wide hover:bg-primary transition-all duration-200 active:scale-95 shadow-md shrink-0" type="button" aria-label="Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
+export default function BanksAlternative() { return (<div className="cardb-screen screen-banksalternative bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold tracking-wide hover:bg-primary transition-all duration-200 active:scale-95 shadow-md shrink-0" type="button" aria-label="Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
 <span className="material-symbols-outlined text-[20px]">{"add"}</span>
 <span>{"Thêm tài khoản ngân hàng"}</span>
-</button>
-</div>
+</button></>}>
+
+
 
 <div className="flex items-center justify-between px-1">
 <div className="flex items-center gap-3">
@@ -186,7 +167,5 @@ export default function BanksAlternative() { return (<div className="cardb-scree
 </div>
 </div>
 </div>
-</section>
-</div>
-</div>
-</div></main></div>); }
+
+</ProfileLayout></div>); }
