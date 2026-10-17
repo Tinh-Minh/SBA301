@@ -307,7 +307,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-sm text-[#292929] font-bold">{"1. Phía trước xe"}</span>
 <span className="text-xs text-[#10B981] font-semibold mt-0.5">{"Đã tải lên"}</span>
 </div>
-<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ">{"Xem ảnh bàn giao cũ"}</button>
+<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ" data-action="preview-image">{"Xem ảnh bàn giao cũ"}</button>
 </div>
 
 <div className="bg-[#F7F7F5] rounded-xl p-space-md flex flex-col items-center justify-center text-center gap-space-sm group hover:border-[#FC6C26] border border-[#E9E9E7] transition-all min-h-[170px]">
@@ -318,7 +318,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-sm text-[#292929] font-bold">{"2. Phía sau xe"}</span>
 <span className="text-xs text-[#10B981] font-semibold mt-0.5">{"Đã tải lên"}</span>
 </div>
-<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ">{"Xem ảnh bàn giao cũ"}</button>
+<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ" data-action="preview-image">{"Xem ảnh bàn giao cũ"}</button>
 </div>
 
 <div className="bg-[#F7F7F5] rounded-xl p-space-md flex flex-col items-center justify-center text-center gap-space-sm group hover:border-[#FC6C26] border border-[#E9E9E7] transition-all min-h-[170px]">
@@ -329,7 +329,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-sm text-[#292929] font-bold">{"3. Thân xe bên trái"}</span>
 <span className="text-xs text-[#10B981] font-semibold mt-0.5">{"Đã tải lên"}</span>
 </div>
-<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ">{"Xem ảnh bàn giao cũ"}</button>
+<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ" data-action="preview-image">{"Xem ảnh bàn giao cũ"}</button>
 </div>
 
 <div className="bg-[#F7F7F5] rounded-xl p-space-md flex flex-col items-center justify-center text-center gap-space-sm group hover:border-[#FC6C26] border border-[#E9E9E7] transition-all min-h-[170px]">
@@ -340,7 +340,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-sm text-[#292929] font-bold">{"4. Thân xe bên phải"}</span>
 <span className="text-xs text-[#10B981] font-semibold mt-0.5">{"Đã tải lên"}</span>
 </div>
-<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ">{"Xem ảnh bàn giao cũ"}</button>
+<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ" data-action="preview-image">{"Xem ảnh bàn giao cũ"}</button>
 </div>
 
 <div className="bg-[#F7F7F5] rounded-xl p-space-md flex flex-col items-center justify-center text-center gap-space-sm group hover:border-[#FC6C26] border border-[#E9E9E7] transition-all min-h-[170px]">
@@ -351,7 +351,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-sm text-[#292929] font-bold">{"5. Nội thất & Ghế ngồi"}</span>
 <span className="text-xs text-[#10B981] font-semibold mt-0.5">{"Đã tải lên"}</span>
 </div>
-<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ">{"Xem ảnh bàn giao cũ"}</button>
+<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ" data-action="preview-image">{"Xem ảnh bàn giao cũ"}</button>
 </div>
 
 <div className="bg-[#F7F7F5] rounded-xl p-space-md flex flex-col items-center justify-center text-center gap-space-sm group hover:border-[#FC6C26] border border-[#E9E9E7] transition-all min-h-[170px]">
@@ -362,7 +362,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-sm text-[#292929] font-bold">{"6. Taplo ODO & Pin EV"}</span>
 <span className="text-xs text-[#10B981] font-semibold mt-0.5">{"Đã tải lên"}</span>
 </div>
-<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ">{"Xem ảnh bàn giao cũ"}</button>
+<button className="mt-1 text-xs text-[#666666] hover:text-[#FC6C26] underline" type="button" aria-label="Xem ảnh bàn giao cũ" data-action="preview-image">{"Xem ảnh bàn giao cũ"}</button>
 </div>
 </div>
 </div>
@@ -373,7 +373,7 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="material-symbols-outlined text-[#FC6C26] text-[24px]">{"receipt_long"}</span>
 <h2 className="text-lg md:text-xl font-bold text-[#292929]">{"Phí phát sinh và đối soát"}</h2>
 </div>
-<button className="ui-action px-space-md py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-[#E9E9E7] text-[#292929] text-xs font-semibold border border-[#E9E9E7] transition-colors flex items-center gap-1.5 self-start sm:self-auto" type="button" aria-label="Yêu cầu xem xét khoản phí">
+<button className="ui-action px-space-md py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-[#E9E9E7] text-[#292929] text-xs font-semibold border border-[#E9E9E7] transition-colors flex items-center gap-1.5 self-start sm:self-auto" type="button" aria-label="Yêu cầu xem xét khoản phí" data-route="/tranh-chap">
 <span className="material-symbols-outlined text-[#F5A623] text-[18px]">{"gavel"}</span>{"\n            Yêu cầu xem xét khoản phí\n          "}</button>
 </div>
 
