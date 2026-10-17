@@ -13,7 +13,7 @@
 
 /* ===================================================================== 1. Tailwind */
 @import "tailwindcss";
-@config "../../tailwind.config.ts";
+@config "./tailwind.config.ts";
 
 /* ===================================================================== 2. Màu */
 /* CarDB shared Tailwind color tokens. */

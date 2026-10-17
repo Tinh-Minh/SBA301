@@ -3,7 +3,7 @@ import type { ApiResponse } from "@/interfaces/api";
 
 /** axios dùng chung cho mọi lời gọi backend (Spring Boot). */
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api",
 });
 
 // Gắn thông tin đăng nhập vào mọi request (chỉ chạy được ở trình duyệt).

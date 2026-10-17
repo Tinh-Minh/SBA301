@@ -1,5 +1,5 @@
-import { Header } from "@/components/header";
-import { ReferenceFooter } from "@/components/reference-footer";
+import { Header } from "@/components/Header";
+import { ReferenceFooter } from "@/components/ReferenceFooter";
 
 export default function HeaderShowcase() {
   return <main className="px-6 pt-28 pb-12 md:px-10"><div className="mx-auto max-w-6xl space-y-12">

@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
-import { Icon } from "./icon";
-import { ProfileSidebar } from "./profile-sidebar";
+import { Icon } from "./Icon";
+import { ProfileSidebar } from "./ProfileSidebar";
 import type { ProfileSection } from "@/interfaces/profile";
 
 const labels: Record<ProfileSection, string> = {
@@ -23,9 +23,9 @@ export function ProfileLayout({ active, title, description, actions, children }:
   return <main className="profile-layout w-full bg-background pt-20">
     <div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg">
       <nav aria-label="Đường dẫn hồ sơ" className="flex flex-wrap items-center gap-space-xs mb-space-md text-on-surface-variant font-body-sm text-body-sm">
-        <Link href="/" className="hover:text-primary-container transition-colors">Trang chủ</Link>
+        <Link to="/" className="hover:text-primary-container transition-colors">Trang chủ</Link>
         <Icon name="chevron_right" className="text-base text-outline" />
-        <Link href="/tai-khoan" className="hover:text-primary-container transition-colors">Hồ sơ &amp; Tài khoản</Link>
+        <Link to="/tai-khoan" className="hover:text-primary-container transition-colors">Hồ sơ &amp; Tài khoản</Link>
         <Icon name="chevron_right" className="text-base text-outline" />
         <span aria-current="page" className="text-on-surface font-label-sm text-label-sm">{title}</span>
       </nav>

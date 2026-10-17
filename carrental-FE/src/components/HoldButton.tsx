@@ -1,7 +1,6 @@
-"use client";
 
 import { useEffect, useId, useRef, useState } from "react";
-import { Icon } from "./icon";
+import { Icon } from "./Icon";
 
 export function HoldButton({ children, onComplete, danger = false, disabled = false }: {
   children: string; onComplete: () => void; danger?: boolean; disabled?: boolean;

@@ -43,3 +43,27 @@ export const pageTitles: PageTitleMap = {
   "hop-dong-mau": "Hợp đồng mẫu",
   "quen-mat-khau": "Khôi phục mật khẩu"
 };
+
+/** Đường dẫn cũ / đường dẫn trong bản thiết kế -> đường dẫn chính thức. */
+export const pageRedirects: Record<string, string> = {
+  "trang-chu": "/",
+  "thue-xe-tu-lai": "/kham-pha-xe",
+  "dang-nhap-dat-xe": "/dang-nhap",
+  "thanh-toan-dat-coc": "/thanh-toan",
+  "bang-gia-dong-xe": "/cach-tinh-gia",
+  "xe-kem-tai-xe": "/kham-pha-xe",
+  "uu-dai": "/kham-pha-xe",
+  "ve-kanow": "/lien-he",
+  "ho-so-ca-nhan": "/tai-khoan",
+  "xac-minh-giay-to": "/tai-khoan/xac-minh",
+  "ho-so-tai-xe": "/tai-khoan/ho-so-tai-xe",
+  "tai-khoan-ngan-hang": "/tai-khoan/ngan-hang",
+  "don-thue-xe": "/tai-khoan/don-thue",
+  "lich-su-chuyen-di": "/tai-khoan/lich-su",
+  "booking-detail-c08": "/don-thue/CDB-ORD-20261026-904",
+  "chi-tiet-don-thue": "/don-thue/CDB-ORD-20261026-904",
+  "handover-protocol-c10": "/ban-giao/nhan-xe",
+  "thanh-toan-lai": "/thanh-toan",
+  "privacy-policy": "/chinh-sach-bao-mat",
+  "terms-of-service": "/dieu-khoan-su-dung",
+};

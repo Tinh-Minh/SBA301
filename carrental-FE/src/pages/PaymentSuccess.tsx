@@ -1,15 +1,15 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import type { CSSProperties } from "react";
 
 export default function PaymentSuccess() { return (<div className="cardb-screen screen-paymentsuccess bg-soft-bg font-sans text-charcoal antialiased"><main className="w-full  bg-soft-bg min-h-[calc(100vh-140px)] pt-20"><div className="flex flex-col w-full"><div className="max-w-6xl mx-auto px-4 md:px-8 py-8 flex flex-col gap-6 relative z-10 w-full">
 
 <nav aria-label="Đường dẫn trang" className="flex items-center gap-1.5 text-subtext text-xs md:text-sm">
-<Link className="hover:text-orange-brand transition-colors flex items-center gap-1" data-path="chuyen-xe-cua-toi" href="/chuyen-xe-cua-toi">
+<Link className="hover:text-orange-brand transition-colors flex items-center gap-1" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
 <span className="material-symbols-outlined text-[16px]">{"directions_car"}</span>
 <span>{"Chuyến xe của tôi"}</span>
 </Link>
 <span className="material-symbols-outlined text-[14px] text-gray-400">{"chevron_right"}</span>
-<Link className="hover:text-orange-brand transition-colors" data-path="chi-tiet-don-thue" href="/don-thue/CDB-ORD-20261026-904">{"\n          Chi tiết đơn thuê\n        "}</Link>
+<Link className="hover:text-orange-brand transition-colors" data-path="chi-tiet-don-thue" to="/don-thue/CDB-ORD-20261026-904">{"\n          Chi tiết đơn thuê\n        "}</Link>
 <span className="material-symbols-outlined text-[14px] text-gray-400">{"chevron_right"}</span>
 <span className="text-subtext">{"Thanh toán"}</span>
 <span className="material-symbols-outlined text-[14px] text-gray-400">{"chevron_right"}</span>
@@ -256,18 +256,18 @@ export default function PaymentSuccess() { return (<div className="cardb-screen 
 <section className="mt-2 flex flex-col items-center gap-3 pb-8">
 <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-4">
 
-<Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-brand hover:bg-orange-hover text-white font-semibold text-sm shadow-md transition-all cursor-pointer text-center" data-path="chi-tiet-don-thue" href="/don-thue/CDB-ORD-20261026-904">
+<Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-orange-brand hover:bg-orange-hover text-white font-semibold text-sm shadow-md transition-all cursor-pointer text-center" data-path="chi-tiet-don-thue" to="/don-thue/CDB-ORD-20261026-904">
 <span>{"Xem chi tiết đơn thuê"}</span>
 <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
 </Link>
 
-<Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#FFFFFF] border border-card-border text-charcoal hover:bg-gray-50 font-medium text-sm shadow-xs transition-all cursor-pointer text-center" data-path="chuyen-xe-cua-toi" href="/chuyen-xe-cua-toi">
+<Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#FFFFFF] border border-card-border text-charcoal hover:bg-gray-50 font-medium text-sm shadow-xs transition-all cursor-pointer text-center" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
 <span className="material-symbols-outlined text-[18px] text-subtext">{"calendar_month"}</span>
 <span>{"Chuyến xe của tôi"}</span>
 </Link>
 </div>
 
-<Link className="inline-flex items-center gap-1.5 text-subtext hover:text-orange-brand transition-colors text-sm text-center mt-3 font-medium" data-path="kham-pha-xe" href="/kham-pha-xe">
+<Link className="inline-flex items-center gap-1.5 text-subtext hover:text-orange-brand transition-colors text-sm text-center mt-3 font-medium" data-path="kham-pha-xe" to="/kham-pha-xe">
 <span className="material-symbols-outlined text-[16px]">{"arrow_back"}</span>
 <span>{"Tiếp tục khám phá xe khác"}</span>
 </Link>

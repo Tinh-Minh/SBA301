@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import type { CSSProperties } from "react";
 
 export default function Order() { return (<div className="cardb-screen screen-order bg-[#F7F7F5] font-body-md text-[#292929] antialiased selection:bg-[#fc6c26] selection:text-white"><main className="w-full  bg-[#F7F7F5] min-h-screen pt-20"><div className="flex flex-col w-full">
@@ -9,13 +9,13 @@ export default function Order() { return (<div className="cardb-screen screen-or
 
 <div className="flex flex-wrap items-center justify-between gap-3">
 <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-[#666666]">
-<Link className="hover:text-[#FC6C26] transition-colors flex items-center gap-1 font-medium" data-path="chuyen-xe-cua-toi" href="/chuyen-xe-cua-toi">
+<Link className="hover:text-[#FC6C26] transition-colors flex items-center gap-1 font-medium" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
 <span>{"Chuyến xe của tôi"}</span>
 </Link>
 <span className="text-[#E9E9E7] font-normal">{"/"}</span>
 <span className="text-[#FC6C26] font-semibold">{"Chi tiết đơn thuê"}</span>
 </nav>
-<Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#292929] hover:border-[#FC6C26] border border-[#E9E9E7] text-sm font-medium transition-all shadow-sm" data-path="chuyen-xe-cua-toi" href="/chuyen-xe-cua-toi">
+<Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#292929] hover:border-[#FC6C26] border border-[#E9E9E7] text-sm font-medium transition-all shadow-sm" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
 <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
 <span>{"← Quay lại Chuyến xe của tôi"}</span>
 </Link>
@@ -141,7 +141,7 @@ export default function Order() { return (<div className="cardb-screen screen-or
 <h3 className="text-2xl font-bold text-white drop-shadow-md">{"\nVinFast VF 9 Plus AWD\n"}</h3>
 <p className="text-sm text-white/90 tracking-wide font-medium">{"Hiệu suất 402 mã lực • Pin lithium thế hệ mới"}</p>
 </div>
-<Link className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E9E9E7] text-[#292929] font-semibold text-sm transition-all shadow-md" data-path="kham-pha-xe" href="/kham-pha-xe">
+<Link className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E9E9E7] text-[#292929] font-semibold text-sm transition-all shadow-md" data-path="kham-pha-xe" to="/kham-pha-xe">
 <span>{"Xem chi tiết xe ↗"}</span>
 </Link>
 </div>
@@ -413,12 +413,12 @@ export default function Order() { return (<div className="cardb-screen screen-or
 </div>
 </div>
 
-<Link className="w-full py-3.5 px-4 rounded-xl bg-[#FC6C26] hover:bg-[#e05815] text-white font-bold text-center flex items-center justify-center gap-2 shadow-md transition-all text-sm" data-path="chuyen-xe-cua-toi" href="/chuyen-xe-cua-toi">
+<Link className="w-full py-3.5 px-4 rounded-xl bg-[#FC6C26] hover:bg-[#e05815] text-white font-bold text-center flex items-center justify-center gap-2 shadow-md transition-all text-sm" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
 <span className="material-symbols-outlined text-[20px]">{"directions_car"}</span>
 <span>{"← Quay lại Chuyến xe của tôi"}</span>
 </Link>
 
-<Link className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E9E9E7] text-[#292929] font-semibold text-center flex items-center justify-center gap-2 transition-all text-sm shadow-sm" data-path="kham-pha-xe" href="/kham-pha-xe">
+<Link className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#F7F7F5] border border-[#E9E9E7] text-[#292929] font-semibold text-center flex items-center justify-center gap-2 transition-all text-sm shadow-sm" data-path="kham-pha-xe" to="/kham-pha-xe">
 <span className="material-symbols-outlined text-[18px]">{"search"}</span>
 <span>{"Xem danh sách xe khác"}</span>
 </Link>

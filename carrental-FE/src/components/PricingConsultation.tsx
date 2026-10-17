@@ -1,7 +1,6 @@
-"use client";
 
 import { useState, type FormEvent } from "react";
-import { Icon } from "./icon";
+import { Icon } from "./Icon";
 
 export function PricingConsultation() {
   const [submitted, setSubmitted] = useState(false);

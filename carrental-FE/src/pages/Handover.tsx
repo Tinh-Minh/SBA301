@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import type { CSSProperties } from "react";
 
 export default function Handover() { return (<div className="cardb-screen screen-handover bg-[#F7F7F5] font-body text-charcoal antialiased"><main className="w-full  bg-[#F7F7F5] min-h-[calc(100vh-140px)] pt-20"><div className="flex flex-col w-full">
@@ -8,9 +8,9 @@ export default function Handover() { return (<div className="cardb-screen screen
 
 <div className="flex flex-wrap items-center justify-between gap-4">
 <nav className="flex items-center gap-2 text-xs text-muted font-medium">
-<Link className="hover:text-primary transition-colors" href="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+<Link className="hover:text-primary transition-colors" to="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
 <span className="text-border-light">{"/"}</span>
-<Link className="hover:text-primary transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
+<Link className="hover:text-primary transition-colors" to="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
 <span className="text-border-light">{"/"}</span>
 <span className="text-primary font-semibold">{"Bàn giao nhận xe"}</span>
 </nav>
@@ -108,7 +108,7 @@ export default function Handover() { return (<div className="cardb-screen screen
 <span className="text-muted text-xs">{"• SUV 7 Chỗ Thương Gia"}</span>
 </div>
 </div>
-<Link className="inline-flex items-center gap-1 text-muted hover:text-primary text-xs font-semibold transition-colors" href="/xe/vinfast-vf8-plus-2024">
+<Link className="inline-flex items-center gap-1 text-muted hover:text-primary text-xs font-semibold transition-colors" to="/xe/vinfast-vf8-plus-2024">
 <span className="">{"Xem chi tiết đơn thuê ↗"}</span>
 </Link>
 </div>

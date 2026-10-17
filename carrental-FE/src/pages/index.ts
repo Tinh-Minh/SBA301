@@ -1,33 +1,36 @@
+import { lazy } from "react";
 import type { ScreenRegistry } from "@/interfaces/page";
-import Home from "./Home";
-import Pricing from "./Pricing";
-import Explore from "./Explore";
-import Vehicle from "./Vehicle";
-import Login from "./Login";
-import Register from "./Register";
-import Account from "./Account";
-import AccountOrders from "./AccountOrders";
-import History from "./History";
-import Verification from "./Verification";
-import VerificationCollapsed from "./VerificationCollapsed";
-import DriverProfile from "./DriverProfile";
-import Banks from "./Banks";
-import BanksAlternative from "./BanksAlternative";
-import AddBank from "./AddBank";
-import DefaultBank from "./DefaultBank";
-import Checkout from "./Checkout";
-import RequestSuccess from "./RequestSuccess";
-import Trips from "./Trips";
-import Order from "./Order";
-import ConfirmedOrder from "./ConfirmedOrder";
-import Payment from "./Payment";
-import PaymentSuccess from "./PaymentSuccess";
-import PaymentFailed from "./PaymentFailed";
-import Handover from "./Handover";
-import Return from "./Return";
-import Review from "./Review";
-import Dispute from "./Dispute";
-import HeaderShowcase from "./HeaderShowcase";
+
+// Mỗi màn hình được tải riêng khi người dùng mở đường dẫn đó (code splitting).
+const Home = lazy(() => import("./Home"));
+const Pricing = lazy(() => import("./Pricing"));
+const Explore = lazy(() => import("./Explore"));
+const Vehicle = lazy(() => import("./Vehicle"));
+const Login = lazy(() => import("./Login"));
+const Register = lazy(() => import("./Register"));
+const Account = lazy(() => import("./Account"));
+const AccountOrders = lazy(() => import("./AccountOrders"));
+const History = lazy(() => import("./History"));
+const Verification = lazy(() => import("./Verification"));
+const VerificationCollapsed = lazy(() => import("./VerificationCollapsed"));
+const DriverProfile = lazy(() => import("./DriverProfile"));
+const Banks = lazy(() => import("./Banks"));
+const BanksAlternative = lazy(() => import("./BanksAlternative"));
+const AddBank = lazy(() => import("./AddBank"));
+const DefaultBank = lazy(() => import("./DefaultBank"));
+const Checkout = lazy(() => import("./Checkout"));
+const RequestSuccess = lazy(() => import("./RequestSuccess"));
+const Trips = lazy(() => import("./Trips"));
+const Order = lazy(() => import("./Order"));
+const ConfirmedOrder = lazy(() => import("./ConfirmedOrder"));
+const Payment = lazy(() => import("./Payment"));
+const PaymentSuccess = lazy(() => import("./PaymentSuccess"));
+const PaymentFailed = lazy(() => import("./PaymentFailed"));
+const Handover = lazy(() => import("./Handover"));
+const Return = lazy(() => import("./Return"));
+const Review = lazy(() => import("./Review"));
+const Dispute = lazy(() => import("./Dispute"));
+const HeaderShowcase = lazy(() => import("./HeaderShowcase"));
 
 export const screens: ScreenRegistry = {
   "": Home,

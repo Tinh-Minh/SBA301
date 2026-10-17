@@ -1,5 +1,5 @@
-import { ProfileLayout } from "@/components/profile-layout";
-import Link from "next/link";
+import { ProfileLayout } from "@/components/ProfileLayout";
+import { Link } from "react-router-dom";
 import type { CSSProperties } from "react";
 
 export default function Account() { return (<div className="cardb-screen screen-account bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="account" title="Hồ sơ cá nhân" description="Quản lý thông tin tài khoản, mức độ tín nhiệm lái xe và chứng thực hồ sơ pháp lý chuẩn mực.">
