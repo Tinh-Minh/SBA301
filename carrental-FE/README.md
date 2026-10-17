@@ -40,11 +40,22 @@ Các trạng thái bổ sung: `/tai-khoan/xac-minh/thu-gon`, `/mau-thiet-ke/ngan
 
 ## Cấu trúc và thiết kế
 
-- `src/views/`: các màn hình React render trên máy chủ.
-- `src/lib/screens.ts`: đăng ký màn hình và đường dẫn.
-- `src/components/`: điều hướng, trạng thái đăng nhập mẫu, tương tác, lightbox và nút giữ.
-- `src/styles/colors.css`: màu dùng chung qua biến RGB, hỗ trợ opacity Tailwind.
-- `src/styles/tokens.json`: ánh xạ Tailwind, typography, khoảng cách và bo góc.
+Thư mục `src/` sắp xếp theo yêu cầu của môn học:
+
+```
+carrental-FE/src/
+├── app/          # Định tuyến Next.js (chỉ các file *.next.tsx): layout, not-found, [[...slug]]
+├── components/   # Thành phần dùng lại: header, footer, sidebar hồ sơ, tương tác, nút giữ...
+├── pages/        # Các màn hình (Home, Explore, Order, Handover...) + index.ts đăng ký đường dẫn -> màn hình
+├── services/     # Xử lý dữ liệu và gọi API: api.ts (axios), orderService.ts (Function 3), pricingService.ts, pageService.ts
+├── interfaces/   # Kiểu TypeScript, tương đương DTO của backend: api.ts, order.ts, auth.ts, pricing.ts...
+├── hooks/        # Custom hook: useAuth
+└── styles/       # style.css (file style duy nhất: màu, font, nền) + tokens.json (token Tailwind)
+```
+
+- `next.config.ts` đặt `pageExtensions: ["next.tsx", "next.ts"]`. Nhờ vậy `src/pages` chỉ chứa component màn hình, không bị Next.js hiểu là Pages Router.
+- `src/styles/style.css` gom toàn bộ màu, font và style chung, dùng cùng Tailwind (`tokens.json` -> `tailwind.config.ts`) để giao diện nhất quán.
+- Gọi backend: copy `.env.example` thành `.env` và chỉnh `NEXT_PUBLIC_API_BASE_URL` (mặc định `http://localhost:8080/api`).
 - `public/`: ảnh WebP, font Be Vietnam Pro và bộ icon tự lưu trữ.
 - `tests/`: kiểm tra 29 màn hình ở 375, 768 và 1440 px cùng các luồng tương tác.
 
