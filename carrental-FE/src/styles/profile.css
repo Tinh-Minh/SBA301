@@ -1,9 +1,0 @@
-.profile-content > .shadow-sm { border-radius:1rem; }
-.profile-content > .shadow-sm:is([class~="p-space-md"],[class~="p-space-lg"],[class~="p-space-xl"]),
-.profile-content > .tab-pane > .shadow-sm,
-.profile-content [data-purpose^="bank-card-"] { border-radius:1rem;padding:1rem; }
-@media(min-width:768px) {
- .profile-content > .shadow-sm:is([class~="p-space-md"],[class~="p-space-lg"],[class~="p-space-xl"]),
- .profile-content > .tab-pane > .shadow-sm,
- .profile-content [data-purpose^="bank-card-"] { padding:1.5rem; }
-}

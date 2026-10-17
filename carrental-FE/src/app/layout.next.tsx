@@ -4,7 +4,7 @@ import { Header } from "@/components/header";
 import { ReferenceFooter } from "@/components/reference-footer";
 import { Interactions } from "@/components/interactions";
 import { AuthProvider } from "@/components/auth-provider";
-import "./globals.css";
+import "@/styles/style.css";
 
 export const metadata: Metadata = {
   title: { default: "CarDB — Đồng hành mọi chuyến đi", template: "%s | CarDB" },

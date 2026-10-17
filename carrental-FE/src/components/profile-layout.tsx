@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Icon } from "./icon";
 import { ProfileSidebar } from "./profile-sidebar";
 import type { ProfileSection } from "@/interfaces/profile";
-import "../styles/profile.css";
 
 const labels: Record<ProfileSection, string> = {
   account: "Hồ sơ cá nhân",
