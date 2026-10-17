@@ -20,7 +20,7 @@ function Modal({ title, close, children }) {
     return <dialog ref={ref} onCancel={close} onClick={event => { if (event.currentTarget === event.target)
         close(); }} aria-labelledby="app-dialog-title" className="m-auto w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-border-light bg-white p-0 text-text-primary shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm"><div className="p-5 sm:p-7"><div className="mb-5 flex items-start justify-between gap-4"><h2 id="app-dialog-title" className="text-xl font-bold">{title}</h2><button type="button" aria-label="Đóng hộp thoại" onClick={close} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-section-bg"><Icon name="close" className="text-[20px]"/></button></div>{children}</div></dialog>;
 }
-export function Interactions({ children }) {
+export function Interactions({ children, className = "" }) {
     const navigate = useNavigate();
     const revalidator = useRevalidator();
     const path = useLocation().pathname;
@@ -455,7 +455,7 @@ export function Interactions({ children }) {
         }
         notify("Đã lưu thông tin trong bản xem trước.");
     }
-    return <div ref={root} onClick={click} onSubmit={submit} onInput={event => { const el = event.target; if (["review-content", "dispute-detail"].includes(el.id))
+    return <div ref={root} className={`app-interactions ${className}`} onClick={click} onSubmit={submit} onInput={event => { const el = event.target; if (["review-content", "dispute-detail"].includes(el.id))
         setText("char-counter", `${el.value.length}/1000`); }} onChange={event => { const el = event.target; if (el.type === "file")
         notify(`Đã chọn ${el.files?.length ?? 0} tệp.`); }} onKeyDown={event => {
             const el = event.target;

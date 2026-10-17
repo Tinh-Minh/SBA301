@@ -1,7 +1,6 @@
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { ProfileSidebar } from "@/components/ProfileSidebar.jsx";
-import "../styles/profile.css";
 const labels = {
     account: "Hồ sơ cá nhân",
     verification: "Hồ sơ định danh eKYC",

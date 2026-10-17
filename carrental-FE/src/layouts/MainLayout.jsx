@@ -11,7 +11,7 @@ export default function MainLayout() {
     return <AuthProvider>
     <a href="#noi-dung" className="skip-link">Đến nội dung chính</a>
     <Header />
-    <Interactions><div id="noi-dung"><Outlet /></div><ReferenceFooter /></Interactions>
+    <Interactions className="app-layout"><div id="noi-dung"><Outlet /></div><ReferenceFooter /></Interactions>
     <ScrollRestoration />
   </AuthProvider>;
 }

@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { InteractiveGrid } from "@/components/InteractiveGrid.jsx";
 import { HeroCarScene } from "@/components/HeroCarScene.jsx";
 export default function HomePage() {
-    return (<div className="cardb-screen screen-home bg-page-bg font-sans text-text-primary antialiased selection:bg-brand-accent selection:text-white  flex flex-col justify-between">
+    return (<div className="cardb-screen screen-home bg-page-bg font-sans text-text-primary antialiased selection:bg-brand-accent selection:text-white flex flex-col justify-between">
 
 
 
@@ -71,7 +71,7 @@ export default function HomePage() {
     </div>
 
     <div>
-    <button className="w-full h-11 bg-brand-accent hover:bg-[#e05b19] active:scale-95 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2" type="button" aria-label="Tìm xe ngay" data-action="search">
+    <button className="w-full h-11 bg-brand-accent hover:bg-primary-hover active:scale-95 text-white font-bold text-xs rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2" type="button" aria-label="Tìm xe ngay" data-action="search">
     <span className="material-symbols-outlined text-[18px]">{"search"}</span>{"\n                Tìm xe ngay\n              "}</button>
     </div>
     </div>
@@ -274,7 +274,7 @@ export default function HomePage() {
     </div>
     </div>
 
-    <div className="group relative bg-[#FAFAF8] overflow-hidden border-b border-border-light transition-all hover:bg-white/95">
+    <div className="group relative bg-surface-canvas-warm overflow-hidden border-b border-border-light transition-all hover:bg-white/95">
     <div className="grid grid-cols-1 md:grid-cols-12 items-center">
 
     <div className="relative h-[160px] w-full md:col-span-5 order-2 md:order-1 overflow-hidden md:[clip-path:polygon(0%_0%,100%_0%,90%_100%,0%_100%)]">
@@ -332,7 +332,7 @@ export default function HomePage() {
     </div>
     </div>
 
-    <div className="group relative bg-[#FAFAF8] overflow-hidden transition-all hover:bg-white/95">
+    <div className="group relative bg-surface-canvas-warm overflow-hidden transition-all hover:bg-white/95">
     <div className="grid grid-cols-1 md:grid-cols-12 items-center">
 
     <div className="relative h-[160px] w-full md:col-span-5 order-2 md:order-1 overflow-hidden md:[clip-path:polygon(0%_0%,100%_0%,90%_100%,0%_100%)]">

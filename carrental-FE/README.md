@@ -52,9 +52,7 @@ Tổ chức thư mục tham chiếu nhánh `F3+F4`: `pages/user`, `pages/auth`, 
 - `src/storage/`: đọc/ghi phiên đăng nhập mẫu trên trình duyệt.
 - `src/utils/`: dữ liệu và công thức tính giá thuê.
 - `src/components/`: các thành phần tái sử dụng, điều hướng, trạng thái đăng nhập, lightbox và nút giữ.
-- `src/index.css`: điểm nhập CSS toàn cục; bảng màu vẫn nằm ở `src/styles/colors.css`.
-- `src/styles/colors.css`: màu dùng chung qua biến RGB, hỗ trợ opacity Tailwind.
-- `src/styles/tokens.json`: ánh xạ Tailwind, typography, khoảng cách và bo góc.
+- `src/styles/`: toàn bộ CSS, bảng màu, phông chữ và cấu hình tiện ích Tailwind.
 - `public/`: ảnh WebP, font Be Vietnam Pro và bộ icon tự lưu trữ.
 - `tests/`: kiểm tra 29 màn hình ở 375, 768 và 1440 px cùng các luồng tương tác.
 
@@ -63,6 +61,16 @@ Thiết kế dùng nền trắng/đá ấm, chữ than và cam chủ đạo. Lư
 Video trang chủ: [Erik Mclean trên Pexels](https://www.pexels.com/video/a-white-car-parked-in-the-pouring-rain-at-night-16815341/), theo [giấy phép Pexels](https://www.pexels.com/license/). Bản MP4 tự lưu trữ được nén xuống 1280 × 536, bỏ âm thanh; ảnh WebP lấy từ khung hình đầu. Video tự dừng khi ra khỏi màn hình hoặc bật chế độ giảm chuyển động.
 
 Điều hướng hồ sơ dùng chung thành phần từ màn hình xác minh giấy tờ. Trang chủ mở đầu bằng video trên nền đen, lưới cam hiện dần, sau đó ánh sáng và nội dung xuất hiện; chế độ giảm chuyển động bỏ qua hiệu ứng này. Thao tác cuộn bằng chuột, cảm ứng, thanh cuộn hoặc bàn phím lập tức hoàn tất phần mở đầu và hiển thị nội dung, không khóa cuộn trang.
+
+### Quy ước CSS
+
+- `src/styles/globals.css`: nhập Tailwind, bảng màu, phông chữ và quy tắc nền dùng toàn ứng dụng. Chỉ nhập một lần trong `main.jsx`.
+- `src/styles/colors.css`: màu thương hiệu và vai trò giao diện (chữ, nền, đường viền, trạng thái). Các tên ngữ nghĩa tương đương tham chiếu cùng một giá trị.
+- `src/styles/fonts.css`: khai báo phông chữ tự lưu trữ.
+- Dùng tiện ích Tailwind cho bố cục, khoảng cách và responsive. Chỉ có ba stylesheet trong `src/styles/`: `globals.css`, `colors.css`, `fonts.css`. CSS tùy chỉnh được nhóm theo thành phần trong `globals.css`, dùng selector giới hạn phạm vi như `.site-header`, `.profile-content`, `.app-interactions` và `.screen-home`. Không tạo stylesheet riêng cho từng component hoặc trang.
+- Hiệu ứng trang chủ trong `globals.css` được giới hạn bằng `.screen-home` hoặc `body:has(.screen-home)`. Các animation `home-*` giữ tên ổn định để thao tác cuộn có thể kết thúc toàn bộ phần mở đầu.
+- Màu trang trí chỉ dùng một lần có thể nằm trong CSS của component; màu có vai trò giao diện dùng token chung. Không thêm Bootstrap song song với Tailwind.
+- `src/styles/tokens.json`: cấu hình tên tiện ích Tailwind cho khoảng cách, cỡ chữ, bo góc và ánh xạ biến màu. Không chứa giá trị màu trực tiếp hoặc quy tắc selector.
 
 ## Hành vi prototype
 
