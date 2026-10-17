@@ -169,7 +169,7 @@ export default function Payment() { return (<div className="cardb-screen screen-
 </div>
 <div className="text-right">
 <span className="text-[11px] text-muted-gray font-medium block">{"Tổng tiền:"}</span>
-<span className="text-xl font-bold text-primary">{"3.700.000 đ"}</span>
+<span className="ui-money text-xl font-bold text-primary">{"3.700.000 đ"}</span>
 </div>
 </div>
 
@@ -241,7 +241,7 @@ export default function Payment() { return (<div className="cardb-screen screen-
 </div>
 <div className="flex items-center justify-between pb-1 border-b border-border-light">
 <span className="text-muted-gray">{"Số tiền:"}</span>
-<span className="font-bold text-primary">{"3.700.000 đ"}</span>
+<span className="ui-money font-bold text-primary">{"3.700.000 đ"}</span>
 </div>
 <div className="flex items-center justify-between">
 <span className="text-muted-gray">{"Nội dung CK:"}</span>
@@ -308,11 +308,11 @@ export default function Payment() { return (<div className="cardb-screen screen-
 <h3 className="text-xs font-bold text-charcoal uppercase tracking-wider">{"Tóm tắt chi phí thanh toán"}</h3>
 <div className="flex justify-between items-center text-xs text-muted-gray">
 <span>{"Tiền thuê trước ưu đãi (2 ngày):"}</span>
-<span className="font-semibold text-charcoal">{"3.900.000 đ"}</span>
+<span className="ui-money font-semibold text-charcoal">{"3.900.000 đ"}</span>
 </div>
 <div className="flex justify-between items-center text-xs text-success-green font-medium">
 <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[15px]">{"sell"}</span>{"Mã ưu đãi (CARDBWELCOME):"}</span>
-<span className="font-bold">{"-200.000 đ"}</span>
+<span className="ui-money font-bold">{"-200.000 đ"}</span>
 </div>
 <div className="flex justify-between items-center text-xs text-muted-gray">
 <span>{"Phí dịch vụ CarDB Concierge:"}</span>
@@ -323,7 +323,7 @@ export default function Payment() { return (<div className="cardb-screen screen-
 <span className="text-xs font-bold text-charcoal uppercase block">{"Tổng thanh toán ngay:"}</span>
 <span className="text-[11px] text-muted-gray">{"Đã bao gồm VAT & bảo hiểm vật chất"}</span>
 </div>
-<span className="text-2xl font-bold text-primary">{"3.700.000 đ"}</span>
+<span className="ui-money text-2xl font-bold text-primary">{"3.700.000 đ"}</span>
 </div>
 
 <div className="mt-2 p-3 rounded-lg bg-white border border-border-light flex items-start gap-2 text-xs text-muted-gray">
