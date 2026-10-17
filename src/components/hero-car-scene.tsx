@@ -1,7 +1,3 @@
-"use client";
-
-import { useState } from "react";
-
 const spokes = Array.from({ length: 10 }, (_, index) => index * 36);
 
 function Wheel({ position }: { position: "front" | "rear" }) {
@@ -24,10 +20,8 @@ function Wheel({ position }: { position: "front" | "rear" }) {
 }
 
 export function HeroCarScene() {
-  const [paused, setPaused] = useState(false);
-
   return (
-    <div className="hero-car-scene" data-paused={paused}>
+    <div className="hero-car-scene">
       <div className="hero-car-stage">
         <img src="/images/cardb-02d5cb41aa8f9514.webp" alt="Xe SUV màu xanh bên cung đường ven biển" width="512" height="279" className="hero-car-photo" loading="eager" fetchPriority="high" decoding="async" />
         <div className="hero-car-effects" aria-hidden="true">
@@ -39,10 +33,6 @@ export function HeroCarScene() {
           <div className="hero-wind"><i /><i /><i /><i /><i /></div>
         </div>
       </div>
-      <button type="button" className="hero-motion-toggle" aria-pressed={paused} onClick={() => setPaused(value => !value)}>
-        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">{paused ? <path d="m4 2 10 6-10 6Z" /> : <path d="M3 2h4v12H3zm6 0h4v12H9z" />}</svg>
-        {paused ? "Bật chuyển động" : "Dừng chuyển động"}
-      </button>
     </div>
   );
 }
