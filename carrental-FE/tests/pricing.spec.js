@@ -10,30 +10,26 @@ test("Price calculator itemizes extras and discount boundaries", async ({ page }
     await expect(total).toHaveText("8.505.000 đ");
     await days.fill("29");
     await expect(total).toHaveText("35.235.000 đ");
-    await page.getByRole("button", { name: "Thuê theo tháng", exact: true }).click();
+    await days.fill("30");
     await expect(days).toHaveValue("30");
     await expect(total).toHaveText("30.375.000 đ");
-    await page.getByRole("button", { name: "Kèm tài xế", exact: true }).click();
     await days.fill("3");
-    await expect(total).toHaveText("5.184.000 đ");
+    await expect(total).toHaveText("4.050.000 đ");
     await page.getByLabel("Bảo hiểm nâng cao").check();
     await page.getByLabel("Giao xe sân bay").check();
-    await expect(total).toHaveText("5.666.760 đ");
+    await expect(total).toHaveText("4.532.760 đ");
     await page.getByLabel("Phân khúc xe", { exact: true }).selectOption("sedan");
-    await expect(total).toHaveText("4.046.760 đ");
+    await expect(total).toHaveText("2.912.760 đ");
     await expect(page.getByText("Cọc thế chấp giữ riêng", { exact: true })).toBeVisible();
 });
-test("Rental modes and category filters update price cards", async ({ page }) => {
+test("Category filters update price cards without the rental mode switch", async ({ page }) => {
     await page.goto("/cach-tinh-gia");
     await expect(page.locator("[data-price-card]")).toHaveCount(5);
     await page.getByRole("group", { name: "Lọc phân khúc" }).getByRole("button", { name: "Xe điện VinFast", exact: true }).click();
     const card = page.locator('[data-price-card="electric"]');
     await expect(page.locator("[data-price-card]")).toHaveCount(1);
     await expect(card.getByText("1.250.000 đ", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Kèm tài xế", exact: true }).click();
-    await expect(card.getByText("1.600.000 đ", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "Thuê theo tháng", exact: true }).click();
-    await expect(card.getByText("28.125.000 đ", { exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Hình thức thuê" })).toHaveCount(0);
     await card.getByRole("link", { name: "Khám phá đội xe" }).click();
     await expect(page).toHaveURL(/kham-pha-xe$/);
 });
@@ -41,7 +37,7 @@ test("Pricing follows supplied section order and consultation works", async ({ p
     await page.goto("/cach-tinh-gia");
     await expect.poll(() => page.locator("[data-pricing-section]").evaluateAll(elements => elements.map(element => element.getAttribute("data-pricing-section"))))
         .toEqual(["intro", "fleet", "comparison", "fees", "enterprise", "faq"]);
-    await expect(page.locator('[data-pricing-section="intro"] [aria-label="Hình thức thuê"]')).toBeVisible();
+    await expect(page.locator('[data-pricing-section="intro"] [aria-label="Hình thức thuê"]')).toHaveCount(0);
     await expect(page.locator('[data-pricing-section="intro"] h2')).toHaveCount(4);
     await expect(page.locator('[data-pricing-section="comparison"] th[scope="col"]')).toHaveCount(6);
     await expect(page.locator('[data-pricing-section="fees"] #du-toan')).toBeVisible();
