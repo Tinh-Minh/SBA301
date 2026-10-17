@@ -1,3 +1,4 @@
+import BootstrapModal from "react-bootstrap/Modal";
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useRevalidator } from "react-router";
 import { useAuth } from "@/components/AuthProvider.jsx";
@@ -9,17 +10,30 @@ function setText(id, text) { const el = document.getElementById(id); if (el)
 function activate(button) { button.parentElement?.querySelectorAll(":scope > button").forEach(el => { el.dataset.active = String(el === button); el.setAttribute("aria-pressed", String(el === button)); }); }
 function filterCars(category) { document.querySelectorAll("[data-vehicle-card]").forEach(card => { card.dataset.filterHidden = String(category !== "all" && card.dataset.vehicleCard !== category); }); }
 function Modal({ title, close, children }) {
-    const ref = useRef(null);
-    useEffect(() => {
-        const dialog = ref.current;
-        if (!dialog)
-            return;
-        dialog.showModal();
-        return () => dialog.close();
-    }, []);
-    return <dialog ref={ref} onCancel={close} onClick={event => { if (event.currentTarget === event.target)
-        close(); }} aria-labelledby="app-dialog-title" className="m-auto w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-border-light bg-white p-0 text-text-primary shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm"><div className="p-5 sm:p-7"><div className="mb-5 flex items-start justify-between gap-4"><h2 id="app-dialog-title" className="text-xl font-bold">{title}</h2><button type="button" aria-label="Đóng hộp thoại" onClick={close} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-section-bg"><Icon name="close" className="text-[20px]"/></button></div>{children}</div></dialog>;
+    function wrapFocus(event) {
+        if (event.key !== "Tab") return;
+        const dialog = event.currentTarget;
+        const controls = [...dialog.querySelectorAll("button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex]:not([tabindex='-1'])")]
+            .filter(element => element.tabIndex >= 0 && element.getClientRects().length);
+        const first = controls[0];
+        const last = controls.at(-1);
+        // Keep Tab inside the dialog when the next stop would be browser chrome.
+        if (!event.shiftKey && document.activeElement === last || event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+            event.preventDefault();
+            (event.shiftKey ? last : first)?.focus();
+        }
+    }
+    return <BootstrapModal show centered animation={false} onKeyDown={wrapFocus} onHide={close} aria-labelledby="app-dialog-title" className="cardb-modal" backdropClassName="cardb-modal-backdrop" dialogClassName="mx-auto my-4 w-[calc(100%-2rem)] max-w-2xl" contentClassName="rounded-xl border border-border-light bg-white p-0 text-text-primary shadow-2xl">
+      <div className="p-5 sm:p-7">
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <h2 id="app-dialog-title" className="text-xl font-bold">{title}</h2>
+          <button type="button" aria-label="Đóng hộp thoại" onClick={close} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-section-bg"><Icon name="close" className="text-[20px]"/></button>
+        </div>
+        {children}
+      </div>
+    </BootstrapModal>;
 }
+
 export function Interactions({ children, className = "" }) {
     const navigate = useNavigate();
     const revalidator = useRevalidator();
@@ -468,7 +482,7 @@ export function Interactions({ children, className = "" }) {
         }}>
   {children}
   {empty ? <p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path === "/kham-pha-xe" ? "Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc." : "Chưa có chuyến xe ở trạng thái này."}</p> : null}
-  {toast ? <div role="status" className="toast fixed inset-x-4 bottom-5 z-[150] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-xl border border-border-light bg-text-primary px-5 py-4 text-sm text-white shadow-xl"><Icon name="check_circle" className="text-[20px] text-brand-accent"/>{toast}<button type="button" aria-label="Đóng thông báo" onClick={() => setToast("")}><Icon name="close" className="text-[18px]"/></button></div> : null}
+  {toast ? <div role="status" className="app-toast fixed inset-x-4 bottom-5 z-[150] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-xl border border-border-light bg-text-primary px-5 py-4 text-sm text-white shadow-xl"><Icon name="check_circle" className="text-[20px] text-brand-accent"/>{toast}<button type="button" aria-label="Đóng thông báo" onClick={() => setToast("")}><Icon name="close" className="text-[18px]"/></button></div> : null}
   {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { setModal(null); navigate("/chuyen-xe-cua-toi?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy đặt xe</HoldButton></div> : null}</Modal> : null}
  </div>;
 }

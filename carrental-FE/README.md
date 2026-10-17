@@ -69,7 +69,7 @@ Video trang chủ: [Erik Mclean trên Pexels](https://www.pexels.com/video/a-whi
 - `src/styles/fonts.css`: khai báo phông chữ tự lưu trữ.
 - Dùng tiện ích Tailwind cho bố cục, khoảng cách và responsive. Chỉ có ba stylesheet trong `src/styles/`: `globals.css`, `colors.css`, `fonts.css`. CSS tùy chỉnh được nhóm theo thành phần trong `globals.css`, dùng selector giới hạn phạm vi như `.site-header`, `.profile-content`, `.app-interactions` và `.screen-home`. Không tạo stylesheet riêng cho từng component hoặc trang.
 - Hiệu ứng trang chủ trong `globals.css` được giới hạn bằng `.screen-home` hoặc `body:has(.screen-home)`. Các animation `home-*` giữ tên ổn định để thao tác cuộn có thể kết thúc toàn bộ phần mở đầu.
-- Màu trang trí chỉ dùng một lần có thể nằm trong CSS của component; màu có vai trò giao diện dùng token chung. Không thêm Bootstrap song song với Tailwind.
+- Màu trang trí chỉ dùng một lần có thể nằm trong CSS của component; màu có vai trò giao diện dùng token chung. React Bootstrap quản lý dropdown tài khoản và modal dùng chung. Không nhập toàn bộ Bootstrap CSS để tránh xung đột utility; Tailwind và các selector có phạm vi trong `globals.css` cung cấp giao diện, dùng cùng bảng màu CarDB.
 - `src/styles/tokens.json`: cấu hình tên tiện ích Tailwind cho khoảng cách, cỡ chữ, bo góc và ánh xạ biến màu. Không chứa giá trị màu trực tiếp hoặc quy tắc selector.
 
 ## Hành vi prototype

@@ -70,8 +70,20 @@
 .app-interactions [data-rating-active="true"] { color:rgb(var(--color-brand-accent))!important;font-variation-settings:"FILL" 1; }
 .app-interactions [data-car-image] { transition:transform .45s cubic-bezier(.2,.7,.3,1); }
 .app-interactions [data-vehicle-card]:hover [data-car-image] { transform:scale(1.035); }
-.app-interactions .toast { animation:toast-in .2s ease-out; }
+.app-interactions .app-toast { animation:toast-in .2s ease-out; }
 @keyframes toast-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* React Bootstrap behavior with the existing CarDB theme. */
+.cardb-modal {
+ position:fixed;inset:0;z-index:160;overflow-x:hidden;overflow-y:auto;
+ outline:0;-webkit-overflow-scrolling:touch;
+}
+.cardb-modal .modal-dialog { position:relative;pointer-events:none; }
+.cardb-modal .modal-dialog-centered { display:flex;align-items:center;min-height:calc(100% - 2rem); }
+.cardb-modal .modal-content { position:relative;display:flex;flex-direction:column;width:100%;pointer-events:auto; }
+.cardb-modal-backdrop { position:fixed;inset:0;z-index:159;background:rgb(var(--color-cinematic) / .6);backdrop-filter:blur(4px); }
+.site-header .dropdown-menu { position:absolute;z-index:60; }
+.site-header .dropdown-menu:not(.show) { display:none; }
 
 /* Homepage pointer grid */
 .square-grid-container { position:relative;isolation:isolate;overflow:hidden;background:rgb(var(--color-section-bg));border-bottom:1px solid rgb(var(--color-border-light)); }
@@ -139,4 +151,4 @@ body:has(.screen-home) footer { animation:home-content-enter .8s ease 2.2s both;
 
 /* User preferences and print */
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
-@media print{.site-header,footer,[data-hold-control],.toast{display:none!important}.cardb-screen main{padding-top:0!important}}
+@media print{.site-header,footer,[data-hold-control],.app-toast{display:none!important}.cardb-screen main{padding-top:0!important}}
