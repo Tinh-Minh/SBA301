@@ -10,7 +10,7 @@ export default function Checkout() { return (<div className="cardb-screen screen
 <nav aria-label="Breadcrumb" className="flex items-center gap-2">
 <Link className="font-label-sm text-label-sm text-[#666666] hover:text-[#FC6C26] transition-colors font-medium" href="/kham-pha-xe">{"Khám phá xe"}</Link>
 <span className="font-label-sm text-label-sm text-[#666666]">{"/"}</span>
-<Link className="font-label-sm text-label-sm text-[#666666] hover:text-[#FC6C26] transition-colors font-medium" href="/lien-he">{"VinFast VF 9 Plus AWD"}</Link>
+<Link className="font-label-sm text-label-sm text-[#666666] hover:text-[#FC6C26] transition-colors font-medium" href="/xe/vinfast-vf8-plus-2024">{"VinFast VF 9 Plus AWD"}</Link>
 <span className="font-label-sm text-label-sm text-[#666666]">{"/"}</span>
 <span className="font-label-sm text-label-sm text-[#FC6C26] font-semibold">{"Xác nhận yêu cầu thuê xe"}</span>
 </nav>
@@ -158,7 +158,7 @@ export default function Checkout() { return (<div className="cardb-screen screen
 <div className="flex flex-col sm:flex-row gap-3 mt-space-md">
 <div className="relative flex-1">
 <input className="w-full rounded-xl bg-[#F7F7F5] border border-[#E9E9E7] pl-3.5 pr-32 py-3 font-label-lg text-label-lg text-[#292929] font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-[#FC6C26]" id="voucher-input" placeholder="Nhập mã ưu đãi (ví dụ: CARDBWELCOME)" type="text" aria-label="Nhập mã ưu đãi (ví dụ: CARDBWELCOME)" defaultValue="CARDBWELCOME" />
-<button className="absolute right-1.5 top-1.5 bottom-1.5 px-4 rounded-lg bg-[#D1FAE5] text-[#10B981] font-label-md text-label-md font-bold transition-all border border-[#10B981]/30" id="btn-apply-voucher" type="button" aria-label="Đã áp dụng">{"\n                    Đã áp dụng\n                  "}</button>
+<button className="absolute right-1.5 top-1.5 bottom-1.5 px-4 rounded-lg bg-[#D1FAE5] text-[#10B981] font-label-md text-label-md font-bold transition-all border border-[#10B981]/30" id="btn-apply-voucher" type="button" aria-label="Đã áp dụng" data-action="apply-voucher">{"\n                    Đã áp dụng\n                  "}</button>
 </div>
 </div>
 
@@ -167,7 +167,7 @@ export default function Checkout() { return (<div className="cardb-screen screen
 <span className="material-symbols-outlined text-[#10B981] text-[20px]">{"check_circle"}</span>
 <span className="font-body-sm text-body-sm text-[#065F46]">{"\n                    Mã "}<strong className="text-[#047857] font-bold">{"CARDBWELCOME"}</strong>{" (-200.000 đ) đã được áp dụng thành công cho đơn đặt xe đầu tiên!\n                  "}</span>
 </div>
-<button className="text-[#666666] hover:text-[#DC2626] transition-colors p-1" title="Hủy mã" type="button" aria-label="Hủy mã">
+<button className="text-[#666666] hover:text-[#DC2626] transition-colors p-1" title="Hủy mã" type="button" aria-label="Hủy mã" data-action="remove-voucher">
 <span className="material-symbols-outlined text-[16px]">{"close"}</span>
 </button>
 </div>
@@ -229,11 +229,11 @@ export default function Checkout() { return (<div className="cardb-screen screen
 </div>
 <div className="flex items-center justify-between gap-2 text-[#666666]">
 <span>{"Mã ưu đãi (CARDBWELCOME)"}</span>
-<span className="ui-money text-[#10B981] font-bold shrink-0 text-right whitespace-nowrap">{"-200.000 đ"}</span>
+<span data-voucher-discount="true" className="ui-money text-[#10B981] font-bold shrink-0 text-right whitespace-nowrap">{"-200.000 đ"}</span>
 </div>
 <div className="pt-3 border-t border-[#E9E9E7] flex items-center justify-between gap-2">
 <span className="font-label-lg text-label-lg text-[#292929] font-bold">{"Tổng tiền thuê xe (2 ngày)"}</span>
-<span className="ui-money text-[22px] text-[#FC6C26] font-bold shrink-0 text-right whitespace-nowrap">{"3.700.000 đ"}</span>
+<span data-checkout-total="currency" className="ui-money text-[22px] text-[#FC6C26] font-bold shrink-0 text-right whitespace-nowrap">{"3.700.000 đ"}</span>
 </div>
 </div>
 
@@ -251,7 +251,7 @@ export default function Checkout() { return (<div className="cardb-screen screen
 <span className="font-label-sm text-label-sm text-[#FC6C26] font-bold">{"(khi được duyệt)"}</span>
 </div>
 <div className="flex items-baseline justify-between">
-<span className="text-[32px] text-[#292929] font-extrabold tracking-tight whitespace-nowrap">{"3.700.000"}</span>
+<span data-checkout-total="number" className="text-[32px] text-[#292929] font-extrabold tracking-tight whitespace-nowrap">{"3.700.000"}</span>
 <span className="text-[20px] text-[#FC6C26] font-bold whitespace-nowrap">{"VNĐ"}</span>
 </div>
 <div className="pt-2 border-t border-[#E9E9E7] text-[#666666] font-label-sm text-label-sm flex items-start gap-2">
