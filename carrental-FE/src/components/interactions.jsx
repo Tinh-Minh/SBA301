@@ -10,7 +10,13 @@ function activate(button) { button.parentElement?.querySelectorAll(":scope > but
 function filterCars(category) { document.querySelectorAll("[data-vehicle-card]").forEach(card => { card.dataset.filterHidden = String(category !== "all" && card.dataset.vehicleCard !== category); }); }
 function Modal({ title, close, children }) {
     const ref = useRef(null);
-    useEffect(() => { ref.current?.showModal(); }, []);
+    useEffect(() => {
+        const dialog = ref.current;
+        if (!dialog)
+            return;
+        dialog.showModal();
+        return () => dialog.close();
+    }, []);
     return <dialog ref={ref} onCancel={close} onClick={event => { if (event.currentTarget === event.target)
         close(); }} aria-labelledby="app-dialog-title" className="m-auto w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-border-light bg-white p-0 text-text-primary shadow-2xl backdrop:bg-black/60 backdrop:backdrop-blur-sm"><div className="p-5 sm:p-7"><div className="mb-5 flex items-start justify-between gap-4"><h2 id="app-dialog-title" className="text-xl font-bold">{title}</h2><button type="button" aria-label="Đóng hộp thoại" onClick={close} className="flex size-8 shrink-0 items-center justify-center rounded-full bg-section-bg"><Icon name="close" className="text-[20px]"/></button></div>{children}</div></dialog>;
 }
