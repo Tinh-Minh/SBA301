@@ -52,7 +52,7 @@ Mọi response theo `ApiResponseDTO { status, message, data }`.
 | `repository/VoucherRepository` (giữ `increaseUsage`, `decreaseUsage`) | Function 1 |
 | `repository/CarSlotRepository` | Function 2 |
 | `service/impl/HeaderCurrentUserServiceImpl` (header `X-User-Id`) | Function 1: cài `CurrentUserService` đọc từ JWT |
-| `config/TempSecurityConfig`, `config/TempSwaggerHeaderConfig` | Function 1: SecurityConfig + SwaggerConfig thật |
+| `config/Viet_Config`: phần 3 (Security, CORS) và phần 4 (ô `X-User-Id` trên Swagger) | Function 1: SecurityConfig + SwaggerConfig thật (giữ phần 1 `Clock` và phần 2 scheduling) |
 | FE: ô "User ID (tạm)" trên `AppNavbar`, header `X-User-Id` trong `services/api.js` | Function 1: trang đăng nhập, lưu `token` |
 
 Entity và enum dùng chung (`Customer`, `Car`, `CarSlot`, `Voucher`, `RentalOrder`, `ActionLog`, `OrderHandover`, `HandoverImage`...) lấy từ nhánh `BE` của Minh, Function 3 không sửa. Quy tắc chuyển trạng thái đơn nằm ở `service/OrderStatusRules`; ảnh bàn giao lưu qua `HandoverImageRepository`.
