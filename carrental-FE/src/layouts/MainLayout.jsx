@@ -13,6 +13,6 @@ export default function MainLayout() {
     <a href="#noi-dung" className="skip-link">Đến nội dung chính</a>
     <Header />
     <Interactions className="app-layout"><div id="noi-dung"><Outlet /></div><ReferenceFooter /></Interactions>
-    <ScrollRestoration />
+    <ScrollRestoration getKey={location => location.pathname} />
   </ToastProvider></AuthProvider>;
 }

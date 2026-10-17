@@ -4,7 +4,7 @@
 @config "../../tailwind.config.js";
 
 @layer base {
-  html { scroll-behavior:smooth;scroll-padding-top:100px;color-scheme:light; }
+  html { scroll-behavior:auto;scroll-padding-top:100px;color-scheme:light; }
   body { margin:0;background:rgb(var(--color-page-bg));color:rgb(var(--color-text-primary)); }
   * { box-sizing:border-box; }
   button,select,summary { cursor:pointer; }

@@ -45,7 +45,7 @@ export function TripManager({ history = false }) {
             if (!("order" in values)) next.delete("page");
             for (const [key, value] of Object.entries(values)) value && value !== "all" ? next.set(key, value) : next.delete(key);
             return next;
-        }, { replace });
+        }, { replace, preventScrollReset: true });
     }
     function closeModal() { setModal(null); if (params.has("order")) update({ order: null }, true); }
     function detailUrl(id) { const next = new URLSearchParams(params); next.set("order", id); return `?${next}`; }
@@ -62,7 +62,7 @@ export function TripManager({ history = false }) {
     }
     function exportReport() { downloadTripReport(filtered); notify(`Đã xuất ${filtered.length} chuyến xe sang CSV.`); }
     return <div data-managed-interactions className={`cardb-screen ${history ? "screen-history" : "screen-accountorders"} bg-background font-body-md text-body-md text-on-surface antialiased`}>
-      <ProfileLayout active={history ? "history" : "orders"} title={history ? "Lịch sử chuyến đi" : "Đơn thuê xe"} actions={<div className="flex flex-wrap gap-2"><button type="button" className={control} onClick={() => { setCancelled(readTripCancellations()); notify("Đã làm mới danh sách chuyến xe."); }}><Icon name="refresh" className="text-base"/>Làm mới</button><button type="button" className={control} onClick={exportReport}><Icon name="download" className="text-base"/>Xuất CSV</button></div>}>
+      <ProfileLayout active={history ? "history" : "orders"} title={history ? "Lịch sử chuyến đi" : "Đơn thuê xe"}>
         <div className="space-y-4 rounded-xl bg-white p-4 shadow-sm sm:p-6">
           <div className="trip-status-tabs" aria-label="Lọc trạng thái chuyến đi">
             {["all", ...statuses].map(key => <button type="button" key={key} aria-pressed={status === key} onClick={() => update({ status: key })} className="trip-status-tab ui-action">
@@ -75,6 +75,7 @@ export function TripManager({ history = false }) {
             <label className="min-w-0"><span className="mb-1.5 block text-xs font-semibold">Sắp xếp</span><select aria-label="Sắp xếp chuyến xe" className={field} value={sort} onChange={event => update({ sort: event.target.value })}><option value="newest">Mới nhất</option><option value="oldest">Cũ nhất</option><option value="pickup">Ngày nhận xe</option><option value="price">Giá trị cao nhất</option></select></label>
           </div>
         </div>
+        <div data-trip-toolbar className="flex flex-wrap justify-end gap-2"><button type="button" className={control} onClick={() => { setCancelled(readTripCancellations()); notify("Đã làm mới danh sách chuyến xe."); }}><Icon name="refresh" className="text-base"/>Làm mới</button><button type="button" className={control} onClick={exportReport}><Icon name="download" className="text-base"/>Xuất CSV</button></div>
         <div className="space-y-4">
           {visible.map(trip => <article key={trip.id} data-trip-card data-trip-status={trip.status} data-trip-id={trip.id} className="trip-card group relative isolate overflow-hidden rounded-xl border border-border-light bg-white shadow-sm transition-shadow hover:shadow-md">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-light bg-section-bg/60 px-4 py-3">
@@ -85,7 +86,7 @@ export function TripManager({ history = false }) {
               <div className="flex min-w-0 flex-col gap-4 sm:flex-row">
                 <img src={`/images/${trip.image}`} alt={trip.car} loading="lazy" decoding="async" className="aspect-[16/9] w-full shrink-0 rounded-lg object-cover sm:aspect-[4/3] sm:w-36"/>
                 <div className="min-w-0 flex-1 space-y-3">
-                  <div className="min-w-0"><h2 className="truncate text-base font-bold text-text-primary transition-colors group-hover:text-brand-accent" title={trip.car}><Link to={detailUrl(trip.id)} aria-label={`Chi tiết đơn thuê ${trip.car}`} className="trip-card-link">{trip.car}</Link></h2><p className="mt-1 truncate text-xs text-text-secondary" title={`Chủ xe: ${trip.owner}`}>Chủ xe: {trip.owner} · ★ {trip.rating}</p></div>
+                  <div className="min-w-0"><h2 className="truncate text-base font-bold text-text-primary transition-colors group-hover:text-brand-accent" title={trip.car}><Link to={detailUrl(trip.id)} preventScrollReset aria-label={`Chi tiết đơn thuê ${trip.car}`} className="trip-card-link">{trip.car}</Link></h2><p className="mt-1 truncate text-xs text-text-secondary" title={`Chủ xe: ${trip.owner}`}>Chủ xe: {trip.owner} · ★ {trip.rating}</p></div>
                   <div className="grid grid-cols-1 gap-2 min-[440px]:grid-cols-2">
                     <div className="min-w-0"><span className="block text-[11px] text-text-secondary">Nhận xe</span><span className="block truncate text-xs font-medium" title={date(trip.start)}>{date(trip.start)}</span></div>
                     <div className="min-w-0"><span className="block text-[11px] text-text-secondary">Trả xe</span><span className="block truncate text-xs font-medium" title={date(trip.end)}>{date(trip.end)}</span></div>
@@ -110,7 +111,7 @@ export function TripManager({ history = false }) {
               </div>
             </div>
           </article>)}
-          {!visible.length ? <div role="status" className="rounded-xl border border-dashed border-border-light bg-white p-8 text-center"><Icon name="travel_explore" className="mb-3 text-3xl text-brand-accent"/><h2 className="text-base font-semibold">Chưa có chuyến xe phù hợp</h2><p className="mt-2 text-xs text-text-secondary">Đổi trạng thái hoặc xóa bộ lọc để xem các chuyến xe khác.</p><button type="button" className={`${control} mt-4`} onClick={() => setParams({})}>Xóa bộ lọc</button></div> : null}
+          {!visible.length ? <div role="status" className="rounded-xl border border-dashed border-border-light bg-white p-8 text-center"><Icon name="travel_explore" className="mb-3 text-3xl text-brand-accent"/><h2 className="text-base font-semibold">Chưa có chuyến xe phù hợp</h2><p className="mt-2 text-xs text-text-secondary">Đổi trạng thái hoặc xóa bộ lọc để xem các chuyến xe khác.</p><button type="button" className={`${control} mt-4`} onClick={() => setParams({}, { preventScrollReset: true })}>Xóa bộ lọc</button></div> : null}
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-text-secondary"><p>Hiển thị {filtered.length ? (page - 1) * pageSize + 1 : 0}–{Math.min(page * pageSize, filtered.length)} / {filtered.length} chuyến xe</p><nav aria-label="Phân trang chuyến xe" className="flex items-center gap-1"><button type="button" aria-label="Trang trước" disabled={page === 1} onClick={() => update({ page: String(page - 1) })} className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="chevron_left" className="text-base"/></button>{Array.from({ length: pages }, (_, i) => <button type="button" key={i} aria-label={`Trang ${i + 1}`} aria-current={page === i + 1 ? "page" : undefined} onClick={() => update({ page: String(i + 1) })} className={page === i + 1 ? selectedControl : control}>{i + 1}</button>)}<button type="button" aria-label="Trang sau" disabled={page === pages} onClick={() => update({ page: String(page + 1) })} className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="chevron_right" className="text-base"/></button></nav></div>
       </ProfileLayout>
