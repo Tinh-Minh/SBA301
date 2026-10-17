@@ -49,11 +49,11 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 
 <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
 <div className="flex-wrap gap-y-2 flex gap-2 pointer-events-auto">
-<button className="ui-action bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Xem toàn cảnh 360°">
+<button className="ui-action bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Xem toàn cảnh 360°" data-action="media-info">
 <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
 </svg>{"\n                  Xem toàn cảnh 360°\n                "}</button>
-<button className="ui-action bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Video kiểm định">
+<button className="ui-action bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Video kiểm định" data-action="media-info">
 <svg className="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path>
 </svg>{"\n                  Video kiểm định\n                "}</button>
@@ -134,7 +134,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 
 <div className="flex gap-2">
 <button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-900 text-white" type="button" aria-label="Tất cả (186)" data-action="filter">{"Tất cả (186)"}</button>
-<button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200" type="button" aria-label="Có ảnh (48)">{"Có ảnh (48)"}</button>
+<button className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200" type="button" aria-label="Có ảnh (48)" data-action="choice">{"Có ảnh (48)"}</button>
 </div>
 </div>
 <div className="space-y-4">
@@ -242,7 +242,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 </div>
 </div>
 <div className="flex items-center gap-2 pt-2 border-t border-gray-200/60">
-<button type="button" className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200/80 hover:bg-orange-600 hover:text-white transition-all" aria-label="Nhắn tin">
+<button type="button" className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-orange-600 bg-orange-50 border border-orange-200/80 hover:bg-orange-600 hover:text-white transition-all" aria-label="Nhắn tin" data-action="contact-owner">
 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
 </svg>{"\n          Nhắn tin\n        "}</button>
@@ -382,7 +382,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <span className="text-xs uppercase font-extrabold text-orange-600 tracking-wider">{"Đề xuất cùng phân khúc"}</span>
 <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight mt-0.5">{"Dòng Xe Tương Tự Phù Hợp Cho Chuyến Đi"}</h2>
 </div>
-<Link className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-orange-600 flex items-center gap-1 group" href="/lien-he">{"\n          Xem toàn bộ đội xe\n          "}<svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
+<Link className="text-xs sm:text-sm font-semibold text-gray-700 hover:text-orange-600 flex items-center gap-1 group" href="/kham-pha-xe">{"\n          Xem toàn bộ đội xe\n          "}<svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"></path></svg>
 </Link>
 </div>
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
