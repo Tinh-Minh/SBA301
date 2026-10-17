@@ -1,24 +1,27 @@
 import { test, expect } from "@playwright/test";
 
-test("Hero animates independently of the stationary photograph", async ({ page }) => {
+test("Hero uses full-frame footage without information overlays", async ({ page }) => {
   await page.goto("/");
-  const photo = page.locator(".hero-car-photo");
-  const wheel = page.locator(".hero-wheel-spin").first();
-  await expect(photo).toHaveCSS("animation-name", "none");
-  await expect(photo).toHaveCSS("transform", "none");
-  await expect(wheel).toHaveCSS("animation-name", "hero-wheel-turn");
-  await expect(page.locator(".hero-headlight").first()).toHaveCSS("animation-name", "hero-lights");
-  await expect(page.getByRole("button", { name: /chuyển động/ })).toHaveCount(0);
+  const video = page.locator(".hero-car-video");
+  await expect(video).toHaveAttribute("src", "/videos/hero-car-rain.mp4");
+  await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).currentTime)).toBeGreaterThan(.1);
+  expect(await video.evaluate(el => (el as HTMLVideoElement).muted)).toBe(true);
+  await expect(page.locator(".hero-car-card")).toHaveText("");
+  await expect(page.locator(".hero-car-hud,.hero-car-effects")).toHaveCount(0);
   await page.setViewportSize({ width: 375, height: 900 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
-test("Hero respects reduced motion", async ({ page }) => {
+test("Hero respects reduced motion and pauses outside viewport", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await expect(page.locator(".hero-wheel-spin").first()).toHaveCSS("animation-name", "none");
-  await expect(page.locator(".hero-headlight").first()).toHaveCSS("animation-name", "none");
-  await expect(page.locator(".hero-wind")).toBeHidden();
+  const video = page.locator(".hero-car-video");
+  await expect(video).toHaveAttribute("poster", "/images/hero-car-rain.webp");
+  expect(await video.evaluate(el => (el as HTMLVideoElement).paused)).toBe(true);
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).currentTime)).toBeGreaterThan(.1);
+  await page.locator("footer").scrollIntoViewIfNeeded();
+  await expect.poll(() => video.evaluate(el => (el as HTMLVideoElement).paused)).toBe(true);
 });
 
 test("Grid lights orange under cursor and fades on exit", async ({ page }) => {
@@ -33,7 +36,7 @@ test("Grid lights orange under cursor and fades on exit", async ({ page }) => {
   await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "1");
   expect(await grid.evaluate(el => el.style.getPropertyValue("--grid-x"))).toBe("72px");
   expect(await grid.evaluate(el => el.style.getPropertyValue("--grid-y"))).toBe("240px");
-  const photo = (await page.locator(".hero-car-photo").boundingBox())!;
+  const photo = (await page.locator(".hero-car-video").boundingBox())!;
   await page.mouse.move(photo.x + photo.width / 2, photo.y + photo.height / 2);
   await expect(grid).toHaveAttribute("data-glowing", "true");
   await page.mouse.move(1, 1);

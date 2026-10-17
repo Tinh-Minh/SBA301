@@ -37,41 +37,9 @@
 .grid-reveal { position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .3s ease;background-image:linear-gradient(90deg,rgb(var(--color-brand-accent) / .65) 1px,transparent 1px),linear-gradient(rgb(var(--color-brand-accent) / .65) 1px,transparent 1px);background-size:50px 50px;mask-image:radial-gradient(circle 200px at var(--grid-x,-1000px) var(--grid-y,-1000px),#000,transparent);-webkit-mask-image:radial-gradient(circle 200px at var(--grid-x,-1000px) var(--grid-y,-1000px),#000,transparent); }
 .square-grid-container[data-glowing="true"] .grid-reveal { opacity:1; }
 .hero-car-card { box-shadow:0 30px 70px -25px rgb(var(--color-text-primary) / .35),0 12px 35px -20px rgb(var(--color-brand-accent) / .35); }
-/* Every effect shares the photograph's coordinate system, including mobile crops. */
 .hero-car-scene { position:relative;aspect-ratio:16/7;overflow:hidden; }
-.hero-car-stage { position:absolute;width:100%;aspect-ratio:512/279;left:50%;top:50%;transform:translate(-50%,-50%); }
-.hero-car-photo { display:block;width:100%;height:100%; }
-.hero-car-effects { position:absolute;inset:0;pointer-events:none; }
-.hero-wheel { position:absolute;transform:translate(-50%,-50%) scaleX(.78); }
-.hero-wheel--front { left:46.68%;top:70.25%;width:10.15%;height:18.64%; }
-.hero-wheel--rear { left:76.76%;top:60.57%;width:7.42%;height:13.62%;transform:translate(-50%,-50%) scaleX(.65); }
-.hero-wheel-spin { width:100%;height:100%;animation:hero-wheel-turn 1.3s linear infinite; }
-.hero-wheel-spin svg { display:block;width:100%;height:100%;filter:brightness(.76); }
-.hero-headlight { position:absolute;background:#effcff;border-radius:40%;box-shadow:0 0 3px #fff,0 0 9px #c8f3ff,0 0 22px #b6edff;animation:hero-lights 7s ease-in-out infinite; }
-.hero-headlight--near { left:31.5%;top:54.35%;width:7.8%;height:.8%;transform:rotate(-5deg); }
-.hero-headlight--far { left:21.05%;top:53.4%;width:3.5%;height:.65%;transform:rotate(24deg); }
-.hero-light-spill { position:absolute;left:6%;top:55%;width:31%;height:20%;background:radial-gradient(ellipse,rgba(184,230,255,.28),transparent 65%);transform:rotate(-12deg);mix-blend-mode:screen;animation:hero-lights 7s ease-in-out infinite; }
-.hero-wind { position:absolute;inset:0;overflow:hidden; }
-.hero-wind i { position:absolute;right:-30%;width:24%;height:1px;background:linear-gradient(90deg,transparent,rgba(235,249,255,.65),transparent);animation:hero-wind-pass 3.8s linear infinite;opacity:0; }
-.hero-wind i:nth-child(1) { top:14%;animation-delay:-.7s; }
-.hero-wind i:nth-child(2) { top:24%;width:13%;animation-delay:-2.3s; }
-.hero-wind i:nth-child(3) { top:34%;width:19%;animation-delay:-1.4s; }
-.hero-wind i:nth-child(4) { top:86%;animation-delay:-3.1s; }
-.hero-wind i:nth-child(5) { top:92%;width:32%;animation-delay:-.2s; }
-@keyframes hero-wheel-turn { to { transform:rotate(360deg); } }
-@keyframes hero-lights { 0%,38%,50%,100% { opacity:.85; } 41%,47% { opacity:.15; } 44%,53% { opacity:1; } }
-@keyframes hero-wind-pass { 0% { transform:translateX(0);opacity:0; } 15%,75% { opacity:.6; } 100% { transform:translateX(-600%);opacity:0; } }
-@media (max-width:767px) {
- .hero-car-scene { aspect-ratio:4/3; }
- .hero-car-stage { width:137.6344%; }
- .hero-car-hud { padding:.75rem; }
- .hero-car-hud > div:first-child { font-size:7px;gap:.25rem; }
- .hero-car-hud > div:first-child > span { padding:.3rem .4rem;white-space:nowrap; }
- .hero-car-hud > div:last-child > div:nth-child(n+3) { display:none; }
- .hero-car-hud > div:last-child p:first-child { font-size:8px; }
- .hero-car-hud > div:last-child p:last-child { font-size:10px; }
-}
-@media (prefers-reduced-motion:reduce) { .hero-wind { display:none; } }
+.hero-car-video { display:block;width:100%;height:100%;object-fit:cover;object-position:center; }
+@media(max-width:767px) { .hero-car-scene { aspect-ratio:16/10; }.hero-car-video { object-position:35% center; } }
 .ambient-glow { animation:ambient-glow 6s ease-in-out infinite; }
 @keyframes ambient-glow { 0%,100%{opacity:.6}50%{opacity:.85} }
 .cardb-screen details[open] summary .faq-icon { transform:rotate(180deg);color:rgb(var(--color-brand-accent)); }
@@ -87,8 +55,6 @@
  .cardb-screen .text-5xl,.cardb-screen .text-6xl { font-size:34px;line-height:1.25; }
  .cardb-screen .whitespace-nowrap { max-width:100%; }
  .cardb-screen .overflow-x-auto { max-width:100%;overscroll-behavior-x:contain; }
- .screen-home #hero-section .grid.grid-cols-2 { gap:.4rem; }
- .screen-home #hero-section .grid.grid-cols-2 > div { padding:.5rem; }
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
 @media print{.site-header,footer,[data-hold-control],.toast{display:none!important}.cardb-screen main{padding-top:0!important}}

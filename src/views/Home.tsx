@@ -18,38 +18,8 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <p className="text-xs md:text-sm text-text-secondary max-w-xl mx-auto leading-relaxed">{"\n            Trải nghiệm các dòng xe tự lái cao cấp tiện lợi, minh bạch từng chi phí. Nhận xe linh hoạt theo giờ hoặc theo ngày tại TP. Hồ Chí Minh và toàn quốc.\n          "}</p>
 </div>
 
-<div className="hero-car-card relative w-full max-w-5xl rounded-2xl overflow-hidden border border-border-light bg-[#09151A] group">
-
-<div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 z-10 pointer-events-none"></div>
-
+<div className="hero-car-card relative w-full max-w-5xl overflow-hidden rounded-2xl border border-border-light bg-[#09151A]">
 <HeroCarScene />
-
-<div className="hero-car-hud absolute inset-0 z-20 pointer-events-none p-5 flex flex-col justify-between">
-<div className="flex items-center justify-between text-[11px] font-mono text-white/80">
-<span className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-<span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>{"\n                HỆ THỐNG VẬN HÀNH CARDB\n              "}</span>
-<span className="bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">{"\n                CHẾ ĐỘ TRƯNG BÀY • SPORT+\n              "}</span>
-</div>
-
-<div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left">
-<div className="bg-black/70 backdrop-blur-md p-3 rounded-xl border border-white/15 text-white">
-<p className="text-[10px] text-white/60 font-semibold uppercase">{"Đèn pha Matrix"}</p>
-<p className="text-xs font-bold text-white mt-0.5">{"Quét vật cản 350m"}</p>
-</div>
-<div className="bg-black/70 backdrop-blur-md p-3 rounded-xl border border-white/15 text-white">
-<p className="text-[10px] text-white/60 font-semibold uppercase">{"Khung gầm thông minh"}</p>
-<p className="text-xs font-bold text-brand-accent mt-0.5">{"650 HP • Khí nén"}</p>
-</div>
-<div className="bg-black/70 backdrop-blur-md p-3 rounded-xl border border-white/15 text-white">
-<p className="text-[10px] text-white/60 font-semibold uppercase">{"Động cơ kép AWD"}</p>
-<p className="text-xs font-bold text-white mt-0.5">{"0-100 km/h: 3.6s"}</p>
-</div>
-<div className="bg-black/70 backdrop-blur-md p-3 rounded-xl border border-white/15 text-white">
-<p className="text-[10px] text-white/60 font-semibold uppercase">{"Pin thế hệ mới"}</p>
-<p className="text-xs font-bold text-emerald-400 mt-0.5">{"100 kWh • 510 km"}</p>
-</div>
-</div>
-</div>
 </div>
 </div>
 </section>
