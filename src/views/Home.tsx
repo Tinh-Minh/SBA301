@@ -29,13 +29,13 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-border-light hover:border-brand-accent/40 transition-colors">
 
 <div className="flex items-center justify-between pb-4 mb-4 border-b border-border-light flex-wrap gap-3">
-<div className="flex items-center gap-2">
-<button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-brand-accent text-white shadow-sm" type="button" aria-label="Theo ngày" data-action="rental-mode">
+<div className="flex-wrap gap-y-2 flex items-center gap-2">
+<button className="ui-action inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-brand-accent text-white shadow-sm" type="button" aria-label="Theo ngày" data-action="rental-mode">
 <span className="material-symbols-outlined text-[16px]">{"calendar_today"}</span>{"\n                Theo ngày\n              "}</button>
-<button className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-pill-bg transition-colors" type="button" aria-label="Theo giờ (Linh hoạt)" data-action="rental-mode">
-<span className="material-symbols-outlined text-[16px]">{"schedule"}</span>{"\n                Theo giờ (Linh hoạt)\n              "}</button>
+<button className="ui-action inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-text-primary hover:bg-pill-bg transition-colors" type="button" aria-label="Theo giờ (Linh hoạt)" data-action="rental-mode">
+<span className="material-symbols-outlined text-[16px]">{"schedule"}</span>{"\n                Theo giờ"}<span className="hidden sm:inline">{"(Linh hoạt)"}</span></button>
 </div>
-<div className="flex items-center gap-4 text-xs text-text-secondary">
+<div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-secondary">
 <span className="flex items-center gap-1 text-emerald-600 font-medium">
 <span className="material-symbols-outlined text-[16px]">{"check_circle"}</span>{" Miễn phí hủy trước 24h\n              "}</span>
 <span className="flex items-center gap-1 text-brand-accent font-medium">
@@ -96,7 +96,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </div>
 
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+<div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
 
 <div className="bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="ev" data-vehicle-name="VinFast VF 8 Plus" data-price="1250000">
 <div>
@@ -122,12 +122,12 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </div>
 </div>
-<div className="p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
+<div className="flex-wrap gap-y-2 p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
 <div>
 <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
 <p className="text-sm font-extrabold text-brand-accent">{"1.250.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
 </div>
-<button className="px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+<button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
 </div>
 </div>
 
@@ -155,12 +155,12 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </div>
 </div>
-<div className="p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
+<div className="flex-wrap gap-y-2 p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
 <div>
 <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
 <p className="text-sm font-extrabold text-brand-accent">{"2.450.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
 </div>
-<button className="px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+<button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
 </div>
 </div>
 
@@ -188,12 +188,12 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </div>
 </div>
-<div className="p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
+<div className="flex-wrap gap-y-2 p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
 <div>
 <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
 <p className="text-sm font-extrabold text-brand-accent">{"1.400.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
 </div>
-<button className="px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+<button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
 </div>
 </div>
 
@@ -221,12 +221,12 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </div>
 </div>
-<div className="p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
+<div className="flex-wrap gap-y-2 p-4 pt-2 border-t border-border-light flex items-center justify-between mt-2">
 <div>
 <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
 <p className="text-sm font-extrabold text-brand-accent">{"3.800.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
 </div>
-<button className="px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+<button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
 </div>
 </div>
 </div>
