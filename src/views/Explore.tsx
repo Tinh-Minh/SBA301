@@ -60,10 +60,10 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <div className="mt-3 pt-3 flex flex-wrap items-center gap-2 border-t border-[#E9E9E7]">
 <span className="text-xs text-[#8d7166] uppercase font-bold tracking-wider mr-1">{"Thành phố phổ biến:"}</span>
 <button className="rounded-full bg-[#1E1E1E] px-3.5 py-1 text-xs font-semibold text-white shadow-sm" type="button" aria-label="Tất cả" data-action="filter">{"\nTất cả\n"}</button>
-<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Hà Nội (54)">{"\nHà Nội (54)\n"}</button>
-<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#594138] hover:text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="TP. Hồ Chí Minh (68)">{"\nTP. Hồ Chí Minh (68)\n"}</button>
-<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#594138] hover:text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Đà Nẵng (22)">{"\nĐà Nẵng (22)\n"}</button>
-<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#594138] hover:text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Cần Thơ (12)">{"\nCần Thơ (12)\n"}</button>
+<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Hà Nội (54)" data-action="choice">{"\nHà Nội (54)\n"}</button>
+<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#594138] hover:text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="TP. Hồ Chí Minh (68)" data-action="choice">{"\nTP. Hồ Chí Minh (68)\n"}</button>
+<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#594138] hover:text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Đà Nẵng (22)" data-action="choice">{"\nĐà Nẵng (22)\n"}</button>
+<button className="rounded-full bg-[#f6f3f2] border border-[#E9E9E7] px-3.5 py-1 text-xs font-medium text-[#594138] hover:text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Cần Thơ (12)" data-action="choice">{"\nCần Thơ (12)\n"}</button>
 </div>
 </div>
 </div>
@@ -102,9 +102,9 @@ export default function Explore() { return (<div className="cardb-screen screen-
 </div>
 <div className="flex flex-wrap gap-1.5 pt-1">
 <span className="text-[11px] text-[#666666] font-medium self-center mr-0.5">{"Gợi ý:"}</span>
-<button className="px-2.5 py-0.5 rounded-full bg-[#f6f3f2] hover:bg-[#eae7e7] border border-[#E9E9E7] text-[#594138] text-[11px] font-medium transition-colors" type="button" aria-label="+ Crossover">{"+ Crossover"}</button>
-<button className="px-2.5 py-0.5 rounded-full bg-[#f6f3f2] hover:bg-[#eae7e7] border border-[#E9E9E7] text-[#594138] text-[11px] font-medium transition-colors" type="button" aria-label="+ Bán tải">{"+ Bán tải"}</button>
-<button className="px-2.5 py-0.5 rounded-full bg-[#f6f3f2] hover:bg-[#eae7e7] border border-[#E9E9E7] text-[#594138] text-[11px] font-medium transition-colors" type="button" aria-label="+ MPV">{"+ MPV"}</button>
+<button className="px-2.5 py-0.5 rounded-full bg-[#f6f3f2] hover:bg-[#eae7e7] border border-[#E9E9E7] text-[#594138] text-[11px] font-medium transition-colors" type="button" aria-label="+ Crossover" data-action="choice">{"+ Crossover"}</button>
+<button className="px-2.5 py-0.5 rounded-full bg-[#f6f3f2] hover:bg-[#eae7e7] border border-[#E9E9E7] text-[#594138] text-[11px] font-medium transition-colors" type="button" aria-label="+ Bán tải" data-action="choice">{"+ Bán tải"}</button>
+<button className="px-2.5 py-0.5 rounded-full bg-[#f6f3f2] hover:bg-[#eae7e7] border border-[#E9E9E7] text-[#594138] text-[11px] font-medium transition-colors" type="button" aria-label="+ MPV" data-action="choice">{"+ MPV"}</button>
 </div>
 </div>
 
@@ -136,9 +136,9 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <div className="flex flex-col gap-3">
 <h3 className="text-xs uppercase tracking-wider text-[#666666] font-bold">{"Số chỗ ngồi"}</h3>
 <div className="grid grid-cols-3 gap-2">
-<button className="py-2 text-center rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-[#1E1E1E] text-xs font-medium hover:border-[#fc6c26]/50 hover:bg-white transition-colors" type="button" aria-label="4 Chỗ">{"\n4 Chỗ\n"}</button>
-<button className="py-2 text-center rounded-xl bg-[#1E1E1E] text-white text-xs font-bold shadow-sm" type="button" aria-label="5 Chỗ">{"\n5 Chỗ\n"}</button>
-<button className="py-2 text-center rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-[#1E1E1E] text-xs font-medium hover:border-[#fc6c26]/50 hover:bg-white transition-colors" type="button" aria-label="7 Chỗ">{"\n7 Chỗ\n"}</button>
+<button className="py-2 text-center rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-[#1E1E1E] text-xs font-medium hover:border-[#fc6c26]/50 hover:bg-white transition-colors" type="button" aria-label="4 Chỗ" data-action="choice">{"\n4 Chỗ\n"}</button>
+<button className="py-2 text-center rounded-xl bg-[#1E1E1E] text-white text-xs font-bold shadow-sm" type="button" aria-label="5 Chỗ" data-action="choice">{"\n5 Chỗ\n"}</button>
+<button className="py-2 text-center rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-[#1E1E1E] text-xs font-medium hover:border-[#fc6c26]/50 hover:bg-white transition-colors" type="button" aria-label="7 Chỗ" data-action="choice">{"\n7 Chỗ\n"}</button>
 </div>
 </div>
 
@@ -268,10 +268,10 @@ export default function Explore() { return (<div className="cardb-screen screen-
 </select>
 </div>
 <div className="flex items-center rounded-xl bg-[#f6f3f2] p-1 border border-[#E9E9E7]">
-<button className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E1E1E] text-white shadow-sm" title="Xem dạng lưới" type="button" aria-label="Xem dạng lưới">
+<button className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E1E1E] text-white shadow-sm" title="Xem dạng lưới" type="button" aria-label="Xem dạng lưới" data-action="view-layout" data-layout="grid">
 <span className="material-symbols-outlined text-[18px]">{"grid_view"}</span>
 </button>
-<button className="flex h-8 w-8 items-center justify-center rounded-lg text-[#666666] hover:text-[#1E1E1E]" title="Xem dạng danh sách" type="button" aria-label="Xem dạng danh sách">
+<button className="flex h-8 w-8 items-center justify-center rounded-lg text-[#666666] hover:text-[#1E1E1E]" title="Xem dạng danh sách" type="button" aria-label="Xem dạng danh sách" data-action="view-layout" data-layout="list">
 <span className="material-symbols-outlined text-[18px]">{"view_list"}</span>
 </button>
 </div>
@@ -658,7 +658,7 @@ export default function Explore() { return (<div className="cardb-screen screen-
 </div>
 <h4 className="text-base font-bold text-[#1E1E1E]">{"Không tìm thấy xe phù hợp với thời gian đã chọn"}</h4>
 <p className="text-xs text-[#666666] mt-1.5 mb-4 leading-relaxed">{"\n        Các xe trong phân khúc đã kín lịch từ 08:00, 26/10/2025 đến 20:00, 28/10/2025 tại Hà Nội. Quý khách vui lòng điều chỉnh khoảng thời gian thuê để xem thêm xe trống.\n      "}</p>
-<button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#fc6c26] text-white text-xs font-bold shadow-sm hover:bg-[#e05b1b] transition-all" type="button" aria-label="Thay đổi thời gian tìm kiếm">
+<button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#fc6c26] text-white text-xs font-bold shadow-sm hover:bg-[#e05b1b] transition-all" type="button" aria-label="Thay đổi thời gian tìm kiếm" data-action="edit-search">
 <span className="material-symbols-outlined text-[16px]">{"schedule"}</span>{"\n        Thay đổi thời gian tìm kiếm\n      "}</button>
 </div>
 </details>
@@ -667,16 +667,16 @@ export default function Explore() { return (<div className="cardb-screen screen-
 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl bg-white p-4 border border-[#E9E9E7] shadow-sm">
 <div className="text-xs text-[#666666]">{"\nHiển thị "}<span className="font-bold text-[#1E1E1E]">{"1 - 6"}</span>{" trên "}<span className="font-bold text-[#1E1E1E]">{"54"}</span>{" xe tại Hà Nội\n"}</div>
 <div className="flex items-center gap-1.5">
-<button className="flex h-9 px-3 items-center gap-1 rounded-xl bg-[#f6f3f2] text-xs font-semibold text-[#8d7166] opacity-50 cursor-not-allowed border border-[#E9E9E7]" disabled={true} type="button" aria-label="Trước">
+<button className="flex h-9 px-3 items-center gap-1 rounded-xl bg-[#f6f3f2] text-xs font-semibold text-[#8d7166] opacity-50 cursor-not-allowed border border-[#E9E9E7]" disabled={true} type="button" aria-label="Trước" data-action="page">
 <span className="material-symbols-outlined text-[16px]">{"arrow_back"}</span>
 <span><span className="hidden sm:inline">{"Trước"}</span></span>
 </button>
-<button className="h-9 w-9 rounded-xl bg-[#1E1E1E] text-xs font-bold text-white shadow-sm" type="button" aria-label="1">{"\n1\n"}</button>
-<button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="2">{"\n2\n"}</button>
-<button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="3">{"\n3\n"}</button>
+<button className="h-9 w-9 rounded-xl bg-[#1E1E1E] text-xs font-bold text-white shadow-sm" type="button" aria-label="1" data-action="page">{"\n1\n"}</button>
+<button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="2" data-action="page">{"\n2\n"}</button>
+<button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="3" data-action="page">{"\n3\n"}</button>
 <span className="px-1 text-[#8d7166]">{"..."}</span>
-<button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="5">{"\n5\n"}</button>
-<button className="flex h-9 px-3 items-center gap-1 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Tiếp">
+<button className="h-9 w-9 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="5" data-action="page">{"\n5\n"}</button>
+<button className="flex h-9 px-3 items-center gap-1 rounded-xl bg-[#f6f3f2] border border-[#E9E9E7] text-xs font-semibold text-[#1E1E1E] hover:bg-[#eae7e7] transition-colors" type="button" aria-label="Tiếp" data-action="page">
 <span><span className="hidden sm:inline">{"Tiếp"}</span></span>
 <span className="material-symbols-outlined text-[16px]">{"arrow_forward"}</span>
 </button>
