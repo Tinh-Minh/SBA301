@@ -11,12 +11,11 @@ test("Legacy trips URL redirects into the profile and keeps filter queries", asy
     await expect(page.locator('[data-trip-card]')).toContainText("Hạn thanh toán");
 });
 
-test("Filters, sorting, real pagination, and reload use the shared booking collection", async ({ page }) => {
+test("Filters, sorting, and reload apply to ongoing orders only", async ({ page }) => {
     await page.goto("/tai-khoan/don-thue");
-    await expect(page.getByRole("button", { name: "Tất cả (7)", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Tất cả (4)", exact: true })).toBeVisible();
     await expect(page.locator('[data-trip-card]')).toHaveCount(4);
-    await page.getByRole("button", { name: "Trang sau", exact: true }).click();
-    await expect(page.locator('[data-trip-card]')).toHaveCount(3);
+    await expect(page.getByRole("button", { name: "Trang sau", exact: true })).toBeDisabled();
     await page.getByRole("button", { name: "Đã xác nhận (2)", exact: true }).click();
     await expect(page.locator('[data-trip-card]')).toHaveCount(2);
     await page.getByRole("combobox", { name: "Sắp xếp chuyến xe", exact: true }).selectOption("price");
@@ -51,6 +50,10 @@ test("Trip cards open the matching details and cancellation persists into profil
     await page.keyboard.up("Space");
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Chờ xác nhận (0)", exact: true })).toBeVisible();
+    await expect(page.locator('[data-trip-card]')).toHaveCount(0);
+    await page.getByRole("button", { name: "Tất cả (3)", exact: true }).click();
+    await expect(page.locator('[data-trip-card]')).toHaveCount(3);
+    await expect(page.locator('[data-trip-id="CDB-ORD-20261026-904"]')).toHaveCount(0);
     await page.goto("/tai-khoan/lich-su?status=cancelled");
     await expect(page.locator('[data-trip-card]')).toHaveCount(2);
     await expect(page.locator('[data-trip-card]').filter({ hasText: "VF 9 Plus AWD" })).toHaveCount(1);
@@ -82,4 +85,22 @@ test("History keeps invoice, return records, review and rebooking; CSV follows f
     await page.keyboard.press("Escape");
     await page.getByRole("link", { name: "Đặt lại xe này", exact: true }).click();
     await expect(page).toHaveURL(/xe\/vinfast-vf8-plus-2024$/);
+});
+
+
+test("Orders and history have separate statuses and records", async ({ page }) => {
+    await page.goto("/tai-khoan/don-thue?status=completed");
+    const tabs = page.locator(".trip-status-tabs button");
+    await expect(tabs).toHaveText(["Tất cả (4)", "Chờ xác nhận (1)", "Đã xác nhận (2)", "Đang thuê (1)"]);
+    await expect(tabs.first()).toHaveAttribute("aria-pressed", "true");
+    const ongoing = await page.locator("[data-trip-card]").evaluateAll(cards => cards.map(card => card.dataset.tripId));
+    await expect(page.locator('[data-purpose="account-sidebar"] a[href="/tai-khoan/don-thue"]')).toContainText("4");
+    await page.getByRole("link", { name: "Lịch sử chuyến đi", exact: true }).click();
+    await expect(tabs).toHaveText(["Tất cả (3)", "Đã hoàn thành (2)", "Đã hủy (1)", "Đã từ chối (0)", "Hết hạn (0)"]);
+    const past = await page.locator("[data-trip-card]").evaluateAll(cards => cards.map(card => card.dataset.tripId));
+    expect(past).toHaveLength(3);
+    expect(past.filter(id => ongoing.includes(id))).toEqual([]);
+    await page.goto("/tai-khoan/lich-su?status=pending");
+    await expect(tabs.first()).toHaveAttribute("aria-pressed", "true");
+    await expect(page.locator("[data-trip-card]")).toHaveCount(3);
 });

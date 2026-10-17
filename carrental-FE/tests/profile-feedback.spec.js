@@ -30,6 +30,6 @@ test("Refresh and export use the shared dismissible toast without moving the lis
     const downloaded = page.waitForEvent("download");
     await page.getByRole("button", { name: "Xuất CSV", exact: true }).click();
     await downloaded;
-    await expect(toast).toHaveText(/Đã xuất 7 chuyến xe sang CSV/);
+    await expect(toast).toHaveText(/Đã xuất 4 chuyến xe sang CSV/);
     await expect(toast).toHaveCount(0, { timeout: 6000 });
 });

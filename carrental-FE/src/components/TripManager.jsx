@@ -22,8 +22,9 @@ export function TripManager({ history = false }) {
     const notify = useToast();
     const [modal, setModal] = useState(null);
     const records = trips.map(trip => cancelled.includes(trip.id) ? { ...trip, status: "cancelled", cancellationFee: 0, note: "Đã hủy yêu cầu. Không phát sinh phí hủy trong bản xem trước." } : trip);
-    const collection = history ? records.filter(isPastTrip) : records;
-    const status = Object.hasOwn(tripStatuses, params.get("status")) ? params.get("status") : "all";
+    const collection = records.filter(trip => isPastTrip(trip) === history);
+    const statuses = Object.keys(tripStatuses).filter(status => isPastTrip({ status }) === history);
+    const status = statuses.includes(params.get("status")) ? params.get("status") : "all";
     const query = params.get("q") || "";
     const period = params.get("period") || "all";
     const sort = params.get("sort") || "newest";
@@ -35,7 +36,6 @@ export function TripManager({ history = false }) {
     const page = Math.min(pages, Math.max(1, Number.parseInt(params.get("page"), 10) || 1));
     const visible = filtered.slice((page - 1) * pageSize, page * pageSize);
     const counts = Object.fromEntries(Object.keys(tripStatuses).map(key => [key, collection.filter(trip => trip.status === key).length]));
-    const statuses = history ? ["completed", "cancelled", "rejected", "expired"] : Object.keys(tripStatuses);
     const selected = modal || (params.get("order") ? { kind: "details", id: params.get("order") } : null);
     const selectedTrip = records.find(trip => trip.id === selected?.id);
     const months = [...new Set(collection.map(trip => trip.start.slice(0, 7)))].sort().reverse();
