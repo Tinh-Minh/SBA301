@@ -212,11 +212,11 @@ export default function Dispute() { return (<div className="cardb-screen screen-
 <span className="w-6 h-6 rounded-full bg-[#FC6C26] text-white flex items-center justify-center text-[12px] font-bold">{"4"}</span>
 <h2 className="text-[18px] text-[#292929] font-bold">{"Bằng chứng đính kèm"}</h2>
 </div>
-<Link className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#FC6C26] hover:underline transition-all" href="/lien-he"><span className="material-symbols-outlined text-[16px]">{"compare"}</span><span>{"Xem ảnh và thông tin bàn giao nhận (C10-A) & trả xe (C10-B)"}</span></Link>
+<Link className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#FC6C26] hover:underline transition-all" href="/ban-giao/nhan-xe"><span className="material-symbols-outlined text-[16px]">{"compare"}</span><span>{"Xem ảnh và thông tin bàn giao nhận (C10-A) & trả xe (C10-B)"}</span></Link>
 </div>
 <p className="text-[14px] text-[#666666] mb-4">{"\n            Đính kèm hình ảnh hiện trạng thực tế, ảnh táp-lô xe, biên nhận hoặc tài liệu để đội ngũ đối soát CarDB thẩm tra.\n          "}</p>
 
-<div className="rounded-[14px] p-6 bg-[#F7F7F5] border-2 border-dashed border-[#E9E9E7] hover:border-[#FC6C26] hover:bg-[#FFF8F5] transition-all flex flex-col items-center justify-center text-center cursor-pointer mb-4 group">
+<div role="button" tabIndex={0} data-action="upload" aria-label="Tải lên bằng chứng" className="rounded-[14px] p-6 bg-[#F7F7F5] border-2 border-dashed border-[#E9E9E7] hover:border-[#FC6C26] hover:bg-[#FFF8F5] transition-all flex flex-col items-center justify-center text-center cursor-pointer mb-4 group">
 <div className="w-12 h-12 rounded-full bg-white border border-[#E9E9E7] group-hover:bg-[#FC6C26] group-hover:text-white text-[#FC6C26] flex items-center justify-center mb-2.5 transition-all shadow-sm">
 <span className="material-symbols-outlined text-[24px]">{"cloud_upload"}</span>
 </div>
@@ -226,8 +226,8 @@ export default function Dispute() { return (<div className="cardb-screen screen-
 </div>
 
 <div className="flex flex-col gap-2">
-<span className="text-[11px] text-[#666666] uppercase tracking-wider font-bold">{"Tài liệu đã chuẩn bị đính kèm (1)"}</span>
-<div className="flex items-center justify-between p-3 rounded-xl bg-[#FFFFFF] border border-[#E9E9E7] hover:border-[#FC6C26]/50 transition-colors">
+<span id="attachment-count" className="text-[11px] text-[#666666] uppercase tracking-wider font-bold">{"Tài liệu đã chuẩn bị đính kèm (1)"}</span>
+<div data-attachment="true" className="flex items-center justify-between p-3 rounded-xl bg-[#FFFFFF] border border-[#E9E9E7] hover:border-[#FC6C26]/50 transition-colors">
 <div className="flex items-center gap-3 min-w-0">
 <div className="w-10 h-10 rounded-lg bg-[#FFF8F5] border border-[#FC6C26]/20 text-[#FC6C26] flex items-center justify-center shrink-0">
 <span className="material-symbols-outlined text-[20px]">{"image"}</span>
@@ -242,10 +242,10 @@ export default function Dispute() { return (<div className="cardb-screen screen-
 </div>
 </div>
 <div className="flex items-center gap-2 shrink-0">
-<button className="p-1.5 rounded-lg text-[#666666] hover:text-[#FC6C26] hover:bg-[#F7F7F5] transition-colors" title="Xem trước" type="button" aria-label="Hiện hoặc ẩn mật khẩu" data-action="password">
+<button className="p-1.5 rounded-lg text-[#666666] hover:text-[#FC6C26] hover:bg-[#F7F7F5] transition-colors" title="Xem trước" type="button" aria-label="Xem trước bằng chứng" data-action="preview-attachment">
 <span className="material-symbols-outlined text-[18px]">{"visibility"}</span>
 </button>
-<button className="p-1.5 rounded-lg text-[#666666] hover:text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" title="Xóa tệp" type="button" aria-label="Xóa tệp">
+<button className="p-1.5 rounded-lg text-[#666666] hover:text-[#EF4444] hover:bg-[#FEE2E2] transition-colors" title="Xóa tệp" type="button" aria-label="Xóa tệp" data-action="remove-attachment">
 <span className="material-symbols-outlined text-[18px]">{"close"}</span>
 </button>
 </div>
@@ -267,7 +267,7 @@ export default function Dispute() { return (<div className="cardb-screen screen-
 </div>
 
 <div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-<button className="w-full sm:w-auto px-6 py-3 rounded-[12px] bg-[#FFFFFF] border border-[#E9E9E7] text-[#292929] text-[14px] font-semibold hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2 shadow-sm" type="button" aria-label="Quay lại chi tiết đơn">
+<button className="w-full sm:w-auto px-6 py-3 rounded-[12px] bg-[#FFFFFF] border border-[#E9E9E7] text-[#292929] text-[14px] font-semibold hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2 shadow-sm" type="button" aria-label="Quay lại chi tiết đơn" data-route="/don-thue/CDB-ORD-20261026-904">
 <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
 <span>{"Quay lại chi tiết đơn"}</span>
 </button>
