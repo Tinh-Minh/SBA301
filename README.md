@@ -51,6 +51,8 @@ Thiết kế dùng nền trắng/đá ấm, chữ than và cam chủ đạo. Lư
 
 Video trang chủ: [Erik Mclean trên Pexels](https://www.pexels.com/video/a-white-car-parked-in-the-pouring-rain-at-night-16815341/), theo [giấy phép Pexels](https://www.pexels.com/license/). Bản MP4 tự lưu trữ được nén xuống 1280 × 536, bỏ âm thanh; ảnh WebP lấy từ khung hình đầu. Video tự dừng khi ra khỏi màn hình hoặc bật chế độ giảm chuyển động.
 
+Điều hướng hồ sơ dùng chung thành phần từ màn hình xác minh giấy tờ. Trang chủ mở đầu bằng video trên nền đen, lưới cam hiện dần, sau đó ánh sáng và nội dung xuất hiện; chế độ giảm chuyển động bỏ qua hiệu ứng này.
+
 ## Hành vi prototype
 
 Đăng nhập bằng thông tin bất kỳ. Trạng thái được lưu trên trình duyệt và cập nhật thanh điều hướng; mật khẩu không được lưu. Hồ sơ có thể chỉnh sửa, chọn ngân hàng, lọc xe, lưu yêu thích, xem ảnh, gửi yêu cầu, chấm sao và tải tệp vào bản xem trước.
@@ -58,3 +60,7 @@ Video trang chủ: [Erik Mclean trên Pexels](https://www.pexels.com/video/a-whi
 Thanh toán và hủy yêu cầu phải giữ nút 1,6 giây bằng chuột, cảm ứng hoặc Enter/Space. Thả sớm sẽ dừng thao tác. Thông báo nằm trong trang; không sử dụng `alert()`, `confirm()` hoặc `prompt()`.
 
 Website không kết nối máy chủ xác thực, email/SMS, thanh toán hoặc đặt xe thực tế. Thông tin ngân hàng và giao dịch là dữ liệu mẫu; tệp chỉ được chọn trên thiết bị. Các commit giữ ở local để chủ dự án tự push.
+
+Các kiểm tra trình duyệt bao gồm đường đi từ tìm xe đến xác nhận thuê, hồ sơ và ngân hàng, giữ nút thanh toán/hủy, đối soát trả xe, tranh chấp, đặt lại xe, mã ưu đãi và xuất báo cáo CSV. Kiểm tra chữ ở 320, 375, 768, 1024 và 1440 px.
+
+Phân trang phản hồi lựa chọn trên bộ dữ liệu mẫu; chưa tải thêm trang từ máy chủ. Ảnh 360° và video kiểm định chưa có tài nguyên tương ứng, nên nút mở thông báo và hướng dẫn xem thư viện ảnh. Xuất báo cáo hiện dùng CSV tương thích Excel.
