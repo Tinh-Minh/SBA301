@@ -8,7 +8,7 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 <nav className="flex items-center gap-space-xs mb-space-md text-on-surface-variant font-body-sm text-body-sm">
 <Link className="hover:text-primary-container transition-colors" href="/">{"Trang chủ"}</Link>
 <span className="material-symbols-outlined text-base text-outline">{"chevron_right"}</span>
-<Link className="hover:text-primary-container transition-colors" href="/lien-he">{"Hồ sơ & Tài khoản"}</Link>
+<Link className="hover:text-primary-container transition-colors" href="/tai-khoan">{"Hồ sơ & Tài khoản"}</Link>
 <span className="material-symbols-outlined text-base text-outline">{"chevron_right"}</span>
 <span className="text-on-surface font-label-sm text-label-sm">{"Xác minh giấy tờ"}</span>
 </nav>
@@ -111,7 +111,7 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 </div>
 <div className="flex-wrap gap-y-2 mt-space-sm flex items-center justify-between pt-space-xs">
 <span className="font-body-sm text-body-sm text-on-surface-variant">{"Tải lên: 16/01/2024"}</span>
-<button className="ui-action font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
+<button className="ui-action font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật" data-action="preview-image">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
 </button>
 </div>
 </div>
@@ -133,7 +133,7 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 </div>
 <div className="flex-wrap gap-y-2 mt-space-sm flex items-center justify-between pt-space-xs">
 <span className="font-body-sm text-body-sm text-on-surface-variant">{"Tải lên: 16/01/2024"}</span>
-<button className="ui-action font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
+<button className="ui-action font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật" data-action="preview-image">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
 </button>
 </div>
 </div>
@@ -214,7 +214,7 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 </div>
 <div className="mt-space-sm flex items-center justify-between pt-space-xs">
 <span className="font-body-sm text-body-sm text-on-surface-variant">{"Độ nét: 98% (Đạt)"}</span>
-<button className="font-label-sm text-label-sm text-primary-container hover:underline" type="button" aria-label="Xem ảnh">{"Xem ảnh"}</button>
+<button className="font-label-sm text-label-sm text-primary-container hover:underline" type="button" aria-label="Xem ảnh" data-action="preview-image">{"Xem ảnh"}</button>
 </div>
 </div>
 
@@ -231,7 +231,7 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 </div>
 <div className="mt-space-sm flex items-center justify-between pt-space-xs">
 <span className="font-body-sm text-body-sm text-on-surface-variant">{"Mã QR: Đã quét hợp lệ"}</span>
-<button className="font-label-sm text-label-sm text-primary-container hover:underline" type="button" aria-label="Xem ảnh">{"Xem ảnh"}</button>
+<button className="font-label-sm text-label-sm text-primary-container hover:underline" type="button" aria-label="Xem ảnh" data-action="preview-image">{"Xem ảnh"}</button>
 </div>
 </div>
 </div>
