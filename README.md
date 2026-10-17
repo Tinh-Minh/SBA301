@@ -12,7 +12,6 @@ npm run dev
 Mở http://localhost:3000. Để chạy production và kiểm tra:
 
 ```sh
-npm run typecheck
 npm run build
 npm start
 npm test
@@ -41,9 +40,9 @@ Các trạng thái bổ sung: `/tai-khoan/xac-minh/thu-gon`, `/mau-thiet-ke/ngan
 ## Cấu trúc và thiết kế
 
 - `src/views/`: các màn hình React chạy trên trình duyệt.
-- `src/main.tsx`, `src/app.tsx`: khởi động React và bố cục dùng chung.
-- `src/router.tsx`: React Router, tiêu đề trang, chuyển hướng và khôi phục vị trí cuộn.
-- `src/lib/screens.ts`: đăng ký các màn hình tải riêng theo đường dẫn.
+- `src/main.jsx`, `src/app.jsx`: khởi động React và bố cục dùng chung.
+- `src/router.jsx`: React Router, tiêu đề trang, chuyển hướng và khôi phục vị trí cuộn.
+- `src/lib/screens.js`: đăng ký các màn hình tải riêng theo đường dẫn.
 - `src/components/`: điều hướng, trạng thái đăng nhập mẫu, tương tác, lightbox và nút giữ.
 - `src/styles/colors.css`: màu dùng chung qua biến RGB, hỗ trợ opacity Tailwind.
 - `src/styles/tokens.json`: ánh xạ Tailwind, typography, khoảng cách và bo góc.
