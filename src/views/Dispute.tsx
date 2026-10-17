@@ -266,12 +266,12 @@ export default function Dispute() { return (<div className="cardb-screen screen-
 <p className="text-[13px] text-[#666666]">{"Yêu cầu sẽ được ghi nhận khi hệ thống xác nhận gửi thành công. Việc gửi tranh chấp không tự động hủy đơn thuê hay hoàn tiền."}</p>
 </div>
 
-<div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
+<div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
 <button className="w-full sm:w-auto px-6 py-3 rounded-[12px] bg-[#FFFFFF] border border-[#E9E9E7] text-[#292929] text-[14px] font-semibold hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2 shadow-sm" type="button" aria-label="Quay lại chi tiết đơn">
 <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
 <span>{"Quay lại chi tiết đơn"}</span>
 </button>
-<button className="w-full sm:w-auto px-8 py-3.5 rounded-[12px] bg-[#FC6C26] hover:bg-[#e05e1e] text-white text-[16px] font-bold shadow-[0_4px_14px_rgba(252,108,38,0.35)] hover:shadow-[0_6px_20px_rgba(252,108,38,0.45)] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5" id="submit-dispute-btn" type="button" aria-label="Gửi yêu cầu xem xét" data-action="dispute">
+<button className="ui-action w-full sm:w-auto px-4 py-3.5 sm:px-6 rounded-[12px] bg-[#FC6C26] hover:bg-[#e05e1e] text-white text-[16px] font-bold shadow-[0_4px_14px_rgba(252,108,38,0.35)] hover:shadow-[0_6px_20px_rgba(252,108,38,0.45)] active:scale-[0.99] transition-all flex items-center justify-center gap-2.5" id="submit-dispute-btn" type="button" aria-label="Gửi yêu cầu xem xét" data-action="dispute">
 <span>{"Gửi yêu cầu xem xét"}</span>
 <span className="material-symbols-outlined text-[20px]">{"arrow_forward"}</span>
 </button>
@@ -334,7 +334,7 @@ export default function Dispute() { return (<div className="cardb-screen screen-
 </div>
 <div className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-[#ECFDF5] border border-[#10B981]/20 mt-1">
 <span className="text-[12px] text-[#666666] font-medium">{"Tiền thuê đã thanh toán:"}</span>
-<span className="text-[17px] font-bold text-[#10B981] whitespace-nowrap">{"3.700.000 đ"}</span>
+<span className="ui-money text-[17px] font-bold text-[#10B981] whitespace-nowrap">{"3.700.000 đ"}</span>
 </div>
 </div>
 </div>
@@ -349,11 +349,11 @@ export default function Dispute() { return (<div className="cardb-screen screen-
 <div className="flex flex-col gap-2.5 my-3">
 <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-[#FDE68A]/60">
 <span className="text-[13px] text-[#666666]">{"Tiền cọc đã ghi nhận (C10-A):"}</span>
-<span className="text-[16px] font-bold text-[#292929] whitespace-nowrap">{"15.000.000 đ"}</span>
+<span className="ui-money text-[16px] font-bold text-[#292929] whitespace-nowrap">{"15.000.000 đ"}</span>
 </div>
 <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-[#FDE68A]/60">
 <span className="text-[13px] text-[#666666]">{"Khoản khấu trừ đã xác nhận:"}</span>
-<span className="text-[14px] font-bold text-[#666666] whitespace-nowrap">{"0 đ"}</span>
+<span className="ui-money text-[14px] font-bold text-[#666666] whitespace-nowrap">{"0 đ"}</span>
 </div>
 <div className="flex items-center justify-between p-3 rounded-lg bg-white border border-[#FDE68A]/60">
 <span className="text-[13px] text-[#666666]">{"Trạng thái đối soát cọc:"}</span>
