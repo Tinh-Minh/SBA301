@@ -349,12 +349,12 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 </div>
 </div>
 
-<button className="w-full mt-4 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-extrabold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-orange-600/30 transition-all flex items-center justify-center gap-2 group" type="button" aria-label="TIẾN HÀNH ĐẶT XE NGAY">
-<span className="">{"TIẾN HÀNH ĐẶT XE NGAY"}</span>
+<Link href="/dat-xe/xac-nhan" className="w-full mt-4 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-extrabold text-sm py-3.5 px-4 rounded-xl shadow-lg shadow-orange-600/30 transition-all flex items-center justify-center gap-2 group" aria-label="Tiến hành đặt xe ngay">
+<span className="">{"Đặt xe ngay"}</span>
 <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
 <path d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
 </svg>
-</button>
+</Link>
 
 <div className="mt-3 text-center space-y-1">
 <p className="text-[11px] text-gray-500 font-medium">{"⚡ Giữ xe 0đ • Hủy miễn phí trước 24 giờ"}</p>
