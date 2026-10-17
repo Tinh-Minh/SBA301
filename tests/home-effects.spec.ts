@@ -30,16 +30,29 @@ test("Grid lights orange under cursor and fades on exit", async ({ page }) => {
   const bounds = (await grid.boundingBox())!;
   await page.mouse.move(bounds.x + 72, bounds.y + 240);
   await expect(grid).toHaveAttribute("data-glowing", "true");
-  await expect(page.locator(".grid-active-cell")).toHaveCSS("opacity", "1");
-  expect(await grid.evaluate(el => el.style.getPropertyValue("--cell-x"))).toBe("48px");
-  expect(await grid.evaluate(el => el.style.getPropertyValue("--cell-y"))).toBe("240px");
-  await expect.poll(() => page.locator(".grid-trail-cell").evaluateAll(cells => cells.some(cell => Number(getComputedStyle(cell).opacity) > 0))).toBe(true);
+  await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "1");
+  expect(await grid.evaluate(el => el.style.getPropertyValue("--grid-x"))).toBe("72px");
+  expect(await grid.evaluate(el => el.style.getPropertyValue("--grid-y"))).toBe("240px");
   const photo = (await page.locator(".hero-car-photo").boundingBox())!;
   await page.mouse.move(photo.x + photo.width / 2, photo.y + photo.height / 2);
   await expect(grid).toHaveAttribute("data-glowing", "true");
   await page.mouse.move(1, 1);
   await expect(grid).toHaveAttribute("data-glowing", "false");
-  await expect(page.locator(".grid-active-cell")).toHaveCSS("opacity", "0");
+  await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "0");
   await page.getByRole("button", { name: "Tìm xe ngay", exact: true }).click();
   await expect(page).toHaveURL(/kham-pha-xe\?location=/);
+});
+
+test("Grid follows page scrolling beneath a stationary cursor", async ({ page }) => {
+  await page.goto("/");
+  const grid = page.locator("#interactive-grid-zone");
+  await expect(grid).toHaveAttribute("data-glowing", "false");
+  await page.mouse.move(80, 350);
+  await expect(grid).toHaveAttribute("data-glowing", "true");
+  await page.evaluate(() => window.scrollTo({ top: 150, behavior: "instant" }));
+  await expect.poll(() => grid.evaluate(el => Number.parseFloat(el.style.getPropertyValue("--grid-y"))))
+    .toBeCloseTo(350 - (await grid.boundingBox())!.y, 0);
+  await page.evaluate(() => window.dispatchEvent(new Event("blur")));
+  await expect(grid).toHaveAttribute("data-glowing", "false");
+  await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "0");
 });
