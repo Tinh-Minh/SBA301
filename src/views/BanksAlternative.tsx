@@ -11,7 +11,7 @@ export default function BanksAlternative() { return (<div className="cardb-scree
 <section className="flex-1 w-full flex flex-col gap-6 min-w-0">
 
 <nav className="flex items-center gap-2 text-[12px] font-label-sm text-outline tracking-wider uppercase">
-<Link className="hover:text-on-surface transition-colors" href="/lien-he">{"Hồ sơ & Tài khoản CarDB"}</Link>
+<Link className="hover:text-on-surface transition-colors" href="/tai-khoan">{"Hồ sơ & Tài khoản CarDB"}</Link>
 <span>{"/"}</span>
 <span className="text-on-surface font-semibold">{"Quản lý tài khoản ngân hàng"}</span>
 </nav>
@@ -157,7 +157,7 @@ export default function BanksAlternative() { return (<div className="cardb-scree
 <p className="font-body-md text-body-md text-on-surface-variant mt-1 leading-relaxed max-w-3xl">{"\n                Tài khoản ngân hàng được sử dụng để nhận các khoản chi trả khi bạn cho thuê xe trên CarDB. Hệ thống tự động chuyển khoản tới tài khoản có đánh dấu mặc định theo chu kỳ thanh toán vào ngày 05 và ngày 20 hàng tháng.\n              "}</p>
 </div>
 </div>
-<Link className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-primary font-label-md text-label-md font-semibold whitespace-nowrap transition-colors shrink-0" href="/lien-he">
+<Link className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-primary font-label-md text-label-md font-semibold whitespace-nowrap transition-colors shrink-0" href="/tai-khoan/don-thue">
 <span>{"Xem doanh thu cho thuê xe"}</span>
 <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
 </Link>
