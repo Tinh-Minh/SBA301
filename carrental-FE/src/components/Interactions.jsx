@@ -1,3 +1,4 @@
+import { useToast } from "@/components/ToastProvider.jsx";
 import { Modal } from "@/components/Modal.jsx";
 import { cancelTrip } from "@/storage/tripStorage.js";
 import { useEffect, useRef, useState } from "react";
@@ -16,15 +17,10 @@ export function Interactions({ children, className = "" }) {
     const path = useLocation().pathname;
     const { login, logout } = useAuth();
     const root = useRef(null);
-    const toastTimer = useRef(null);
-    const [toast, setToast] = useState("");
+    const notify = useToast();
     const [modal, setModal] = useState(null);
     const [empty, setEmpty] = useState(false);
     const [rating, setRating] = useState(0);
-    function notify(text) { setToast(text); if (toastTimer.current)
-        clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(""), 4000); }
-    useEffect(() => () => { if (toastTimer.current)
-        clearTimeout(toastTimer.current); }, []);
     useEffect(() => {
         setModal(null);
         setEmpty(false);
@@ -423,7 +419,6 @@ export function Interactions({ children, className = "" }) {
         }}>
   {children}
   {empty ? <p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path === "/kham-pha-xe" ? "Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc." : "Chưa có chuyến xe ở trạng thái này."}</p> : null}
-  {toast ? <div role="status" className="app-toast fixed inset-x-4 bottom-5 z-[150] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-xl border border-border-light bg-text-primary px-5 py-4 text-sm text-white shadow-xl"><Icon name="check_circle" className="text-[20px] text-brand-accent"/>{toast}<button type="button" aria-label="Đóng thông báo" onClick={() => setToast("")}><Icon name="close" className="text-[18px]"/></button></div> : null}
   {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { cancelTrip("CDB-ORD-20261026-904"); setModal(null); navigate("/tai-khoan/don-thue?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy đặt xe</HoldButton></div> : null}</Modal> : null}
  </div>;
 }

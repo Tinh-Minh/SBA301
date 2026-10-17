@@ -1,3 +1,4 @@
+import { useToast } from "@/components/ToastProvider.jsx";
 import { useState } from "react";
 import { Link, useSearchParams } from "react-router";
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
@@ -7,14 +8,18 @@ import { HoldButton } from "@/components/HoldButton.jsx";
 import { trips, tripStatuses, isPastTrip, formatTripDate as date, formatTripMoney as money, downloadTripReport, tripTimeRemaining } from "@/utils/trips.js";
 import { readTripCancellations, cancelTrip } from "@/storage/tripStorage.js";
 
-const control = "ui-action inline-flex items-center justify-center gap-1.5 rounded-lg border border-border-light bg-white px-3 py-2 text-xs font-semibold text-text-primary transition-colors hover:border-brand-accent/40 hover:text-brand-accent";
+const controlBase = "ui-action inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition-colors";
+const control = `${controlBase} border-border-light bg-white text-text-primary hover:border-brand-accent/40 hover:text-brand-accent`;
+const primaryControl = `${controlBase} border-brand-accent bg-brand-accent text-white hover:bg-primary-hover hover:text-white`;
+const dangerControl = `${controlBase} border-error/20 bg-white text-error hover:bg-error-container/40`;
+const selectedControl = `${controlBase} border-brand-accent/20 bg-accent-soft text-brand-accent`;
 const field = "w-full min-w-0 rounded-lg border border-border-light bg-white px-3 py-2.5 text-xs text-text-primary outline-none focus:border-brand-accent";
 const pageSize = 4;
 
 export function TripManager({ history = false }) {
     const [params, setParams] = useSearchParams();
     const [cancelled, setCancelled] = useState(readTripCancellations);
-    const [notice, setNotice] = useState(() => params.has("cancelled") ? "Đã hủy yêu cầu thuê xe." : "");
+    const notify = useToast();
     const [modal, setModal] = useState(null);
     const records = trips.map(trip => cancelled.includes(trip.id) ? { ...trip, status: "cancelled", cancellationFee: 0, note: "Đã hủy yêu cầu. Không phát sinh phí hủy trong bản xem trước." } : trip);
     const collection = history ? records.filter(isPastTrip) : records;
@@ -46,19 +51,18 @@ export function TripManager({ history = false }) {
     function detailUrl(id) { const next = new URLSearchParams(params); next.set("order", id); return `?${next}`; }
     function show(kind, trip) { setModal({ kind, id: trip.id }); }
     async function copy(trip) {
-        try { await navigator.clipboard.writeText(trip.id); setNotice(`Đã sao chép: ${trip.id}`); }
-        catch { setNotice(`Mã đơn: ${trip.id}`); }
+        try { await navigator.clipboard.writeText(trip.id); notify(`Đã sao chép: ${trip.id}`); }
+        catch { notify(`Mã đơn: ${trip.id}`); }
     }
     function confirmCancellation() {
         const saved = cancelTrip(selectedTrip.id);
         setCancelled(current => [...new Set([...current, selectedTrip.id])]);
         closeModal();
-        setNotice(saved ? "Đã hủy yêu cầu thuê xe. Danh sách và số lượng đã được cập nhật." : "Đã hủy trong phiên hiện tại. Trình duyệt không cho phép lưu thay đổi.");
+        notify(saved ? "Đã hủy yêu cầu thuê xe. Danh sách và số lượng đã được cập nhật." : "Đã hủy trong phiên hiện tại. Trình duyệt không cho phép lưu thay đổi.");
     }
-    function exportReport() { downloadTripReport(filtered); setNotice(`Đã xuất ${filtered.length} chuyến xe sang CSV.`); }
+    function exportReport() { downloadTripReport(filtered); notify(`Đã xuất ${filtered.length} chuyến xe sang CSV.`); }
     return <div data-managed-interactions className={`cardb-screen ${history ? "screen-history" : "screen-accountorders"} bg-background font-body-md text-body-md text-on-surface antialiased`}>
-      <ProfileLayout active={history ? "history" : "orders"} title={history ? "Lịch sử chuyến đi" : "Đơn thuê xe"} description={history ? "Hóa đơn, biên bản bàn giao, hoàn cọc và đánh giá của những chuyến đi đã kết thúc." : "Theo dõi yêu cầu, thanh toán, nhận xe và hành trình của bạn tại một nơi."} actions={<div className="flex flex-wrap gap-2"><button type="button" className={control} onClick={() => { setCancelled(readTripCancellations()); setNotice("Đã làm mới danh sách chuyến xe."); }}><Icon name="refresh" className="text-base"/>Làm mới</button><button type="button" className={control} onClick={exportReport}><Icon name="download" className="text-base"/>Xuất CSV</button></div>}>
-        {notice ? <div role="status" className="flex items-start justify-between gap-3 rounded-lg border border-brand-accent/20 bg-accent-soft px-4 py-3 text-xs text-text-primary"><span>{notice}</span><button type="button" aria-label="Đóng thông báo" className="shrink-0" onClick={() => setNotice("")}><Icon name="close" className="text-base"/></button></div> : null}
+      <ProfileLayout active={history ? "history" : "orders"} title={history ? "Lịch sử chuyến đi" : "Đơn thuê xe"} actions={<div className="flex flex-wrap gap-2"><button type="button" className={control} onClick={() => { setCancelled(readTripCancellations()); notify("Đã làm mới danh sách chuyến xe."); }}><Icon name="refresh" className="text-base"/>Làm mới</button><button type="button" className={control} onClick={exportReport}><Icon name="download" className="text-base"/>Xuất CSV</button></div>}>
         <div className="space-y-4 rounded-xl bg-white p-4 shadow-sm sm:p-6">
           <div className="trip-status-tabs" aria-label="Lọc trạng thái chuyến đi">
             {["all", ...statuses].map(key => <button type="button" key={key} aria-pressed={status === key} onClick={() => update({ status: key })} className="trip-status-tab ui-action">
@@ -97,8 +101,8 @@ export function TripManager({ history = false }) {
               {trip.status === "confirmed" && !trip.paid && trip.paymentDeadline ? <p className="mt-3 text-xs text-status-amber-strong">Hạn thanh toán: <strong className="whitespace-nowrap">{trip.paymentDeadline}</strong></p> : null}
               <p className="mt-3 text-xs leading-relaxed text-text-secondary">{trip.note}</p>
               <div className="relative z-20 mt-4 flex flex-wrap gap-2">
-                {trip.status === "confirmed" && !trip.paid ? <Link className={`${control} border-brand-accent bg-brand-accent text-white hover:bg-primary-hover hover:text-white`} to={`/thanh-toan?order=${trip.id}`}>Thanh toán ngay<Icon name="arrow_forward" className="text-base"/></Link> : null}
-                {["pending", "confirmed"].includes(trip.status) ? <button type="button" className={`${control} text-error hover:text-error`} onClick={() => show("cancel", trip)}>Hủy yêu cầu</button> : null}
+                {trip.status === "confirmed" && !trip.paid ? <Link className={primaryControl} to={`/thanh-toan?order=${trip.id}`}>Thanh toán ngay<Icon name="arrow_forward" className="text-base"/></Link> : null}
+                {["pending", "confirmed"].includes(trip.status) ? <button type="button" className={dangerControl} onClick={() => show("cancel", trip)}>Hủy yêu cầu</button> : null}
                 {trip.status === "active" ? <><Link className={control} to={`/ban-giao/nhan-xe?order=${trip.id}`}><Icon name="description" className="text-base"/>Vị trí & Biên nhận</Link><a className={control} href="tel:19008899"><Icon name="call" className="text-base"/>Hỗ trợ khẩn cấp</a></> : null}
                 {trip.status === "confirmed" && trip.paid ? <Link className={control} to={`/ban-giao/nhan-xe?order=${trip.id}`}>Biên bản nhận xe</Link> : null}
                 {trip.status === "completed" ? <><button type="button" className={control} onClick={() => show("invoice", trip)}><Icon name="receipt_long" className="text-base"/>Tải hóa đơn VAT</button><button type="button" className={control} onClick={() => show("return", trip)}>Biên bản trả xe C10-B</button>{trip.review ? <button type="button" className={control} onClick={() => show("review", trip)}>Xem đánh giá {trip.review}</button> : <Link className={control} to={`/danh-gia?order=${trip.id}`}>★ Viết đánh giá</Link>}<Link className={control} to={trip.car.startsWith("VinFast VF 8") ? "/xe/vinfast-vf8-plus-2024" : `/kham-pha-xe?car=${encodeURIComponent(trip.car)}`}>Đặt lại xe này</Link></> : null}
@@ -108,14 +112,14 @@ export function TripManager({ history = false }) {
           </article>)}
           {!visible.length ? <div role="status" className="rounded-xl border border-dashed border-border-light bg-white p-8 text-center"><Icon name="travel_explore" className="mb-3 text-3xl text-brand-accent"/><h2 className="text-base font-semibold">Chưa có chuyến xe phù hợp</h2><p className="mt-2 text-xs text-text-secondary">Đổi trạng thái hoặc xóa bộ lọc để xem các chuyến xe khác.</p><button type="button" className={`${control} mt-4`} onClick={() => setParams({})}>Xóa bộ lọc</button></div> : null}
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-text-secondary"><p>Hiển thị {filtered.length ? (page - 1) * pageSize + 1 : 0}–{Math.min(page * pageSize, filtered.length)} / {filtered.length} chuyến xe</p><nav aria-label="Phân trang chuyến xe" className="flex items-center gap-1"><button type="button" aria-label="Trang trước" disabled={page === 1} onClick={() => update({ page: String(page - 1) })} className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="chevron_left" className="text-base"/></button>{Array.from({ length: pages }, (_, i) => <button type="button" key={i} aria-label={`Trang ${i + 1}`} aria-current={page === i + 1 ? "page" : undefined} onClick={() => update({ page: String(i + 1) })} className={`${control} ${page === i + 1 ? "bg-accent-soft text-brand-accent" : ""}`}>{i + 1}</button>)}<button type="button" aria-label="Trang sau" disabled={page === pages} onClick={() => update({ page: String(page + 1) })} className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="chevron_right" className="text-base"/></button></nav></div>
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-text-secondary"><p>Hiển thị {filtered.length ? (page - 1) * pageSize + 1 : 0}–{Math.min(page * pageSize, filtered.length)} / {filtered.length} chuyến xe</p><nav aria-label="Phân trang chuyến xe" className="flex items-center gap-1"><button type="button" aria-label="Trang trước" disabled={page === 1} onClick={() => update({ page: String(page - 1) })} className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="chevron_left" className="text-base"/></button>{Array.from({ length: pages }, (_, i) => <button type="button" key={i} aria-label={`Trang ${i + 1}`} aria-current={page === i + 1 ? "page" : undefined} onClick={() => update({ page: String(i + 1) })} className={page === i + 1 ? selectedControl : control}>{i + 1}</button>)}<button type="button" aria-label="Trang sau" disabled={page === pages} onClick={() => update({ page: String(page + 1) })} className={`${control} disabled:cursor-not-allowed disabled:opacity-40`}><Icon name="chevron_right" className="text-base"/></button></nav></div>
       </ProfileLayout>
       {selectedTrip ? <Modal title={selected.kind === "cancel" ? "Hủy yêu cầu thuê xe" : selected.kind === "invoice" ? "Hóa đơn thuê xe" : selected.kind === "return" ? "Biên bản trả xe C10-B" : selected.kind === "review" ? "Đánh giá chuyến đi" : "Chi tiết đơn thuê"} close={closeModal}><div data-managed-interactions data-trip-document={selected.kind === "invoice" || selected.kind === "return" ? "true" : undefined} className="space-y-4">
         <div><p className="break-all font-mono text-xs text-text-secondary">{selectedTrip.id}</p><h3 className="mt-2 truncate text-lg font-bold" title={selectedTrip.car}>{selectedTrip.car}</h3><span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${tripStatuses[selectedTrip.status].tone}`}>{tripStatuses[selectedTrip.status].label}</span></div>
         {selected.kind === "cancel" ? <><p className="text-sm text-text-secondary">Giữ nút để hủy yêu cầu của xe này. Thả tay trước khi đủ 1,6 giây để giữ nguyên chuyến đi.</p><HoldButton danger onComplete={confirmCancellation}>Giữ để hủy đặt xe</HoldButton></> : <>
           <dl className="space-y-3 text-sm"><div><dt className="text-xs text-text-secondary">Thời gian thuê</dt><dd className="mt-1">{date(selectedTrip.start)} — {date(selectedTrip.end)}</dd></div><div><dt className="text-xs text-text-secondary">Địa điểm</dt><dd className="mt-1">{selectedTrip.location}</dd></div><div><dt className="text-xs text-text-secondary">Chủ xe</dt><dd>{selectedTrip.owner} · ★ {selectedTrip.rating}</dd></div><div className="flex flex-wrap justify-between gap-2 border-t border-border-light pt-3"><dt>Tiền thuê</dt><dd className="ui-money font-semibold">{money(selectedTrip.total)}</dd></div>{selectedTrip.discount ? <div className="flex flex-wrap justify-between gap-2 text-brand-accent"><dt>Ưu đãi CARDBWELCOME</dt><dd className="ui-money">Đã giảm {money(selectedTrip.discount)}</dd></div> : null}<div className="flex flex-wrap justify-between gap-2"><dt>Cọc thế chấp</dt><dd className="ui-money">{money(selectedTrip.deposit)}</dd></div>{selectedTrip.refund ? <div><dt className="font-medium text-status-success-ink">Đã hoàn cọc 100%</dt><dd className="mt-1 text-xs text-text-secondary">{selectedTrip.refund}</dd></div> : null}{selectedTrip.distance ? <div><dt>Quãng đường</dt><dd>{selectedTrip.distance}</dd></div> : null}</dl>
           {selected.kind === "review" ? <p className="rounded-lg bg-accent-soft p-4 text-sm">★ {selectedTrip.review} / 5 · Xe sạch, nhận xe đúng giờ, chủ xe nhiệt tình.</p> : <p className="text-sm leading-relaxed text-text-secondary">{selectedTrip.note}</p>}
-          <div className="flex flex-wrap gap-2">{["invoice", "return"].includes(selected.kind) ? <button type="button" className={control} onClick={() => window.print()}><Icon name="print" className="text-base"/>In / Lưu PDF</button> : null}{selectedTrip.status === "confirmed" && !selectedTrip.paid ? <Link className={control} to={`/thanh-toan?order=${selectedTrip.id}`}>Thanh toán ngay</Link> : null}{selectedTrip.id === "CDB-ORD-20261026-904" ? <Link className={control} to="/don-thue/CDB-ORD-20261026-904">Xem tiến trình đơn thuê</Link> : null}</div>
+          <div className="flex flex-wrap gap-2">{["invoice", "return"].includes(selected.kind) ? <button type="button" className={control} onClick={() => window.print()}><Icon name="print" className="text-base"/>In / Lưu PDF</button> : null}{selectedTrip.status === "confirmed" && !selectedTrip.paid ? <Link className={primaryControl} to={`/thanh-toan?order=${selectedTrip.id}`}>Thanh toán ngay</Link> : null}{selectedTrip.id === "CDB-ORD-20261026-904" ? <Link className={control} to="/don-thue/CDB-ORD-20261026-904">Xem tiến trình đơn thuê</Link> : null}</div>
         </>}
       </div></Modal> : null}
     </div>;
