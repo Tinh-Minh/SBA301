@@ -64,10 +64,13 @@ export function TripManager({ history = false }) {
     return <div data-managed-interactions className={`cardb-screen ${history ? "screen-history" : "screen-accountorders"} bg-background font-body-md text-body-md text-on-surface antialiased`}>
       <ProfileLayout active={history ? "history" : "orders"} title={history ? "Lịch sử chuyến đi" : "Đơn thuê xe"}>
         <div className="space-y-4 rounded-xl bg-white p-4 shadow-sm sm:p-6">
-          <div className="trip-status-tabs" aria-label="Lọc trạng thái chuyến đi">
+          <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="trip-status-tabs min-w-0 flex-1" aria-label="Lọc trạng thái chuyến đi">
             {["all", ...statuses].map(key => <button type="button" key={key} aria-pressed={status === key} onClick={() => update({ status: key })} className="trip-status-tab ui-action">
               {key === "all" ? "Tất cả" : tripStatuses[key].label} ({key === "all" ? collection.length : counts[key]})
             </button>)}
+          </div>
+          <div data-trip-toolbar className="flex shrink-0 justify-end gap-2 pb-1 whitespace-nowrap"><button type="button" className={control} onClick={() => { setCancelled(readTripCancellations()); notify("Đã làm mới danh sách chuyến xe."); }}><Icon name="refresh" className="text-base"/>Làm mới</button><button type="button" className={control} onClick={exportReport}><Icon name="download" className="text-base"/>Xuất CSV</button></div>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <label className="min-w-0 sm:col-span-2 xl:col-span-1"><span className="mb-1.5 block text-xs font-semibold">Tìm chuyến xe</span><input type="search" aria-label="Tìm theo mã đơn hoặc tên xe" placeholder="Mã đơn hoặc tên xe" value={query} onChange={event => update({ q: event.target.value }, true)} className={field}/></label>
@@ -75,7 +78,6 @@ export function TripManager({ history = false }) {
             <label className="min-w-0"><span className="mb-1.5 block text-xs font-semibold">Sắp xếp</span><select aria-label="Sắp xếp chuyến xe" className={field} value={sort} onChange={event => update({ sort: event.target.value })}><option value="newest">Mới nhất</option><option value="oldest">Cũ nhất</option><option value="pickup">Ngày nhận xe</option><option value="price">Giá trị cao nhất</option></select></label>
           </div>
         </div>
-        <div data-trip-toolbar className="flex flex-wrap justify-end gap-2"><button type="button" className={control} onClick={() => { setCancelled(readTripCancellations()); notify("Đã làm mới danh sách chuyến xe."); }}><Icon name="refresh" className="text-base"/>Làm mới</button><button type="button" className={control} onClick={exportReport}><Icon name="download" className="text-base"/>Xuất CSV</button></div>
         <div className="space-y-4">
           {visible.map(trip => <article key={trip.id} data-trip-card data-trip-status={trip.status} data-trip-id={trip.id} className="trip-card group relative isolate overflow-hidden rounded-xl border border-border-light bg-white shadow-sm transition-shadow hover:shadow-md">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-light bg-section-bg/60 px-4 py-3">

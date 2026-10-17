@@ -27,7 +27,7 @@ for (const width of [375, 1440]) {
 test("Returning through profile navigation and reloading restores each page position", async ({ page }) => {
     await page.goto("/tai-khoan/don-thue");
     await expect(page.locator("[data-trip-toolbar]")).toBeVisible();
-    expect(await page.locator("[data-trip-toolbar]").evaluate(el => Boolean(el.nextElementSibling.querySelector("[data-trip-card]")))).toBe(true);
+    expect(await page.locator("[data-trip-toolbar]").evaluate(el => el.previousElementSibling.matches(".trip-status-tabs"))).toBe(true);
     await scrollTo(page, 320);
     await page.locator('[data-purpose="account-sidebar"] a[href="/tai-khoan/lich-su"]').dispatchEvent("click");
     await expect(page).toHaveURL(/tai-khoan\/lich-su$/);
