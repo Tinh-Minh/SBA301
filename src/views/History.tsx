@@ -132,7 +132,7 @@ export default function History() { return (<div className="cardb-screen screen-
 
 <section className="lg:col-span-8 xl:col-span-9 flex flex-col gap-space-lg">
 
-<div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div className="flex flex-col xl:flex-row xl:items-end justify-between gap-space-md">
 <div>
 <div className="flex items-center gap-space-xs mb-1">
 <span className="w-2 h-2 rounded-full bg-primary-container"></span>
@@ -141,8 +141,8 @@ export default function History() { return (<div className="cardb-screen screen-
 <h1 className="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">{"Lịch sử chuyến đi"}</h1>
 <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-1">{"\n                Tra cứu lịch sử các chuyến thuê đã hoàn tất, xuất hóa đơn VAT điện tử và quản lý biên bản bàn giao xe chính xác theo chuẩn C10-B.\n              "}</p>
 </div>
-<div className="flex items-center gap-space-sm self-start md:self-end">
-<button className="px-space-md py-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Xuất báo cáo PDF / Excel">
+<div className="flex-wrap gap-y-2 flex items-center gap-space-sm self-start xl:self-end">
+<button className="ui-action px-space-md py-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Xuất báo cáo PDF / Excel">
 <span className="material-symbols-outlined text-[18px]">{"download"}</span>
 <span className="">{"Xuất báo cáo PDF / Excel"}</span>
 </button>
@@ -472,10 +472,10 @@ export default function History() { return (<div className="cardb-screen screen-
 
 <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-space-md mt-space-sm">
 <div className="font-body-sm text-body-sm text-on-surface-variant text-center sm:text-left">{"\n              Hiển thị "}<span className="font-technical-data text-on-surface font-bold">{"1 - 3"}</span>{" của "}<span className="font-technical-data text-on-surface font-bold">{"10"}</span>{" chuyến xe đã thực hiện\n            "}</div>
-<div className="flex items-center gap-space-xs">
-<button className="px-3.5 py-1.5 rounded-lg bg-surface-container-low text-outline hover:text-on-surface font-label-md text-label-md flex items-center gap-1 cursor-not-allowed opacity-50" disabled={true} type="button" aria-label="Trước">
+<div className="flex-wrap gap-y-2 flex items-center gap-space-xs">
+<button className="pagination-arrow px-3.5 py-1.5 rounded-lg bg-surface-container-low text-outline hover:text-on-surface font-label-md text-label-md flex items-center gap-1 cursor-not-allowed opacity-50" disabled={true} type="button" aria-label="Trước">
 <span className="material-symbols-outlined text-[18px]">{"chevron_left"}</span>
-<span className="">{"Trước"}</span>
+<span className="hidden sm:inline">{"Trước"}</span>
 </button>
 <div className="flex items-center gap-1 px-1">
 <button className="w-8 h-8 rounded-lg bg-primary-container text-on-primary font-technical-data text-technical-data font-bold shadow-sm" type="button" aria-label="1">{"1"}</button>
@@ -484,8 +484,8 @@ export default function History() { return (<div className="cardb-screen screen-
 <span className="px-1 text-outline">{"..."}</span>
 <button className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-technical-data text-technical-data font-semibold" type="button" aria-label="4">{"4"}</button>
 </div>
-<button className="px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1 transition-colors" type="button" aria-label="Tiếp theo">
-<span className="">{"Tiếp theo"}</span>
+<button className="pagination-arrow ui-action px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1 transition-colors" type="button" aria-label="Tiếp theo">
+<span className="hidden sm:inline">{"Tiếp theo"}</span>
 <span className="material-symbols-outlined text-[18px]">{"chevron_right"}</span>
 </button>
 </div>
