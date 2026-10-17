@@ -17,7 +17,7 @@ test("Account dropdown supports keyboard navigation, Escape, and outside clicks"
     await expect(toggle).toBeFocused();
     await toggle.click();
     await expect(menu).toBeVisible();
-    await page.locator("main h1").click();
+    await page.locator(".profile-columns").click({ position: { x: 5, y: 5 } });
     await expect(menu).toBeHidden();
 });
 

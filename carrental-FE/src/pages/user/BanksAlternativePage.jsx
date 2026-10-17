@@ -1,10 +1,7 @@
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
 import { Link } from "react-router";
 export default function BanksAlternativePage() {
-    return (<div className="cardb-screen screen-banksalternative bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold tracking-wide hover:bg-primary transition-all duration-200 active:scale-95 shadow-md shrink-0" type="button" aria-label="Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
-        <span className="material-symbols-outlined text-[20px]">{"add"}</span>
-        <span>{"Thêm tài khoản ngân hàng"}</span>
-        </button></>}>
+    return (<div className="cardb-screen screen-banksalternative bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="banks" title="Tài khoản ngân hàng">
 
 
 
@@ -126,6 +123,11 @@ export default function BanksAlternativePage() {
     </div>
     </div>
     </div>
+
+    <div data-purpose="add-bank-action" className="flex justify-start"><button className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold tracking-wide hover:bg-primary transition-all duration-200 active:scale-95 shadow-md shrink-0" type="button" aria-label="Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
+        <span className="material-symbols-outlined text-[20px]">{"add"}</span>
+        <span>{"Thêm tài khoản ngân hàng"}</span>
+        </button></div>
 
     <div className="w-full bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_12px_rgb(var(--color-cinematic)_/_0.03)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
     <div className="flex items-start gap-4">

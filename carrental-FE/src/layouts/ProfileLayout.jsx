@@ -1,15 +1,7 @@
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { ProfileSidebar } from "@/components/ProfileSidebar.jsx";
-const labels = {
-    account: "Hồ sơ cá nhân",
-    verification: "Hồ sơ định danh eKYC",
-    driver: "Hồ sơ tài xế",
-    banks: "Tài khoản ngân hàng",
-    orders: "Quản lý đơn thuê",
-    history: "Lịch sử chuyến đi",
-};
-export function ProfileLayout({ active, title, description, actions, children }) {
+export function ProfileLayout({ active, title, actions, children }) {
     return <main className="profile-layout w-full bg-background pt-20">
     <div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg">
       <nav aria-label="Đường dẫn hồ sơ" className="flex flex-wrap items-center gap-space-xs mb-space-md text-on-surface-variant font-body-sm text-body-sm">
@@ -19,17 +11,9 @@ export function ProfileLayout({ active, title, description, actions, children })
         <Icon name="chevron_right" className="text-base text-outline"/>
         <span aria-current="page" className="text-on-surface font-label-sm text-label-sm">{title}</span>
       </nav>
-      <header className="profile-heading flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-xl">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-space-xs mb-space-xs">
-            <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm uppercase tracking-wider">{labels[active]}</span>
-            <span className="size-1.5 rounded-full bg-primary-container"/>
-            <span className="font-technical-data text-technical-data text-on-surface-variant">Thành viên cao cấp</span>
-          </div>
-          <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">{title}</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant mt-space-xs max-w-2xl">{description}</p>
-        </div>
-        {actions ? <div className="profile-heading-actions shrink-0 md:max-w-[35%]">{actions}</div> : null}
+      <header className="profile-heading relative flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-lg">
+        <h1 className="sr-only font-headline-lg text-headline-lg text-on-surface tracking-tight">{title}</h1>
+        {actions ? <div className="profile-heading-actions flex w-full flex-wrap justify-end gap-2">{actions}</div> : null}
       </header>
       <div className="profile-columns grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
         <ProfileSidebar active={active} className="lg:col-span-4 xl:col-span-3"/>

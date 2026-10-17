@@ -6,12 +6,7 @@ export default function BanksPage() {
 
 
 
-    <ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center space-x-2 bg-brand-accent hover:bg-primary-hover text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-accent/20 transition-all flex-shrink-0 cursor-pointer" type="button" aria-label="+ Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
-        <svg className="w-4 h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"></path>
-        </svg>
-        <span>{"+ Thêm tài khoản ngân hàng"}</span>
-        </button></>}>
+    <ProfileLayout active="banks" title="Tài khoản ngân hàng">
 
 
     <div className="flex items-center justify-between pt-2 border-t border-border-light">
@@ -138,6 +133,13 @@ export default function BanksPage() {
     </article>
 
     </div>
+
+    <div data-purpose="add-bank-action" className="flex justify-start"><button className="inline-flex items-center justify-center space-x-2 bg-brand-accent hover:bg-primary-hover text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-brand-accent/20 transition-all flex-shrink-0 cursor-pointer" type="button" aria-label="+ Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
+        <svg className="w-4 h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"></path>
+        </svg>
+        <span>{"+ Thêm tài khoản ngân hàng"}</span>
+        </button></div>
 
     <div className="bg-section-bg border border-border-light rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4" data-purpose="payout-policy-banner">
     <div className="flex items-start space-x-3.5">

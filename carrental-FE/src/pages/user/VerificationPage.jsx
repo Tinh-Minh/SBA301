@@ -1,16 +1,7 @@
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
 import { Link } from "react-router";
 export default function VerificationPage() {
-    return (<div className="cardb-screen screen-verification bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="verification" title="Xác minh giấy tờ" description="Cập nhật và quản lý các giấy tờ định danh pháp lý để đủ điều kiện kích hoạt dịch vụ tự lái độc quyền và bảo hiểm vật chất cao cấp trên CarDB." actions={<><div className="flex items-center gap-space-sm bg-surface-container-low px-space-md py-space-sm rounded-xl">
-        <div className="relative flex items-center justify-center">
-        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-        <span className="absolute w-4 h-4 rounded-full bg-emerald-400/40 animate-ping"></span>
-        </div>
-        <div className="flex flex-col">
-        <span className="font-label-sm text-label-sm text-on-surface-variant uppercase">{"Hệ thống thẩm định"}</span>
-        <span className="font-technical-data text-technical-data text-on-surface">{"AI Auto-OCR Hoạt động 24/7"}</span>
-        </div>
-        </div></>}>
+    return (<div className="cardb-screen screen-verification bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="verification" title="Xác minh giấy tờ">
 
     <div className="space-y-3" data-purpose="verification-documents">
 
@@ -256,6 +247,7 @@ export default function VerificationPage() {
     <span className="material-symbols-outlined text-[20px]">{"lock"}</span>
     </div>
     <div className="text-xs text-on-surface-variant leading-relaxed">
+    <div data-purpose="verification-ocr-status" className="mb-2 flex flex-wrap items-center gap-2 text-xs font-semibold text-text-primary"><span className="size-2 shrink-0 rounded-full bg-status-success"/><span>AI Auto-OCR hoạt động 24/7</span></div>
     <strong className="font-semibold text-on-surface">{"Cam kết bảo mật dữ liệu định danh theo Nghị định 13/2023/NĐ-CP:"}</strong>{"\n            Mọi thông tin giấy tờ tùy thân của khách hàng được CarDB lưu trữ tại trung tâm dữ liệu đạt chuẩn Tier 3 và được mã hóa đầu cuối. Thông tin chỉ được sử dụng cho mục đích lập hợp đồng thuê xe tự lái và xuất trình với cơ quan công an / đơn vị bảo hiểm khi phát sinh sự cố giao thông.\n          "}</div>
     </div>
 
