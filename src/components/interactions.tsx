@@ -19,11 +19,11 @@ function Modal({title,close,children}:{title:string;close:()=>void;children:Reac
 
 export function Interactions({children}:{children:ReactNode}){
  const router=useRouter();const path=usePathname();const {login,logout}=useAuth();
- const root=useRef<HTMLDivElement>(null);const toastTimer=useRef<ReturnType<typeof setTimeout>|null>(null);const glowFrame=useRef<number|null>(null);
+ const root=useRef<HTMLDivElement>(null);const toastTimer=useRef<ReturnType<typeof setTimeout>|null>(null);
  const [toast,setToast]=useState("");const [modal,setModal]=useState<{kind:"cancel"|"image"|"info";title:string;body?:string;image?:string}|null>(null);
  const [empty,setEmpty]=useState(false);const [rating,setRating]=useState(0);
  function notify(text:string){setToast(text);if(toastTimer.current)clearTimeout(toastTimer.current);toastTimer.current=setTimeout(()=>setToast(""),4000);}
- useEffect(()=>()=>{if(toastTimer.current)clearTimeout(toastTimer.current);if(glowFrame.current)cancelAnimationFrame(glowFrame.current);},[]);
+ useEffect(()=>()=>{if(toastTimer.current)clearTimeout(toastTimer.current);},[]);
  useEffect(()=>{
   setModal(null);setEmpty(false);setRating(0);
   const params=new URLSearchParams(window.location.search);if(params.get("filter"))filterCars(params.get("filter")!);
@@ -123,11 +123,7 @@ export function Interactions({children}:{children:ReactNode}){
   if(path==="/dat-xe/xac-nhan"){router.push("/dat-xe/thanh-cong");return;}
   notify("Đã lưu thông tin trong bản xem trước.");
  }
- return <div ref={root} onClick={click} onSubmit={submit} onPointerMove={event=>{
-  const zone=(event.target as HTMLElement).closest<HTMLElement>("#interactive-grid-zone");if(!zone||event.pointerType!=="mouse")return;
-  const bounds=zone.getBoundingClientRect(),x=event.clientX-bounds.left,y=event.clientY-bounds.top;
-  if(glowFrame.current)cancelAnimationFrame(glowFrame.current);glowFrame.current=requestAnimationFrame(()=>{zone.style.setProperty("--mouse-x",`${x}px`);zone.style.setProperty("--mouse-y",`${y}px`);});
- }} onInput={event=>{const el=event.target as HTMLTextAreaElement;if(["review-content","dispute-detail"].includes(el.id))setText("char-counter",`${el.value.length}/1000`);}} onChange={event=>{const el=event.target as HTMLInputElement;if(el.type==="file")notify(`Đã chọn ${el.files?.length??0} tệp.`);}} onKeyDown={event=>{
+ return <div ref={root} onClick={click} onSubmit={submit} onInput={event=>{const el=event.target as HTMLTextAreaElement;if(["review-content","dispute-detail"].includes(el.id))setText("char-counter",`${el.value.length}/1000`);}} onChange={event=>{const el=event.target as HTMLInputElement;if(el.type==="file")notify(`Đã chọn ${el.files?.length??0} tệp.`);}} onKeyDown={event=>{
   const el=event.target as HTMLElement;if(el.getAttribute("role")==="button"&&["Enter"," "].includes(event.key)){event.preventDefault();el.click();}
   if(event.key==="Escape"&&path.includes("ngan-hang/"))router.push("/tai-khoan/ngan-hang");
  }}>

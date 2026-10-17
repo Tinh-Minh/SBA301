@@ -34,10 +34,11 @@
 .toast { animation:toast-in .2s ease-out; }
 @keyframes toast-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .square-grid-container { position:relative;background-color:#F7F7F5;background-image:linear-gradient(to right,rgba(233,233,231,.8) 1px,transparent 1px),linear-gradient(to bottom,rgba(233,233,231,.8) 1px,transparent 1px);background-size:32px 32px; }
-.grid-glow-canvas,.grid-radial-glow { position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity .3s; }
-.grid-glow-canvas { background-image:linear-gradient(to right,rgba(252,108,38,.5) 1px,transparent 1px),linear-gradient(to bottom,rgba(252,108,38,.5) 1px,transparent 1px);background-size:32px 32px;mask-image:radial-gradient(circle 180px at var(--mouse-x,-999px) var(--mouse-y,-999px),black 20%,transparent 80%); }
-.grid-radial-glow { background:radial-gradient(circle 160px at var(--mouse-x,-999px) var(--mouse-y,-999px),rgba(252,108,38,.2),transparent 70%); }
-.square-grid-container:hover .grid-glow-canvas,.square-grid-container:hover .grid-radial-glow { opacity:1; }
+.grid-glow-canvas,.grid-radial-glow,.grid-active-cell { position:absolute;inset:0;pointer-events:none;z-index:1;opacity:0;transition:opacity .35s ease; }
+.grid-glow-canvas { background-image:linear-gradient(to right,rgb(var(--color-brand-accent) / .9) 1px,transparent 1px),linear-gradient(to bottom,rgb(var(--color-brand-accent) / .9) 1px,transparent 1px);background-size:32px 32px;mask-image:radial-gradient(circle 240px at var(--mouse-x,-999px) var(--mouse-y,-999px),black 10%,transparent 80%);filter:drop-shadow(0 0 3px rgb(var(--color-brand-accent) / .65)); }
+.grid-radial-glow { background:radial-gradient(circle 230px at var(--mouse-x,-999px) var(--mouse-y,-999px),rgb(var(--color-brand-accent) / .23),rgb(var(--color-brand-accent) / .08) 45%,transparent 75%); }
+.grid-active-cell { inset:auto;left:var(--cell-x);top:var(--cell-y);width:32px;height:32px;background:rgb(var(--color-brand-accent) / .16);border:1px solid rgb(var(--color-brand-accent) / .75);box-shadow:0 0 18px rgb(var(--color-brand-accent) / .3),inset 0 0 12px rgb(var(--color-brand-accent) / .15); }
+.square-grid-container[data-glowing="true"] :is(.grid-glow-canvas,.grid-radial-glow,.grid-active-cell) { opacity:1; }
 /* Every effect shares the photograph's coordinate system, including mobile crops. */
 .hero-car-scene { position:relative;aspect-ratio:16/7;overflow:hidden; }
 .hero-car-stage { position:absolute;width:100%;aspect-ratio:512/279;left:50%;top:50%;transform:translate(-50%,-50%); }

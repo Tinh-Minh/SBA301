@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { CSSProperties } from "react";
+import { InteractiveGrid } from "@/components/interactive-grid";
 import { HeroCarScene } from "@/components/hero-car-scene";
 
 export default function Home() { return (<div className="cardb-screen screen-home bg-page-bg font-sans text-text-primary antialiased selection:bg-brand-accent selection:text-white  flex flex-col justify-between">
@@ -53,11 +53,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </section>
 
-<section className="relative w-full square-grid-container py-12 px-6 md:px-10 border-b border-border-light overflow-hidden transition-all" id="interactive-grid-zone" style={{"--mouse-x": "-999px", "--mouse-y": "-999px"} as CSSProperties}>
-
-<div className="grid-glow-canvas" id="gridGlow"></div>
-<div className="grid-radial-glow" id="radialGlow"></div>
-
+<InteractiveGrid>
 <div className="relative z-10 w-full max-w-5xl mx-auto">
 <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 shadow-lg border border-border-light hover:border-brand-accent/40 transition-colors">
 
@@ -108,7 +104,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 </div>
 </div>
 </div>
-</section>
+</InteractiveGrid>
 
 <section className="w-full py-12 px-6 md:px-10 bg-white">
 <div className="w-full max-w-[1440px] mx-auto">
