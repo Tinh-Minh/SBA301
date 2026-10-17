@@ -249,7 +249,7 @@ export default function ExploreCarsPage() {
     <span className="material-symbols-outlined text-[16px]">{"location_on"}</span>{" Hà Nội\n"}</span>
     </div>
     <div className="hidden sm:block h-4 w-px bg-border-light"></div>
-    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-warm border border-border-light text-xs text-text-strong">
+    <div className="vehicle-search-time flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-warm border border-border-light text-xs text-text-strong">
     <span className="material-symbols-outlined text-brand-accent text-[16px]">{"date_range"}</span>
     <span className="text-text-secondary">{"Thời gian thuê:"}</span>
     <strong className="text-text-strong font-semibold">{"08:00, 26/10/2025 — 20:00, 28/10/2025"}</strong>
@@ -278,10 +278,11 @@ export default function ExploreCarsPage() {
     </div>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="vehicle-results-grid grid gap-6">
 
-    <article className="group relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="ev" data-vehicle-name="VinFast VF 9 Plus AWD" data-price="38">
-    <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+    <article className="group isolate relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="ev" data-vehicle-name="VinFast VF 9 Plus AWD" data-price="38">
+
+    <div className="vehicle-card-badges absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
     <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-text-strong uppercase tracking-wider border border-border-light shadow-sm">{"\n      Xe Điện Hạng Sang\n    "}</span>
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold border border-emerald-200 shadow-sm">
     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse"></span>{"\n      Còn lịch trống\n    "}</span>
@@ -302,7 +303,7 @@ export default function ExploreCarsPage() {
     <span className="text-text-secondary normal-case flex items-center gap-1 shrink-0 text-xs font-normal">
     <span className="material-symbols-outlined text-[14px]">{"location_on"}</span>{" Cầu Giấy, HN\n        "}</span>
     </div>
-    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="VinFast VF 9 Plus AWD">{"\n        VinFast VF 9 Plus AWD\n      "}</h3>
+    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="VinFast VF 9 Plus AWD"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"\n        VinFast VF 9 Plus AWD\n      "}</Link></h3>
     </div>
 
     <div className="grid grid-cols-2 gap-2 text-xs">
@@ -337,13 +338,14 @@ export default function ExploreCarsPage() {
     <span className="text-[10px] text-text-secondary font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+
     </div>
     </div>
     </article>
 
-    <article className="group relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="luxury" data-vehicle-name="BMW 530i M Sport" data-price="52">
-    <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+    <article className="group isolate relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="luxury" data-vehicle-name="BMW 530i M Sport" data-price="52">
+
+    <div className="vehicle-card-badges absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
     <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-text-strong uppercase tracking-wider border border-border-light shadow-sm">{"\n      Sedan Thượng Lưu\n    "}</span>
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold border border-emerald-200 shadow-sm">
     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse"></span>{"\n      Còn lịch trống\n    "}</span>
@@ -364,7 +366,7 @@ export default function ExploreCarsPage() {
     <span className="text-text-secondary normal-case flex items-center gap-1 shrink-0 text-xs font-normal">
     <span className="material-symbols-outlined text-[14px]">{"location_on"}</span>{" Ba Đình, HN\n        "}</span>
     </div>
-    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="BMW 530i M Sport">{"\n        BMW 530i M Sport\n      "}</h3>
+    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="BMW 530i M Sport"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"\n        BMW 530i M Sport\n      "}</Link></h3>
     </div>
     <div className="grid grid-cols-2 gap-2 text-xs">
     <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-section-bg border border-border-light text-[11px] text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
@@ -397,13 +399,14 @@ export default function ExploreCarsPage() {
     <span className="text-[10px] text-text-secondary font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+
     </div>
     </div>
     </article>
 
-    <article className="group relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="luxury" data-vehicle-name="Porsche Macan GTS" data-price="31">
-    <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+    <article className="group isolate relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="luxury" data-vehicle-name="Porsche Macan GTS" data-price="31">
+
+    <div className="vehicle-card-badges absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
     <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-text-strong uppercase tracking-wider border border-border-light shadow-sm">{"\n      Thể Thao Đẳng Cấp\n    "}</span>
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold border border-emerald-200 shadow-sm">
     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse"></span>{"\n      Còn lịch trống\n    "}</span>
@@ -424,7 +427,7 @@ export default function ExploreCarsPage() {
     <span className="text-text-secondary normal-case flex items-center gap-1 shrink-0 text-xs font-normal">
     <span className="material-symbols-outlined text-[14px]">{"location_on"}</span>{" Tây Hồ, HN\n        "}</span>
     </div>
-    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="Porsche Macan GTS">{"\n        Porsche Macan GTS\n      "}</h3>
+    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="Porsche Macan GTS"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"\n        Porsche Macan GTS\n      "}</Link></h3>
     </div>
     <div className="grid grid-cols-2 gap-2 text-xs">
     <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-section-bg border border-border-light text-[11px] text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
@@ -457,13 +460,14 @@ export default function ExploreCarsPage() {
     <span className="text-[10px] text-text-secondary font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+
     </div>
     </div>
     </article>
 
-    <article className="group relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="suv" data-vehicle-name="Mercedes GLC 300 4MATIC" data-price="68">
-    <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+    <article className="group isolate relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="suv" data-vehicle-name="Mercedes GLC 300 4MATIC" data-price="68">
+
+    <div className="vehicle-card-badges absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
     <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-text-strong uppercase tracking-wider border border-border-light shadow-sm">{"\n      SUV Sang Trọng\n    "}</span>
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold border border-emerald-200 shadow-sm">
     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse"></span>{"\n      Còn lịch trống\n    "}</span>
@@ -484,7 +488,7 @@ export default function ExploreCarsPage() {
     <span className="text-text-secondary normal-case flex items-center gap-1 shrink-0 text-xs font-normal">
     <span className="material-symbols-outlined text-[14px]">{"location_on"}</span>{" Hoàn Kiếm, HN\n        "}</span>
     </div>
-    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="Mercedes GLC 300 4MATIC">{"\n        Mercedes GLC 300 4MATIC\n      "}</h3>
+    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="Mercedes GLC 300 4MATIC"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"\n        Mercedes GLC 300 4MATIC\n      "}</Link></h3>
     </div>
     <div className="grid grid-cols-2 gap-2 text-xs">
     <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-section-bg border border-border-light text-[11px] text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
@@ -517,13 +521,14 @@ export default function ExploreCarsPage() {
     <span className="text-[10px] text-text-secondary font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+
     </div>
     </div>
     </article>
 
-    <article className="group relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="ev" data-vehicle-name="VinFast VF 8 Plus" data-price="42">
-    <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+    <article className="group isolate relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="ev" data-vehicle-name="VinFast VF 8 Plus" data-price="42">
+
+    <div className="vehicle-card-badges absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
     <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-text-strong uppercase tracking-wider border border-border-light shadow-sm">{"\n      Xe Điện Thông Minh\n    "}</span>
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold border border-emerald-200 shadow-sm">
     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse"></span>{"\n      Còn lịch trống\n    "}</span>
@@ -544,7 +549,7 @@ export default function ExploreCarsPage() {
     <span className="text-text-secondary normal-case flex items-center gap-1 shrink-0 text-xs font-normal">
     <span className="material-symbols-outlined text-[14px]">{"location_on"}</span>{" Đống Đa, HN\n        "}</span>
     </div>
-    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="VinFast VF 8 Plus">{"\n        VinFast VF 8 Plus\n      "}</h3>
+    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="VinFast VF 8 Plus"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"\n        VinFast VF 8 Plus\n      "}</Link></h3>
     </div>
     <div className="grid grid-cols-2 gap-2 text-xs">
     <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-section-bg border border-border-light text-[11px] text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
@@ -577,13 +582,14 @@ export default function ExploreCarsPage() {
     <span className="text-[10px] text-text-secondary font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+
     </div>
     </div>
     </article>
 
-    <article className="group relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="suv" data-vehicle-name="Audi Q8 55 TFSI" data-price="3100000">
-    <div className="absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
+    <article className="group isolate relative flex flex-col h-full rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-border-light" data-vehicle-card="suv" data-vehicle-name="Audi Q8 55 TFSI" data-price="3100000">
+
+    <div className="vehicle-card-badges absolute top-3 left-3 right-3 z-10 flex items-center justify-between pointer-events-none">
     <span className="rounded-full bg-white/90 backdrop-blur-md px-3 py-1 text-xs font-bold text-text-strong uppercase tracking-wider border border-border-light shadow-sm">{"\n      Crossover Thượng Hạng\n    "}</span>
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 backdrop-blur-md px-2.5 py-1 text-[11px] font-bold border border-emerald-200 shadow-sm">
     <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 animate-pulse"></span>{"\n      Còn lịch trống\n    "}</span>
@@ -603,7 +609,7 @@ export default function ExploreCarsPage() {
     <span className="text-text-secondary normal-case flex items-center gap-1 shrink-0 text-xs font-normal">
     <span className="material-symbols-outlined text-[14px]">{"location_on"}</span>{" Nam Từ Liêm, HN\n        "}</span>
     </div>
-    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="Audi Q8 55 TFSI">{"\n        Audi Q8 55 TFSI\n      "}</h3>
+    <h3 className="text-[17px] font-bold text-text-strong truncate group-hover:text-brand-accent transition-colors leading-snug" title="Audi Q8 55 TFSI"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"\n        Audi Q8 55 TFSI\n      "}</Link></h3>
     </div>
     <div className="grid grid-cols-2 gap-2 text-xs">
     <div className="flex items-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-section-bg border border-border-light text-[11px] text-text-primary whitespace-nowrap overflow-hidden text-ellipsis">
@@ -636,7 +642,7 @@ export default function ExploreCarsPage() {
     <span className="text-[10px] text-text-secondary font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-primary-hover transition-all active:scale-95 text-center" to="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+
     </div>
     </div>
     </article>

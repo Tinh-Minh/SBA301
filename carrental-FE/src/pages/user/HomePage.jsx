@@ -100,11 +100,12 @@ export default function HomePage() {
 
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
 
-    <div className="bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="ev" data-vehicle-name="VinFast VF 8 Plus" data-price="1250000">
+    <div className="relative isolate bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="ev" data-vehicle-name="VinFast VF 8 Plus" data-price="1250000">
+
     <div>
     <div className="relative w-full aspect-[16/10] bg-pill-bg overflow-hidden">
     <span className="absolute top-3 left-3 z-10 text-[10px] font-bold bg-black/60 text-white backdrop-blur-md px-2.5 py-1 rounded-full">{"Quận 7, TP.HCM"}</span>
-    <button className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
+    <button className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
     <span className="material-symbols-outlined text-[16px]">{"favorite"}</span>
     </button>
     <img src="/images/cardb-e5cfa07014e754d6.webp" alt="VinFast VF 8 Plus" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async"/>
@@ -114,7 +115,7 @@ export default function HomePage() {
     <span className="text-text-secondary">{"Xe điện SUV 5 chỗ"}</span>
     <span className="font-bold text-amber-500 flex items-center gap-0.5">{"★ 4.9 "}<span className="text-text-secondary font-normal">{"(42)"}</span></span>
     </div>
-    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors">{"VinFast VF 8 Plus"}</h3>
+    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"VinFast VF 8 Plus"}</Link></h3>
     <div className="flex items-center gap-3 text-[11px] text-text-secondary">
     <span className="">{"⚡ Thuần điện"}</span>
     <span className="">{"•"}</span>
@@ -129,15 +130,16 @@ export default function HomePage() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"1.250.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+
     </div>
     </div>
 
-    <div className="bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="suv" data-vehicle-name="Mercedes GLC 300" data-price="2450000">
+    <div className="relative isolate bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="suv" data-vehicle-name="Mercedes GLC 300" data-price="2450000">
+
     <div>
     <div className="relative w-full aspect-[16/10] bg-pill-bg overflow-hidden">
     <span className="absolute top-3 left-3 z-10 text-[10px] font-bold bg-black/60 text-white backdrop-blur-md px-2.5 py-1 rounded-full">{"Bình Thạnh, TP.HCM"}</span>
-    <button className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
+    <button className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
     <span className="material-symbols-outlined text-[16px]">{"favorite"}</span>
     </button>
     <img src="/images/cardb-1ec43e930558b9f7.webp" alt="Mercedes GLC 300" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async"/>
@@ -147,7 +149,7 @@ export default function HomePage() {
     <span className="text-text-secondary">{"SUV Hạng sang 5 chỗ"}</span>
     <span className="font-bold text-amber-500 flex items-center gap-0.5">{"★ 5.0 "}<span className="text-text-secondary font-normal">{"(68)"}</span></span>
     </div>
-    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors">{"Mercedes GLC 300"}</h3>
+    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"Mercedes GLC 300"}</Link></h3>
     <div className="flex items-center gap-3 text-[11px] text-text-secondary">
     <span className="">{"⛽ Xăng 95"}</span>
     <span className="">{"•"}</span>
@@ -162,15 +164,16 @@ export default function HomePage() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"2.450.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+
     </div>
     </div>
 
-    <div className="bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="suv" data-vehicle-name="Hyundai Santa Fe" data-price="1400000">
+    <div className="relative isolate bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="suv" data-vehicle-name="Hyundai Santa Fe" data-price="1400000">
+
     <div>
     <div className="relative w-full aspect-[16/10] bg-pill-bg overflow-hidden">
     <span className="absolute top-3 left-3 z-10 text-[10px] font-bold bg-black/60 text-white backdrop-blur-md px-2.5 py-1 rounded-full">{"Tân Bình, TP.HCM"}</span>
-    <button className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
+    <button className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
     <span className="material-symbols-outlined text-[16px]">{"favorite"}</span>
     </button>
     <img src="/images/9aa3d9bc2c6c3ec1.webp" alt="Hyundai Santa Fe" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async"/>
@@ -180,7 +183,7 @@ export default function HomePage() {
     <span className="text-text-secondary">{"SUV Gia đình 7 chỗ"}</span>
     <span className="font-bold text-amber-500 flex items-center gap-0.5">{"★ 4.8 "}<span className="text-text-secondary font-normal">{"(53)"}</span></span>
     </div>
-    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors">{"Hyundai Santa Fe"}</h3>
+    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"Hyundai Santa Fe"}</Link></h3>
     <div className="flex items-center gap-3 text-[11px] text-text-secondary">
     <span className="">{"⛽ Xăng Turbo"}</span>
     <span className="">{"•"}</span>
@@ -195,15 +198,16 @@ export default function HomePage() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"1.400.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+
     </div>
     </div>
 
-    <div className="bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="luxury" data-vehicle-name="Porsche Macan GTS" data-price="3800000">
+    <div className="relative isolate bg-card-bg rounded-2xl border border-border-light overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group flex flex-col justify-between" data-vehicle-card="luxury" data-vehicle-name="Porsche Macan GTS" data-price="3800000">
+
     <div>
     <div className="relative w-full aspect-[16/10] bg-pill-bg overflow-hidden">
     <span className="absolute top-3 left-3 z-10 text-[10px] font-bold bg-black/60 text-white backdrop-blur-md px-2.5 py-1 rounded-full">{"Thủ Đức, TP.HCM"}</span>
-    <button className="absolute top-3 right-3 z-10 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
+    <button className="absolute top-3 right-3 z-20 w-7 h-7 rounded-full bg-white/80 hover:bg-white flex items-center justify-center text-text-secondary hover:text-red-500 shadow-sm transition-colors" type="button" aria-label="Lưu xe yêu thích" data-action="favorite">
     <span className="material-symbols-outlined text-[16px]">{"favorite"}</span>
     </button>
     <img src="/images/cardb-346d18fc6de163c0.webp" alt="Porsche Macan GTS" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-car-image="true" loading="lazy" decoding="async"/>
@@ -213,7 +217,7 @@ export default function HomePage() {
     <span className="text-text-secondary">{"Thể thao Thượng lưu"}</span>
     <span className="font-bold text-amber-500 flex items-center gap-0.5">{"★ 5.0 "}<span className="text-text-secondary font-normal">{"(31)"}</span></span>
     </div>
-    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors">{"Porsche Macan GTS"}</h3>
+    <h3 className="text-base font-bold text-text-primary group-hover:text-brand-accent transition-colors"><Link to="/xe/vinfast-vf8-plus-2024" className="vehicle-card-link">{"Porsche Macan GTS"}</Link></h3>
     <div className="flex items-center gap-3 text-[11px] text-text-secondary">
     <span className="">{"🏎️ 434 HP"}</span>
     <span className="">{"•"}</span>
@@ -228,7 +232,7 @@ export default function HomePage() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"3.800.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+
     </div>
     </div>
     </div>
