@@ -1,30 +1,8 @@
-import { ProfileSidebar } from "@/components/profile-sidebar";
+import { ProfileLayout } from "@/components/profile-layout";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-export default function VerificationCollapsed() { return (<div className="cardb-screen screen-verificationcollapsed bg-background font-body-md text-body-md text-on-surface antialiased"><main className="w-full  bg-background pt-20"><div className="flex flex-col w-full">
-<div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg">
-
-<nav className="flex items-center gap-space-xs mb-space-md text-on-surface-variant font-body-sm text-body-sm">
-<Link className="hover:text-primary-container transition-colors" href="/">{"Trang chủ"}</Link>
-<span className="material-symbols-outlined text-base text-outline">{"chevron_right"}</span>
-<Link className="hover:text-primary-container transition-colors" href="/tai-khoan">{"Hồ sơ & Tài khoản"}</Link>
-<span className="material-symbols-outlined text-base text-outline">{"chevron_right"}</span>
-<span className="text-on-surface font-label-sm text-label-sm">{"Xác minh giấy tờ"}</span>
-</nav>
-
-<div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-xl">
-<div>
-<div className="flex items-center gap-space-xs mb-space-xs">
-<span className="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm uppercase tracking-wider">{"Hồ sơ định danh eKYC"}</span>
-<span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-<span className="font-technical-data text-technical-data text-on-surface-variant">{"LVL-3 LUXURY ACCESS"}</span>
-</div>
-<h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">{"Xác minh giấy tờ"}</h1>
-<p className="font-body-md text-body-md text-on-surface-variant mt-space-xs max-w-2xl">{"\n          Cập nhật và quản lý các giấy tờ định danh pháp lý để đủ điều kiện kích hoạt dịch vụ tự lái độc quyền và bảo hiểm vật chất cao cấp trên CarDB.\n        "}</p>
-</div>
-
-<div className="flex items-center gap-space-sm bg-surface-container-low px-space-md py-space-sm rounded-xl">
+export default function VerificationCollapsed() { return (<div className="cardb-screen screen-verificationcollapsed bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="verification" title="Xác minh giấy tờ" description="Cập nhật và quản lý các giấy tờ định danh pháp lý để đủ điều kiện kích hoạt dịch vụ tự lái độc quyền và bảo hiểm vật chất cao cấp trên CarDB." actions={<><div className="flex items-center gap-space-sm bg-surface-container-low px-space-md py-space-sm rounded-xl">
 <div className="relative flex items-center justify-center">
 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
 <span className="absolute w-4 h-4 rounded-full bg-emerald-400/40 animate-ping"></span>
@@ -33,15 +11,7 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 <span className="font-label-sm text-label-sm text-on-surface-variant uppercase">{"Hệ thống thẩm định"}</span>
 <span className="font-technical-data text-technical-data text-on-surface">{"AI Auto-OCR Hoạt động 24/7"}</span>
 </div>
-</div>
-</div>
-
-<div className="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
-
-<ProfileSidebar active="verification" className="lg:col-span-4 xl:col-span-3" />
-
-<div className="lg:col-span-8 xl:col-span-9 space-y-space-lg pt-20">
-
+</div></>}>
 
 <div className="space-y-space-md">
 
@@ -328,10 +298,6 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 <div className="text-xs text-on-surface-variant leading-relaxed">
 <strong className="font-semibold text-on-surface">{"Cam kết bảo mật dữ liệu định danh theo Nghị định 13/2023/NĐ-CP:"}</strong>{"\n            Mọi thông tin giấy tờ tùy thân của khách hàng được CarDB lưu trữ tại trung tâm dữ liệu đạt chuẩn Tier 3 và được mã hóa đầu cuối. Thông tin chỉ được sử dụng cho mục đích lập hợp đồng thuê xe tự lái và xuất trình với cơ quan công an / đơn vị bảo hiểm khi phát sinh sự cố giao thông.\n          "}</div>
 </div>
-</div>
-</div>
-</div>
 
-
-</div></main>
+</ProfileLayout>
 </div>); }
