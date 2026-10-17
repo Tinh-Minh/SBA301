@@ -4,6 +4,7 @@ test("Cancel outline starts at the top center, slows continuously, and resets on
     await page.goto("/tai-khoan/don-thue?status=pending");
     await page.getByRole("button", { name: "Hủy yêu cầu", exact: true }).click();
     const dialog = page.getByRole("dialog");
+    await expect(dialog.locator("[data-cancellation-summary]")).toHaveText(/Chuyến đi sẽ bị hủy và chuyển vào Lịch sử.*Phí hủy: 0 đ/s);
     const button = dialog.locator('[data-hold-control] button');
     const path = button.locator('[data-hold-outline]');
     const geometry = () => path.evaluate(el => ({ start: { x: el.getPointAtLength(0).x, y: el.getPointAtLength(0).y }, width: el.ownerSVGElement.getBoundingClientRect().width }));

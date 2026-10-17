@@ -1,3 +1,4 @@
+import { CancellationSummary } from "@/components/CancellationSummary.jsx";
 import { useToast } from "@/components/ToastProvider.jsx";
 import { Modal } from "@/components/Modal.jsx";
 import { cancelTrip } from "@/storage/tripStorage.js";
@@ -95,7 +96,7 @@ export function Interactions({ children, className = "" }) {
         const arg = button.dataset.args?.match(/['"]([^'"]+)['"]/)?.[1] ?? "";
         const action = button.dataset.action;
         if (handler === "toggleCancelModal" && button.dataset.args?.includes("true") || action === "cancel-order") {
-            setModal({ kind: "cancel", title: "Hủy yêu cầu thuê xe", body: "Giữ nút bên dưới để xác nhận hủy. Thả tay trước khi hết thời gian để giữ nguyên yêu cầu." });
+            setModal({ kind: "cancel", title: "Hủy yêu cầu thuê xe" });
             return;
         }
         if (button.dataset.route) {
@@ -419,6 +420,6 @@ export function Interactions({ children, className = "" }) {
         }}>
   {children}
   {empty ? <p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path === "/kham-pha-xe" ? "Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc." : "Chưa có chuyến xe ở trạng thái này."}</p> : null}
-  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { cancelTrip("CDB-ORD-20261026-904"); setModal(null); navigate("/tai-khoan/don-thue?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy chuyến</HoldButton></div> : null}</Modal> : null}
+  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : modal.kind === "cancel" ? <CancellationSummary/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { cancelTrip("CDB-ORD-20261026-904"); setModal(null); navigate("/tai-khoan/don-thue?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy chuyến</HoldButton></div> : null}</Modal> : null}
  </div>;
 }
