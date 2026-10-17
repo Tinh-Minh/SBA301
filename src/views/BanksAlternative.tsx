@@ -1,3 +1,4 @@
+import { ProfileSidebar } from "@/components/profile-sidebar";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
@@ -5,93 +6,7 @@ export default function BanksAlternative() { return (<div className="cardb-scree
 <div className="max-w-7xl mx-auto w-full px-6 lg:px-12 py-8">
 <div className="flex flex-col lg:flex-row gap-8 items-start">
 
-<aside className="w-full lg:w-[280px] shrink-0 flex flex-col gap-6">
-
-<div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col items-center text-center relative overflow-hidden">
-<div className="absolute top-0 left-0 right-0 h-1.5 bg-primary-container"></div>
-
-<div className="relative mb-3.5 mt-1">
-<div className="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant font-headline-md font-semibold text-2xl shadow-inner">{"\n              HM\n            "}</div>
-<span className="absolute bottom-0 right-0 w-4 h-4 rounded-full bg-emerald-500 ring-2 ring-surface-container-lowest" title="Đang hoạt động"></span>
-</div>
-
-<div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-label-sm uppercase tracking-wider mb-2">
-<span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>{"\n            Đang hoạt động\n          "}</div>
-
-<h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">{"Nguyễn Hoàng Minh"}</h2>
-<span className="font-technical-data text-technical-data text-on-surface-variant text-[12px] mt-0.5">{"ID: CDB-VN-88492"}</span>
-
-<div className="mt-3.5 w-full pt-3 bg-surface-container-low rounded-lg py-1.5 px-3">
-<span className="font-label-sm text-label-sm text-on-surface-variant uppercase font-medium">{"Tài khoản khách hàng"}</span>
-</div>
-</div>
-
-<nav className="bg-surface-container-lowest p-3 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col gap-1">
-<div className="px-3 py-1.5 text-[11px] font-label-sm font-semibold tracking-wider text-outline uppercase">{"\n            Hồ sơ cá nhân\n          "}</div>
-
-<Link className="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all group" href="/tai-khoan">
-<div className="flex items-center gap-3">
-<span className="material-symbols-outlined text-[20px] text-outline group-hover:text-on-surface transition-colors">{"person"}</span>
-<span className="font-body-md text-body-md font-medium">{"Thông tin cá nhân"}</span>
-</div>
-<span className="material-symbols-outlined text-[16px] text-outline-variant group-hover:translate-x-0.5 transition-transform">{"chevron_right"}</span>
-</Link>
-
-<Link className="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all group" href="/tai-khoan/xac-minh">
-<div className="flex items-center gap-3">
-<span className="material-symbols-outlined text-[20px] text-outline group-hover:text-on-surface transition-colors">{"description"}</span>
-<span className="font-body-md text-body-md font-medium">{"Xác minh giấy tờ"}</span>
-</div>
-<span className="px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold bg-amber-50 text-amber-700">{"1 Chờ duyệt"}</span>
-</Link>
-
-<Link className="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all group" href="/tai-khoan/ho-so-tai-xe">
-<div className="flex items-center gap-3">
-<span className="material-symbols-outlined text-[20px] text-outline group-hover:text-on-surface transition-colors">{"badge"}</span>
-<span className="font-body-md text-body-md font-medium">{"Hồ sơ tài xế"}</span>
-</div>
-<span className="px-2 py-0.5 rounded text-[11px] font-label-sm font-semibold bg-surface-container-high text-on-surface-variant">{"Chờ kích hoạt"}</span>
-</Link>
-
-<Link className="flex items-center justify-between px-3.5 py-2.5 rounded-lg bg-primary-fixed/30 text-primary-container font-semibold shadow-xs" href="/tai-khoan/ngan-hang">
-<div className="flex items-center gap-3">
-<span className="material-symbols-outlined text-[20px] text-primary-container" style={{"fontVariationSettings": "'FILL' 1"} as CSSProperties}>{"credit_card"}</span>
-<span className="font-body-md text-body-md">{"Tài khoản ngân hàng"}</span>
-</div>
-<span className="px-2 py-0.5 rounded text-[11px] font-label-sm font-bold bg-primary-container text-on-primary">{"Đã liên kết (2)"}</span>
-</Link>
-</nav>
-
-<nav className="bg-surface-container-lowest p-3 rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col gap-1">
-<div className="px-3 py-1.5 text-[11px] font-label-sm font-semibold tracking-wider text-outline uppercase">{"\n            Quản lý hành trình\n          "}</div>
-
-<Link className="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all group" href="/tai-khoan/don-thue">
-<div className="flex items-center gap-3">
-<span className="material-symbols-outlined text-[20px] text-outline group-hover:text-on-surface transition-colors">{"shopping_bag"}</span>
-<span className="font-body-md text-body-md font-medium">{"Đơn thuê xe"}</span>
-</div>
-<span className="material-symbols-outlined text-[16px] text-outline-variant group-hover:translate-x-0.5 transition-transform">{"chevron_right"}</span>
-</Link>
-
-<Link className="flex items-center justify-between px-3.5 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-all group" href="/tai-khoan/lich-su">
-<div className="flex items-center gap-3">
-<span className="material-symbols-outlined text-[20px] text-outline group-hover:text-on-surface transition-colors">{"schedule"}</span>
-<span className="font-body-md text-body-md font-medium">{"Lịch sử chuyến đi"}</span>
-</div>
-<span className="material-symbols-outlined text-[16px] text-outline-variant group-hover:translate-x-0.5 transition-transform">{"chevron_right"}</span>
-</Link>
-</nav>
-
-<div className="bg-surface-container-low p-5 rounded-xl shadow-[0_1px_6px_rgba(0,0,0,0.02)] flex flex-col gap-2">
-<div className="flex items-center gap-2">
-<span className="material-symbols-outlined text-primary-container text-[20px]">{"headset_mic"}</span>
-<span className="font-label-sm text-label-sm font-bold tracking-wider text-on-surface-variant uppercase">{"Cần trợ giúp xác minh?"}</span>
-</div>
-<p className="font-body-sm text-body-sm text-on-surface-variant">{"Đội ngũ pháp lý & kỹ thuật hỗ trợ hoàn tất chi trả 24/7:"}</p>
-<a className="font-technical-data text-technical-data text-primary text-[15px] font-bold hover:underline flex items-center gap-1.5" href="tel:19008899">{"\n            1900 8899\n            "}<span className="font-label-sm text-[11px] font-normal text-on-surface-variant">{"(TP. HCM & Hà Nội)"}</span>
-</a>
-</div>
-</aside>
+<ProfileSidebar active="banks" className="w-full lg:w-[280px]" />
 
 <section className="flex-1 w-full flex flex-col gap-6 min-w-0">
 
