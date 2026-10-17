@@ -1,6 +1,6 @@
 # CarDB
 
-Prototype thuê xe cao cấp bằng tiếng Việt, dựng lại từ bộ thiết kế CarDB cập nhật. Next.js 16.4.0 Active LTS, React 19.3, Tailwind CSS 4.3.3 và Node.js 24.21.0 LTS. Phiên bản được khóa trong `package-lock.json` và `.nvmrc`.
+Prototype thuê xe cao cấp bằng tiếng Việt, dựng lại từ bộ thiết kế CarDB cập nhật. React 19.3, React Router 8.4, Vite 8.3.4, Tailwind CSS 4.3.3 và Node.js 24.21.0 LTS. Phiên bản được khóa trong `package-lock.json` và `.nvmrc`.
 
 ## Chạy dự án
 
@@ -18,7 +18,7 @@ npm start
 npm test
 ```
 
-Build sử dụng webpack để tương thích môi trường hạn chế worker Turbopack. Playwright dùng Chromium hệ thống tại `/usr/bin/chromium`; có thể đặt biến `CHROMIUM_PATH` để dùng vị trí khác.
+Ứng dụng React chạy trên trình duyệt, không dùng Next.js. Vite tạo các tệp tĩnh trong `dist/`; mỗi màn hình được tải thành một gói riêng. Playwright dùng Chromium hệ thống tại `/usr/bin/chromium`; có thể đặt biến `CHROMIUM_PATH` để dùng vị trí khác.
 
 ## Các màn hình
 
@@ -40,8 +40,10 @@ Các trạng thái bổ sung: `/tai-khoan/xac-minh/thu-gon`, `/mau-thiet-ke/ngan
 
 ## Cấu trúc và thiết kế
 
-- `src/views/`: các màn hình React render trên máy chủ.
-- `src/lib/screens.ts`: đăng ký màn hình và đường dẫn.
+- `src/views/`: các màn hình React chạy trên trình duyệt.
+- `src/main.tsx`, `src/app.tsx`: khởi động React và bố cục dùng chung.
+- `src/router.tsx`: React Router, tiêu đề trang, chuyển hướng và khôi phục vị trí cuộn.
+- `src/lib/screens.ts`: đăng ký các màn hình tải riêng theo đường dẫn.
 - `src/components/`: điều hướng, trạng thái đăng nhập mẫu, tương tác, lightbox và nút giữ.
 - `src/styles/colors.css`: màu dùng chung qua biến RGB, hỗ trợ opacity Tailwind.
 - `src/styles/tokens.json`: ánh xạ Tailwind, typography, khoảng cách và bo góc.
@@ -67,3 +69,7 @@ Các kiểm tra trình duyệt bao gồm đường đi từ tìm xe đến xác 
 Phân trang phản hồi lựa chọn trên bộ dữ liệu mẫu; chưa tải thêm trang từ máy chủ. Ảnh 360° và video kiểm định chưa có tài nguyên tương ứng, nên nút mở thông báo và hướng dẫn xem thư viện ảnh. Xuất báo cáo hiện dùng CSV tương thích Excel.
 
 Trang cách tính giá có lọc phân khúc, hình thức thuê và dự toán từng khoản. Dữ liệu minh họa giảm 10% tiền thuê từ 7 ngày, 25% từ 30 ngày (không cộng dồn), cộng tài xế/dịch vụ tùy chọn rồi tính thuế minh họa 8%. Cọc thế chấp không cộng vào tổng chi phí. Ảnh sedan lấy từ mẫu HTML do chủ dự án cung cấp; các ảnh khác dùng lại tài nguyên của dự án.
+
+## Triển khai
+
+Chạy `npm run build` rồi phục vụ thư mục `dist/` bằng máy chủ tĩnh. Máy chủ cần trả `index.html` cho các đường dẫn ứng dụng (SPA fallback), để tải trực tiếp hoặc làm mới `/tai-khoan/xac-minh` vẫn hoạt động. `vercel.json` cấu hình sẵn fallback cho Vercel. `npm start` chỉ dùng để xem trước bản build trên máy; `npm run dev` phục vụ môi trường phát triển tại cổng 3000. Playwright mở bản build riêng tại cổng 4173.
