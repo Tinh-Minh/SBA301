@@ -13,7 +13,7 @@ export default function History() { return (<div className="cardb-screen screen-
 <nav aria-label="Breadcrumb" className="flex items-center gap-space-xs text-on-surface-variant mb-space-lg">
 <Link className="font-body-sm text-body-sm hover:text-primary transition-colors" href="/">{"Trang chủ"}</Link>
 <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
-<Link className="font-body-sm text-body-sm hover:text-primary transition-colors" href="/lien-he">{"Hồ sơ & Tài khoản"}</Link>
+<Link className="font-body-sm text-body-sm hover:text-primary transition-colors" href="/tai-khoan">{"Hồ sơ & Tài khoản"}</Link>
 <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
 <span className="font-label-md text-label-md text-on-surface font-semibold">{"Lịch sử chuyến đi"}</span>
 </nav>
@@ -34,7 +34,7 @@ export default function History() { return (<div className="cardb-screen screen-
 <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl mt-1">{"\n                Tra cứu lịch sử các chuyến thuê đã hoàn tất, xuất hóa đơn VAT điện tử và quản lý biên bản bàn giao xe chính xác theo chuẩn C10-B.\n              "}</p>
 </div>
 <div className="flex-wrap gap-y-2 flex items-center gap-space-sm self-start xl:self-end">
-<button className="ui-action px-space-md py-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Xuất báo cáo PDF / Excel">
+<button className="ui-action px-space-md py-2.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-2 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Xuất báo cáo PDF / Excel" data-action="download-report">
 <span className="material-symbols-outlined text-[18px]">{"download"}</span>
 <span className="">{"Xuất báo cáo PDF / Excel"}</span>
 </button>
@@ -109,11 +109,11 @@ export default function History() { return (<div className="cardb-screen screen-
 </div>
 
 <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-<button className="px-3.5 py-1.5 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md font-semibold whitespace-nowrap transition-colors hover:bg-surface-container-high" type="button" aria-label="Tất cả (10)" data-action="filter">{"\n                  Tất cả "}<span className="ml-1 text-on-surface-variant font-technical-data font-normal">{"(10)"}</span>
+<button className="px-3.5 py-1.5 rounded-lg bg-surface-container text-on-surface font-label-md text-label-md font-semibold whitespace-nowrap transition-colors hover:bg-surface-container-high" type="button" aria-label="Tất cả (10)" data-action="trip-filter" data-status-filter="all">{"\n                  Tất cả "}<span className="ml-1 text-on-surface-variant font-technical-data font-normal">{"(10)"}</span>
 </button>
-<button className="px-3.5 py-1.5 rounded-lg bg-primary-fixed/40 text-primary font-label-md text-label-md font-bold whitespace-nowrap shadow-sm" type="button" aria-label="Đã hoàn thành (9)">{"\n                  Đã hoàn thành "}<span className="ml-1 text-primary-container font-technical-data">{"(9)"}</span>
+<button className="px-3.5 py-1.5 rounded-lg bg-primary-fixed/40 text-primary font-label-md text-label-md font-bold whitespace-nowrap shadow-sm" type="button" aria-label="Đã hoàn thành (9)" data-action="trip-filter" data-status-filter="completed">{"\n                  Đã hoàn thành "}<span className="ml-1 text-primary-container font-technical-data">{"(9)"}</span>
 </button>
-<button className="px-3.5 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:text-on-surface whitespace-nowrap transition-colors" type="button" aria-label="Đã hủy (1)">{"\n                  Đã hủy "}<span className="ml-1 text-outline font-technical-data font-normal">{"(1)"}</span>
+<button className="px-3.5 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant font-label-md text-label-md hover:text-on-surface whitespace-nowrap transition-colors" type="button" aria-label="Đã hủy (1)" data-action="trip-filter" data-status-filter="cancelled">{"\n                  Đã hủy "}<span className="ml-1 text-outline font-technical-data font-normal">{"(1)"}</span>
 </button>
 </div>
 
@@ -132,7 +132,7 @@ export default function History() { return (<div className="cardb-screen screen-
 
 <div className="space-y-space-md">
 
-<div className="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div className="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative" data-trip-card="true" data-trip-status="completed">
 <div className="p-space-lg">
 
 <div className="flex flex-wrap items-center justify-between gap-space-sm pb-space-md mb-space-md bg-surface-container-low/40 -mx-space-lg -mt-space-lg px-space-lg pt-space-md">
@@ -192,7 +192,7 @@ export default function History() { return (<div className="cardb-screen screen-
 
 <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
 <div className="flex flex-wrap items-center gap-2">
-<button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Xem đánh giá 5.0">
+<button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Xem đánh giá 5.0" data-route="/danh-gia">
 <span className="material-symbols-outlined text-amber-500 text-[18px]" style={{"fontVariationSettings": "'FILL' 1"} as CSSProperties}>{"star"}</span>
 <span className="">{"Xem đánh giá 5.0"}</span>
 </button>
@@ -205,7 +205,7 @@ export default function History() { return (<div className="cardb-screen screen-
 <span className="">{"Biên bản trả xe C10-B"}</span>
 </button>
 </div>
-<button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này">
+<button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này" data-route="/xe/vinfast-vf8-plus-2024">
 <span className="material-symbols-outlined text-[18px]">{"replay"}</span>
 <span className="">{"Đặt lại xe này"}</span>
 </button>
@@ -215,7 +215,7 @@ export default function History() { return (<div className="cardb-screen screen-
 </div>
 </div>
 
-<div className="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative">
+<div className="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative" data-trip-card="true" data-trip-status="completed">
 <div className="p-space-lg">
 
 <div className="flex flex-wrap items-center justify-between gap-space-sm pb-space-md mb-space-md bg-surface-container-low/40 -mx-space-lg -mt-space-lg px-space-lg pt-space-md">
@@ -273,7 +273,7 @@ export default function History() { return (<div className="cardb-screen screen-
 
 <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
 <div className="flex flex-wrap items-center gap-2">
-<button className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100/80 text-amber-900 font-label-md text-label-md flex items-center gap-1.5 transition-colors font-semibold" type="button" aria-label="★ Viết đánh giá">
+<button className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100/80 text-amber-900 font-label-md text-label-md flex items-center gap-1.5 transition-colors font-semibold" type="button" aria-label="★ Viết đánh giá" data-route="/danh-gia">
 <span className="material-symbols-outlined text-amber-600 text-[18px]">{"rate_review"}</span>
 <span className="">{"★ Viết đánh giá"}</span>
 </button>
@@ -282,7 +282,7 @@ export default function History() { return (<div className="cardb-screen screen-
 <span className="">{"Tải hóa đơn VAT"}</span>
 </button>
 </div>
-<button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này">
+<button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này" data-route="/xe/vinfast-vf8-plus-2024">
 <span className="material-symbols-outlined text-[18px]">{"replay"}</span>
 <span className="">{"Đặt lại xe này"}</span>
 </button>
@@ -292,7 +292,7 @@ export default function History() { return (<div className="cardb-screen screen-
 </div>
 </div>
 
-<div className="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative opacity-90">
+<div className="bg-surface-container-lowest rounded-xl shadow-sm hover:shadow-md transition-all overflow-hidden relative opacity-90" data-trip-card="true" data-trip-status="cancelled">
 <div className="p-space-lg">
 
 <div className="flex flex-wrap items-center justify-between gap-space-sm pb-space-md mb-space-md bg-surface-container-low/40 -mx-space-lg -mt-space-lg px-space-lg pt-space-md">
@@ -347,7 +347,7 @@ export default function History() { return (<div className="cardb-screen screen-
 </div>
 
 <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
-<button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Chính sách hoàn tiền">
+<button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Chính sách hoàn tiền" data-route="/chinh-sach-huy-chuyen">
 <span className="material-symbols-outlined text-outline text-[18px]">{"policy"}</span>
 <span className="">{"Chính sách hoàn tiền"}</span>
 </button>
@@ -365,18 +365,18 @@ export default function History() { return (<div className="cardb-screen screen-
 <div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col sm:flex-row items-center justify-between gap-space-md mt-space-sm">
 <div className="font-body-sm text-body-sm text-on-surface-variant text-center sm:text-left">{"\n              Hiển thị "}<span className="font-technical-data text-on-surface font-bold">{"1 - 3"}</span>{" của "}<span className="font-technical-data text-on-surface font-bold">{"10"}</span>{" chuyến xe đã thực hiện\n            "}</div>
 <div className="flex-wrap gap-y-2 flex items-center gap-space-xs">
-<button className="pagination-arrow px-3.5 py-1.5 rounded-lg bg-surface-container-low text-outline hover:text-on-surface font-label-md text-label-md flex items-center gap-1 cursor-not-allowed opacity-50" disabled={true} type="button" aria-label="Trước">
+<button className="pagination-arrow px-3.5 py-1.5 rounded-lg bg-surface-container-low text-outline hover:text-on-surface font-label-md text-label-md flex items-center gap-1 cursor-not-allowed opacity-50" disabled={true} type="button" aria-label="Trước" data-action="page">
 <span className="material-symbols-outlined text-[18px]">{"chevron_left"}</span>
 <span className="hidden sm:inline">{"Trước"}</span>
 </button>
 <div className="flex items-center gap-1 px-1">
-<button className="w-8 h-8 rounded-lg bg-primary-container text-on-primary font-technical-data text-technical-data font-bold shadow-sm" type="button" aria-label="1">{"1"}</button>
-<button className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-technical-data text-technical-data font-semibold" type="button" aria-label="2">{"2"}</button>
-<button className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-technical-data text-technical-data font-semibold" type="button" aria-label="3">{"3"}</button>
+<button className="w-8 h-8 rounded-lg bg-primary-container text-on-primary font-technical-data text-technical-data font-bold shadow-sm" type="button" aria-label="1" data-action="page">{"1"}</button>
+<button className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-technical-data text-technical-data font-semibold" type="button" aria-label="2" data-action="page">{"2"}</button>
+<button className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-technical-data text-technical-data font-semibold" type="button" aria-label="3" data-action="page">{"3"}</button>
 <span className="px-1 text-outline">{"..."}</span>
-<button className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-technical-data text-technical-data font-semibold" type="button" aria-label="4">{"4"}</button>
+<button className="w-8 h-8 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-technical-data text-technical-data font-semibold" type="button" aria-label="4" data-action="page">{"4"}</button>
 </div>
-<button className="pagination-arrow ui-action px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1 transition-colors" type="button" aria-label="Tiếp theo">
+<button className="pagination-arrow ui-action px-3.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md flex items-center gap-1 transition-colors" type="button" aria-label="Tiếp theo" data-action="page">
 <span className="hidden sm:inline">{"Tiếp theo"}</span>
 <span className="material-symbols-outlined text-[18px]">{"chevron_right"}</span>
 </button>
