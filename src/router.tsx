@@ -23,5 +23,6 @@ const aliases: RouteObject[] = Object.entries(routeAliases).map(([path, destinat
 
 export const router = createBrowserRouter([{
   element: <App />,
+  HydrateFallback: () => <div role="status" className="grid min-h-screen place-items-center bg-page-bg text-sm text-text-secondary">Đang tải trang…</div>,
   children: [...screens, ...information, ...aliases, { path: "*", element: <NotFound />, handle: { title: "Không tìm thấy trang" } }],
 }]);
