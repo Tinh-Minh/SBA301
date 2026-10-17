@@ -1,3 +1,4 @@
+import { ProfileSidebar } from "@/components/profile-sidebar";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
@@ -19,116 +20,7 @@ export default function History() { return (<div className="cardb-screen screen-
 
 <div className="grid grid-cols-1 lg:grid-cols-12 gap-gutter lg:gap-space-xl items-start">
 
-<aside className="lg:col-span-4 xl:col-span-3 flex flex-col gap-space-lg">
-
-<div className="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm relative overflow-hidden">
-<div className="absolute top-0 right-0 w-24 h-24 bg-primary-container/10 rounded-full blur-2xl -mr-8 -mt-8"></div>
-<div className="flex items-center gap-space-md mb-space-md">
-<div className="relative">
-<div className="w-16 h-16 rounded-full bg-surface-container-high overflow-hidden flex items-center justify-center ring-2 ring-primary-container/30">
-<img className="w-full h-full object-cover" src="/images/cardb-5bbc24fe550bc7a8.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async" />
-</div>
-<span className="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 rounded-full ring-2 ring-surface-container-lowest" title="Đang trực tuyến"></span>
-</div>
-<div className="flex-1 min-w-0">
-<div className="flex items-center gap-space-xs">
-<h3 className="font-title text-title text-on-surface font-bold whitespace-nowrap">{"Nguyễn Hoàng Minh"}</h3>
-</div>
-<div className="flex items-center gap-space-xs mt-0.5">
-<span className="font-technical-data text-technical-data text-on-surface-variant font-medium">{"CDB-VN-88492"}</span>
-<span className="w-1 h-1 rounded-full bg-outline-variant"></span>
-<span className="inline-flex items-center px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-label-sm text-[10px] font-bold uppercase tracking-wider">{"VIP Black"}</span>
-</div>
-</div>
-</div>
-
-<div className="flex items-center justify-between px-space-md py-space-xs bg-surface-container-low rounded-lg">
-<span className="font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1">
-<span className="material-symbols-outlined text-[16px] text-emerald-600">{"verified"}</span>{"\n                Xác thực định danh\n              "}</span>
-<span className="font-label-sm text-label-sm text-emerald-700 font-semibold bg-emerald-100/60 px-2 py-0.5 rounded">{"Đã kích hoạt"}</span>
-</div>
-</div>
-
-<div className="bg-surface-container-lowest p-space-md rounded-xl shadow-sm space-y-space-lg">
-
-<div>
-<div className="px-space-sm mb-space-xs">
-<span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">{"Cài đặt tài khoản"}</span>
-</div>
-<nav className="space-y-1">
-<Link className="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface hover:bg-surface-container-low transition-colors group" href="/tai-khoan">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">{"person"}</span>
-<span className="font-label-md text-label-md">{"Thông tin cá nhân"}</span>
-</div>
-<span className="font-technical-data text-[11px] text-outline">{"C05-1"}</span>
-</Link>
-<Link className="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface hover:bg-surface-container-low transition-colors group" href="/tai-khoan/xac-minh">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">{"badge"}</span>
-<span className="font-label-md text-label-md">{"Xác minh giấy tờ"}</span>
-</div>
-<span className="px-2 py-0.5 bg-amber-100 text-amber-800 font-label-sm text-[11px] font-bold rounded-full">{"1 Chờ duyệt"}</span>
-</Link>
-<Link className="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface hover:bg-surface-container-low transition-colors group" href="/tai-khoan/ho-so-tai-xe">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">{"sports_score"}</span>
-<span className="font-label-md text-label-md">{"Hồ sơ tài xế"}</span>
-</div>
-<span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-label-sm text-[11px] font-semibold rounded-full">{"Đang hoạt động"}</span>
-</Link>
-<Link className="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface hover:bg-surface-container-low transition-colors group" href="/tai-khoan/ngan-hang">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">{"account_balance"}</span>
-<span className="font-label-md text-label-md">{"Tài khoản ngân hàng"}</span>
-</div>
-<span className="px-2 py-0.5 bg-surface-container-high text-on-surface-variant font-label-sm text-[11px] font-semibold rounded-full">{"Đã liên kết (2)"}</span>
-</Link>
-</nav>
-</div>
-
-<div className="pt-space-xs">
-<div className="px-space-sm mb-space-xs flex items-center justify-between">
-<span className="font-label-sm text-label-sm uppercase tracking-wider text-outline font-bold">{"Chuyến đi & Giao dịch"}</span>
-<span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-</div>
-<nav className="space-y-1">
-<Link className="flex items-center justify-between px-space-md py-2.5 rounded-lg text-on-surface hover:bg-surface-container-low transition-colors group" href="/tai-khoan/don-thue">
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[20px]">{"receipt_long"}</span>
-<span className="font-label-md text-label-md">{"Đơn thuê xe"}</span>
-</div>
-<span className="px-2 py-0.5 bg-amber-500 text-white font-label-sm text-[11px] font-bold rounded-full">{"1 Đang chờ"}</span>
-</Link>
-
-<div className="flex items-center justify-between px-space-md py-3 rounded-lg bg-primary-fixed/30 text-primary font-bold shadow-sm relative overflow-hidden">
-<div className="absolute left-0 top-0 bottom-0 w-1 bg-primary-container"></div>
-<div className="flex items-center gap-space-sm">
-<span className="material-symbols-outlined text-primary-container text-[20px]" style={{"fontVariationSettings": "'FILL' 1"} as CSSProperties}>{"history"}</span>
-<span className="font-label-md text-label-md text-primary font-semibold">{"Lịch sử chuyến đi"}</span>
-</div>
-</div>
-</nav>
-</div>
-</div>
-
-<div className="bg-surface-container-low p-space-md rounded-xl space-y-space-sm">
-<div className="flex items-center gap-space-sm text-secondary">
-<span className="material-symbols-outlined text-primary-container text-[24px]">{"support_agent"}</span>
-<span className="font-title text-body-md font-bold text-on-surface">{"Đội ngũ Concierge 24/7"}</span>
-</div>
-<p className="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">{"\n              Cần tra cứu lại hóa đơn VAT hoặc biên bản kiểm định vật lý của các hợp đồng cũ?\n            "}</p>
-<div className="pt-space-xs flex items-center justify-between">
-<div>
-<span className="font-label-sm text-[10px] uppercase text-outline block">{"Hotline đặc quyền"}</span>
-<a className="font-headline-sm text-headline-sm text-primary-container font-bold hover:underline" href="tel:19008899">{"1900 8899"}</a>
-</div>
-<div className="w-9 h-9 rounded-full bg-surface-container-lowest flex items-center justify-center text-primary shadow-sm">
-<span className="material-symbols-outlined text-[18px]">{"phone_in_talk"}</span>
-</div>
-</div>
-</div>
-</aside>
+<ProfileSidebar active="history" className="lg:col-span-4 xl:col-span-3" />
 
 <section className="lg:col-span-8 xl:col-span-9 flex flex-col gap-space-lg">
 
