@@ -419,6 +419,6 @@ export function Interactions({ children, className = "" }) {
         }}>
   {children}
   {empty ? <p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path === "/kham-pha-xe" ? "Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc." : "Chưa có chuyến xe ở trạng thái này."}</p> : null}
-  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { cancelTrip("CDB-ORD-20261026-904"); setModal(null); navigate("/tai-khoan/don-thue?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy đặt xe</HoldButton></div> : null}</Modal> : null}
+  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { cancelTrip("CDB-ORD-20261026-904"); setModal(null); navigate("/tai-khoan/don-thue?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy chuyến</HoldButton></div> : null}</Modal> : null}
  </div>;
 }

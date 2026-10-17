@@ -15,6 +15,7 @@ test("Cancel outline starts at the top center, slows continuously, and resets on
     await expect.poll(async () => { const g = await geometry(); return Math.abs(g.start.x - g.width / 2); }).toBeLessThan(1);
     await expect(path).toHaveCSS("stroke", "rgb(239, 68, 68)");
     await button.focus();
+    await expect(button).toHaveText("Giữ để hủy chuyến");
     await page.keyboard.down("Enter");
     const progress = () => path.evaluate(el => 1 - Number.parseFloat(getComputedStyle(el).strokeDashoffset));
     await page.waitForTimeout(300);
@@ -27,8 +28,16 @@ test("Cancel outline starts at the top center, slows continuously, and resets on
     expect(second).toBeGreaterThan(first);
     expect(third).toBeGreaterThan(second);
     expect(third - second).toBeLessThan(second - first + .03);
+    await page.waitForTimeout(900);
+    await expect(dialog).toBeVisible();
+    await expect(button).toHaveText("Giữ để hủy chuyến");
     await page.keyboard.up("Enter");
     await expect(dialog).toBeVisible();
     expect(await path.evaluate(el => Number.parseFloat(getComputedStyle(el).strokeDashoffset))).toBe(1);
     await expect(button.locator("svg.hold-outline")).toHaveCSS("opacity", "0");
+    await page.keyboard.down("Enter");
+    await page.waitForTimeout(2700);
+    await page.keyboard.up("Enter");
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole("status").filter({ hasText: "Đã hủy" })).toBeVisible();
 });

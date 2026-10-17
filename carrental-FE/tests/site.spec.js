@@ -82,10 +82,10 @@ test("Payment requires holding, early release never confirms", async ({ page }) 
     await expect(page).toHaveURL(/thanh-toan\/thanh-cong/);
     expect(dialogs).toBe(0);
     await page.goto("/thanh-toan");
-    const cancel = page.getByRole("button", { name: "Giữ để hủy đặt xe", exact: true });
+    const cancel = page.getByRole("button", { name: "Giữ để hủy chuyến", exact: true });
     await cancel.focus();
     await page.keyboard.down("Space");
-    await page.waitForTimeout(1800);
+    await page.waitForTimeout(2700);
     await page.keyboard.up("Space");
     await expect(page).toHaveURL(/tai-khoan\/don-thue\?cancelled=1/);
 });
@@ -134,12 +134,12 @@ test("Document sections expand and order cancellation requires hold", async ({ p
     await page.locator('[data-handler="toggleCancelModal"][data-args="true"]').first().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
-    const cancel = dialog.getByRole("button", { name: "Giữ để hủy đặt xe", exact: true });
+    const cancel = dialog.getByRole("button", { name: "Giữ để hủy chuyến", exact: true });
     await cancel.click();
     await expect(dialog).toBeVisible();
     await cancel.focus();
     await page.keyboard.down("Enter");
-    await page.waitForTimeout(1800);
+    await page.waitForTimeout(2700);
     await page.keyboard.up("Enter");
     await expect(page).toHaveURL(/tai-khoan\/don-thue\?cancelled=1/);
 });

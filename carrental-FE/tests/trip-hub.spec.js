@@ -42,12 +42,12 @@ test("Trip cards open the matching details and cancellation persists into profil
     await expect(page).toHaveURL(/order=CDB-ORD-20261026-904/);
     await page.keyboard.press("Escape");
     await page.getByRole("button", { name: "Hủy yêu cầu", exact: true }).click();
-    const hold = page.getByRole("button", { name: "Giữ để hủy đặt xe", exact: true });
+    const hold = page.getByRole("button", { name: "Giữ để hủy chuyến", exact: true });
     await hold.click();
     await expect(page.getByRole("dialog")).toBeVisible();
     await hold.focus();
     await page.keyboard.down("Space");
-    await page.waitForTimeout(1750);
+    await page.waitForTimeout(2700);
     await page.keyboard.up("Space");
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Chờ xác nhận (0)", exact: true })).toBeVisible();

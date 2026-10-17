@@ -82,7 +82,7 @@ Giấy tờ định danh có phần đầu thu gọn và mặc định đóng; �
 
 Đăng nhập bằng thông tin bất kỳ. Trạng thái được lưu trên trình duyệt và cập nhật thanh điều hướng; mật khẩu không được lưu. Hồ sơ có thể chỉnh sửa, chọn ngân hàng, lọc xe, lưu yêu thích, xem ảnh, gửi yêu cầu, chấm sao và tải tệp vào bản xem trước.
 
-Thanh toán và hủy yêu cầu phải giữ nút 1,6 giây bằng chuột, cảm ứng hoặc Enter/Space. Thả sớm sẽ dừng thao tác. Thông báo nằm trong trang; không sử dụng `alert()`, `confirm()` hoặc `prompt()`.
+Thanh toán phải giữ nút 1,6 giây; hủy yêu cầu phải giữ nút 2,5 giây bằng chuột, cảm ứng hoặc Enter/Space. Thả sớm sẽ dừng thao tác. Thông báo nằm trong trang; không sử dụng `alert()`, `confirm()` hoặc `prompt()`.
 
 Website không kết nối máy chủ xác thực, email/SMS, thanh toán hoặc đặt xe thực tế. Thông tin ngân hàng và giao dịch là dữ liệu mẫu; tệp chỉ được chọn trên thiết bị. Nhánh `prototype` dùng để tích hợp giao diện vào nhánh `FE`.
 

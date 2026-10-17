@@ -27,10 +27,10 @@ export function HoldButton({ children, onComplete, danger = false, disabled = fa
         function tick(now) {
             if (started.current === null)
                 return;
-            const progress = Math.min((now - started.current) / 1600, 1);
+            const progress = Math.min((now - started.current) / (danger ? 2500 : 1600), 1);
             if (fill.current) fill.current.style.transform = `scaleX(${progress})`;
             // A continuous ease-out keeps the final stretch slower without changing hold time.
-            if (outline.current) outline.current.style.strokeDashoffset = String((1 - progress) ** 2);
+            if (outline.current) outline.current.style.strokeDashoffset = String((1 - progress) ** 3);
             if (progress >= 1) {
                 stop();
                 complete.current();
@@ -74,8 +74,8 @@ export function HoldButton({ children, onComplete, danger = false, disabled = fa
         stop();
     } }} className={`relative flex w-full touch-none select-none items-center justify-center gap-2 overflow-hidden rounded-full px-3 py-4 text-xs font-bold sm:px-6 sm:text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${danger ? "border border-error/25 bg-error-container/40 text-error hover:bg-error-container/70" : "bg-primary text-white shadow-md hover:bg-primary-container"}`}>
       {danger ? <svg aria-hidden="true" focusable="false" className="hold-outline pointer-events-none absolute inset-0 h-full w-full"><path ref={outline} data-hold-outline pathLength="1" fill="none" vectorEffect="non-scaling-stroke"/></svg> : <span ref={fill} aria-hidden="true" className="pointer-events-none absolute inset-0 origin-left scale-x-0 bg-secondary-fixed/25"/>}
-      <span className="relative flex items-center justify-center gap-2 whitespace-nowrap"><Icon name={danger ? "cancel" : "verified"} className="text-[20px]"/>{holding ? "Tiếp tục giữ…" : children}</span>
+      <span className="relative flex items-center justify-center gap-2 whitespace-nowrap">{!danger && <Icon name="verified" className="text-[20px]"/>}{danger ? children : holding ? "Tiếp tục giữ…" : children}</span>
     </button>
-    <p id={hint} className="mt-2 text-center text-[11px] leading-5 text-text-muted">Giữ 1,6 giây để {danger ? "hủy" : "xác nhận"}. Thả tay để dừng. Bàn phím: giữ Enter hoặc Space.</p>
+    <p id={hint} className={danger ? "sr-only" : "mt-2 text-center text-[11px] leading-5 text-text-muted"}>Giữ {danger ? "2,5" : "1,6"} giây để {danger ? "hủy" : "xác nhận"}. Thả tay để dừng. Bàn phím: giữ Enter hoặc Space.</p>
   </div>;
 }
