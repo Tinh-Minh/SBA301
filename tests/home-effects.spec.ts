@@ -84,6 +84,15 @@ test("Entrance shows video on black, then grid, then light", async ({ page }) =>
  expect(Math.abs(card.x + card.width / 2 - viewport.width / 2)).toBeLessThan(2);
  expect(Math.abs(card.y + card.height / 2 - viewport.height / 2)).toBeLessThan(2);
  await expect(page.locator(".hero-car-card")).toHaveCSS("border-top-width", "0px");
+ await expect(page.locator(".hero-car-card")).toHaveCSS("mask-image", "none");
+ await expect(page.locator(".hero-car-card")).toHaveCSS("background-color", "rgb(0, 0, 0)");
+ await expect(page.locator(".hero-car-video")).toHaveCSS("filter", "none");
+ const gridBehindVideo = await page.evaluate(() => {
+  const grid = getComputedStyle(document.querySelector(".home-entry-grid")!);
+  const hero = getComputedStyle(document.querySelector("#hero-section")!);
+  return Number(grid.zIndex) < Number(hero.zIndex);
+ });
+ expect(gridBehindVideo).toBe(true);
  const gridBounds = (await page.locator(".home-entry-grid").boundingBox())!;
  expect(gridBounds.y).toBe(0);
  expect(gridBounds.width).toBe(viewport.width);
