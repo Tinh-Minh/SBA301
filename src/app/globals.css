@@ -29,7 +29,7 @@
 .cardb-screen .flex:not(.flex-col):has(> .ui-money) { column-gap:.75rem; }
 .site-header nav a { white-space:nowrap;flex-shrink:0; }
 .site-header button[aria-controls^="account-menu"] { white-space:nowrap;flex-shrink:0; }
-@container(max-width:1000px) {
+@container(max-width:1280px) {
  .site-header nav[aria-label="Điều hướng chính"] { display:none; }
  .header-menu-toggle { display:flex; }
  .header-mobile-navigation { display:block; }

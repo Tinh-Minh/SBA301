@@ -1,5 +1,7 @@
 export const pageTitles: Record<string, string> = {
   "": "Mở lối mọi hành trình",
+  "cach-tinh-gia": "Cách tính giá thuê xe",
+  "ve-cardb": "Về CarDB",
   "kham-pha-xe": "Khám phá xe",
   "xe/vinfast-vf8-plus-2024": "VinFast VF 8 Plus",
   "dang-nhap": "Đăng nhập",

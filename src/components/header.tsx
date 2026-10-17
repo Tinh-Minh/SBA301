@@ -7,7 +7,7 @@ import { useAuth } from "./auth-provider";
 import { Icon } from "./icon";
 import { SiteBrand } from "./site-brand";
 
-const navigation = [["/kham-pha-xe", "Khám phá xe"], ["/chuyen-xe-cua-toi", "Chuyến xe của tôi"], ["/cho-thue-xe", "Cho thuê xe"]] as const;
+const navigation = [["/kham-pha-xe", "Khám phá xe"], ["/chuyen-xe-cua-toi", "Chuyến xe của tôi"], ["/cho-thue-xe", "Cho thuê xe"], ["/cach-tinh-gia", "Cách tính giá"], ["/ve-cardb", "Về CarDB"]] as const;
 const accountLinks = [["/tai-khoan", "Hồ sơ cá nhân", "badge"], ["/tai-khoan/don-thue", "Đơn thuê xe", "receipt_long"], ["/tai-khoan/lich-su", "Lịch sử chuyến đi", "history"], ["/tai-khoan/ngan-hang", "Tài khoản ngân hàng", "account_balance"]] as const;
 
 export function Header({ previewState }: { previewState?: boolean } = {}) {
@@ -35,6 +35,6 @@ export function Header({ previewState }: { previewState?: boolean } = {}) {
         <button type="button" aria-label={menu?"Đóng menu":"Mở menu"} aria-expanded={menu} aria-controls={mobileId} onClick={()=>{setMenu(value=>!value);setAccount(false);}} className="header-menu-toggle flex size-9 items-center justify-center rounded-lg border border-border-light text-text-primary lg:hidden"><Icon name={menu?"close":"menu"} /></button>
       </div>
     </div>
-    {menu ? <nav id={mobileId} aria-label="Điều hướng di động" className="header-mobile-navigation border-t border-border-light bg-white px-4 py-3 shadow-lg lg:hidden">{navigation.map(([href,label])=><Link key={href} href={href} onClick={close} className="block rounded-lg px-4 py-3 text-sm font-semibold text-text-primary hover:bg-accent-soft hover:text-brand-accent">{label}</Link>)}<div className="mt-2 flex justify-between border-t border-border-light px-4 pt-4 text-sm"><Link href={loggedIn?"/tai-khoan":"/dang-ky"} onClick={close}>{loggedIn?"Hồ sơ cá nhân":"Đăng ký tài khoản"}</Link><a href="tel:19008899" className="font-semibold text-brand-accent">1900 8899</a></div></nav> : null}
+    {menu ? <nav id={mobileId} aria-label="Điều hướng di động" className="header-mobile-navigation border-t border-border-light bg-white px-4 py-3 shadow-lg lg:hidden">{navigation.map(([href,label])=><Link key={href} href={href} onClick={close} aria-current={activePath.startsWith(href)?"page":undefined} className={`block rounded-lg px-4 py-3 text-sm font-semibold ${activePath.startsWith(href)?"bg-accent-soft text-brand-accent":"text-text-primary hover:bg-accent-soft hover:text-brand-accent"}`}>{label}</Link>)}<div className="mt-2 flex justify-between border-t border-border-light px-4 pt-4 text-sm"><Link href={loggedIn?"/tai-khoan":"/dang-ky"} onClick={close}>{loggedIn?"Hồ sơ cá nhân":"Đăng ký tài khoản"}</Link><a href="tel:19008899" className="font-semibold text-brand-accent">1900 8899</a></div></nav> : null}
   </header>;
 }
