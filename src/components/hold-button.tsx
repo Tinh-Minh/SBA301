@@ -38,9 +38,9 @@ export function HoldButton({ children, onComplete, danger = false, disabled = fa
     }} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onBlur={stop} onContextMenu={event => event.preventDefault()} onKeyDown={event => {
       if ((event.key === " " || event.key === "Enter") && !event.repeat) { event.preventDefault(); start(); }
     }} onKeyUp={event => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); stop(); } }}
-      className={`relative flex w-full touch-none select-none items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-4 text-sm font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${danger ? "border border-error/25 bg-error-container/40 text-error hover:bg-error-container/70" : "bg-primary text-white shadow-md hover:bg-primary-container"}`}>
+      className={`relative flex w-full touch-none select-none items-center justify-center gap-2 overflow-hidden rounded-full px-3 py-4 text-xs font-bold sm:px-6 sm:text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${danger ? "border border-error/25 bg-error-container/40 text-error hover:bg-error-container/70" : "bg-primary text-white shadow-md hover:bg-primary-container"}`}>
       <span ref={fill} aria-hidden="true" className={`pointer-events-none absolute inset-0 origin-left scale-x-0 ${danger ? "bg-error/15" : "bg-secondary-fixed/25"}`} />
-      <span className="relative flex items-center justify-center gap-2"><Icon name={danger ? "cancel" : "verified"} className="text-[20px]" />{holding ? "Tiếp tục giữ để xác nhận…" : children}</span>
+      <span className="relative flex items-center justify-center gap-2 whitespace-nowrap"><Icon name={danger ? "cancel" : "verified"} className="text-[20px]" />{holding ? "Tiếp tục giữ…" : children}</span>
     </button>
     <p id={hint} className="mt-2 text-center text-[11px] leading-5 text-text-muted">Giữ 1,6 giây để {danger ? "hủy" : "xác nhận"}. Thả tay để dừng. Bàn phím: giữ Enter hoặc Space.</p>
   </div>;
