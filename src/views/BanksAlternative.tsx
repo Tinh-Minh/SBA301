@@ -222,9 +222,9 @@ export default function BanksAlternative() { return (<div className="cardb-scree
 </div>
 </div>
 
-<div className="mt-6 pt-4 flex items-center justify-between">
+<div className="flex-wrap gap-y-2 mt-6 pt-4 flex items-center justify-between">
 <span className="font-body-sm text-body-sm text-on-surface-variant">{"Sẵn sàng nhận thanh toán"}</span>
-<button className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-label-md font-label-md font-semibold transition-all duration-200 active:scale-95" type="button" aria-label="Đặt làm mặc định" data-action="default-bank">
+<button className="ui-action inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-label-md font-label-md font-semibold transition-all duration-200 active:scale-95" type="button" aria-label="Đặt làm mặc định" data-action="default-bank">
 <span className="material-symbols-outlined text-[18px] text-on-surface-variant">{"check_circle_outline"}</span>
 <span>{"Đặt làm mặc định"}</span>
 </button>
