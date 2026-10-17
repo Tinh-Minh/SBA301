@@ -368,13 +368,13 @@ export default function Return() { return (<div className="cardb-screen screen-r
 </div>
 
 <div className="bg-[#FFFFFF] rounded-2xl p-space-lg border border-[#E9E9E7] shadow-sm flex flex-col gap-space-md">
-<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs pb-1 border-b border-[#E9E9E7]">
+<div className="flex-wrap gap-y-2 flex flex-col sm:flex-row sm:items-center justify-between gap-space-xs pb-1 border-b border-[#E9E9E7]">
 <div className="flex items-center gap-space-sm">
 <span className="material-symbols-outlined text-[#FC6C26] text-[24px]">{"receipt_long"}</span>
 <h2 className="text-lg md:text-xl font-bold text-[#292929]">{"Phí phát sinh và đối soát"}</h2>
 </div>
-<button className="px-space-md py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-[#E9E9E7] text-[#292929] text-xs font-semibold border border-[#E9E9E7] transition-colors flex items-center gap-1.5 self-start sm:self-auto" type="button" aria-label="Yêu cầu xem xét khoản phí / Khiếu nại (Dispute)">
-<span className="material-symbols-outlined text-[#F5A623] text-[18px]">{"gavel"}</span>{"\n            Yêu cầu xem xét khoản phí / Khiếu nại (Dispute)\n          "}</button>
+<button className="ui-action px-space-md py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-[#E9E9E7] text-[#292929] text-xs font-semibold border border-[#E9E9E7] transition-colors flex items-center gap-1.5 self-start sm:self-auto" type="button" aria-label="Yêu cầu xem xét khoản phí">
+<span className="material-symbols-outlined text-[#F5A623] text-[18px]">{"gavel"}</span>{"\n            Yêu cầu xem xét khoản phí\n          "}</button>
 </div>
 
 <div className="overflow-x-auto bg-[#F7F7F5] rounded-xl border border-[#E9E9E7]">
@@ -384,11 +384,11 @@ export default function Return() { return (<div className="cardb-screen screen-r
 </div>
 <span className="text-lg font-bold text-[#10B981]">{"✓ Chưa ghi nhận phí phát sinh"}</span>
 <div className="flex flex-wrap justify-center gap-space-md text-[#666666] text-sm mt-1">
-<span>{"Biểu phí quá giờ: "}<strong className="text-[#292929]">{"0 đ"}</strong></span>
+<span>{"Biểu phí quá giờ: "}<strong className="ui-money text-[#292929]">{"0 đ"}</strong></span>
 <span>{"•"}</span>
-<span>{"Phụ trội km: "}<strong className="text-[#292929]">{"0 đ"}</strong></span>
+<span>{"Phụ trội km: "}<strong className="ui-money text-[#292929]">{"0 đ"}</strong></span>
 <span>{"•"}</span>
-<span>{"Phí vệ sinh: "}<strong className="text-[#292929]">{"0 đ"}</strong></span>
+<span>{"Phí vệ sinh: "}<strong className="ui-money text-[#292929]">{"0 đ"}</strong></span>
 <span>{"•"}</span>
 <span>{"Thiệt hại: "}<strong className="text-[#292929]">{"Không có"}</strong></span>
 </div>
@@ -444,8 +444,8 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <span className="text-sm text-[#292929]">{"\n            Tôi ("}<strong className="text-[#FC6C26]">{"Nguyễn Hoàng Minh"}</strong>{") xác nhận thông tin hiện trạng thực tế khi trả xe và đồng ý gửi phần xác nhận của tôi.\n          "}</span>
 </label>
 
-<div className="flex flex-col sm:flex-row items-center justify-end gap-space-md pt-space-xs">
-<button className="w-full sm:w-auto px-space-lg py-2.5 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#292929] font-bold text-sm border border-[#E9E9E7] transition-colors flex items-center justify-center gap-2" type="button" aria-label="Lưu bản nháp biên bản">
+<div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-end gap-space-md pt-space-xs">
+<button className="ui-action w-full sm:w-auto px-space-lg py-2.5 rounded-xl bg-white hover:bg-[#F7F7F5] text-[#292929] font-bold text-sm border border-[#E9E9E7] transition-colors flex items-center justify-center gap-2" type="button" aria-label="Lưu bản nháp biên bản">
 <span className="material-symbols-outlined text-[18px]">{"save"}</span>{"\n            Lưu bản nháp biên bản\n          "}</button>
 <button className="w-full sm:w-auto px-space-xl py-3 rounded-xl bg-[#FC6C26] hover:bg-[#e05b1b] text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2" type="button" aria-label="Xác nhận của tôi">
 <span>{"Xác nhận của tôi"}</span>
@@ -499,21 +499,21 @@ export default function Return() { return (<div className="cardb-screen screen-r
 <div className="flex flex-col gap-space-sm text-sm">
 <div className="flex items-center justify-between">
 <span className="text-[#666666]">{"Tiền cọc đã ghi nhận"}</span>
-<span className="text-[#292929] font-bold whitespace-nowrap">{"15.000.000 đ"}</span>
+<span className="ui-money text-[#292929] font-bold whitespace-nowrap">{"15.000.000 đ"}</span>
 </div>
 <div className="flex items-center justify-between">
 <span className="text-[#666666]">{"Khấu trừ đã xác nhận"}</span>
-<span className="text-[#666666] font-semibold whitespace-nowrap">{"0 đ"}</span>
+<span className="ui-money text-[#666666] font-semibold whitespace-nowrap">{"0 đ"}</span>
 </div>
 <div className="flex items-center justify-between">
 <span className="text-[#666666]">{"Khấu trừ quá giờ / vi phạm"}</span>
-<span className="text-[#666666] whitespace-nowrap">{"0 đ"}</span>
+<span className="ui-money text-[#666666] whitespace-nowrap">{"0 đ"}</span>
 </div>
 
 <div className="p-space-md rounded-xl bg-[#D1FAE5] border border-[#10B981]/30 flex flex-col gap-1 mt-space-xs">
 <span className="text-[11px] text-[#10B981] font-bold uppercase tracking-wider">{"TIỀN CỌC SẼ HOÀN TRẢ"}</span>
-<div className="flex items-center justify-between">
-<span className="text-2xl font-bold text-[#10B981] tracking-tight whitespace-nowrap">{"\n              15.000.000 đ\n            "}</span>
+<div className="flex flex-wrap items-center justify-between gap-2">
+<span className="ui-money text-2xl font-bold text-[#10B981] tracking-tight whitespace-nowrap">{"\n              15.000.000 đ\n            "}</span>
 <span className="px-2.5 py-0.5 rounded-full bg-white text-[#10B981] text-xs font-bold border border-[#10B981]/30 whitespace-nowrap">{"100% hoàn lại"}</span>
 </div>
 </div>
