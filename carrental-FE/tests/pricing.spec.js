@@ -39,7 +39,7 @@ test("Rental modes and category filters update price cards", async ({ page }) =>
 });
 test("Pricing follows supplied section order and consultation works", async ({ page }) => {
     await page.goto("/cach-tinh-gia");
-    expect(await page.locator("[data-pricing-section]").evaluateAll(elements => elements.map(element => element.getAttribute("data-pricing-section"))))
+    await expect.poll(() => page.locator("[data-pricing-section]").evaluateAll(elements => elements.map(element => element.getAttribute("data-pricing-section"))))
         .toEqual(["intro", "fleet", "comparison", "fees", "enterprise", "faq"]);
     await expect(page.locator('[data-pricing-section="intro"] [aria-label="Hình thức thuê"]')).toBeVisible();
     await expect(page.locator('[data-pricing-section="intro"] h2')).toHaveCount(4);
