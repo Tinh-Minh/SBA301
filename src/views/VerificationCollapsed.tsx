@@ -212,9 +212,9 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 </div>
 <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 rounded backdrop-blur-sm text-[11px] text-white font-technical-data">{"\n                        SHA-256: 8a4f9...9b2\n                      "}</div>
 </div>
-<div className="mt-space-sm flex items-center justify-between pt-space-xs">
+<div className="flex-wrap gap-y-2 mt-space-sm flex items-center justify-between pt-space-xs">
 <span className="font-body-sm text-body-sm text-on-surface-variant">{"Tải lên: 16/01/2024"}</span>
-<button className="font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
+<button className="ui-action font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
 </button>
 </div>
 </div>
@@ -234,9 +234,9 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 </div>
 <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/60 rounded backdrop-blur-sm text-[11px] text-white font-technical-data">{"\n                        CHIP-UID: 99401...88a\n                      "}</div>
 </div>
-<div className="mt-space-sm flex items-center justify-between pt-space-xs">
+<div className="flex-wrap gap-y-2 mt-space-sm flex items-center justify-between pt-space-xs">
 <span className="font-body-sm text-body-sm text-on-surface-variant">{"Tải lên: 16/01/2024"}</span>
-<button className="font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
+<button className="ui-action font-label-sm text-label-sm text-primary-container hover:text-primary transition-colors flex items-center gap-1" type="button" aria-label="Xem ảnh bảo mật">{"\n                        Xem ảnh bảo mật "}<span className="material-symbols-outlined text-[14px]">{"north_east"}</span>
 </button>
 </div>
 </div>
@@ -401,7 +401,7 @@ export default function VerificationCollapsed() { return (<div className="cardb-
 <p className="font-technical-data text-[12px] text-outline mt-2">{"Hỗ trợ định dạng JPG, PNG, HEIC (Tối đa 10MB mỗi ảnh)"}</p>
 </div>
 <div>
-<button className="h-12 px-space-lg rounded-xl bg-primary-container text-white font-label-md text-label-md shadow-md hover:bg-primary transition-all duration-200 inline-flex items-center gap-space-sm transform active:scale-95" type="button" aria-label="Tải lên ảnh Hộ chiếu mới" data-action="upload">
+<button className="ui-action h-12 px-space-lg rounded-xl bg-primary-container text-white font-label-md text-label-md shadow-md hover:bg-primary transition-all duration-200 inline-flex items-center gap-space-sm transform active:scale-95" type="button" aria-label="Tải lên ảnh Hộ chiếu mới" data-action="upload">
 <span className="material-symbols-outlined text-[20px]">{"upload_file"}</span>{"\n                    Tải lên ảnh Hộ chiếu mới\n                  "}</button>
 </div>
 </div>
