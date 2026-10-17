@@ -69,7 +69,11 @@ for (const width of [375, 1024, 1440]) {
     if (!desktop) await header.getByRole("button", { name: "Mở menu", exact: true }).click();
     await expect(header.locator('a[aria-current="page"]').filter({ visible: true })).toHaveText("Cách tính giá");
     await expect(header.getByRole("link", { name: "Về CarDB", exact: true })).toHaveCount(0);
-    if (desktop) expect((await page.request.get("/ve-cardb")).status()).toBe(404);
+    if (desktop) {
+      await page.goto("/ve-cardb");
+      await expect(page.getByRole("heading", { level: 1 })).toHaveText("Chưa tìm thấy trang này");
+      await page.goBack();
+    }
     await page.evaluate(() => document.fonts.ready);
     expect(await page.locator("main .material-symbols-outlined").evaluateAll(elements => elements.every(element => { const style = getComputedStyle(element); return element.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) <= parseFloat(style.fontSize) + 1; }))).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
