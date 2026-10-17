@@ -41,7 +41,7 @@ test("Grid lights orange under cursor and fades on exit", async ({ page }) => {
   const photo = (await page.locator(".hero-car-video").boundingBox())!;
   await page.mouse.move(photo.x + photo.width / 2, photo.y + photo.height / 2);
   await expect(grid).toHaveAttribute("data-glowing", "true");
-  await page.mouse.move(1, 1);
+  await page.mouse.move(-1, -1);
   await expect(grid).toHaveAttribute("data-glowing", "false");
   await expect(page.locator(".grid-reveal")).toHaveCSS("opacity", "0");
   await page.getByRole("button", { name: "Tìm xe ngay", exact: true }).click();
@@ -79,6 +79,16 @@ test("Entrance shows video on black, then grid, then light", async ({ page }) =>
  await expect(page.locator(".site-header")).toHaveCSS("opacity", "0");
  await expect(page.locator(".home-entry-grid")).toHaveCSS("opacity", "0");
  await frame(1200);
+ const card = (await page.locator(".hero-car-card").boundingBox())!;
+ const viewport = page.viewportSize()!;
+ expect(Math.abs(card.x + card.width / 2 - viewport.width / 2)).toBeLessThan(2);
+ expect(Math.abs(card.y + card.height / 2 - viewport.height / 2)).toBeLessThan(2);
+ await expect(page.locator(".hero-car-card")).toHaveCSS("border-top-width", "0px");
+ const gridBounds = (await page.locator(".home-entry-grid").boundingBox())!;
+ expect(gridBounds.y).toBe(0);
+ expect(gridBounds.width).toBe(viewport.width);
+ expect(gridBounds.height).toBeGreaterThanOrEqual(viewport.height);
+ await expect(page.locator(".home-entry-grid")).toHaveCSS("mask-image", "none");
  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(0, 0, 0)");
  expect(await page.locator(".home-entry-grid").evaluate(el => Number(getComputedStyle(el).opacity))).toBeGreaterThan(.9);
  await expect(page.locator(".home-entry-light")).toHaveCSS("opacity", "0");
@@ -89,4 +99,24 @@ test("Entrance shows video on black, then grid, then light", async ({ page }) =>
  await expect(page.locator(".site-header")).toHaveCSS("opacity", "1");
  await expect(page.locator("#home-search")).toHaveCSS("opacity", "1");
  await expect(page.locator(".home-entry-grid")).toHaveCSS("opacity", "0");
+});
+
+test("Mobile entrance centers footage and covers the viewport with grid", async ({ page }) => {
+ await page.setViewportSize({ width: 375, height: 900 });
+ await page.goto("/");
+ await expect(page.locator(".hero-car-card")).toHaveAttribute("data-entry-ready", "true");
+ await page.evaluate(() => {
+  for (const animation of document.getAnimations()) {
+   if (animation instanceof CSSAnimation && animation.animationName.startsWith("home-")) {
+    animation.pause(); animation.currentTime = 1200;
+   }
+  }
+ });
+ const card = (await page.locator(".hero-car-card").boundingBox())!;
+ expect(Math.abs(card.x + card.width / 2 - 187.5)).toBeLessThan(2);
+ expect(Math.abs(card.y + card.height / 2 - 450)).toBeLessThan(2);
+ const grid = (await page.locator(".home-entry-grid").boundingBox())!;
+ expect(grid.y).toBe(0);
+ expect(grid.height).toBeGreaterThanOrEqual(900);
+ expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });

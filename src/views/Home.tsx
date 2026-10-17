@@ -6,7 +6,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 
 
 
-<main className="w-full flex-1 flex flex-col pt-20">
+<main className="w-full flex-1 flex flex-col">
 
 <InteractiveGrid>
 <div className="home-entry-grid" aria-hidden="true" />
@@ -20,7 +20,7 @@ export default function Home() { return (<div className="cardb-screen screen-hom
 <p className="text-xs md:text-sm text-text-secondary max-w-xl mx-auto leading-relaxed">{"\n            Trải nghiệm các dòng xe tự lái cao cấp tiện lợi, minh bạch từng chi phí. Nhận xe linh hoạt theo giờ hoặc theo ngày tại TP. Hồ Chí Minh và toàn quốc.\n          "}</p>
 </div>
 
-<div className="hero-car-card relative w-full max-w-5xl overflow-hidden rounded-2xl border border-border-light bg-[#09151A]">
+<div className="hero-car-card relative w-full max-w-5xl overflow-hidden">
 <HeroCarScene />
 </div>
 </div>
