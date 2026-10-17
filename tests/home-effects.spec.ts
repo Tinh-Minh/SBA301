@@ -129,3 +129,29 @@ test("Mobile entrance centers footage and covers the viewport with grid", async 
  expect(grid.height).toBeGreaterThanOrEqual(900);
  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
+
+for (const input of ["wheel", "keyboard", "touch", "scrollbar"] as const) {
+ test(`Scrolling with ${input} immediately completes entrance`, async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator(".hero-car-card")).toHaveAttribute("data-entry-ready", "true");
+  await page.evaluate(() => {
+   for (const animation of document.getAnimations()) {
+    if (animation instanceof CSSAnimation && animation.animationName.startsWith("home-")) {
+     animation.pause(); animation.currentTime = 350;
+    }
+   }
+  });
+  await expect(page.locator(".site-header")).toHaveCSS("opacity", "0");
+  if (input === "wheel") await page.mouse.wheel(0, 200);
+  if (input === "keyboard") await page.keyboard.press("PageDown");
+  if (input === "touch") await page.evaluate(() => window.dispatchEvent(new Event("touchmove")));
+  if (input === "scrollbar") await page.evaluate(() => window.scrollTo({ top: 200, behavior: "instant" }));
+  await expect(page.locator(".site-header")).toHaveCSS("opacity", "1");
+  await expect(page.locator("#home-search")).toHaveCSS("opacity", "1");
+  await expect(page.locator(".home-entry-grid")).toHaveCSS("opacity", "0");
+  await expect(page.locator(".home-entry-light")).toHaveCSS("opacity", "0");
+  await expect(page.locator("body")).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await expect(page.locator(".hero-car-card")).toHaveCSS("transform", "matrix(1, 0, 0, 1, 0, 0)");
+  if (input !== "touch") await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+ });
+}

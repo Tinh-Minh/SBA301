@@ -21,8 +21,43 @@ export function HeroCarScene() {
     }
     centerEntrance();
     card.dataset.entryReady = "true";
+
+    function removeScrollListeners() {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("touchmove", finishEntrance);
+      window.removeEventListener("scroll", finishEntrance);
+      window.removeEventListener("keydown", onKeyDown);
+    }
+
+    function finishEntrance() {
+      removeScrollListeners();
+      for (const animation of document.getAnimations()) {
+        if (animation instanceof CSSAnimation && animation.animationName.startsWith("home-")) {
+          animation.finish();
+        }
+      }
+    }
+
+    function onWheel(event: WheelEvent) {
+      if (!event.ctrlKey && (event.deltaX || event.deltaY)) finishEntrance();
+    }
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.target instanceof Element && event.target.closest("input,textarea,select,button,a,summary,[contenteditable]:not([contenteditable='false']),[role='button']")) return;
+      if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) finishEntrance();
+    }
+
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("touchmove", finishEntrance, { passive: true });
+    window.addEventListener("scroll", finishEntrance, { passive: true });
+    window.addEventListener("keydown", onKeyDown);
+    if (window.scrollY > 0) finishEntrance();
     window.addEventListener("resize", centerEntrance, { passive: true });
-    return () => window.removeEventListener("resize", centerEntrance);
+    return () => {
+      removeScrollListeners();
+      window.removeEventListener("resize", centerEntrance);
+    };
   }, []);
 
   useEffect(() => {

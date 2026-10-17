@@ -52,7 +52,7 @@ Thiết kế dùng nền trắng/đá ấm, chữ than và cam chủ đạo. Lư
 
 Video trang chủ: [Erik Mclean trên Pexels](https://www.pexels.com/video/a-white-car-parked-in-the-pouring-rain-at-night-16815341/), theo [giấy phép Pexels](https://www.pexels.com/license/). Bản MP4 tự lưu trữ được nén xuống 1280 × 536, bỏ âm thanh; ảnh WebP lấy từ khung hình đầu. Video tự dừng khi ra khỏi màn hình hoặc bật chế độ giảm chuyển động.
 
-Điều hướng hồ sơ dùng chung thành phần từ màn hình xác minh giấy tờ. Trang chủ mở đầu bằng video trên nền đen, lưới cam hiện dần, sau đó ánh sáng và nội dung xuất hiện; chế độ giảm chuyển động bỏ qua hiệu ứng này.
+Điều hướng hồ sơ dùng chung thành phần từ màn hình xác minh giấy tờ. Trang chủ mở đầu bằng video trên nền đen, lưới cam hiện dần, sau đó ánh sáng và nội dung xuất hiện; chế độ giảm chuyển động bỏ qua hiệu ứng này. Thao tác cuộn bằng chuột, cảm ứng, thanh cuộn hoặc bàn phím lập tức hoàn tất phần mở đầu và hiển thị nội dung, không khóa cuộn trang.
 
 ## Hành vi prototype
 
