@@ -48,12 +48,12 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <img alt="VinFast VF 8 Plus 2024 Xanh Biển Sâu" className="w-full h-full object-cover object-center group-hover:scale-[1.02] transition-transform duration-500" src="/images/cardb-418ca04892742654.webp" loading="lazy" decoding="async" />
 
 <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between pointer-events-none">
-<div className="flex gap-2 pointer-events-auto">
-<button className="bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Xem toàn cảnh 360°">
+<div className="flex-wrap gap-y-2 flex gap-2 pointer-events-auto">
+<button className="ui-action bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Xem toàn cảnh 360°">
 <svg className="w-4 h-4 text-orange-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
 </svg>{"\n                  Xem toàn cảnh 360°\n                "}</button>
-<button className="bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Video kiểm định">
+<button className="ui-action bg-gray-900/80 hover:bg-gray-900 backdrop-blur-md text-white text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 border border-white/20 transition-all shadow-md" type="button" aria-label="Video kiểm định">
 <svg className="w-4 h-4 text-orange-400" fill="currentColor" viewBox="0 0 20 20">
 <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"></path>
 </svg>{"\n                  Video kiểm định\n                "}</button>
@@ -183,7 +183,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 
 <div className="grid grid-cols-2 bg-gray-100/90 border-b border-gray-200">
 
-<button type="button" className="flex items-center justify-center gap-2 py-3 px-4 bg-white text-xs font-bold text-gray-900 border-t-2 border-orange-500 transition-colors relative" aria-label="Theo ngày" data-action="rental-mode">
+<button type="button" className="ui-action flex items-center justify-center gap-2 py-3 px-4 bg-white text-xs font-bold text-gray-900 border-t-2 border-orange-500 transition-colors relative" aria-label="Theo ngày" data-action="rental-mode">
 <span className="w-2 h-2 rounded-full bg-orange-600"></span>
 <svg className="w-3.5 h-3.5 text-orange-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
@@ -208,11 +208,11 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <div className="mb-4 pb-4 border-b border-gray-100 flex items-start justify-between">
 <div>
 <div className="flex items-baseline gap-1.5">
-<span className="text-2xl font-black text-orange-600 tracking-tight">{"1.250.000 đ"}</span>
+<span className="ui-money text-2xl font-black text-orange-600 tracking-tight">{"1.250.000 đ"}</span>
 <span className="text-xs font-medium text-gray-500">{"/ ngày"}</span>
 </div>
 <div className="flex items-center gap-2 mt-1">
-<span className="text-xs text-gray-400 line-through">{"1.550.000 đ"}</span>
+<span className="ui-money text-xs text-gray-400 line-through">{"1.550.000 đ"}</span>
 <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700">{"Tiết kiệm 20% tháng này"}</span>
 </div>
 </div>
@@ -323,29 +323,29 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 <div className="space-y-1.5 text-xs border-t border-gray-100 pt-3 text-gray-600">
 <div className="flex justify-between">
 <span className="">{"Đơn giá thuê (3 ngày x 1.250.000đ):"}</span>
-<span className="font-medium text-gray-900">{"3.750.000 đ"}</span>
+<span className="ui-money font-medium text-gray-900">{"3.750.000 đ"}</span>
 </div>
 <div className="flex justify-between">
 <span className="">{"Bảo hiểm VIP (3 ngày x 99.000đ):"}</span>
-<span className="font-medium text-gray-900">{"297.000 đ"}</span>
+<span className="ui-money font-medium text-gray-900">{"297.000 đ"}</span>
 </div>
 <div className="flex justify-between">
 <span className="">{"Thuế GTGT (VAT 8%):"}</span>
-<span className="font-medium text-gray-900">{"323.760 đ"}</span>
+<span className="ui-money font-medium text-gray-900">{"323.760 đ"}</span>
 </div>
 <div className="flex justify-between text-emerald-600 font-semibold">
 <span className="flex items-center gap-1">
 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
 <path d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
 </svg>{"\n          Voucher CARDBVIP (-15%)\n        "}</span>
-<span className="">{"-562.500 đ"}</span>
+<span className="ui-money ">{"-562.500 đ"}</span>
 </div>
 <div className="border-t border-dashed border-gray-300 pt-2 flex items-baseline justify-between text-gray-900">
 <div>
 <span className="text-sm font-bold block">{"Tổng chi phí dự kiến:"}</span>
 <span className="text-[10px] text-gray-500 font-normal">{"Đã bao gồm năng lượng sạc và VAT"}</span>
 </div>
-<span className="text-2xl font-black text-orange-600">{"3.808.260 đ"}</span>
+<span className="ui-money text-2xl font-black text-orange-600">{"3.808.260 đ"}</span>
 </div>
 </div>
 
@@ -406,7 +406,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 </div>
 <div className="px-4 pb-4 pt-1 flex items-center justify-between">
 <div>
-<span className="text-base font-extrabold text-orange-600">{"1.050.000đ"}</span>
+<span className="ui-money text-base font-extrabold text-orange-600">{"1.050.000đ"}</span>
 <span className="text-xs text-gray-400">{"/ngày"}</span>
 </div>
 <Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
@@ -432,7 +432,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 </div>
 <div className="px-4 pb-4 pt-1 flex items-center justify-between">
 <div>
-<span className="text-base font-extrabold text-orange-600">{"1.400.000đ"}</span>
+<span className="ui-money text-base font-extrabold text-orange-600">{"1.400.000đ"}</span>
 <span className="text-xs text-gray-400">{"/ngày"}</span>
 </div>
 <Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
@@ -458,7 +458,7 @@ export default function Vehicle() { return (<div className="cardb-screen screen-
 </div>
 <div className="px-4 pb-4 pt-1 flex items-center justify-between">
 <div>
-<span className="text-base font-extrabold text-orange-600">{"1.850.000đ"}</span>
+<span className="ui-money text-base font-extrabold text-orange-600">{"1.850.000đ"}</span>
 <span className="text-xs text-gray-400">{"/ngày"}</span>
 </div>
 <Link className="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-800 hover:bg-orange-600 hover:text-white transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</Link>
