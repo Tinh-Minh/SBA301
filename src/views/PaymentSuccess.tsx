@@ -142,24 +142,24 @@ export default function PaymentSuccess() { return (<div className="cardb-screen 
 </div>
 <div className="flex items-center justify-between py-2 border-b border-card-border">
 <span className="text-subtext">{"Tiền thuê gốc (2 ngày)"}</span>
-<span className="text-charcoal font-medium font-mono">{"3.900.000 đ"}</span>
+<span className="ui-money text-charcoal font-medium font-mono">{"3.900.000 đ"}</span>
 </div>
 <div className="flex items-center justify-between py-2 text-emerald-accent font-semibold">
 <span className="flex items-center gap-1.5">
 <span className="material-symbols-outlined text-[16px]">{"loyalty"}</span>
 <span>{"Voucher ưu đãi (CARDBWELCOME)"}</span>
 </span>
-<span className="font-mono">{"-200.000 đ"}</span>
+<span className="ui-money font-mono">{"-200.000 đ"}</span>
 </div>
 </div>
 
-<div className="mt-2 rounded-xl p-4 bg-[#FFF8F5] border border-[#FFE0D1] flex items-baseline justify-between">
+<div className="mt-2 rounded-xl p-4 bg-[#FFF8F5] border border-[#FFE0D1] flex flex-col gap-2 sm:flex-row sm:items-baseline justify-between">
 <div className="flex flex-col">
 <span className="text-xs text-charcoal font-bold uppercase tracking-wider">{"SỐ TIỀN ĐÃ THANH TOÁN"}</span>
 <span className="text-xs text-subtext mt-0.5">{"Đã bao gồm VAT & bảo hiểm cơ bản"}</span>
 </div>
 <div className="text-right">
-<span className="text-2xl md:text-3xl text-orange-brand font-bold tracking-tight">{"3.700.000 đ"}</span>
+<span className="ui-money text-2xl md:text-3xl text-orange-brand font-bold tracking-tight">{"3.700.000 đ"}</span>
 </div>
 </div>
 
@@ -172,12 +172,12 @@ export default function PaymentSuccess() { return (<div className="cardb-screen 
 <strong>{"Lưu ý:"}</strong>{" Khoản cọc thế chấp được thực hiện riêng khi giao nhận xe tại bãi xe theo thỏa thuận trong kịch bản minh họa. Khoản cọc "}<strong>{"CHƯA thu"}</strong>{" và "}<strong>{"KHÔNG"}</strong>{" nằm trong số tiền 3.700.000 đ đã thanh toán trực tuyến này.\n"}</p>
 </div>
 
-<div className="mt-4 pt-3 border-t border-card-border flex items-center justify-between text-subtext text-xs">
+<div className="flex-wrap gap-y-2 mt-4 pt-3 border-t border-card-border flex items-center justify-between text-subtext text-xs">
 <div className="flex items-center gap-1.5">
 <span className="text-emerald-accent font-bold">{"✓"}</span>
 <span>{"Chứng từ điện tử hợp lệ theo luật GĐĐT Việt Nam"}</span>
 </div>
-<button className="border border-card-border text-charcoal hover:bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors" type="button" aria-label="In biên lai" data-action="receipt" data-handler="window.print" data-args="">
+<button className="ui-action border border-card-border text-charcoal hover:bg-gray-50 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors" type="button" aria-label="In biên lai" data-action="receipt" data-handler="window.print" data-args="">
 <span className="material-symbols-outlined text-[15px]">{"print"}</span>
 <span>{"In biên lai"}</span>
 </button>
