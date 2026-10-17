@@ -1,3 +1,4 @@
+import { ProfileSidebar } from "@/components/profile-sidebar";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
@@ -9,99 +10,7 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 <main className="flex-1 max-w-[1440px] w-full mx-auto px-6 py-8 pt-20">
 <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
 
-<aside className="col-span-1 lg:col-span-3 space-y-5" data-purpose="account-sidebar">
-
-<div className="bg-[#F7F7F5] border border-[#E9E9E7] rounded-2xl p-4 flex items-center space-x-3.5 shadow-sm">
-<div className="relative w-12 h-12 rounded-xl bg-white border border-[#E9E9E7] flex items-center justify-center flex-shrink-0 text-[#FC6C26]">
-<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8"></path>
-</svg>
-<span className="absolute -top-1 -right-1 w-3 h-3 bg-[#10B981] rounded-full border-2 border-white"></span>
-</div>
-<div className="min-w-0 flex-1">
-<div className="flex items-center space-x-1.5 mb-0.5">
-<span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-<span className="text-[10px] uppercase font-bold text-[#10B981] tracking-wide">{"Đang hoạt động"}</span>
-</div>
-<h2 className="text-sm font-bold text-[#292929] truncate leading-snug">{"Nguyễn Hoàng Minh"}</h2>
-<div className="text-[11px] text-[#666666] font-medium truncate">{"ID: CDB-VN-88492"}</div>
-<div className="text-[10px] text-[#666666] mt-0.5 flex items-center">
-<svg className="w-3 h-3 mr-1 text-[#10B981]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>{"\nTài khoản khách hàng\n"}</div>
-</div>
-</div>
-
-<nav aria-label="Account Tabs" className="bg-[#F7F7F5] border border-[#E9E9E7] rounded-2xl p-2 space-y-1">
-
-<Link className="flex items-center justify-between px-3.5 py-3 rounded-xl text-[#292929] hover:bg-white hover:shadow-sm transition-all" href="/tai-khoan">
-<div className="flex items-center space-x-3 text-xs font-medium">
-<svg className="w-4 h-4 text-[#666666]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>
-<span>{"Thông tin cá nhân"}</span>
-</div>
-</Link>
-
-<Link className="flex items-center justify-between px-3.5 py-3 rounded-xl text-[#292929] hover:bg-white hover:shadow-sm transition-all" href="/tai-khoan/xac-minh">
-<div className="flex items-center space-x-3 text-xs font-medium">
-<svg className="w-4 h-4 text-[#666666]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>
-<span>{"Xác minh giấy tờ"}</span>
-</div>
-<span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]">{"1 Chờ duyệt"}</span>
-</Link>
-
-<Link className="flex items-center justify-between px-3.5 py-3 rounded-xl text-[#292929] hover:bg-white hover:shadow-sm transition-all" href="/tai-khoan/ho-so-tai-xe">
-<div className="flex items-center space-x-3 text-xs font-medium">
-<svg className="w-4 h-4 text-[#666666]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>
-<span>{"Hồ sơ tài xế"}</span>
-</div>
-<span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]">{"Chờ kích hoạt"}</span>
-</Link>
-
-<Link aria-current="page" className="flex items-center justify-between px-3.5 py-3 rounded-xl bg-[#FC6C26] text-white font-semibold shadow-md shadow-[#FC6C26]/20" href="/tai-khoan/ngan-hang">
-<div className="flex items-center space-x-3 text-xs">
-<svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>
-<span className="text-white font-medium">{"Tài khoản ngân hàng"}</span>
-</div>
-<div className="flex items-center space-x-1.5">
-<span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20 text-white">{"Đã liên kết (2)"}</span>
-<svg className="w-3.5 h-3.5 text-white/80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>
-</div>
-</Link>
-</nav>
-
-<div className="bg-white border border-[#E9E9E7] rounded-2xl p-4 shadow-sm">
-<div className="flex items-start space-x-3">
-<div className="w-8 h-8 rounded-lg bg-[#FC6C26]/10 flex items-center justify-center text-[#FC6C26] flex-shrink-0 mt-0.5">
-<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>
-</div>
-<div>
-<div className="text-xs font-bold text-[#292929] uppercase tracking-wider">{"CẦN TRỢ GIÚP XÁC MINH?"}</div>
-<p className="text-[11px] text-[#666666] mt-1 leading-relaxed">{"\nTổng đài hỗ trợ 24/7 CarDB luôn sẵn sàng giải đáp thắc mắc liên kết ngân hàng.\n"}</p>
-<div className="mt-3 flex items-center justify-between text-xs font-bold bg-[#F7F7F5] px-2.5 py-2 rounded-lg border border-[#E9E9E7]">
-<div>
-<div className="text-[#FC6C26] font-bold">{"1900 8899"}</div>
-<div className="text-[9px] text-[#666666] font-normal">{"TP. Hồ Chí Minh & Hà Nội"}</div>
-</div>
-<svg className="w-4 h-4 text-[#FC6C26]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-</svg>
-</div>
-</div>
-</div>
-</div>
-</aside>
+<ProfileSidebar active="banks" className="col-span-1 lg:col-span-3" />
 
 
 <section className="col-span-1 lg:col-span-9 space-y-6" data-purpose="bank-account-content">
