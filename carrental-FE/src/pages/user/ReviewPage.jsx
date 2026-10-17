@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 export default function ReviewPage() {
-    return (<div className="cardb-screen screen-review bg-[#F7F7F5] font-sans text-charcoal antialiased  flex flex-col justify-between"><main className="w-full  bg-[#F7F7F5] flex-1 pt-20"><div className="w-full max-w-[1440px] mx-auto px-6 lg:px-12 py-10">
+    return (<div className="cardb-screen screen-review bg-section-bg font-sans text-charcoal antialiased  flex flex-col justify-between"><main className="w-full  bg-section-bg flex-1 pt-20"><div className="w-full max-w-[1440px] mx-auto px-6 lg:px-12 py-10">
 
     <div className="flex flex-col gap-2 mb-8">
     <nav className="flex items-center gap-2 text-sm text-muted-gray">
@@ -37,7 +37,7 @@ export default function ReviewPage() {
     <span className="text-xs font-semibold text-primary bg-orange-50 border border-orange-200 px-2.5 py-0.5 rounded-full">{"Bắt buộc"}</span>
     </div>
 
-    <div className="bg-[#F7F7F5] border border-border-subtle rounded-xl p-6 text-center flex flex-col items-center justify-center gap-3">
+    <div className="bg-section-bg border border-border-subtle rounded-xl p-6 text-center flex flex-col items-center justify-center gap-3">
     <h2 className="text-[18px] font-bold text-charcoal">{"Đánh giá tổng thể chất lượng chuyến đi"}</h2>
 
     <div className="flex items-center justify-center gap-3 py-1" id="overall-star-group">
@@ -70,7 +70,7 @@ export default function ReviewPage() {
     </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-    <div className="bg-[#F7F7F5] border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
+    <div className="bg-section-bg border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
     <div>
     <span className="text-sm font-bold text-charcoal block">{"Chất lượng & Vận hành xe"}</span>
     <span className="text-xs text-muted-gray block mt-0.5">{"Động cơ êm, pin tốt, vận hành ổn định"}</span>
@@ -84,7 +84,7 @@ export default function ReviewPage() {
     </div>
     </div>
 
-    <div className="bg-[#F7F7F5] border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
+    <div className="bg-section-bg border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
     <div>
     <span className="text-sm font-bold text-charcoal block">{"Vệ sinh & Tình trạng nội thất"}</span>
     <span className="text-xs text-muted-gray block mt-0.5">{"Khử khuẩn, thơm mới, ghế da sạch"}</span>
@@ -98,7 +98,7 @@ export default function ReviewPage() {
     </div>
     </div>
 
-    <div className="bg-[#F7F7F5] border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
+    <div className="bg-section-bg border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
     <div>
     <span className="text-sm font-bold text-charcoal block">{"Thái độ & Hỗ trợ từ chủ xe"}</span>
     <span className="text-xs text-muted-gray block mt-0.5">{"Nhiệt tình, đúng giờ, giao xe tận tâm"}</span>
@@ -112,7 +112,7 @@ export default function ReviewPage() {
     </div>
     </div>
 
-    <div className="bg-[#F7F7F5] border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
+    <div className="bg-section-bg border border-border-subtle rounded-xl p-4 flex flex-col justify-between gap-2">
     <div>
     <span className="text-sm font-bold text-charcoal block">{"Thủ tục bàn giao nhanh chóng"}</span>
     <span className="text-xs text-muted-gray block mt-0.5">{"Đối soát biên bản minh bạch, thuận tiện"}</span>
@@ -133,17 +133,17 @@ export default function ReviewPage() {
     <label className="text-sm font-bold text-charcoal" htmlFor="review-content">{"Nhận xét chi tiết"}</label>
     <span className="text-xs text-muted-gray" id="char-counter">{"0 / 1000 ký tự"}</span>
     </div>
-    <textarea className="w-full bg-[#FFFFFF] border border-border-subtle rounded-xl p-4 text-charcoal placeholder:text-muted-gray min-h-[140px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm leading-relaxed" id="review-content" maxLength={1000} placeholder="Nhập nhận xét chi tiết về chuyến đi, cảm nhận lái xe VinFast VF 9, độ sạch sẽ, sự chu đáo của chủ xe Trần Đức Nam..." rows={5}></textarea>
+    <textarea className="w-full bg-page-bg border border-border-subtle rounded-xl p-4 text-charcoal placeholder:text-muted-gray min-h-[140px] focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm leading-relaxed" id="review-content" maxLength={1000} placeholder="Nhập nhận xét chi tiết về chuyến đi, cảm nhận lái xe VinFast VF 9, độ sạch sẽ, sự chu đáo của chủ xe Trần Đức Nam..." rows={5}></textarea>
     </div>
 
-    <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-xl p-4 flex items-start gap-3">
-    <span className="material-symbols-outlined text-[#D97706] text-[20px] shrink-0 mt-0.5">{"info"}</span>
+    <div className="bg-status-amber-faint border border-status-amber-border rounded-xl p-4 flex items-start gap-3">
+    <span className="material-symbols-outlined text-status-amber-dark text-[20px] shrink-0 mt-0.5">{"info"}</span>
     <p className="text-[13px] text-charcoal leading-relaxed">{"\n              Vui lòng đánh giá trung thực, văn minh và không chia sẻ thông tin cá nhân bí mật (CMND/CCCD, mã thẻ tín dụng, số điện thoại) để đảm bảo tuân thủ tiêu chuẩn cộng đồng CarDB.\n            "}</p>
     </div>
 
     <div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-border-subtle">
-    <Link className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-subtle text-charcoal font-medium text-sm hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2" to="/chuyen-xe-cua-toi">{"\n              ← Quay lại chi tiết đơn\n            "}</Link>
-    <button className="ui-action w-full sm:w-auto px-4 py-3.5 sm:px-6 rounded-xl bg-primary hover:bg-primary-hover text-[#FFFFFF] font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer" id="submit-review-btn" type="button" aria-label="Gửi đánh giá chuyến đi" data-action="review">
+    <Link className="w-full sm:w-auto px-6 py-3.5 rounded-xl border border-border-subtle text-charcoal font-medium text-sm hover:bg-section-bg transition-all flex items-center justify-center gap-2" to="/chuyen-xe-cua-toi">{"\n              ← Quay lại chi tiết đơn\n            "}</Link>
+    <button className="ui-action w-full sm:w-auto px-4 py-3.5 sm:px-6 rounded-xl bg-primary hover:bg-primary-hover text-page-bg font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer" id="submit-review-btn" type="button" aria-label="Gửi đánh giá chuyến đi" data-action="review">
     <span>{"Gửi đánh giá chuyến đi"}</span>
     <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
     </button>
@@ -172,7 +172,7 @@ export default function ReviewPage() {
     </div>
     </div>
 
-    <div className="bg-[#F7F7F5] border border-border-subtle rounded-xl p-4 flex flex-col gap-3 text-xs">
+    <div className="bg-section-bg border border-border-subtle rounded-xl p-4 flex flex-col gap-3 text-xs">
     <div className="flex items-center justify-between pb-2 border-b border-border-subtle">
     <span className="text-muted-gray">{"Mã hợp đồng"}</span>
     <span className="font-bold text-charcoal">{"CDB-ORD-20261026-904"}</span>
@@ -201,7 +201,7 @@ export default function ReviewPage() {
     </div>
     </div>
 
-    <div className="bg-[#F7F7F5] border border-border-subtle rounded-2xl p-6 shadow-sm flex flex-col gap-4">
+    <div className="bg-section-bg border border-border-subtle rounded-2xl p-6 shadow-sm flex flex-col gap-4">
     <div className="flex items-center gap-2 pb-1 border-b border-border-subtle">
     <span className="material-symbols-outlined text-primary text-[20px]">{"verified"}</span>
     <h4 className="text-xs font-bold text-charcoal uppercase tracking-wider">{"\n              Quy chế đánh giá minh bạch\n            "}</h4>
@@ -235,7 +235,7 @@ export default function ReviewPage() {
     <span className="text-xs font-bold text-charcoal">{"1900 8899"}</span>
     </div>
     </div>
-    <a className="px-3 py-1.5 rounded-lg border border-border-subtle hover:bg-[#F7F7F5] text-charcoal text-xs font-semibold transition-all" href="tel:19008899">{"\n              Gọi trợ giúp\n            "}</a>
+    <a className="px-3 py-1.5 rounded-lg border border-border-subtle hover:bg-section-bg text-charcoal text-xs font-semibold transition-all" href="tel:19008899">{"\n              Gọi trợ giúp\n            "}</a>
     </div>
     </div>
     </aside>

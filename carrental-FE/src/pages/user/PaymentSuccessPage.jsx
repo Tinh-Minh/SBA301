@@ -34,7 +34,7 @@ export default function PaymentSuccessPage() {
     </div>
     </section>
 
-    <section aria-label="Tiến trình đơn đặt xe" className="w-full bg-[#FFFFFF] border border-card-border rounded-[16px] p-6 shadow-sm flex flex-col gap-5">
+    <section aria-label="Tiến trình đơn đặt xe" className="w-full bg-page-bg border border-card-border rounded-[16px] p-6 shadow-sm flex flex-col gap-5">
     <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-card-border">
     <div className="flex items-center gap-2 text-charcoal font-bold text-base md:text-lg">
     <span className="material-symbols-outlined text-emerald-accent text-[22px]">{"timeline"}</span>
@@ -79,7 +79,7 @@ export default function PaymentSuccessPage() {
     </div>
     </div>
     <div className="flex flex-col items-center text-center">
-    <div className="w-10 h-10 rounded-full bg-[#E9E9E7] text-subtext flex items-center justify-center font-medium">
+    <div className="w-10 h-10 rounded-full bg-border-light text-subtext flex items-center justify-center font-medium">
     <span className="material-symbols-outlined text-[18px]">{"vpn_key"}</span>
     </div>
     <div className="mt-2.5 flex flex-col items-center">
@@ -98,10 +98,10 @@ export default function PaymentSuccessPage() {
     <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
 
     <div className="lg:col-span-7 flex flex-col gap-6">
-    <div className="bg-[#FFFFFF] border border-card-border rounded-[16px] p-6 shadow-sm relative">
+    <div className="bg-page-bg border border-card-border rounded-[16px] p-6 shadow-sm relative">
     <div className="flex items-center justify-between flex-wrap gap-2 pb-4 border-b border-card-border">
     <div className="flex items-center gap-3">
-    <div className="w-10 h-10 rounded-lg bg-[#FFF0E8] text-orange-brand flex items-center justify-center">
+    <div className="w-10 h-10 rounded-lg bg-surface-accent-warm text-orange-brand flex items-center justify-center">
     <span className="material-symbols-outlined text-[24px]">{"receipt_long"}</span>
     </div>
     <div className="flex flex-col">
@@ -109,7 +109,7 @@ export default function PaymentSuccessPage() {
     <span className="text-xs text-subtext">{"Thanh toán trực tuyến nội bộ CarDB"}</span>
     </div>
     </div>
-    <span className="px-3 py-1 rounded-full bg-[#F0F1EF] text-charcoal font-mono text-xs font-semibold">{"\n  TXN-20261026-904-SIM\n"}</span>
+    <span className="px-3 py-1 rounded-full bg-pill-bg text-charcoal font-mono text-xs font-semibold">{"\n  TXN-20261026-904-SIM\n"}</span>
     </div>
 
     <div className="flex flex-col gap-1 py-3 text-sm">
@@ -152,7 +152,7 @@ export default function PaymentSuccessPage() {
     </div>
     </div>
 
-    <div className="mt-2 rounded-xl p-4 bg-[#FFF8F5] border border-[#FFE0D1] flex flex-col gap-2 sm:flex-row sm:items-baseline justify-between">
+    <div className="mt-2 rounded-xl p-4 bg-surface-accent-faint border border-border-accent flex flex-col gap-2 sm:flex-row sm:items-baseline justify-between">
     <div className="flex flex-col">
     <span className="text-xs text-charcoal font-bold uppercase tracking-wider">{"SỐ TIỀN ĐÃ THANH TOÁN"}</span>
     <span className="text-xs text-subtext mt-0.5">{"Đã bao gồm VAT & bảo hiểm cơ bản"}</span>
@@ -162,7 +162,7 @@ export default function PaymentSuccessPage() {
     </div>
     </div>
 
-    <div className="mt-4 rounded-xl p-4 bg-[#FFFBEB] border border-[#FDE68A] flex flex-col gap-2">
+    <div className="mt-4 rounded-xl p-4 bg-status-amber-faint border border-status-amber-border flex flex-col gap-2">
     <div className="flex items-center justify-between flex-wrap gap-2">
     <span className="text-sm font-bold text-charcoal uppercase tracking-wide">{"\n  TIỀN CỌC HOÀN LẠI: 15.000.000 Đ\n"}</span>
     <span className="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold">{"\n  Thực hiện tại bãi nhận xe\n"}</span>
@@ -186,7 +186,7 @@ export default function PaymentSuccessPage() {
 
     <div className="lg:col-span-5 flex flex-col gap-6">
 
-    <div className="bg-[#FFFFFF] border border-card-border rounded-[16px] p-6 shadow-sm flex flex-col">
+    <div className="bg-page-bg border border-card-border rounded-[16px] p-6 shadow-sm flex flex-col">
     <div className="relative w-full h-44 rounded-lg overflow-hidden bg-gray-100">
     <img className="w-full h-full object-cover" src="/images/cardb-2e3a36134e5d812f.webp" alt="Hình ảnh xe CarDB" loading="lazy" decoding="async"/>
     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
@@ -260,7 +260,7 @@ export default function PaymentSuccessPage() {
     <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
     </Link>
 
-    <Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-[#FFFFFF] border border-card-border text-charcoal hover:bg-gray-50 font-medium text-sm shadow-xs transition-all cursor-pointer text-center" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
+    <Link className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-page-bg border border-card-border text-charcoal hover:bg-gray-50 font-medium text-sm shadow-xs transition-all cursor-pointer text-center" data-path="chuyen-xe-cua-toi" to="/chuyen-xe-cua-toi">
     <span className="material-symbols-outlined text-[18px] text-subtext">{"calendar_month"}</span>
     <span>{"Chuyến xe của tôi"}</span>
     </Link>

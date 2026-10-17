@@ -21,7 +21,7 @@ export default function BanksAlternativePage() {
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
 
-    <div className="bg-surface-container-lowest rounded-xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden transition-all duration-200 hover:shadow-[0_8px_24px_rgba(252,108,38,0.08)]">
+    <div className="bg-surface-container-lowest rounded-xl p-6 shadow-[0_4px_20px_rgb(var(--color-cinematic)_/_0.03)] flex flex-col justify-between relative overflow-hidden transition-all duration-200 hover:shadow-[0_8px_24px_rgb(var(--color-brand-accent)_/_0.08)]">
 
     <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-500 via-primary-container to-emerald-500"></div>
     <div className="flex flex-col gap-6">
@@ -75,7 +75,7 @@ export default function BanksAlternativePage() {
     </div>
     </div>
 
-    <div className="bg-surface-container-lowest rounded-xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden transition-all duration-200 hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+    <div className="bg-surface-container-lowest rounded-xl p-6 shadow-[0_4px_20px_rgb(var(--color-cinematic)_/_0.03)] flex flex-col justify-between relative overflow-hidden transition-all duration-200 hover:shadow-[0_8px_24px_rgb(var(--color-cinematic)_/_0.06)]">
     <div className="flex flex-col gap-6">
 
     <div className="flex items-start justify-between gap-3 pt-1">
@@ -127,7 +127,7 @@ export default function BanksAlternativePage() {
     </div>
     </div>
 
-    <div className="w-full bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+    <div className="w-full bg-surface-container-lowest rounded-xl p-6 shadow-[0_2px_12px_rgb(var(--color-cinematic)_/_0.03)] flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
     <div className="flex items-start gap-4">
     <div className="w-12 h-12 rounded-xl bg-primary-fixed/40 flex items-center justify-center text-primary-container shrink-0">
     <span className="material-symbols-outlined text-[28px]" style={{ "fontVariationSettings": "'FILL' 1" }}>{"account_balance_wallet"}</span>

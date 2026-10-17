@@ -174,7 +174,7 @@ export default function PaymentPage() {
 
     <div className="flex flex-col gap-3" id="payment-methods">
 
-    <div className="p-4 rounded-xl border-2 border-primary bg-[#FFF8F5] transition-all cursor-pointer" data-handler="selectPaymentMethod" data-args="'qr'">
+    <div className="p-4 rounded-xl border-2 border-primary bg-surface-accent-faint transition-all cursor-pointer" data-handler="selectPaymentMethod" data-args="'qr'">
     <div className="flex items-start justify-between gap-3">
     <div className="flex items-center gap-3">
     <div className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center font-bold shadow-sm flex-shrink-0">

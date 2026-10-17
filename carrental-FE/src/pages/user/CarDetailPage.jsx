@@ -202,7 +202,7 @@ export default function CarDetailPage() {
     </button>
     </div>
 
-    <div className="p-5 relative" style={{ "backgroundImage": "linear-gradient(to bottom, rgba(252, 108, 38, 0.04) 0%, transparent 140px)" }}>
+    <div className="p-5 relative" style={{ "backgroundImage": "linear-gradient(to bottom, rgb(var(--color-brand-accent) / 0.04) 0%, transparent 140px)" }}>
 
     <div className="mb-4 pb-4 border-b border-gray-100 flex items-start justify-between">
     <div>

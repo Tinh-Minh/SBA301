@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 export default function HandoverPage() {
-    return (<div className="cardb-screen screen-handover bg-[#F7F7F5] font-body text-charcoal antialiased"><main className="w-full  bg-[#F7F7F5] min-h-[calc(100vh-140px)] pt-20"><div className="flex flex-col w-full">
+    return (<div className="cardb-screen screen-handover bg-section-bg font-body text-charcoal antialiased"><main className="w-full  bg-section-bg min-h-[calc(100vh-140px)] pt-20"><div className="flex flex-col w-full">
 
     <div className="w-full bg-surface border-b border-border-light py-6 px-margin">
     <div className="max-w-[1440px] mx-auto flex flex-col gap-5">
@@ -73,7 +73,7 @@ export default function HandoverPage() {
     </div>
 
     <div className="relative z-10 flex flex-col items-center gap-2 group bg-surface px-2">
-    <div className="w-10 h-10 rounded-full bg-[#FFF8F5] border-2 border-primary text-primary flex items-center justify-center shadow-md animate-pulse">
+    <div className="w-10 h-10 rounded-full bg-surface-accent-faint border-2 border-primary text-primary flex items-center justify-center shadow-md animate-pulse">
     <span className="w-3 h-3 rounded-full bg-primary"></span>
     </div>
     <div className="flex flex-col items-center">
@@ -114,7 +114,7 @@ export default function HandoverPage() {
 
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t border-border-light text-xs">
     <div className="flex items-center gap-2.5">
-    <div className="w-8 h-8 rounded-full bg-[#FFF8F5] text-primary flex items-center justify-center shrink-0 border border-primary/20">
+    <div className="w-8 h-8 rounded-full bg-surface-accent-faint text-primary flex items-center justify-center shrink-0 border border-primary/20">
     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
     </svg>
@@ -145,7 +145,7 @@ export default function HandoverPage() {
     <div className="rounded-2xl bg-surface border border-border-light p-5 sm:p-6 shadow-sm flex flex-col gap-5">
     <div className="flex items-center justify-between border-b border-border-light pb-4">
     <div className="flex items-center gap-2.5">
-    <div className="w-9 h-9 rounded-xl bg-[#FFF8F5] text-primary border border-primary/20 flex items-center justify-center">
+    <div className="w-9 h-9 rounded-xl bg-surface-accent-faint text-primary border border-primary/20 flex items-center justify-center">
     <svg className="w-5 h-5 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round"></path>
     </svg>
@@ -160,7 +160,7 @@ export default function HandoverPage() {
     <div className="flex flex-col gap-2.5">
     <span className="text-xs font-bold text-charcoal uppercase tracking-wider">{"Tình trạng ngoại thất xe"}</span>
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-    <label className="cursor-pointer relative flex items-center gap-3 p-3.5 rounded-xl bg-[#FFF8F5] border-2 border-primary text-charcoal shadow-xs">
+    <label className="cursor-pointer relative flex items-center gap-3 p-3.5 rounded-xl bg-surface-accent-faint border-2 border-primary text-charcoal shadow-xs">
     <input className="text-primary focus:ring-0 w-4 h-4 accent-primary" name="exterior" type="radio" defaultChecked={true}/>
     <div className="flex flex-col">
     <span className="text-xs font-bold text-charcoal">{"Tốt / Không trầy xước"}</span>
@@ -187,7 +187,7 @@ export default function HandoverPage() {
     <div className="flex flex-col gap-2.5">
     <span className="text-xs font-bold text-charcoal uppercase tracking-wider">{"Tình trạng nội thất & Vệ sinh"}</span>
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-    <label className="cursor-pointer relative flex items-center gap-3 p-3.5 rounded-xl bg-[#FFF8F5] border-2 border-primary text-charcoal shadow-xs">
+    <label className="cursor-pointer relative flex items-center gap-3 p-3.5 rounded-xl bg-surface-accent-faint border-2 border-primary text-charcoal shadow-xs">
     <input className="text-primary focus:ring-0 w-4 h-4 accent-primary" name="interior" type="radio" defaultChecked={true}/>
     <div className="flex flex-col">
     <span className="text-xs font-bold text-charcoal">{"Sạch sẽ & Đạt chuẩn"}</span>
@@ -211,14 +211,14 @@ export default function HandoverPage() {
     </div>
     </div>
 
-    <div className="flex flex-col gap-2.5 pt-2"><div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1"><span className="text-xs font-bold text-charcoal uppercase tracking-wider">{"Phụ kiện & Giấy tờ pháp lý bàn giao"}</span><span className="text-status-amber-dark text-xs font-semibold">{"0/6 mục đã kiểm tra"}</span></div><p className="text-xs text-muted">{"Vui lòng chỉ tích chọn sau khi đã tận mắt kiểm tra thực tế phụ kiện trên xe."}</p><div className="grid grid-cols-1 md:grid-cols-2 gap-2.5"><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-[#FFF8F5] border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Giấy đăng ký xe (Bản sao công chứng hợp lệ)"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-[#FFF8F5] border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Giấy chứng nhận kiểm định an toàn còn hạn"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-[#FFF8F5] border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Bảo hiểm TNDS & Bảo hiểm vật chất xe 2 chiều"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-[#FFF8F5] border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Bộ cáp sạc di động chính hãng & Adapter sạc"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-[#FFF8F5] border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Chìa khóa thông minh Smartkey (01 chiếc)"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-[#FFF8F5] border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Bộ vá lốp khẩn cấp, bơm điện & tam giác phản quang"}</span></label></div></div>
+    <div className="flex flex-col gap-2.5 pt-2"><div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1"><span className="text-xs font-bold text-charcoal uppercase tracking-wider">{"Phụ kiện & Giấy tờ pháp lý bàn giao"}</span><span className="text-status-amber-dark text-xs font-semibold">{"0/6 mục đã kiểm tra"}</span></div><p className="text-xs text-muted">{"Vui lòng chỉ tích chọn sau khi đã tận mắt kiểm tra thực tế phụ kiện trên xe."}</p><div className="grid grid-cols-1 md:grid-cols-2 gap-2.5"><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-surface-accent-faint border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Giấy đăng ký xe (Bản sao công chứng hợp lệ)"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-surface-accent-faint border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Giấy chứng nhận kiểm định an toàn còn hạn"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-surface-accent-faint border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Bảo hiểm TNDS & Bảo hiểm vật chất xe 2 chiều"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-surface-accent-faint border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Bộ cáp sạc di động chính hãng & Adapter sạc"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-surface-accent-faint border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Chìa khóa thông minh Smartkey (01 chiếc)"}</span></label><label className="flex items-center gap-3 p-3 rounded-xl bg-surface-alt hover:bg-surface-accent-faint border border-border-light hover:border-primary/30 transition-colors cursor-pointer"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary" type="checkbox"/><span className="text-xs text-charcoal font-medium">{"Bộ vá lốp khẩn cấp, bơm điện & tam giác phản quang"}</span></label></div></div>
     </div>
 
     <div className="rounded-2xl bg-surface border border-border-light p-5 sm:p-6 shadow-sm flex flex-col gap-5">
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-light pb-4">
     <div>
     <div className="flex items-center gap-2">
-    <div className="w-8 h-8 rounded-lg bg-[#FFF8F5] text-primary border border-primary/20 flex items-center justify-center">
+    <div className="w-8 h-8 rounded-lg bg-surface-accent-faint text-primary border border-primary/20 flex items-center justify-center">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" strokeLinecap="round" strokeLinejoin="round"></path>
     <path d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -233,7 +233,7 @@ export default function HandoverPage() {
 
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
 
-    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-[#FFF8F5] transition-all cursor-pointer min-h-[160px] text-center">
+    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-surface-accent-faint transition-all cursor-pointer min-h-[160px] text-center">
     <div className="w-9 h-9 rounded-full bg-white border border-border-light text-primary flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-xs">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M12 4.5v15m7.5-7.5h-15" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -244,7 +244,7 @@ export default function HandoverPage() {
     <span className="text-[11px] text-muted mt-1.5 px-2 py-0.5 rounded bg-white border border-border-light">{"Chưa tải lên"}</span>
     </div>
 
-    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-[#FFF8F5] transition-all cursor-pointer min-h-[160px] text-center">
+    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-surface-accent-faint transition-all cursor-pointer min-h-[160px] text-center">
     <div className="w-9 h-9 rounded-full bg-white border border-border-light text-primary flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-xs">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M12 4.5v15m7.5-7.5h-15" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -255,7 +255,7 @@ export default function HandoverPage() {
     <span className="text-[11px] text-muted mt-1.5 px-2 py-0.5 rounded bg-white border border-border-light">{"Chưa tải lên"}</span>
     </div>
 
-    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-[#FFF8F5] transition-all cursor-pointer min-h-[160px] text-center">
+    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-surface-accent-faint transition-all cursor-pointer min-h-[160px] text-center">
     <div className="w-9 h-9 rounded-full bg-white border border-border-light text-primary flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-xs">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M12 4.5v15m7.5-7.5h-15" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -266,7 +266,7 @@ export default function HandoverPage() {
     <span className="text-[11px] text-muted mt-1.5 px-2 py-0.5 rounded bg-white border border-border-light">{"Chưa tải lên"}</span>
     </div>
 
-    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-[#FFF8F5] transition-all cursor-pointer min-h-[160px] text-center">
+    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-surface-accent-faint transition-all cursor-pointer min-h-[160px] text-center">
     <div className="w-9 h-9 rounded-full bg-white border border-border-light text-primary flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-xs">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M12 4.5v15m7.5-7.5h-15" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -277,7 +277,7 @@ export default function HandoverPage() {
     <span className="text-[11px] text-muted mt-1.5 px-2 py-0.5 rounded bg-white border border-border-light">{"Chưa tải lên"}</span>
     </div>
 
-    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-[#FFF8F5] transition-all cursor-pointer min-h-[160px] text-center">
+    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-surface-accent-faint transition-all cursor-pointer min-h-[160px] text-center">
     <div className="w-9 h-9 rounded-full bg-white border border-border-light text-primary flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-xs">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M12 4.5v15m7.5-7.5h-15" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -288,7 +288,7 @@ export default function HandoverPage() {
     <span className="text-[11px] text-muted mt-1.5 px-2 py-0.5 rounded bg-white border border-border-light">{"Chưa tải lên"}</span>
     </div>
 
-    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-[#FFF8F5] transition-all cursor-pointer min-h-[160px] text-center">
+    <div className="group flex flex-col items-center justify-center p-4 rounded-xl border border-dashed border-border-light hover:border-primary bg-surface-alt hover:bg-surface-accent-faint transition-all cursor-pointer min-h-[160px] text-center">
     <div className="w-9 h-9 rounded-full bg-white border border-border-light text-primary flex items-center justify-center mb-2 group-hover:scale-110 transition-transform shadow-xs">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M12 4.5v15m7.5-7.5h-15" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -322,7 +322,7 @@ export default function HandoverPage() {
     </div>
     </div>
 
-    <div className="rounded-2xl bg-surface border border-border-light p-5 sm:p-6 shadow-sm flex flex-col gap-5"><div className="flex items-center gap-2.5 border-b border-border-light pb-4"><div className="w-9 h-9 rounded-xl bg-[#FFF8F5] text-primary border border-primary/20 flex items-center justify-center"><svg className="w-5 h-5 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" strokeLinecap="round" strokeLinejoin="round"></path></svg></div><h2 className="text-base sm:text-lg font-bold text-charcoal">{"Xác nhận bàn giao giữa hai bên"}</h2></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"><div className="p-3.5 rounded-xl bg-surface-alt border border-border-light flex items-center justify-between"><div className="flex flex-col"><span className="text-[10px] text-muted uppercase tracking-wider font-semibold">{"Chủ xe đối tác"}</span><span className="text-xs font-bold text-charcoal mt-0.5">{"Trần Đức Nam"}</span></div><span className="inline-flex items-center px-2.5 py-1 rounded-full bg-status-amber-bg text-status-amber-dark border border-amber-200 text-xs font-semibold">{"Chưa xác nhận"}</span></div><div className="p-3.5 rounded-xl bg-surface-alt border border-border-light flex items-center justify-between"><div className="flex flex-col"><span className="text-[10px] text-muted uppercase tracking-wider font-semibold">{"Khách thuê"}</span><span className="text-xs font-bold text-charcoal mt-0.5">{"Nguyễn Hoàng Minh"}</span></div><span className="inline-flex items-center px-2.5 py-1 rounded-full bg-status-amber-bg text-status-amber-dark border border-amber-200 text-xs font-semibold">{"Chưa xác nhận"}</span></div></div><p className="text-xs text-muted leading-relaxed bg-surface-alt p-3.5 rounded-xl border border-border-light">{"Biên bản chỉ có hiệu lực chính thức và chuyển đi khi cả Chủ xe và Khách thuê cùng hoàn tất xác nhận độc lập trên hệ thống ứng dụng CarDB. Khách thuê không xác nhận thay cho Chủ xe và ngược lại."}</p><label className="flex items-start gap-3 p-3.5 rounded-xl bg-surface-alt hover:bg-[#FFF8F5] transition-colors cursor-pointer border border-border-light"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary mt-0.5" type="checkbox"/><span className="text-xs text-charcoal font-medium leading-relaxed">{"Tôi (Nguyễn Hoàng Minh) xác nhận thông tin hiện trạng thực tế và đồng ý gửi phần xác nhận của tôi."}</span></label><div className="flex flex-col gap-2 pt-1"><div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-end gap-3"><button className="ui-action w-full sm:w-auto px-6 py-3 rounded-xl bg-white hover:bg-surface-alt text-charcoal font-semibold text-xs sm:text-sm border border-border-light transition-all text-center shadow-xs" type="button" aria-label="Lưu bản nháp biên bản">{"Lưu bản nháp biên bản"}</button><button className="w-full sm:w-auto px-7 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs sm:text-sm tracking-wide shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group" type="button" aria-label="Xác nhận của tôi ➔"><span className="">{"Xác nhận của tôi ➔"}</span></button></div><p className="text-right text-[11px] text-muted">{"Đang chờ bên còn lại xác nhận (nếu một bên hoàn tất trước). Bàn giao chỉ hoàn tất sau khi hệ thống xác nhận đủ điều kiện và xác nhận của hai bên."}</p></div></div>
+    <div className="rounded-2xl bg-surface border border-border-light p-5 sm:p-6 shadow-sm flex flex-col gap-5"><div className="flex items-center gap-2.5 border-b border-border-light pb-4"><div className="w-9 h-9 rounded-xl bg-surface-accent-faint text-primary border border-primary/20 flex items-center justify-center"><svg className="w-5 h-5 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" strokeLinecap="round" strokeLinejoin="round"></path></svg></div><h2 className="text-base sm:text-lg font-bold text-charcoal">{"Xác nhận bàn giao giữa hai bên"}</h2></div><div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5"><div className="p-3.5 rounded-xl bg-surface-alt border border-border-light flex items-center justify-between"><div className="flex flex-col"><span className="text-[10px] text-muted uppercase tracking-wider font-semibold">{"Chủ xe đối tác"}</span><span className="text-xs font-bold text-charcoal mt-0.5">{"Trần Đức Nam"}</span></div><span className="inline-flex items-center px-2.5 py-1 rounded-full bg-status-amber-bg text-status-amber-dark border border-amber-200 text-xs font-semibold">{"Chưa xác nhận"}</span></div><div className="p-3.5 rounded-xl bg-surface-alt border border-border-light flex items-center justify-between"><div className="flex flex-col"><span className="text-[10px] text-muted uppercase tracking-wider font-semibold">{"Khách thuê"}</span><span className="text-xs font-bold text-charcoal mt-0.5">{"Nguyễn Hoàng Minh"}</span></div><span className="inline-flex items-center px-2.5 py-1 rounded-full bg-status-amber-bg text-status-amber-dark border border-amber-200 text-xs font-semibold">{"Chưa xác nhận"}</span></div></div><p className="text-xs text-muted leading-relaxed bg-surface-alt p-3.5 rounded-xl border border-border-light">{"Biên bản chỉ có hiệu lực chính thức và chuyển đi khi cả Chủ xe và Khách thuê cùng hoàn tất xác nhận độc lập trên hệ thống ứng dụng CarDB. Khách thuê không xác nhận thay cho Chủ xe và ngược lại."}</p><label className="flex items-start gap-3 p-3.5 rounded-xl bg-surface-alt hover:bg-surface-accent-faint transition-colors cursor-pointer border border-border-light"><input className="w-4 h-4 rounded text-primary border-border-light focus:ring-0 accent-primary mt-0.5" type="checkbox"/><span className="text-xs text-charcoal font-medium leading-relaxed">{"Tôi (Nguyễn Hoàng Minh) xác nhận thông tin hiện trạng thực tế và đồng ý gửi phần xác nhận của tôi."}</span></label><div className="flex flex-col gap-2 pt-1"><div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-end gap-3"><button className="ui-action w-full sm:w-auto px-6 py-3 rounded-xl bg-white hover:bg-surface-alt text-charcoal font-semibold text-xs sm:text-sm border border-border-light transition-all text-center shadow-xs" type="button" aria-label="Lưu bản nháp biên bản">{"Lưu bản nháp biên bản"}</button><button className="w-full sm:w-auto px-7 py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-bold text-xs sm:text-sm tracking-wide shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 group" type="button" aria-label="Xác nhận của tôi ➔"><span className="">{"Xác nhận của tôi ➔"}</span></button></div><p className="text-right text-[11px] text-muted">{"Đang chờ bên còn lại xác nhận (nếu một bên hoàn tất trước). Bàn giao chỉ hoàn tất sau khi hệ thống xác nhận đủ điều kiện và xác nhận của hai bên."}</p></div></div>
     </div>
 
     <div className="lg:col-span-4 flex flex-col gap-5 lg:sticky lg:top-24">
@@ -362,10 +362,10 @@ export default function HandoverPage() {
     </div>
     </div>
 
-    <div className="rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] p-5 shadow-sm flex flex-col gap-3.5 relative overflow-hidden">
+    <div className="rounded-2xl bg-status-amber-faint border border-status-amber-border p-5 shadow-sm flex flex-col gap-3.5 relative overflow-hidden">
     <div className="flex items-center justify-between gap-3 w-full"><h3 className="text-xs font-bold text-charcoal flex items-center gap-1.5"><svg className="w-4 h-4 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg><span className="whitespace-nowrap">{"Tiền cọc thế chấp:"}</span></h3><span className="ui-money font-mono text-primary font-bold text-sm whitespace-nowrap shrink-0 text-right">{"15.000.000 đ"}</span></div>
 
-    <div className="p-3 rounded-xl bg-white/80 border border-[#FDE68A] flex items-start gap-2.5">
+    <div className="p-3 rounded-xl bg-white/80 border border-status-amber-border flex items-start gap-2.5">
     <svg className="w-4 h-4 text-status-amber-dark shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
     </svg>
@@ -382,7 +382,7 @@ export default function HandoverPage() {
 
     <div className="mt-1 p-3 rounded-xl bg-white border border-border-light flex items-center justify-between shadow-xs">
     <div className="flex items-center gap-2">
-    <div className="w-8 h-8 rounded-lg bg-[#FFF8F5] text-primary flex items-center justify-center border border-primary/20">
+    <div className="w-8 h-8 rounded-lg bg-surface-accent-faint text-primary flex items-center justify-center border border-primary/20">
     <svg className="w-4 h-4 stroke-current" fill="none" strokeWidth="2" viewBox="0 0 24 24">
     <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" strokeLinecap="round" strokeLinejoin="round"></path>
     </svg>
