@@ -7,9 +7,9 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 
 
 <main className="flex-1 max-w-[1440px] w-full mx-auto px-6 py-8 pt-20">
-<div className="grid grid-cols-12 gap-8">
+<div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
 
-<aside className="col-span-12 lg:col-span-3 space-y-5" data-purpose="account-sidebar">
+<aside className="col-span-1 lg:col-span-3 space-y-5" data-purpose="account-sidebar">
 
 <div className="bg-[#F7F7F5] border border-[#E9E9E7] rounded-2xl p-4 flex items-center space-x-3.5 shadow-sm">
 <div className="relative w-12 h-12 rounded-xl bg-white border border-[#E9E9E7] flex items-center justify-center flex-shrink-0 text-[#FC6C26]">
@@ -104,7 +104,7 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 </aside>
 
 
-<section className="col-span-12 lg:col-span-9 space-y-6" data-purpose="bank-account-content">
+<section className="col-span-1 lg:col-span-9 space-y-6" data-purpose="bank-account-content">
 
 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
 <div>
@@ -159,7 +159,7 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 
 <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-[#D1FAE5] text-[#065F46] border border-[#A7F3D0]">
 <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-<span>{"Mặc định nhận thanh toán"}</span>
+<span>{"Mặc định"}</span>
 </span>
 </div>
 
@@ -182,16 +182,16 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 </div>
 </div>
 
-<div className="mt-6 pt-4 border-t border-[#E9E9E7] flex items-center justify-between">
+<div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#E9E9E7] pt-4">
 <div className="flex items-center space-x-1.5 text-xs font-semibold text-[#10B981]">
 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"></path>
 </svg>
 <span>{"Tài khoản mặc định hiện tại"}</span>
 </div>
-<div className="flex items-center space-x-2">
-<button className="px-2.5 py-1 text-xs font-medium text-[#666666] hover:text-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</button>
-<button className="px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-action="edit-profile">{"Chỉnh sửa"}</button>
+<div className="flex-wrap gap-y-2 flex items-center space-x-2">
+<button className="ui-action px-2.5 py-1 text-xs font-medium text-[#666666] hover:text-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</button>
+<button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-action="edit-profile">{"Chỉnh sửa"}</button>
 </div>
 </div>
 </article>
@@ -235,16 +235,16 @@ export default function Banks() { return (<div className="cardb-screen screen-ba
 </div>
 </div>
 
-<div className="mt-6 pt-4 border-t border-[#E9E9E7] flex items-center justify-between">
-<button className="inline-flex items-center space-x-1.5 text-xs font-medium text-[#FC6C26] hover:bg-[#FFF5EE] px-2.5 py-1 rounded-lg border border-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Đặt làm mặc định" data-action="default-bank">
+<div className="flex-wrap gap-y-2 mt-6 pt-4 border-t border-[#E9E9E7] flex items-center justify-between">
+<button className="ui-action inline-flex items-center space-x-1.5 text-xs font-medium text-[#FC6C26] hover:bg-[#FFF5EE] px-2.5 py-1 rounded-lg border border-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Đặt làm mặc định" data-action="default-bank">
 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
 </svg>
 <span>{"Đặt làm mặc định"}</span>
 </button>
-<div className="flex items-center space-x-2">
-<button className="px-2.5 py-1 text-xs font-medium text-[#666666] hover:text-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</button>
-<button className="px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-action="edit-profile">{"Chỉnh sửa"}</button>
+<div className="flex-wrap gap-y-2 flex items-center space-x-2">
+<button className="ui-action px-2.5 py-1 text-xs font-medium text-[#666666] hover:text-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-route="/xe/vinfast-vf8-plus-2024">{"Xem chi tiết"}</button>
+<button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-action="edit-profile">{"Chỉnh sửa"}</button>
 </div>
 </div>
 </article>
