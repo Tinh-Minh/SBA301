@@ -115,5 +115,6 @@
   --color-surface-canvas: 255 255 255;
   --color-text-muted: 102 102 102;
   --color-status-success: 16 185 129;
+  --color-status-success-ink: 4 120 87;
   --color-accent: 252 108 38;
 }
