@@ -40,6 +40,21 @@ test("Rental modes and category filters update price cards", async ({ page }) =>
   await expect(page).toHaveURL(/kham-pha-xe$/);
 });
 
+test("Pricing follows supplied section order and consultation works", async ({ page }) => {
+  await page.goto("/cach-tinh-gia");
+  expect(await page.locator("[data-pricing-section]").evaluateAll(elements => elements.map(element => element.getAttribute("data-pricing-section"))))
+    .toEqual(["intro", "fleet", "comparison", "fees", "enterprise", "faq"]);
+  await expect(page.locator('[data-pricing-section="intro"] [aria-label="Hình thức thuê"]')).toBeVisible();
+  await expect(page.locator('[data-pricing-section="intro"] h2')).toHaveCount(4);
+  await expect(page.locator('[data-pricing-section="comparison"] th[scope="col"]')).toHaveCount(6);
+  await expect(page.locator('[data-pricing-section="fees"] #du-toan')).toBeVisible();
+  await page.getByLabel("Tên doanh nghiệp / tổ chức *", { exact: true }).fill("Công ty thử nghiệm");
+  await page.getByLabel("Người liên hệ *", { exact: true }).fill("Nguyễn Văn A");
+  await page.getByLabel("Số điện thoại *", { exact: true }).fill("0901234567");
+  await page.getByRole("button", { name: "Xem trước yêu cầu báo giá", exact: true }).click();
+  await expect(page.locator("#enterpriseConsult").getByRole("status")).toContainText("Đã lưu yêu cầu trong bản xem trước");
+});
+
 for (const width of [375, 1024, 1440]) {
   test(`Pricing and about navigation works at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
