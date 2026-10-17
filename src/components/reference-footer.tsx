@@ -5,7 +5,7 @@ import { SiteBrand } from "./site-brand";
 const groups = [
   { title: "Dịch vụ", links: [["Thuê xe tự lái", "/kham-pha-xe"], ["Thuê xe có tài xế", "/xe-kem-tai-xe"], ["Bảng giá & Cách tính", "/cach-tinh-gia"], ["Thuê xe theo tháng", "/thue-xe-dai-han"]] },
   { title: "Chính sách & Hỗ trợ", links: [["Bảo hiểm chuyến đi", "/chinh-sach-bao-hiem"], ["Quy định đặt cọc", "/quy-dinh-dat-coc"], ["Chính sách hoàn hủy", "/chinh-sach-huy-chuyen"], ["Câu hỏi thường gặp", "/cau-hoi-thuong-gap"]] },
-  { title: "Về CarDB", links: [["Giới thiệu công ty", "/ve-cardb"], ["Ưu đãi khách hàng", "/uu-dai"], ["Tuyển dụng tài xế", "/lien-he"], ["Liên hệ hợp tác", "/cho-thue-xe"]] },
+  { title: "Về CarDB", links: [["Ưu đãi khách hàng", "/uu-dai"], ["Tuyển dụng tài xế", "/lien-he"], ["Liên hệ hợp tác", "/cho-thue-xe"]] },
 ];
 
 export function ReferenceFooter() {

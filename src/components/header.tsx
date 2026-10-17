@@ -7,7 +7,7 @@ import { useAuth } from "./auth-provider";
 import { Icon } from "./icon";
 import { SiteBrand } from "./site-brand";
 
-const navigation = [["/kham-pha-xe", "Khám phá xe"], ["/chuyen-xe-cua-toi", "Chuyến xe của tôi"], ["/cho-thue-xe", "Cho thuê xe"], ["/cach-tinh-gia", "Cách tính giá"], ["/ve-cardb", "Về CarDB"]] as const;
+const navigation = [["/kham-pha-xe", "Khám phá xe"], ["/chuyen-xe-cua-toi", "Chuyến xe của tôi"], ["/cho-thue-xe", "Cho thuê xe"], ["/cach-tinh-gia", "Cách tính giá"]] as const;
 const accountLinks = [["/tai-khoan", "Hồ sơ cá nhân", "badge"], ["/tai-khoan/don-thue", "Đơn thuê xe", "receipt_long"], ["/tai-khoan/lich-su", "Lịch sử chuyến đi", "history"], ["/tai-khoan/ngan-hang", "Tài khoản ngân hàng", "account_balance"]] as const;
 
 export function Header({ previewState }: { previewState?: boolean } = {}) {

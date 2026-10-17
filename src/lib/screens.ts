@@ -1,7 +1,6 @@
 import type { ComponentType } from "react";
 import Home from "@/views/Home";
 import Pricing from "@/views/Pricing";
-import About from "@/views/About";
 import Explore from "@/views/Explore";
 import Vehicle from "@/views/Vehicle";
 import Login from "@/views/Login";
@@ -33,7 +32,6 @@ import HeaderShowcase from "@/views/HeaderShowcase";
 export const screens: Record<string, ComponentType> = {
   "": Home,
   "cach-tinh-gia": Pricing,
-  "ve-cardb": About,
   "kham-pha-xe": Explore,
   "xe/vinfast-vf8-plus-2024": Vehicle,
   "dang-nhap": Login,

@@ -22,12 +22,12 @@ Build sử dụng webpack để tương thích môi trường hạn chế worker
 
 ## Các màn hình
 
-30 màn hình bao gồm cách tính giá, giới thiệu CarDB, trang chủ, khám phá xe, chi tiết xe, đăng nhập/đăng ký, hồ sơ cá nhân, đơn thuê, lịch sử, xác minh giấy tờ, hồ sơ tài xế, ngân hàng và các hộp thoại, xác nhận yêu cầu, thông báo thành công, chuyến xe, chi tiết đơn, thanh toán/thành công/thất bại, biên bản nhận/trả xe, đánh giá và tranh chấp.
+29 màn hình bao gồm cách tính giá, trang chủ, khám phá xe, chi tiết xe, đăng nhập/đăng ký, hồ sơ cá nhân, đơn thuê, lịch sử, xác minh giấy tờ, hồ sơ tài xế, ngân hàng và các hộp thoại, xác nhận yêu cầu, thông báo thành công, chuyến xe, chi tiết đơn, thanh toán/thành công/thất bại, biên bản nhận/trả xe, đánh giá và tranh chấp.
 
 Các đường dẫn chính:
 
 - `/`, `/kham-pha-xe`, `/xe/vinfast-vf8-plus-2024`
-- `/cach-tinh-gia`, `/ve-cardb`
+- `/cach-tinh-gia`
 - `/dang-nhap`, `/dang-ky`, `/tai-khoan`
 - `/tai-khoan/don-thue`, `/tai-khoan/lich-su`, `/tai-khoan/xac-minh`, `/tai-khoan/ho-so-tai-xe`
 - `/tai-khoan/ngan-hang`, `/tai-khoan/ngan-hang/them`, `/tai-khoan/ngan-hang/mac-dinh`
@@ -46,7 +46,7 @@ Các trạng thái bổ sung: `/tai-khoan/xac-minh/thu-gon`, `/mau-thiet-ke/ngan
 - `src/styles/colors.css`: màu dùng chung qua biến RGB, hỗ trợ opacity Tailwind.
 - `src/styles/tokens.json`: ánh xạ Tailwind, typography, khoảng cách và bo góc.
 - `public/`: ảnh WebP, font Be Vietnam Pro và bộ icon tự lưu trữ.
-- `tests/`: kiểm tra 30 màn hình ở 375, 768 và 1440 px cùng các luồng tương tác.
+- `tests/`: kiểm tra 29 màn hình ở 375, 768 và 1440 px cùng các luồng tương tác.
 
 Thiết kế dùng nền trắng/đá ấm, chữ than và cam chủ đạo. Lưới sáng phản hồi con trỏ, ảnh xe phóng nhẹ, gallery/lightbox, nền toàn trang và bề mặt kính mờ. Tôn trọng `prefers-reduced-motion`.
 

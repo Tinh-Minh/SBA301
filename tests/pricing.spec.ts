@@ -56,10 +56,10 @@ test("Pricing follows supplied section order and consultation works", async ({ p
 });
 
 for (const width of [375, 1024, 1440]) {
-  test(`Pricing and about navigation works at ${width}px`, async ({ page }) => {
+  test(`Pricing navigation works at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
     await page.addInitScript(() => localStorage.setItem("cardb:session:v1", "demo"));
-    await page.goto("/ve-cardb");
+    await page.goto("/kham-pha-xe");
     const header = page.locator("header.site-header").first();
     const desktop = width === 1440;
     if (!desktop) await header.getByRole("button", { name: "Mở menu", exact: true }).click();
@@ -68,11 +68,10 @@ for (const width of [375, 1024, 1440]) {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Chi phí thuê xe");
     if (!desktop) await header.getByRole("button", { name: "Mở menu", exact: true }).click();
     await expect(header.locator('a[aria-current="page"]').filter({ visible: true })).toHaveText("Cách tính giá");
-    await header.getByRole("link", { name: "Về CarDB", exact: true }).filter({ visible: true }).click();
-    await expect(page).toHaveURL(/ve-cardb$/);
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("Để việc thuê xe");
+    await expect(header.getByRole("link", { name: "Về CarDB", exact: true })).toHaveCount(0);
+    if (desktop) expect((await page.request.get("/ve-cardb")).status()).toBe(404);
     await page.evaluate(() => document.fonts.ready);
-    expect(await page.locator("main .material-symbols-outlined").evaluateAll(elements => elements.every(element => element.getBoundingClientRect().width <= 32))).toBe(true);
+    expect(await page.locator("main .material-symbols-outlined").evaluateAll(elements => elements.every(element => { const style = getComputedStyle(element); return element.getBoundingClientRect().width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) <= parseFloat(style.fontSize) + 1; }))).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     const headerFits = await header.evaluate(element => {
       const bounds = element.getBoundingClientRect();
