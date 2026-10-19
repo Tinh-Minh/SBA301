@@ -139,9 +139,9 @@ public class RentalOrderServiceImpl implements RentalOrderService {
                 .expiresAt(deadline)
                 .note(request.getNote())
                 .commissionRate(commissionRate)
-                .createdAt(now)
-                .updatedAt(now)
                 .build();
+        order.setCreatedAt(now);
+        order.setUpdatedAt(now);
         order = rentalOrderRepository.saveAndFlush(order);
 
         actionLogService.log(order, renter, ActionLogService.CREATE, null, OrderStatus.PENDING,

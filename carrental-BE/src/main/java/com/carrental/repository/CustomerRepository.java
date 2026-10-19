@@ -2,7 +2,12 @@ package com.carrental.repository;
 
 import com.carrental.entity.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-/** TẠM THỜI cho Function 3 - Function 1 sẽ thay bằng repository đầy đủ. */
+import java.util.Optional;
+
+@Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
+    Optional<Customer> findByEmail(String email);
+    Optional<Customer> findByPhone(String phone);
 }

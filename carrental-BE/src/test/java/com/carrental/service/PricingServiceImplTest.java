@@ -53,9 +53,10 @@ class PricingServiceImplTest {
         Clock clock = Clock.fixed(NOW.atZone(VN).toInstant(), VN);
         pricingService = new PricingServiceImpl(voucherRepository, rentalOrderRepository, clock);
 
-        Car car = Car.builder().id(1L).status(CarStatus.ACTIVE).depositAmount(new BigDecimal("2000000")).build();
+        Car car = Car.builder().status(CarStatus.ACTIVE).depositAmount(new BigDecimal("2000000")).build();
+        car.setId(1L);
         slot = CarSlot.builder()
-                .id(10L).car(car)
+                .car(car)
                 .startTime(LocalDateTime.of(2026, 10, 12, 0, 0))
                 .endTime(LocalDateTime.of(2026, 10, 20, 0, 0))
                 .pricePerHour(new BigDecimal("100000"))
@@ -64,11 +65,12 @@ class PricingServiceImplTest {
                 .minRentalHours(4)
                 .status(SlotStatus.OPEN)
                 .build();
+        slot.setId(10L);
     }
 
     private Voucher voucher(DiscountType type, String value, String max, String minOrder) {
-        return Voucher.builder()
-                .id(5L).code("SALE").discountType(type)
+        Voucher v = Voucher.builder()
+                .code("SALE").discountType(type)
                 .discountValue(new BigDecimal(value))
                 .maxDiscount(max == null ? null : new BigDecimal(max))
                 .minOrderAmount(new BigDecimal(minOrder))
@@ -76,6 +78,8 @@ class PricingServiceImplTest {
                 .usageLimit(100).perUserLimit(1).usedCount(0)
                 .status(VoucherStatus.ACTIVE)
                 .build();
+        v.setId(5L);
+        return v;
     }
 
     // ---------- số lượng (làm tròn lên) ----------

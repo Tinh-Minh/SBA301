@@ -18,11 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Customer {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Customer extends BaseEntity {
 
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;
@@ -64,11 +60,4 @@ public class Customer {
     @Builder.Default
     private CustomerStatus status = CustomerStatus.ACTIVE;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 }

@@ -18,11 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RentalOrder {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class RentalOrder extends BaseEntity {
 
     @Column(name = "order_code", nullable = false, unique = true, length = 30)
     private String orderCode;
@@ -117,11 +113,4 @@ public class RentalOrder {
     @Builder.Default
     private Long version = 0L;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 }

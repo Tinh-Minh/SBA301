@@ -4,4 +4,6 @@
 # Whitelist allowed directories and files
 !/carrental-BE/
 !/carrental-FE/
+!/docs/
+!/BACKEND_CONVENTIONS.md
 !/.gitignore
