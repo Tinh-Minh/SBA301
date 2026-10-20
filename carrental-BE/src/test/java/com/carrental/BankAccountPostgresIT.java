@@ -65,7 +65,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.flyway.enabled=true",
-        "spring.flyway.locations=classpath:db/migration/function1",
+        "spring.flyway.locations=classpath:db/migration/function1,classpath:db/migration/it-support",
         "spring.jpa.hibernate.ddl-auto=validate",
         "spring.jpa.open-in-view=false"
 })
@@ -109,11 +109,11 @@ class BankAccountPostgresIT {
     void isolateRowsAndCreateTestOnlyPayoutFk() {
         customerProperties.setStatusLockTimeoutMs(2_500);
         reset(bankAccounts, changeLogger, statusLockSpy);
-        jdbc.execute("CREATE TABLE IF NOT EXISTS payouts ("
+        jdbc.execute("DROP TABLE IF EXISTS payouts");
+        jdbc.execute("CREATE TABLE payouts ("
                 + "id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, bank_account_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, "
                 + "CONSTRAINT " + PAYOUT_FK + " FOREIGN KEY (bank_account_id, recipient_id) "
                 + "REFERENCES bank_accounts (id, customer_id))");
-        jdbc.update("delete from payouts");
         jdbc.update("delete from customers");
     }
 

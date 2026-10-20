@@ -62,7 +62,7 @@ class Function1ExecutableJarSmokeIT {
 
         // Schema setup belongs to the isolated test harness, not the production executable JAR.
         Flyway.configure().dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())
-                .locations("classpath:db/migration/function1").load().migrate();
+                .locations("classpath:db/migration/function1", "classpath:db/migration/it-support").load().migrate();
 
         Path tempBase = Path.of(System.getProperty("java.io.tmpdir")).toRealPath();
         Path runRoot = Files.createTempDirectory(tempBase, "sba301-p10-jar-").toRealPath();

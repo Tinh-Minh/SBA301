@@ -78,7 +78,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.flyway.enabled=true",
-        "spring.flyway.locations=classpath:db/migration/function1",
+        "spring.flyway.locations=classpath:db/migration/function1,classpath:db/migration/it-support",
         "spring.jpa.hibernate.ddl-auto=validate",
         "spring.jpa.open-in-view=false",
         "spring.datasource.hikari.connection-init-sql=SET lock_timeout TO '300ms'",

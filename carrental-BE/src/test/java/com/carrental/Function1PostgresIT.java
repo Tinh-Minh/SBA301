@@ -53,7 +53,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.flyway.enabled=true",
         "spring.flyway.locations=classpath:db/migration/function1",
-        "spring.jpa.hibernate.ddl-auto=validate",
+        "spring.jpa.hibernate.ddl-auto=none",
         "spring.jpa.open-in-view=false"
 })
 class Function1PostgresIT {

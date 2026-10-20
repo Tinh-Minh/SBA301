@@ -20,6 +20,7 @@ import com.carrental.repository.CustomerStatusLock;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.CustomerService;
 import com.carrental.service.CustomerStatusChangeLogger;
+import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -38,14 +39,16 @@ public class CustomerServiceImpl implements CustomerService {
     private static final char LIKE_ESCAPE = '\\';
 
     private final CustomerRepository customers;
+    private final EntityManager entityManager;
     private final CustomerStatusLock statusLock;
     private final CustomerStatusChangeLogger statusChangeLogger;
     private final CustomerProperties properties;
     private final Clock clock;
 
-    public CustomerServiceImpl(CustomerRepository customers, CustomerStatusLock statusLock,
+    public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager, CustomerStatusLock statusLock,
             CustomerStatusChangeLogger statusChangeLogger, CustomerProperties properties, Clock clock) {
         this.customers = customers;
+        this.entityManager = entityManager;
         this.statusLock = statusLock;
         this.statusChangeLogger = statusChangeLogger;
         this.properties = properties;
@@ -93,7 +96,11 @@ public class CustomerServiceImpl implements CustomerService {
                 changed = true;
             }
         }
-        if (changed) customers.flush();
+        if (changed) {
+            customers.flush();
+            // The database trigger is authoritative for updated_at; reload it after the write.
+            entityManager.refresh(customer);
+        }
         return CustomerMapper.toProfile(customer);
     }
 
