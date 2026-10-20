@@ -21,4 +21,10 @@ public interface TransactionService {
     TransactionResponse getById(Long id);
 
     PageResponse<TransactionResponse> getPaged(Long orderId, String transactionType, String status, Pageable pageable);
+
+    String getVNPayUrl(Long transactionId, String bankCode, jakarta.servlet.http.HttpServletRequest request);
+
+    TransactionResponse processVNPayReturn(java.util.Map<String, String> queryParams);
+
+    java.util.Map<String, String> processVNPayIpn(java.util.Map<String, String> queryParams);
 }

@@ -16,9 +16,14 @@ public record TransactionResponse(
         String status,
         String providerRef,
         LocalDateTime paidAt,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String paymentUrl
 ) {
     public static TransactionResponse from(Transaction t) {
+        return from(t, null);
+    }
+
+    public static TransactionResponse from(Transaction t, String paymentUrl) {
         if (t == null) return null;
         return new TransactionResponse(
                 t.getId(),
@@ -31,7 +36,8 @@ public record TransactionResponse(
                 t.getStatus() != null ? t.getStatus().name() : null,
                 t.getProviderRef(),
                 t.getPaidAt(),
-                t.getCreatedAt()
+                t.getCreatedAt(),
+                paymentUrl
         );
     }
 }

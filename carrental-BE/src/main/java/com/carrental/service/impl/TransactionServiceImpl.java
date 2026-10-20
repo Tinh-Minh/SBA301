@@ -8,6 +8,7 @@ import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.TransactionResponse;
 import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Transaction;
+import com.carrental.enums.PaymentMethod;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.TransactionType;
@@ -15,6 +16,8 @@ import com.carrental.exception.AppException;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.TransactionRepository;
 import com.carrental.service.TransactionService;
+import com.carrental.service.VNPayService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,9 +25,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -34,6 +40,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final RentalOrderRepository rentalOrderRepository;
+    private final VNPayService vnPayService;
 
     @Override
     @Transactional
@@ -52,7 +59,17 @@ public class TransactionServiceImpl implements TransactionService {
 
             Transaction saved = transactionRepository.save(transaction);
             log.info("Tạo giao dịch đặt cọc thành công id={}", saved.getId());
-            return TransactionResponse.from(saved);
+
+            String paymentUrl = null;
+            if (saved.getMethod() == PaymentMethod.VNPAY) {
+                try {
+                    paymentUrl = vnPayService.createPaymentUrl(saved.getId(), null, getCurrentHttpRequest());
+                } catch (Exception ex) {
+                    log.warn("Không thể sinh VNPay paymentUrl cho giao dịch cọc id={}: {}", saved.getId(), ex.getMessage());
+                }
+            }
+
+            return TransactionResponse.from(saved, paymentUrl);
         } catch (AppException e) {
             log.warn("Tạo giao dịch đặt cọc thất bại orderId={}: {}", request.getOrderId(), e.getMessage());
             throw e;
@@ -80,7 +97,17 @@ public class TransactionServiceImpl implements TransactionService {
 
             Transaction saved = transactionRepository.save(transaction);
             log.info("Tạo giao dịch thanh toán thành công id={}", saved.getId());
-            return TransactionResponse.from(saved);
+
+            String paymentUrl = null;
+            if (saved.getMethod() == PaymentMethod.VNPAY) {
+                try {
+                    paymentUrl = vnPayService.createPaymentUrl(saved.getId(), null, getCurrentHttpRequest());
+                } catch (Exception ex) {
+                    log.warn("Không thể sinh VNPay paymentUrl cho giao dịch thanh toán id={}: {}", saved.getId(), ex.getMessage());
+                }
+            }
+
+            return TransactionResponse.from(saved, paymentUrl);
         } catch (AppException e) {
             log.warn("Tạo giao dịch thanh toán thất bại orderId={}: {}", request.getOrderId(), e.getMessage());
             throw e;
@@ -204,6 +231,33 @@ public class TransactionServiceImpl implements TransactionService {
             page = transactionRepository.findAll(pageable);
         }
         return PageResponse.from(page.map(TransactionResponse::from));
+    }
+
+    @Override
+    public String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request) {
+        HttpServletRequest req = request != null ? request : getCurrentHttpRequest();
+        return vnPayService.createPaymentUrl(transactionId, bankCode, req);
+    }
+
+    @Override
+    @Transactional
+    public TransactionResponse processVNPayReturn(Map<String, String> queryParams) {
+        return vnPayService.processReturn(queryParams);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, String> processVNPayIpn(Map<String, String> queryParams) {
+        return vnPayService.processIpn(queryParams);
+    }
+
+    private HttpServletRequest getCurrentHttpRequest() {
+        try {
+            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            return attributes != null ? attributes.getRequest() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private Transaction findTransactionOrThrow(Long id) {

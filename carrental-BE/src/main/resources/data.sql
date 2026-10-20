@@ -331,7 +331,7 @@ WHERE o.order_code = 'ORD-2026-001'
 -- ------------------------------------------------------------------------------
 INSERT INTO transactions (order_id, transaction_type, amount, method, status, provider_ref, paid_at, created_at, updated_at)
 SELECT 
-    o.id, 'DEPOSIT', o.deposit_amount, 'VNPAY', 'SUCCESS', 'VNPAY-DEP-001', NOW() - interval '23 hours', NOW() - interval '23 hours', NOW() - interval '23 hours'
+    o.id, 'DEPOSIT', o.deposit_amount, 'MOMO', 'SUCCESS', 'MOMO-DEP-001', NOW() - interval '23 hours', NOW() - interval '23 hours', NOW() - interval '23 hours'
 FROM rental_orders o
 WHERE o.order_code = 'ORD-2026-001'
   AND NOT EXISTS (
@@ -340,7 +340,7 @@ WHERE o.order_code = 'ORD-2026-001'
 
 INSERT INTO transactions (order_id, transaction_type, amount, method, status, provider_ref, paid_at, created_at, updated_at)
 SELECT 
-    o.id, 'RENTAL_PAYMENT', o.total_amount, 'VNPAY', 'SUCCESS', 'VNPAY-PAY-001', NOW() - interval '23 hours', NOW() - interval '23 hours', NOW() - interval '23 hours'
+    o.id, 'RENTAL_PAYMENT', o.total_amount, 'MOMO', 'SUCCESS', 'MOMO-PAY-001', NOW() - interval '23 hours', NOW() - interval '23 hours', NOW() - interval '23 hours'
 FROM rental_orders o
 WHERE o.order_code = 'ORD-2026-001'
   AND NOT EXISTS (

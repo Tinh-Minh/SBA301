@@ -144,10 +144,23 @@ SET rental_type = 'DAILY', payment_status = 'UNPAID', total_amount = 1200000, de
   {
     "orderId": 1,
     "amount": 1200000,
-    "method": "MOCK_GATEWAY"
+    "method": "VNPAY"
   }
   ```
-- **Response (HTTP 200):** Tạo giao dịch thanh toán tiền thuê với trạng thái `PENDING`. Có thể gọi `simulate-gateway` để chuyển thành `SUCCESS` (cập nhật đơn thuê sang `PAID`).
+- **Response (HTTP 200):** Tạo giao dịch thanh toán tiền thuê với trạng thái `PENDING`. Trả về trường `paymentUrl` chứa đường dẫn trực tiếp sang cổng **VNPay Sandbox**.
+
+#### 1.3b. Thanh toán thực tế qua cổng VNPay Sandbox (Nhập thẻ test)
+- **Method:** `GET`
+- **URL:** `{{baseUrl}}/api/transactions/{id}/vnpay-url?bankCode=NCB`
+- **Các bước nhập thẻ test trên cổng VNPay Sandbox:**
+  1. Copy đường link `paymentUrl` trả về và dán vào trình duyệt (Chrome/Edge).
+  2. Cổng VNPay Sandbox mở ra, chọn ngân hàng **NCB** (hoặc đã được chọn sẵn nếu truyền `bankCode=NCB`).
+  3. Nhập thông tin thẻ test NCB chuẩn của VNPay:
+     - **Số thẻ:** `9704198526191432198`
+     - **Tên chủ thẻ:** `NGUYEN VAN A`
+     - **Ngày phát hành:** `07/15`
+  4. Bấm **Tiếp tục** -> Nhập mật khẩu OTP: **`123456`**.
+  5. Cổng VNPay tự động chuyển hướng về `http://localhost:8080/api/transactions/vnpay-return`, hiển thị giao diện xác nhận **Thanh toán thành công**, đồng thời cập nhật trạng thái đơn thuê sang `PAID` và Transaction sang `SUCCESS`.
 
 #### 1.4. Hoàn tiền cọc sau chuyến đi (Refund)
 - **Method:** `POST`

@@ -181,6 +181,45 @@
           }
         },
         {
+          "name": "1.3b Lấy URL thanh toán VNPay Sandbox (Nhập thẻ test)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Sinh link VNPay Sandbox thành công\", function () {",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "    pm.expect(jsonData.data).to.have.property(\"paymentUrl\");",
+                  "    pm.expect(jsonData.data.paymentUrl).to.include(\"sandbox.vnpayment.vn\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/{{transactionId}}/vnpay-url?bankCode=NCB",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "{{transactionId}}", "vnpay-url"],
+              "query": [
+                {
+                  "key": "bankCode",
+                  "value": "NCB",
+                  "description": "Ngân hàng test mặc định của VNPay: NCB"
+                }
+              ]
+            },
+            "description": "Lấy URL chuyển hướng sang cổng VNPay Sandbox để nhập thẻ test NCB (9704198526191432198)."
+          }
+        },
+        {
           "name": "1.4 Hoàn tiền giao dịch (Refund)",
           "event": [
             {
@@ -398,6 +437,36 @@
         {
           "name": "2.3 Miễn trừ phí phát sinh (Waive)",
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "pm.sendRequest({",
+                  "    url: pm.collectionVariables.get('baseUrl') + '/api/extra-fees',",
+                  "    method: 'POST',",
+                  "    header: { 'Content-Type': 'application/json' },",
+                  "    body: {",
+                  "        mode: 'raw',",
+                  "        raw: JSON.stringify({",
+                  "            orderId: Number(pm.collectionVariables.get('orderId')),",
+                  "            createdById: Number(pm.collectionVariables.get('ownerId')),",
+                  "            feeType: 'OTHER',",
+                  "            amount: 50000,",
+                  "            description: 'Phí phát sinh mẫu để kiểm thử miễn trừ'",
+                  "        })",
+                  "    }",
+                  "}, function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "        var json = res.json();",
+                  "        if (json.data && json.data.id) {",
+                  "            pm.collectionVariables.set('extraFeeId', json.data.id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -896,16 +965,22 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200\", function () {",
-                  "    pm.response.to.have.status(200);",
+                  "pm.test(\"Status code is 200 (Tạo mới) hoặc 400 (Đã đánh giá trước đó)\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
                   "});",
                   "var jsonData = pm.response.json();",
-                  "pm.test(\"Gửi đánh giá thành công\", function () {",
-                  "    pm.expect(jsonData.success).to.eql(true);",
-                  "    pm.expect(jsonData.data.rating).to.eql(5);",
-                  "});",
-                  "if (jsonData.data && jsonData.data.id) {",
-                  "    pm.collectionVariables.set(\"reviewId\", jsonData.data.id);",
+                  "if (pm.response.code === 200) {",
+                  "    pm.test(\"Gửi đánh giá thành công\", function () {",
+                  "        pm.expect(jsonData.success).to.eql(true);",
+                  "        pm.expect(jsonData.data.rating).to.eql(5);",
+                  "    });",
+                  "    if (jsonData.data && jsonData.data.id) {",
+                  "        pm.collectionVariables.set(\"reviewId\", jsonData.data.id);",
+                  "    }",
+                  "} else {",
+                  "    pm.test(\"Đã gửi đánh giá cho đơn thuê này rồi\", function () {",
+                  "        pm.expect(jsonData.message).to.include(\"đã gửi đánh giá\");",
+                  "    });",
                   "}"
                 ],
                 "type": "text/javascript"
