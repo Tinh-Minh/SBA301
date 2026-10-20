@@ -10,9 +10,9 @@ import java.security.interfaces.RSAPublicKey;
 import java.util.Base64;
 
 /** Ephemeral integration-test signing keys, created outside the project and removed on JVM shutdown. */
-final class TestJwtKeys {
-    static final String ISSUER = "sba301:function1:test-issuer";
-    static final String AUDIENCE = "carrental-api-test";
+public final class TestJwtKeys {
+    public static final String ISSUER = "sba301:function1:test-issuer";
+    public static final String AUDIENCE = "carrental-api-test";
     private static final Path DIRECTORY;
     private static final KeyPair KEY_PAIR;
     private static final Path PRIVATE_KEY_FILE;
@@ -36,10 +36,10 @@ final class TestJwtKeys {
 
     private TestJwtKeys() { }
 
-    static String privateKeyLocation() { return PRIVATE_KEY_FILE.toUri().toString(); }
-    static String publicKeyLocation() { return PUBLIC_KEY_FILE.toUri().toString(); }
-    static RSAPrivateKey privateKey() { return (RSAPrivateKey) KEY_PAIR.getPrivate(); }
-    static RSAPublicKey publicKey() { return (RSAPublicKey) KEY_PAIR.getPublic(); }
+    public static String privateKeyLocation() { return PRIVATE_KEY_FILE.toUri().toString(); }
+    public static String publicKeyLocation() { return PUBLIC_KEY_FILE.toUri().toString(); }
+    public static RSAPrivateKey privateKey() { return (RSAPrivateKey) KEY_PAIR.getPrivate(); }
+    public static RSAPublicKey publicKey() { return (RSAPublicKey) KEY_PAIR.getPublic(); }
 
     private static String pem(String type, byte[] encoded) {
         String body = Base64.getMimeEncoder(64, new byte[]{'\n'}).encodeToString(encoded);

@@ -1,13 +1,17 @@
 package com.carrental.exception;
 
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.carrental.dto.response.ApiResponse;
+import com.carrental.dto.response.ApiResponseDTO;
 import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.web.RequestTraceFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice
@@ -28,10 +33,31 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(AppException.class)
-    public ResponseEntity<ApiResponse<Void>> handleAppException(AppException exception) {
+    public ResponseEntity<?> handleAppException(AppException exception) {
+        if (exception.errorCode() == null) {
+            return ResponseEntity.status(exception.getStatus())
+                    .body(ApiResponseDTO.error(exception.getStatus(), exception.getMessage(), null));
+        }
         ErrorCode errorCode = exception.errorCode();
         return ResponseEntity.status(errorCode.status())
                 .body(ApiResponse.failure(errorCode, RequestTraceFilter.currentTraceId(), exception.fieldErrors()));
+    }
+
+    @ExceptionHandler({ResourceNotFoundException.class, BadRequestException.class, UnauthorizedException.class,
+            ForbiddenException.class, ConflictException.class})
+    public ResponseEntity<ApiResponseDTO<Void>> handleFunction34BusinessException(RuntimeException exception) {
+        HttpStatus status = exception instanceof ResourceNotFoundException ? HttpStatus.NOT_FOUND
+                : exception instanceof UnauthorizedException ? HttpStatus.UNAUTHORIZED
+                : exception instanceof ForbiddenException ? HttpStatus.FORBIDDEN
+                : exception instanceof ConflictException ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST;
+        return ResponseEntity.status(status).body(ApiResponseDTO.error(status, exception.getMessage(), null));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponseDTO<Void>> handleOptimisticLock(ObjectOptimisticLockingFailureException exception) {
+        HttpStatus status = HttpStatus.CONFLICT;
+        return ResponseEntity.status(status).body(ApiResponseDTO.error(status,
+                "Dữ liệu vừa được cập nhật đồng thời, vui lòng tải lại và thử lại", null));
     }
 
     @ExceptionHandler(AuthenticationException.class)
@@ -75,6 +101,23 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Unhandled request failure traceId={} exceptionType={}", traceId, exception.getClass().getSimpleName());
         return ResponseEntity.status(ErrorCode.INTERNAL_ERROR.status())
                 .body(ApiResponse.failure(ErrorCode.INTERNAL_ERROR, traceId, List.of()));
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(
+            MethodArgumentNotValidException exception,
+            HttpHeaders headers,
+            HttpStatusCode statusCode,
+            WebRequest request) {
+        if (isFunction34Request(request)) {
+            Map<String, String> errors = new LinkedHashMap<>();
+            exception.getBindingResult().getFieldErrors()
+                    .forEach(error -> errors.putIfAbsent(error.getField(), error.getDefaultMessage()));
+            ApiResponseDTO<Map<String, String>> response = ApiResponseDTO.error(
+                    HttpStatus.BAD_REQUEST, "Dữ liệu không hợp lệ", errors);
+            return super.handleExceptionInternal(exception, response, headers, HttpStatus.BAD_REQUEST, request);
+        }
+        return super.handleMethodArgumentNotValid(exception, headers, statusCode, request);
     }
 
     @Override
@@ -131,6 +174,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             return ErrorCode.INVALID_REQUEST;
         }
         return ErrorCode.INTERNAL_ERROR;
+    }
+
+    private boolean isFunction34Request(WebRequest request) {
+        String description = request.getDescription(false);
+        return description.matches(".*uri=/api/(orders|disputes|extra-fees|handovers|payouts|reviews|transactions|payments)(/|\\?.*)?.*");
     }
 
     private List<FieldErrorResponse> fieldErrors(Exception exception) {
