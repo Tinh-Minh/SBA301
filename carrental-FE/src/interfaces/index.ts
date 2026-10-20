@@ -1,9 +1,0 @@
-export type * from "./enums";
-export type * from "./customer";
-export type * from "./bank-account";
-export type * from "./car";
-export type * from "./car-slot";
-export type * from "./rental-order";
-export type * from "./order-handover";
-export type * from "./payout";
-export type * from "./owner";

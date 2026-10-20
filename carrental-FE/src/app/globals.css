@@ -2,7 +2,7 @@
 @import "../styles/colors.css";
 @import "../styles/fonts.css";
 @import "../styles/home-entrance.css";
-@config "../../tailwind.config.ts";
+@config "../../tailwind.config.js";
 
 @layer base {
   html { scroll-behavior:smooth;scroll-padding-top:100px;color-scheme:light; }
