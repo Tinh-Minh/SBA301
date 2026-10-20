@@ -3,8 +3,8 @@ package com.carrental.repository;
 import java.util.Optional;
 
 import com.carrental.entity.UserDocument;
-import com.carrental.enums.DocumentVerifyStatus;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.VerificationStatus;
+import com.carrental.enums.DocumentType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,10 +21,10 @@ public interface UserDocumentRepository extends JpaRepository<UserDocument, Long
 
     Page<UserDocument> findByCustomer_Id(Long customerId, Pageable pageable);
 
-    Page<UserDocument> findByVerifyStatus(DocumentVerifyStatus verifyStatus, Pageable pageable);
+    Page<UserDocument> findByVerifyStatus(VerificationStatus verifyStatus, Pageable pageable);
 
     Optional<UserDocument> findFirstByDocTypeAndDocNumberAndVerifyStatus(
-            UserDocumentType docType, String docNumber, DocumentVerifyStatus verifyStatus);
+            DocumentType docType, String docNumber, VerificationStatus verifyStatus);
 
     /** Scalar owner discovery avoids loading an unlocked document entity before the ordered lock protocol. */
     @Query("select d.customer.id from UserDocument d where d.id = :id")

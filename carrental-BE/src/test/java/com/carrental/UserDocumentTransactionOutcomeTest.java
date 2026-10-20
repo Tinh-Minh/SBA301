@@ -17,7 +17,7 @@ import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.entity.UserDocument;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.CustomerStatusLock;
@@ -87,7 +87,7 @@ class UserDocumentTransactionOutcomeTest {
         UserDocumentServiceImpl service = new UserDocumentServiceImpl(customers, documents, storage,
                 new DocumentImageInspector(properties), transactions, mock(CustomerStatusLock.class),
                 mock(KycService.class), mock(DocumentReviewLogger.class), Clock.systemDefaultZone());
-        UserDocumentSubmissionRequest metadata = new UserDocumentSubmissionRequest(UserDocumentType.CITIZEN_ID,
+        UserDocumentSubmissionRequest metadata = new UserDocumentSubmissionRequest(DocumentType.CITIZEN_ID,
                 "SYNTHETIC-" + UUID.randomUUID().toString().substring(0, 8), null, LocalDate.of(2000, 1, 1),
                 null, null, null, null);
         UserDocumentSubmissionCommand command = new UserDocumentSubmissionCommand(metadata,

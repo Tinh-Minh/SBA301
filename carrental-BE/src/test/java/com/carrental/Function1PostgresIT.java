@@ -22,11 +22,11 @@ import com.carrental.entity.UserDocument;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
-import com.carrental.enums.DocumentVerifyStatus;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.DriverStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.repository.BankAccountRepository;
 import com.carrental.repository.CustomerRepository;
@@ -155,14 +155,14 @@ class Function1PostgresIT {
 
             UserDocument document = new UserDocument();
             document.setCustomer(customer);
-            document.setDocType(UserDocumentType.CITIZEN_ID);
+            document.setDocType(DocumentType.CITIZEN_ID);
             document.setDocNumber("DOC-" + SUFFIX);
             document.setFrontImageUrl("private/front");
             document.setFullNameOnDoc("Mapping Person");
             document.setDateOfBirthOnDoc(LocalDate.of(1995, 4, 3));
             document.setIssueDate(LocalDate.of(2020, 1, 1));
             document.setExpiresAt(LocalDate.of(2030, 1, 1));
-            document.setVerifyStatus(DocumentVerifyStatus.APPROVED);
+            document.setVerifyStatus(VerificationStatus.APPROVED);
             document.setVerifiedBy(administrator);
             document.setVerifiedAt(LocalDateTime.of(2026, 10, 13, 9, 15));
             entityManager.persist(document);
@@ -177,7 +177,7 @@ class Function1PostgresIT {
             bank.setBankName("Example Bank");
             bank.setAccountNumber("000012345678");
             bank.setAccountHolder("Mapping Person");
-            bank.setDefault(true);
+            bank.setIsDefault(true);
             entityManager.persist(bank);
 
             Voucher voucher = new Voucher();
@@ -216,15 +216,15 @@ class Function1PostgresIT {
             assertThat(loaded.getKycStatus()).isEqualTo(KycStatus.PENDING);
             assertThat(loaded.getRole()).isEqualTo(Role.CUSTOMER);
             assertThat(loaded.getStatus()).isEqualTo(CustomerStatus.ACTIVE);
-            assertThat(loaded.isEmailVerified()).isFalse();
-            assertThat(loadedDocument.getDocType()).isEqualTo(UserDocumentType.CITIZEN_ID);
-            assertThat(loadedDocument.getVerifyStatus()).isEqualTo(DocumentVerifyStatus.APPROVED);
+            assertThat(loaded.getEmailVerified()).isFalse();
+            assertThat(loadedDocument.getDocType()).isEqualTo(DocumentType.CITIZEN_ID);
+            assertThat(loadedDocument.getVerifyStatus()).isEqualTo(VerificationStatus.APPROVED);
             assertThat(loadedDocument.getBackImageUrl()).isNull();
             assertThat(loadedDocument.getVerifiedAt()).isEqualTo(LocalDateTime.of(2026, 10, 13, 9, 15));
             assertThat(entityManager.find(Customer.class, administrator.getId()).getRole()).isEqualTo(Role.ADMIN);
             assertThat(loadedDriver.getStatus()).isEqualTo(DriverStatus.ACTIVE);
             assertThat(loadedBank.getAccountNumber()).isEqualTo("000012345678");
-            assertThat(loadedBank.isDefault()).isTrue();
+            assertThat(loadedBank.getIsDefault()).isTrue();
             assertThat(loadedVoucher.getDiscountType()).isEqualTo(DiscountType.FIXED);
             assertThat(loadedVoucher.getDiscountValue()).isEqualByComparingTo("250000");
             assertThat(loadedVoucher.getMaxDiscount()).isEqualByComparingTo("0");
@@ -411,14 +411,14 @@ class Function1PostgresIT {
         assertThat(page.getContent()).extracting(UserDocument::getId).containsExactly(oneDoc.getId());
         assertThat(page.getTotalElements()).isEqualTo(1);
         assertThat(documents.findByIdAndCustomer_Id(twoDoc.getId(), one.getId())).isEmpty();
-        assertThat(documents.findByVerifyStatus(DocumentVerifyStatus.PENDING,
+        assertThat(documents.findByVerifyStatus(VerificationStatus.PENDING,
                 org.springframework.data.domain.PageRequest.of(0, 50)).getContent())
                 .extracting(UserDocument::getId).contains(oneDoc.getId(), twoDoc.getId());
         UserDocument approved = saveDocument(one, "APPROVED-SCOPE-" + SUFFIX);
-        approved.setVerifyStatus(DocumentVerifyStatus.APPROVED);
+        approved.setVerifyStatus(VerificationStatus.APPROVED);
         approved = documents.save(approved);
-        assertThat(documents.findFirstByDocTypeAndDocNumberAndVerifyStatus(UserDocumentType.CITIZEN_ID,
-                approved.getDocNumber(), DocumentVerifyStatus.APPROVED).map(UserDocument::getId))
+        assertThat(documents.findFirstByDocTypeAndDocNumberAndVerifyStatus(DocumentType.CITIZEN_ID,
+                approved.getDocNumber(), VerificationStatus.APPROVED).map(UserDocument::getId))
                 .contains(approved.getId());
 
         Driver oneDriver = saveDriver(one);
@@ -512,7 +512,7 @@ class Function1PostgresIT {
     private UserDocument saveDocument(Customer customer, String number) {
         UserDocument document = new UserDocument();
         document.setCustomer(customer);
-        document.setDocType(UserDocumentType.CITIZEN_ID);
+        document.setDocType(DocumentType.CITIZEN_ID);
         document.setDocNumber(number);
         document.setFrontImageUrl("test/front");
         return documents.save(document);
@@ -530,7 +530,7 @@ class Function1PostgresIT {
         bank.setBankName(bankName);
         bank.setAccountNumber(accountNumber);
         bank.setAccountHolder("P02 Test");
-        bank.setDefault(isDefault);
+        bank.setIsDefault(isDefault);
         return bankAccounts.save(bank);
     }
 

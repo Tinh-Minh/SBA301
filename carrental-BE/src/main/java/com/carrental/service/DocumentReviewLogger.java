@@ -1,8 +1,8 @@
 package com.carrental.service;
 
-import com.carrental.enums.DocumentVerifyStatus;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.KycStatus;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.web.RequestTraceFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,8 +15,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class DocumentReviewLogger {
     private static final Logger log = LoggerFactory.getLogger(DocumentReviewLogger.class);
 
-    public void record(long actorId, long ownerId, long documentId, UserDocumentType type,
-            DocumentVerifyStatus oldStatus, DocumentVerifyStatus newStatus,
+    public void record(long actorId, long ownerId, long documentId, DocumentType type,
+            VerificationStatus oldStatus, VerificationStatus newStatus,
             KycStatus oldKyc, KycStatus newKyc, boolean reasonProvided) {
         String traceId = RequestTraceFilter.currentTraceId();
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {

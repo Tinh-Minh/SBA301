@@ -53,11 +53,11 @@ import com.carrental.dto.response.VoucherResponse;
 import com.carrental.dto.response.VoucherWindowState;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
-import com.carrental.enums.DocumentVerifyStatus;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.DriverStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.dto.request.driver.DriverListQuery;
 import com.carrental.dto.request.voucher.VoucherListQuery;
@@ -220,20 +220,20 @@ class Function1OpenApiContractTest {
         assertEnumValues(schemas.path("Customer").path("properties").path("role"), Role.values());
         assertEnumValues(schemas.path("Customer").path("properties").path("status"), CustomerStatus.values());
         assertEnumValues(schemas.path("Customer").path("properties").path("kycStatus"), KycStatus.values());
-        assertEnumValues(schemas.path("Document").path("properties").path("docType"), UserDocumentType.values());
-        assertEnumValues(schemas.path("Document").path("properties").path("verifyStatus"), DocumentVerifyStatus.values());
+        assertEnumValues(schemas.path("Document").path("properties").path("docType"), DocumentType.values());
+        assertEnumValues(schemas.path("Document").path("properties").path("verifyStatus"), VerificationStatus.values());
         assertEnumValues(schemas.path("Driver").path("properties").path("status"), DriverStatus.values());
         assertEnumValues(schemas.path("Voucher").path("properties").path("discountType"), DiscountType.values());
         assertEnumValues(schemas.path("Voucher").path("properties").path("status"), VoucherStatus.values());
         assertEnumValues(schemas.path("Voucher").path("properties").path("windowState"), VoucherWindowState.values());
         assertEnumValues(schemas.path("CustomerStatus").path("properties").path("status"), CustomerStatus.values());
-        assertEnumValues(schemas.path("DocumentUpload").path("properties").path("docType"), UserDocumentType.values());
+        assertEnumValues(schemas.path("DocumentUpload").path("properties").path("docType"), DocumentType.values());
         assertEnumValues(schemas.path("VoucherCreate").path("properties").path("discountType"), DiscountType.values());
         assertEnumValues(schemas.path("VoucherStatusRequest").path("properties").path("status"), VoucherStatus.values());
         assertEnumValues(schemas.path("DriverStatusRequest").path("properties").path("status"),
                 Set.of(DriverStatus.ACTIVE, DriverStatus.SUSPENDED));
         assertEnumValues(schemas.path("DocumentReviewRequest").path("properties").path("verifyStatus"),
-                Set.of(DocumentVerifyStatus.APPROVED, DocumentVerifyStatus.REJECTED));
+                Set.of(VerificationStatus.APPROVED, VerificationStatus.REJECTED));
 
         JsonNode driverStatusSchema = queryParameter(root, "/api/drivers", "status");
         JsonNode voucherStatusSchema = queryParameter(root, "/api/vouchers", "status");
@@ -241,8 +241,8 @@ class Function1OpenApiContractTest {
         assertEnumValues(voucherStatusSchema, VoucherStatus.values());
         assertEnumValues(queryParameter(root, "/api/customers", "status"), CustomerStatus.values());
         assertEnumValues(queryParameter(root, "/api/customers", "kycStatus"), KycStatus.values());
-        assertEnumValues(queryParameter(root, "/api/user-documents", "docType"), UserDocumentType.values());
-        assertEnumValues(queryParameter(root, "/api/user-documents", "verifyStatus"), DocumentVerifyStatus.values());
+        assertEnumValues(queryParameter(root, "/api/user-documents", "docType"), DocumentType.values());
+        assertEnumValues(queryParameter(root, "/api/user-documents", "verifyStatus"), VerificationStatus.values());
         assertEnumValues(queryParameter(root, "/api/vouchers", "discountType"), DiscountType.values());
         assertEnumValues(queryParameter(root, "/api/vouchers", "window"), VoucherWindowState.values());
         assertSchemaEnumValues(queryParameter(root, "/api/user-documents", "scope"), Set.of("mine", "all"));

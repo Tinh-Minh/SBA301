@@ -1,7 +1,7 @@
 package com.carrental.dto.request.document;
 
 import com.carrental.dto.response.FieldErrorResponse;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import java.time.Clock;
@@ -12,7 +12,7 @@ import java.util.List;
 
 /** Explicit allowlisted metadata accepted for one new pending document submission. */
 public record UserDocumentSubmissionRequest(
-        UserDocumentType docType,
+        DocumentType docType,
         String docNumber,
         String fullNameOnDoc,
         LocalDate dateOfBirthOnDoc,
@@ -23,7 +23,7 @@ public record UserDocumentSubmissionRequest(
 
     public static UserDocumentSubmissionRequest parse(java.util.Map<String, String> values, Clock clock) {
         List<FieldErrorResponse> errors = new ArrayList<>();
-        UserDocumentType docType = enumValue(values.get("docType"), "docType", errors);
+        DocumentType docType = enumValue(values.get("docType"), "docType", errors);
         String docNumber = requiredText(values.get("docNumber"), "docNumber", 50, errors);
         String fullName = optionalText(values.get("fullNameOnDoc"), "fullNameOnDoc", 150, errors);
         String issuePlace = optionalText(values.get("issuePlace"), "issuePlace", 200, errors);
@@ -37,7 +37,7 @@ public record UserDocumentSubmissionRequest(
         if (issue != null && expiry != null && issue.isAfter(expiry)) {
             errors.add(new FieldErrorResponse("expiresAt", "Ngày hết hạn phải bằng hoặc sau ngày cấp"));
         }
-        if (docType == UserDocumentType.DRIVER_LICENSE && license == null) {
+        if (docType == DocumentType.DRIVER_LICENSE && license == null) {
             errors.add(new FieldErrorResponse("licenseClass", "Hạng bằng lái là bắt buộc"));
         }
         if (!errors.isEmpty()) throw new AppException(ErrorCode.VALIDATION_ERROR, errors);
@@ -71,13 +71,13 @@ public record UserDocumentSubmissionRequest(
         }
     }
 
-    private static UserDocumentType enumValue(String input, String field, List<FieldErrorResponse> errors) {
+    private static DocumentType enumValue(String input, String field, List<FieldErrorResponse> errors) {
         if (input == null || input.strip().isEmpty()) {
             errors.add(new FieldErrorResponse(field, "Trường này là bắt buộc"));
             return null;
         }
         try {
-            return UserDocumentType.valueOf(input.strip());
+            return DocumentType.valueOf(input.strip());
         } catch (IllegalArgumentException exception) {
             errors.add(new FieldErrorResponse(field, "Loại giấy tờ không hợp lệ"));
             return null;

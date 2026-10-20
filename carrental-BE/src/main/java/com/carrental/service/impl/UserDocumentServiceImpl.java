@@ -11,10 +11,10 @@ import com.carrental.dto.response.UserDocumentReviewResponse;
 import com.carrental.entity.Customer;
 import com.carrental.entity.UserDocument;
 import com.carrental.enums.CustomerStatus;
-import com.carrental.enums.DocumentVerifyStatus;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.mapper.UserDocumentMapper;
@@ -120,7 +120,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
                 applyMetadata(document, command.metadata());
                 document.setFrontImageUrl(frontReceipt.locator());
                 document.setBackImageUrl(backReceipt == null ? null : backReceipt.locator());
-                document.setVerifyStatus(DocumentVerifyStatus.PENDING);
+                document.setVerifyStatus(VerificationStatus.PENDING);
                 document.setRejectReason(null);
                 document.setVerifiedBy(null);
                 document.setVerifiedAt(null);
@@ -257,18 +257,18 @@ public class UserDocumentServiceImpl implements UserDocumentService {
 
         LocalDate evaluatedOn = LocalDate.now(clock);
         KycStatus oldKyc = owner.getKycStatus();
-        DocumentVerifyStatus oldStatus = document.getVerifyStatus();
-        if (command.status() == DocumentVerifyStatus.APPROVED) {
+        VerificationStatus oldStatus = document.getVerifyStatus();
+        if (command.status() == VerificationStatus.APPROVED) {
             validateApprovalPrerequisites(document, evaluatedOn);
             validateStoredEvidence(document, actorRow.getId(), owner.getId());
             if (documents.findFirstByDocTypeAndDocNumberAndVerifyStatus(
-                    document.getDocType(), document.getDocNumber(), DocumentVerifyStatus.APPROVED).isPresent()) {
+                    document.getDocType(), document.getDocNumber(), VerificationStatus.APPROVED).isPresent()) {
                 throw new AppException(ErrorCode.APPROVED_DOCUMENT_CONFLICT);
             }
-            document.setVerifyStatus(DocumentVerifyStatus.APPROVED);
+            document.setVerifyStatus(VerificationStatus.APPROVED);
             document.setRejectReason(null);
         } else {
-            document.setVerifyStatus(DocumentVerifyStatus.REJECTED);
+            document.setVerifyStatus(VerificationStatus.REJECTED);
             document.setRejectReason(command.reason());
         }
         document.setVerifiedBy(actorRow);
@@ -301,10 +301,10 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         if (request == null || !request.verifyStatusWasProvided() || request.getVerifyStatus() == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
-        DocumentVerifyStatus status = request.getVerifyStatus();
-        if (status == DocumentVerifyStatus.PENDING) throw new AppException(ErrorCode.INVALID_REQUEST);
+        VerificationStatus status = request.getVerifyStatus();
+        if (status == VerificationStatus.PENDING) throw new AppException(ErrorCode.INVALID_REQUEST);
         String reason = request.getRejectReason();
-        if (status == DocumentVerifyStatus.APPROVED) {
+        if (status == VerificationStatus.APPROVED) {
             if (reason != null) throw new AppException(ErrorCode.INVALID_REQUEST);
             return new ReviewCommand(status, null);
         }
@@ -324,11 +324,11 @@ public class UserDocumentServiceImpl implements UserDocumentService {
                 && (document.getExpiresAt() == null || !document.getExpiresAt().isBefore(today))
                 && (document.getIssueDate() == null || document.getExpiresAt() == null
                         || !document.getIssueDate().isAfter(document.getExpiresAt()));
-        if (document.getDocType() == UserDocumentType.DRIVER_LICENSE) {
+        if (document.getDocType() == DocumentType.DRIVER_LICENSE) {
             complete = complete && notBlank(document.getLicenseClass()) && document.getExpiresAt() != null;
         }
-        if (document.getDocType() == UserDocumentType.CITIZEN_ID
-                || document.getDocType() == UserDocumentType.DRIVER_LICENSE) {
+        if (document.getDocType() == DocumentType.CITIZEN_ID
+                || document.getDocType() == DocumentType.DRIVER_LICENSE) {
             complete = complete && notBlank(document.getBackImageUrl());
         }
         if (!complete) throw new AppException(ErrorCode.DOCUMENT_NOT_APPROVABLE);
@@ -345,8 +345,8 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             throw exception;
         }
         validateStoredImage(document.getFrontImageUrl(), actorId, ownerId, document.getId());
-        if (document.getDocType() == UserDocumentType.CITIZEN_ID
-                || document.getDocType() == UserDocumentType.DRIVER_LICENSE) {
+        if (document.getDocType() == DocumentType.CITIZEN_ID
+                || document.getDocType() == DocumentType.DRIVER_LICENSE) {
             validateStoredImage(document.getBackImageUrl(), actorId, ownerId, document.getId());
         }
     }
@@ -407,7 +407,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
 
     private boolean notBlank(String value) { return value != null && !value.strip().isEmpty(); }
 
-    private record ReviewCommand(DocumentVerifyStatus status, String reason) { }
+    private record ReviewCommand(VerificationStatus status, String reason) { }
 
     private Specification<UserDocument> documentSpecification(CurrentAccount account, UserDocumentListQuery query) {
         return (root, criteria, builder) -> {

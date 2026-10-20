@@ -13,20 +13,20 @@ public final class CustomerMapper {
     public static CustomerProfileResponse toProfile(Customer customer) {
         return new CustomerProfileResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
                 customer.getPhone(), customer.getDateOfBirth(), customer.getAddress(), customer.getAvatarUrl(),
-                customer.isEmailVerified(), customer.getKycStatus(), customer.getRole(), customer.getStatus(),
+                customer.getEmailVerified(), customer.getKycStatus(), customer.getRole(), customer.getStatus(),
                 customer.getCreatedAt(), customer.getUpdatedAt());
     }
 
     public static CustomerSummaryResponse toSummary(Customer customer) {
         return new CustomerSummaryResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
                 customer.getPhone(), customer.getRole(), customer.getStatus(), customer.getKycStatus(),
-                customer.isEmailVerified(), customer.getCreatedAt(), customer.getUpdatedAt());
+                customer.getEmailVerified(), customer.getCreatedAt(), customer.getUpdatedAt());
     }
 
     public static CustomerAdminResponse toAdmin(Customer customer) {
         return new CustomerAdminResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
                 customer.getPhone(), customer.getRole(), customer.getStatus(), customer.getKycStatus(),
-                customer.isEmailVerified(), customer.getCreatedAt(), customer.getUpdatedAt(),
+                customer.getEmailVerified(), customer.getCreatedAt(), customer.getUpdatedAt(),
                 customer.getDateOfBirth(), customer.getAddress());
     }
 }

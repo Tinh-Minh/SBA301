@@ -1,15 +1,15 @@
 package com.carrental.dto.response;
 
-import com.carrental.enums.DocumentVerifyStatus;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.VerificationStatus;
+import com.carrental.enums.DocumentType;
 import java.time.LocalDateTime;
 
 public record UserDocumentSummaryResponse(
         long id,
         long customerId,
-        UserDocumentType docType,
+        DocumentType docType,
         String docNumberMasked,
-        DocumentVerifyStatus verifyStatus,
+        VerificationStatus verifyStatus,
         boolean hasFrontImage,
         boolean hasBackImage,
         LocalDateTime createdAt,

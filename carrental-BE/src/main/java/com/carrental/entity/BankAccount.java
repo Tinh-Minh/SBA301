@@ -1,19 +1,25 @@
 package com.carrental.entity;
 
-import com.carrental.entity.base.BaseEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
 
-/** Customer bank account; account numbers remain strings to preserve leading zeroes. */
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "bank_accounts")
-public class BankAccount extends BaseEntity {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class BankAccount {
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
@@ -27,19 +33,10 @@ public class BankAccount extends BaseEntity {
     private String accountHolder;
 
     @Column(name = "is_default", nullable = false)
-    private boolean isDefault;
+    @Builder.Default
+    private Boolean isDefault = false;
 
-    public BankAccount() {
-    }
-
-    public Customer getCustomer() { return customer; }
-    public void setCustomer(Customer customer) { this.customer = customer; }
-    public String getBankName() { return bankName; }
-    public void setBankName(String bankName) { this.bankName = bankName; }
-    public String getAccountNumber() { return accountNumber; }
-    public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
-    public String getAccountHolder() { return accountHolder; }
-    public void setAccountHolder(String accountHolder) { this.accountHolder = accountHolder; }
-    public boolean isDefault() { return isDefault; }
-    public void setDefault(boolean isDefault) { this.isDefault = isDefault; }
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 }

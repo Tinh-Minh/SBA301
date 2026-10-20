@@ -8,7 +8,7 @@ public final class BankAccountMapper {
 
     public static BankAccountResponse toResponse(BankAccount account) {
         return new BankAccountResponse(account.getId(), account.getCustomer().getId(), account.getBankName(),
-                mask(account.getAccountNumber()), account.getAccountHolder(), account.isDefault(), account.getCreatedAt());
+                mask(account.getAccountNumber()), account.getAccountHolder(), account.getIsDefault(), account.getCreatedAt());
     }
 
     public static String mask(String accountNumber) {

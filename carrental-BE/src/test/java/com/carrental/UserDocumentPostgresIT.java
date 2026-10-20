@@ -491,7 +491,7 @@ class UserDocumentPostgresIT {
         SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
                 stale, null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))));
         UserDocumentSubmissionRequest metadata = new UserDocumentSubmissionRequest(
-                com.carrental.enums.UserDocumentType.CITIZEN_ID, "00123", null, null, null, null, null, null);
+                com.carrental.enums.DocumentType.CITIZEN_ID, "00123", null, null, null, null, null, null);
         var image = new UploadedDocumentImage("front.png", "image/png", syntheticPng());
         long beforeRows = documentCount(owner.id());
         long beforeFiles = fileCount();
@@ -613,7 +613,7 @@ class UserDocumentPostgresIT {
         SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
                 principal, null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))));
         UserDocumentSubmissionRequest metadata = new UserDocumentSubmissionRequest(
-                com.carrental.enums.UserDocumentType.CITIZEN_ID, "SENTINEL_PRIVATE_DOC_NUMBER", null, null, null, null, null, null);
+                com.carrental.enums.DocumentType.CITIZEN_ID, "SENTINEL_PRIVATE_DOC_NUMBER", null, null, null, null, null, null);
         var upload = new UploadedDocumentImage("synthetic.png", "image/png", syntheticPng());
         Set<String> beforeFiles = fileNames();
         String traceId = UUID.randomUUID().toString();

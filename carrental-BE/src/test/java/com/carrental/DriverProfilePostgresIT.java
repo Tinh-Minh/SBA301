@@ -12,7 +12,7 @@ import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DriverStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.repository.DriverRepository;
 import com.carrental.service.DriverEligibilityService;
 import com.carrental.storage.CanonicalDocumentImage;
@@ -618,9 +618,9 @@ class DriverProfilePostgresIT {
         String adminToken = login(admin);
         LocalDate today = LocalDate.of(2026, 10, 14);
 
-        JsonNode identity = uploadDocument(ownerToken, UserDocumentType.CITIZEN_ID, "E2E-ID", null, today);
+        JsonNode identity = uploadDocument(ownerToken, DocumentType.CITIZEN_ID, "E2E-ID", null, today);
         assertSuccess(review(adminToken, identity.path("id").asLong()), 200);
-        JsonNode license = uploadDocument(ownerToken, UserDocumentType.DRIVER_LICENSE, "E2E-LICENSE", "B", today);
+        JsonNode license = uploadDocument(ownerToken, DocumentType.DRIVER_LICENSE, "E2E-LICENSE", "B", today);
         assertSuccess(review(adminToken, license.path("id").asLong()), 200);
         assertThat(jdbc.queryForObject("select kyc_status from customers where id=?", String.class, owner.id())).isEqualTo("VERIFIED");
 
@@ -644,7 +644,7 @@ class DriverProfilePostgresIT {
         System.out.println("P07_END_TO_END P05_upload=PENDING P06_review=APPROVED P07_create=201_activate=ACTIVE eligibleNow=true");
     }
 
-    private JsonNode uploadDocument(String token, UserDocumentType type, String number, String licenseClass,
+    private JsonNode uploadDocument(String token, DocumentType type, String number, String licenseClass,
             LocalDate expiry) throws Exception {
         String boundary = "p07-" + UUID.randomUUID().toString().replace("-", "");
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -657,7 +657,7 @@ class DriverProfilePostgresIT {
         addTextPart(output, boundary, "expiresAt", expiry.toString());
         if (licenseClass != null) addTextPart(output, boundary, "licenseClass", licenseClass);
         addFilePart(output, boundary, "frontImage", "front.png", png());
-        if (type == UserDocumentType.CITIZEN_ID || type == UserDocumentType.DRIVER_LICENSE) {
+        if (type == DocumentType.CITIZEN_ID || type == DocumentType.DRIVER_LICENSE) {
             addFilePart(output, boundary, "backImage", "back.png", png());
         }
         output.write(("--" + boundary + "--\r\n").getBytes(StandardCharsets.UTF_8));

@@ -72,7 +72,7 @@ public class BankAccountServiceImpl implements BankAccountService {
                 BankAccount previous = bankAccounts.findByCustomer_IdAndIsDefaultTrue(owner.getId()).orElse(null);
                 if (previous != null) {
                     BankAccount lockedPrevious = lockRows(owner.getId(), List.of(previous.getId())).getFirst();
-                    lockedPrevious.setDefault(false);
+                    lockedPrevious.setIsDefault(false);
                     bankAccounts.flush();
                 }
             }
@@ -81,7 +81,7 @@ public class BankAccountServiceImpl implements BankAccountService {
             bankAccount.setBankName(input.bankName());
             bankAccount.setAccountNumber(input.accountNumber());
             bankAccount.setAccountHolder(input.accountHolder());
-            bankAccount.setDefault(input.makeDefault());
+            bankAccount.setIsDefault(input.makeDefault());
             BankAccount saved = bankAccounts.saveAndFlush(bankAccount);
             changeLogger.changed("bank-account-create", owner.getId(), saved.getId());
             return BankAccountMapper.toResponse(saved);
@@ -145,14 +145,14 @@ public class BankAccountServiceImpl implements BankAccountService {
             if (currentDefault != null) ids.add(currentDefault.getId());
             List<BankAccount> lockedRows = lockRows(owner.getId(), ids);
             BankAccount target = findLocked(lockedRows, bankAccountId).orElseThrow(() -> notFound());
-            if (target.isDefault()) return BankAccountMapper.toResponse(target);
+            if (Boolean.TRUE.equals(target.getIsDefault())) return BankAccountMapper.toResponse(target);
 
-            BankAccount oldDefault = lockedRows.stream().filter(BankAccount::isDefault).findFirst().orElse(null);
+            BankAccount oldDefault = lockedRows.stream().filter(BankAccount::getIsDefault).findFirst().orElse(null);
             if (oldDefault != null) {
-                oldDefault.setDefault(false);
+                oldDefault.setIsDefault(false);
                 bankAccounts.flush();
             }
-            target.setDefault(true);
+            target.setIsDefault(true);
             bankAccounts.flush();
             changeLogger.changed("bank-account-default", owner.getId(), target.getId());
             return BankAccountMapper.toResponse(target);

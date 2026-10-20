@@ -1,26 +1,32 @@
 package com.carrental.entity;
 
+import com.carrental.enums.DiscountType;
+import com.carrental.enums.VoucherStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import com.carrental.entity.base.AuditedEntity;
-import com.carrental.enums.DiscountType;
-import com.carrental.enums.VoucherStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
-
-/** Administrator-managed voucher definition; no order association is part of Function 1. */
 @Entity
 @Table(name = "vouchers")
-public class Voucher extends AuditedEntity {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Voucher {
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
 
-    @Column(length = 300)
+    @Column(name = "description", length = 300)
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -34,6 +40,7 @@ public class Voucher extends AuditedEntity {
     private BigDecimal maxDiscount;
 
     @Column(name = "min_order_amount", nullable = false, precision = 14, scale = 0)
+    @Builder.Default
     private BigDecimal minOrderAmount = BigDecimal.ZERO;
 
     @Column(name = "start_at", nullable = false)
@@ -46,40 +53,23 @@ public class Voucher extends AuditedEntity {
     private Integer usageLimit;
 
     @Column(name = "per_user_limit", nullable = false)
+    @Builder.Default
     private Integer perUserLimit = 1;
 
     @Column(name = "used_count", nullable = false)
+    @Builder.Default
     private Integer usedCount = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
     private VoucherStatus status = VoucherStatus.ACTIVE;
 
-    public Voucher() {
-    }
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public String getCode() { return code; }
-    public void setCode(String code) { this.code = code; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public DiscountType getDiscountType() { return discountType; }
-    public void setDiscountType(DiscountType discountType) { this.discountType = discountType; }
-    public BigDecimal getDiscountValue() { return discountValue; }
-    public void setDiscountValue(BigDecimal discountValue) { this.discountValue = discountValue; }
-    public BigDecimal getMaxDiscount() { return maxDiscount; }
-    public void setMaxDiscount(BigDecimal maxDiscount) { this.maxDiscount = maxDiscount; }
-    public BigDecimal getMinOrderAmount() { return minOrderAmount; }
-    public void setMinOrderAmount(BigDecimal minOrderAmount) { this.minOrderAmount = minOrderAmount; }
-    public LocalDateTime getStartAt() { return startAt; }
-    public void setStartAt(LocalDateTime startAt) { this.startAt = startAt; }
-    public LocalDateTime getEndAt() { return endAt; }
-    public void setEndAt(LocalDateTime endAt) { this.endAt = endAt; }
-    public Integer getUsageLimit() { return usageLimit; }
-    public void setUsageLimit(Integer usageLimit) { this.usageLimit = usageLimit; }
-    public Integer getPerUserLimit() { return perUserLimit; }
-    public void setPerUserLimit(Integer perUserLimit) { this.perUserLimit = perUserLimit; }
-    public Integer getUsedCount() { return usedCount; }
-    public void setUsedCount(Integer usedCount) { this.usedCount = usedCount; }
-    public VoucherStatus getStatus() { return status; }
-    public void setStatus(VoucherStatus status) { this.status = status; }
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }

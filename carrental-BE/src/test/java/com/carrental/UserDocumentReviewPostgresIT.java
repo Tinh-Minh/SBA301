@@ -19,10 +19,10 @@ import ch.qos.logback.core.AppenderBase;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
-import com.carrental.enums.DocumentVerifyStatus;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.DocumentType;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerStatusLock;
 import com.carrental.repository.UserDocumentRepository;
@@ -177,10 +177,10 @@ class UserDocumentReviewPostgresIT {
         Account customer = account("review-customer", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE);
         String adminToken = login(admin);
         String customerToken = login(customer);
-        SeededDocument ownDocument = seedDocument(admin, UserDocumentType.PASSPORT, unique("SELF"),
+        SeededDocument ownDocument = seedDocument(admin, DocumentType.PASSPORT, unique("SELF"),
                 "Admin Owner", LocalDate.of(1990, 1, 2), "Hanoi", LocalDate.of(2010, 1, 2), null, null,
                 true, true);
-        SeededDocument target = seedDocument(customer, UserDocumentType.PASSPORT, unique("STRICT"),
+        SeededDocument target = seedDocument(customer, DocumentType.PASSPORT, unique("STRICT"),
                 "Customer Owner", LocalDate.of(1990, 1, 2), "Hanoi", LocalDate.of(2010, 1, 2), null, null,
                 true, false);
         Map<String, Object> before = documentAudit(target.id());
@@ -238,7 +238,7 @@ class UserDocumentReviewPostgresIT {
         Account admin = account("approve-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
         Account owner = account("approve-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE);
         String token = login(admin);
-        SeededDocument document = seedDocument(owner, UserDocumentType.CITIZEN_ID, unique("APPROVE"),
+        SeededDocument document = seedDocument(owner, DocumentType.CITIZEN_ID, unique("APPROVE"),
                 "Identity Name", LocalDate.of(1992, 5, 6), "Da Nang", LocalDate.of(2012, 5, 6), null, null,
                 true, true);
         Map<String, Object> beforeDocument = documentAudit(document.id());
@@ -282,7 +282,7 @@ class UserDocumentReviewPostgresIT {
         Account admin = account("reject-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
         Account owner = account("reject-locked-owner", Role.CUSTOMER, CustomerStatus.LOCKED, KycStatus.NONE);
         String token = login(admin);
-        SeededDocument document = seedDocument(owner, UserDocumentType.CITIZEN_ID, unique("REJECT"),
+        SeededDocument document = seedDocument(owner, DocumentType.CITIZEN_ID, unique("REJECT"),
                 null, null, null, null, null, null, false, false);
         String sentinel = "P06_PRIVATE_REJECT_REASON";
         doReturn(false).when(storage).isEnabled();
@@ -314,35 +314,35 @@ class UserDocumentReviewPostgresIT {
         String token = login(admin);
         LocalDate today = LocalDate.now(TEST_CLOCK);
 
-        SeededDocument missingFields = seedDocument(owner, UserDocumentType.PASSPORT, unique("MISSING"),
+        SeededDocument missingFields = seedDocument(owner, DocumentType.PASSPORT, unique("MISSING"),
                 null, null, null, null, null, null, false, false);
         assertReviewFailureUnchanged(missingFields, token, 409, "DOCUMENT_NOT_APPROVABLE");
 
-        SeededDocument missingBack = seedDocument(owner, UserDocumentType.CITIZEN_ID, unique("BACK"),
+        SeededDocument missingBack = seedDocument(owner, DocumentType.CITIZEN_ID, unique("BACK"),
                 "Valid Name", LocalDate.of(1990, 1, 1), "Hanoi", today.minusYears(10), null, null,
                 true, false);
         assertReviewFailureUnchanged(missingBack, token, 409, "DOCUMENT_NOT_APPROVABLE");
 
-        SeededDocument driverNoExpiry = seedDocument(owner, UserDocumentType.DRIVER_LICENSE, unique("NOEXP"),
+        SeededDocument driverNoExpiry = seedDocument(owner, DocumentType.DRIVER_LICENSE, unique("NOEXP"),
                 "Valid Name", LocalDate.of(1990, 1, 1), "Hanoi", today.minusYears(10), null, "B1",
                 true, true);
         assertReviewFailureUnchanged(driverNoExpiry, token, 409, "DOCUMENT_NOT_APPROVABLE");
 
-        SeededDocument expired = seedDocument(owner, UserDocumentType.PASSPORT, unique("EXPIRED"),
+        SeededDocument expired = seedDocument(owner, DocumentType.PASSPORT, unique("EXPIRED"),
                 "Valid Name", LocalDate.of(1990, 1, 1), "Hanoi", today.minusYears(10), today.minusDays(1), null,
                 true, false);
         assertReviewFailureUnchanged(expired, token, 409, "DOCUMENT_NOT_APPROVABLE");
 
-        SeededDocument futureBirth = seedDocument(owner, UserDocumentType.PASSPORT, unique("FUTUREDOB"),
+        SeededDocument futureBirth = seedDocument(owner, DocumentType.PASSPORT, unique("FUTUREDOB"),
                 "Valid Name", today.plusDays(1), "Hanoi", today.minusYears(1), null, null, true, false);
         assertReviewFailureUnchanged(futureBirth, token, 409, "DOCUMENT_NOT_APPROVABLE");
 
-        SeededDocument futureIssue = seedDocument(owner, UserDocumentType.PASSPORT, unique("FUTUREISSUE"),
+        SeededDocument futureIssue = seedDocument(owner, DocumentType.PASSPORT, unique("FUTUREISSUE"),
                 "Valid Name", LocalDate.of(1990, 1, 1), "Hanoi", today.plusDays(1), null, null, true, false);
         assertReviewFailureUnchanged(futureIssue, token, 409, "DOCUMENT_NOT_APPROVABLE");
 
         String missingNumber = "P06_R1_PRIVATE_NUMBER_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        SeededDocument missingStoredFile = seedDocument(owner, UserDocumentType.PASSPORT, missingNumber,
+        SeededDocument missingStoredFile = seedDocument(owner, DocumentType.PASSPORT, missingNumber,
                 "P06_R1_PRIVATE_NAME_SENTINEL", LocalDate.of(1990, 1, 1), "P06_R1_PRIVATE_PLACE_SENTINEL",
                 today.minusYears(10), null, null, true, false);
         Path storedEvidence = privatePath(missingStoredFile.front());
@@ -353,7 +353,7 @@ class UserDocumentReviewPostgresIT {
                 missingNumber, "P06_R1_PRIVATE_NAME_SENTINEL", "P06_R1_PRIVATE_PLACE_SENTINEL", storedEvidence.toString());
 
         String corruptNumber = "P06_R1_CORRUPT_NUMBER_" + UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        SeededDocument corruptEvidence = seedDocument(owner, UserDocumentType.PASSPORT, corruptNumber,
+        SeededDocument corruptEvidence = seedDocument(owner, DocumentType.PASSPORT, corruptNumber,
                 "P06_R1_CORRUPT_NAME_SENTINEL", LocalDate.of(1990, 1, 1), "Hanoi",
                 today.minusYears(10), null, null, true, false);
         Path corruptPath = privatePath(corruptEvidence.front());
@@ -365,7 +365,7 @@ class UserDocumentReviewPostgresIT {
                 corruptPath.toString(), corruptEvidence.front());
         assertThat(Files.readAllBytes(corruptPath)).containsExactly(corruptBytes);
 
-        SeededDocument disabled = seedDocument(owner, UserDocumentType.PASSPORT, unique("DISABLED"),
+        SeededDocument disabled = seedDocument(owner, DocumentType.PASSPORT, unique("DISABLED"),
                 "Valid Name", LocalDate.of(1990, 1, 1), "Hanoi", today.minusYears(10), null, null, true, false);
         doReturn(false).when(storage).isEnabled();
         assertReviewFailureWithDiagnostic(disabled, token, 503, ErrorCode.DEPENDENCY_UNAVAILABLE,
@@ -373,7 +373,7 @@ class UserDocumentReviewPostgresIT {
         reset(storage);
 
         String unavailableCause = "P06_R1_UNAVAILABLE_CAUSE_SENTINEL";
-        SeededDocument unavailable = seedDocument(owner, UserDocumentType.PASSPORT, unique("UNAVAILABLE"),
+        SeededDocument unavailable = seedDocument(owner, DocumentType.PASSPORT, unique("UNAVAILABLE"),
                 "P06_R1_UNAVAILABLE_NAME_SENTINEL", LocalDate.of(1990, 1, 1), "Hanoi",
                 today.minusYears(10), null, null, true, false);
         doAnswer(invocation -> {
@@ -385,7 +385,7 @@ class UserDocumentReviewPostgresIT {
                 unavailableCause, "P06_R1_UNAVAILABLE_NAME_SENTINEL", unavailable.front(), PRIVATE_ROOT.toString());
         reset(storage);
 
-        SeededDocument expiresToday = seedDocument(owner, UserDocumentType.PASSPORT, unique("TODAY"),
+        SeededDocument expiresToday = seedDocument(owner, DocumentType.PASSPORT, unique("TODAY"),
                 "Valid Name", LocalDate.of(1990, 1, 1), "Hanoi", today, today, null, true, false);
         HttpResponse<String> accepted = patch(reviewPath(expiresToday.id()), token, "{\"verifyStatus\":\"APPROVED\"}");
         assertApiSuccess(accepted, 200);
@@ -404,20 +404,20 @@ class UserDocumentReviewPostgresIT {
         String ownerToken = login(owner);
         LocalDate today = LocalDate.now(TEST_CLOCK);
 
-        seedDocument(owner, UserDocumentType.CITIZEN_ID, unique("VALID"), "Private Name", LocalDate.of(1990, 1, 1),
-                "Private Place", today.minusYears(5), today, null, false, false, DocumentVerifyStatus.APPROVED);
-        seedDocument(owner, UserDocumentType.PASSPORT, unique("PENDING"), "Other Name", LocalDate.of(1990, 1, 1),
-                "Private Place", today.minusYears(5), null, null, false, false, DocumentVerifyStatus.PENDING);
-        seedDocument(owner, UserDocumentType.PASSPORT, unique("REJECTED"), "Other Name", LocalDate.of(1990, 1, 1),
-                "Private Place", today.minusYears(5), null, null, false, false, DocumentVerifyStatus.REJECTED);
-        seedDocument(pendingOwner, UserDocumentType.CITIZEN_ID, unique("PEND"), null, null, null, null, null, null,
-                false, false, DocumentVerifyStatus.PENDING);
-        seedDocument(pendingOwner, UserDocumentType.PASSPORT, unique("REJ"), null, null, null, null, null, null,
-                false, false, DocumentVerifyStatus.REJECTED);
-        seedDocument(rejectedOwner, UserDocumentType.PASSPORT, unique("ONLYREJ"), null, null, null, null, null, null,
-                false, false, DocumentVerifyStatus.REJECTED);
-        seedDocument(driverOwner, UserDocumentType.DRIVER_LICENSE, unique("ONLYDL"), null, null, null, null, today.plusYears(1),
-                "B1", false, false, DocumentVerifyStatus.APPROVED);
+        seedDocument(owner, DocumentType.CITIZEN_ID, unique("VALID"), "Private Name", LocalDate.of(1990, 1, 1),
+                "Private Place", today.minusYears(5), today, null, false, false, VerificationStatus.APPROVED);
+        seedDocument(owner, DocumentType.PASSPORT, unique("PENDING"), "Other Name", LocalDate.of(1990, 1, 1),
+                "Private Place", today.minusYears(5), null, null, false, false, VerificationStatus.PENDING);
+        seedDocument(owner, DocumentType.PASSPORT, unique("REJECTED"), "Other Name", LocalDate.of(1990, 1, 1),
+                "Private Place", today.minusYears(5), null, null, false, false, VerificationStatus.REJECTED);
+        seedDocument(pendingOwner, DocumentType.CITIZEN_ID, unique("PEND"), null, null, null, null, null, null,
+                false, false, VerificationStatus.PENDING);
+        seedDocument(pendingOwner, DocumentType.PASSPORT, unique("REJ"), null, null, null, null, null, null,
+                false, false, VerificationStatus.REJECTED);
+        seedDocument(rejectedOwner, DocumentType.PASSPORT, unique("ONLYREJ"), null, null, null, null, null, null,
+                false, false, VerificationStatus.REJECTED);
+        seedDocument(driverOwner, DocumentType.DRIVER_LICENSE, unique("ONLYDL"), null, null, null, null, today.plusYears(1),
+                "B1", false, false, VerificationStatus.APPROVED);
 
         Map<String, Object> ownerBefore = customerSnapshot(owner.id());
         HttpResponse<String> mine = get("/api/customers/me/kyc", ownerToken);
@@ -450,8 +450,8 @@ class UserDocumentReviewPostgresIT {
     void currentKycExpiryChangesAtNextClockDayWithoutMutatingSnapshotOrDocument() throws Exception {
         Account owner = account("kyc-boundary", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE);
         LocalDate today = LocalDate.now(TEST_CLOCK);
-        SeededDocument expiring = seedDocument(owner, UserDocumentType.PASSPORT, unique("BOUNDARY"),
-                null, null, null, null, today, null, false, false, DocumentVerifyStatus.APPROVED);
+        SeededDocument expiring = seedDocument(owner, DocumentType.PASSPORT, unique("BOUNDARY"),
+                null, null, null, null, today, null, false, false, VerificationStatus.APPROVED);
         Map<String, Object> beforeCustomer = customerSnapshot(owner.id());
         Map<String, Object> beforeDoc = documentAudit(expiring.id());
 
@@ -481,7 +481,7 @@ class UserDocumentReviewPostgresIT {
         SeededDocument sameA = seedComplete(owner, sameNumber);
         SeededDocument sameB = seedComplete(owner, sameNumber);
         doReturn(java.util.Optional.empty()).when(documents).findFirstByDocTypeAndDocNumberAndVerifyStatus(
-                any(UserDocumentType.class), anyString(), eq(DocumentVerifyStatus.APPROVED));
+                any(DocumentType.class), anyString(), eq(VerificationStatus.APPROVED));
         HttpResponse<String> sameWinner = patch(reviewPath(sameA.id()), token, "{\"verifyStatus\":\"APPROVED\"}");
         assertApiSuccess(sameWinner, 200);
         assertReviewFailureWithDiagnostic(sameB, token, 409, ErrorCode.APPROVED_DOCUMENT_CONFLICT,
@@ -941,31 +941,31 @@ class UserDocumentReviewPostgresIT {
 
     private SeededDocument seedComplete(Account owner, String number) throws Exception {
         LocalDate today = LocalDate.now(TEST_CLOCK);
-        return seedDocument(owner, UserDocumentType.CITIZEN_ID, number, "Synthetic Identity", LocalDate.of(1991, 2, 3),
+        return seedDocument(owner, DocumentType.CITIZEN_ID, number, "Synthetic Identity", LocalDate.of(1991, 2, 3),
                 "Synthetic City", today.minusYears(8), null, null, true, true);
     }
 
-    private SeededDocument seedDocument(Account owner, UserDocumentType type, String number,
+    private SeededDocument seedDocument(Account owner, DocumentType type, String number,
             String fullName, LocalDate birth, String issuePlace, LocalDate issueDate, LocalDate expiresAt,
             String licenseClass, boolean storeFront, boolean storeBack) throws Exception {
         return seedDocument(owner, type, number, fullName, birth, issuePlace, issueDate, expiresAt,
-                licenseClass, storeFront, storeBack, DocumentVerifyStatus.PENDING);
+                licenseClass, storeFront, storeBack, VerificationStatus.PENDING);
     }
 
-    private SeededDocument seedDocument(Account owner, UserDocumentType type, String number,
+    private SeededDocument seedDocument(Account owner, DocumentType type, String number,
             String fullName, LocalDate birth, String issuePlace, LocalDate issueDate, LocalDate expiresAt,
-            String licenseClass, boolean storeFront, boolean storeBack, DocumentVerifyStatus status) throws Exception {
+            String licenseClass, boolean storeFront, boolean storeBack, VerificationStatus status) throws Exception {
         String front = storeFront ? storage.store(new CanonicalDocumentImage(png(), DocumentImageFormat.PNG)).locator()
                 : locator();
         String back = storeBack ? storage.store(new CanonicalDocumentImage(png(), DocumentImageFormat.PNG)).locator()
-                : (type == UserDocumentType.CITIZEN_ID || type == UserDocumentType.DRIVER_LICENSE ? null : null);
+                : (type == DocumentType.CITIZEN_ID || type == DocumentType.DRIVER_LICENSE ? null : null);
         Long id = jdbc.queryForObject("""
                 insert into user_documents(customer_id,doc_type,doc_number,full_name_on_doc,date_of_birth_on_doc,
                     issue_place,issue_date,expires_at,license_class,front_image_url,back_image_url,verify_status,
                     reject_reason,verified_by,verified_at)
                 values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) returning id
                 """, Long.class, owner.id(), type.name(), number, fullName, birth, issuePlace, issueDate, expiresAt,
-                licenseClass, front, back, status.name(), status == DocumentVerifyStatus.REJECTED ? "synthetic rejection" : null,
+                licenseClass, front, back, status.name(), status == VerificationStatus.REJECTED ? "synthetic rejection" : null,
                 null, null);
         return new SeededDocument(id, owner, type, number, front, back);
     }
@@ -1155,7 +1155,7 @@ class UserDocumentReviewPostgresIT {
     }
 
     private record Account(long id, String email, String name) { }
-    private record SeededDocument(long id, Account owner, UserDocumentType type, String number, String front, String back) { }
+    private record SeededDocument(long id, Account owner, DocumentType type, String number, String front, String back) { }
     private record Part(String name, String filename, String mediaType, byte[] bytes) { }
 
     private static final class SafeLogCapture extends AppenderBase<ILoggingEvent> implements AutoCloseable {

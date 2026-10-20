@@ -1,34 +1,40 @@
 package com.carrental.entity;
 
-import com.carrental.entity.base.AuditedEntity;
 import com.carrental.enums.DriverStatus;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-/** A customer's separate driver profile. Licence data remains in user_documents. */
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "drivers")
-public class Driver extends AuditedEntity {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Driver {
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false, unique = true)
     private Customer customer;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
     private DriverStatus status = DriverStatus.PENDING;
 
-    public Driver() {
-    }
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
-    public Customer getCustomer() { return customer; }
-    public void setCustomer(Customer customer) { this.customer = customer; }
-    public DriverStatus getStatus() { return status; }
-    public void setStatus(DriverStatus status) { this.status = status; }
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }

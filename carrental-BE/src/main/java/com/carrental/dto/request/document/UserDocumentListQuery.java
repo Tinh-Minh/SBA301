@@ -1,8 +1,8 @@
 package com.carrental.dto.request.document;
 
 import com.carrental.config.DocumentProperties;
-import com.carrental.enums.DocumentVerifyStatus;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.VerificationStatus;
+import com.carrental.enums.DocumentType;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import java.util.Locale;
@@ -15,8 +15,8 @@ import org.springframework.util.MultiValueMap;
 public record UserDocumentListQuery(
         String scope,
         Long customerId,
-        UserDocumentType docType,
-        DocumentVerifyStatus verifyStatus,
+        DocumentType docType,
+        VerificationStatus verifyStatus,
         int page,
         int size,
         String sortField,
@@ -36,8 +36,8 @@ public record UserDocumentListQuery(
             try { customerId = Long.parseLong(customerText); }
             catch (NumberFormatException exception) { throw invalid(); }
         }
-        UserDocumentType docType = enumValue(value(parameters, "docType", null), UserDocumentType.class);
-        DocumentVerifyStatus status = enumValue(value(parameters, "verifyStatus", null), DocumentVerifyStatus.class);
+        DocumentType docType = enumValue(value(parameters, "docType", null), DocumentType.class);
+        VerificationStatus status = enumValue(value(parameters, "verifyStatus", null), VerificationStatus.class);
         int page = integer(value(parameters, "page", "0"));
         int size = integer(value(parameters, "size", Integer.toString(properties.getList().getDefaultPageSize())));
         if (page < 0 || size <= 0 || size > properties.getList().getMaxPageSize()

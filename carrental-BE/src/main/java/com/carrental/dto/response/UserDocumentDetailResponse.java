@@ -1,14 +1,14 @@
 package com.carrental.dto.response;
 
-import com.carrental.enums.DocumentVerifyStatus;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.VerificationStatus;
+import com.carrental.enums.DocumentType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record UserDocumentDetailResponse(
         long id,
         long customerId,
-        UserDocumentType docType,
+        DocumentType docType,
         String docNumber,
         String fullNameOnDoc,
         LocalDate dateOfBirthOnDoc,
@@ -16,7 +16,7 @@ public record UserDocumentDetailResponse(
         LocalDate issueDate,
         LocalDate expiresAt,
         String licenseClass,
-        DocumentVerifyStatus verifyStatus,
+        VerificationStatus verifyStatus,
         String rejectReason,
         Long verifiedById,
         LocalDateTime verifiedAt,

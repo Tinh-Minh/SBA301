@@ -1,6 +1,6 @@
 package com.carrental.dto.request.document;
 
-import com.carrental.enums.DocumentVerifyStatus;
+import com.carrental.enums.VerificationStatus;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import tools.jackson.databind.JsonNode;
@@ -10,7 +10,7 @@ public final class ReviewUserDocumentRequest {
 
     private boolean verifyStatusPresent;
     private boolean rejectReasonPresent;
-    private DocumentVerifyStatus verifyStatus;
+    private VerificationStatus verifyStatus;
     private String rejectReason;
 
     @JsonProperty("verifyStatus")
@@ -21,7 +21,7 @@ public final class ReviewUserDocumentRequest {
             throw new IllegalArgumentException("Document review status must be a string");
         }
         try {
-            verifyStatus = DocumentVerifyStatus.valueOf(value.stringValue());
+            verifyStatus = VerificationStatus.valueOf(value.stringValue());
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException("Document review status is invalid");
         }
@@ -48,7 +48,7 @@ public final class ReviewUserDocumentRequest {
     // Keep presence accessors non-JavaBean so Jackson cannot bind internal flags.
     public boolean verifyStatusWasProvided() { return verifyStatusPresent; }
     public boolean rejectReasonWasProvided() { return rejectReasonPresent; }
-    public DocumentVerifyStatus getVerifyStatus() { return verifyStatus; }
+    public VerificationStatus getVerifyStatus() { return verifyStatus; }
     public String getRejectReason() { return rejectReason; }
 
     private static void rejectDuplicate(boolean alreadyPresent) {

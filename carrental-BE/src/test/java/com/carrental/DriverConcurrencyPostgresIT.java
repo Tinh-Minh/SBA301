@@ -12,8 +12,8 @@ import com.carrental.enums.DriverStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.repository.CustomerStatusLock;
-import com.carrental.enums.DocumentVerifyStatus;
-import com.carrental.enums.UserDocumentType;
+import com.carrental.enums.VerificationStatus;
+import com.carrental.enums.DocumentType;
 import com.carrental.service.DocumentReviewLogger;
 import com.carrental.service.DriverChangeLogger;
 import com.carrental.storage.CanonicalDocumentImage;
@@ -251,8 +251,8 @@ class DriverConcurrencyPostgresIT {
                 await(releaseReviewCommit, "P06 document review commit release");
             }
             return result;
-        }).when(reviewLogger).record(anyLong(), anyLong(), anyLong(), any(UserDocumentType.class),
-                any(DocumentVerifyStatus.class), any(DocumentVerifyStatus.class),
+        }).when(reviewLogger).record(anyLong(), anyLong(), anyLong(), any(DocumentType.class),
+                any(VerificationStatus.class), any(VerificationStatus.class),
                 any(KycStatus.class), any(KycStatus.class), anyBoolean());
 
         try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
