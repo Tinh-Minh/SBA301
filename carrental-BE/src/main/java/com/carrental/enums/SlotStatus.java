@@ -13,9 +13,9 @@ public enum SlotStatus {
             return next == CLOSED || next == CANCELLED;
         }
         if (this == CLOSED) {
-            return next == OPEN || next == CANCELLED;
+            return next == OPEN || next == CANCELLED; // Chủ xe có quyền huỷ slot đang đóng
         }
-        return false;
+        return false; // CANCELLED là trạng thái cuối
     }
 
     public void validateTransitionTo(SlotStatus next) {

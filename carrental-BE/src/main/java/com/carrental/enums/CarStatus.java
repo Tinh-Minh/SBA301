@@ -19,6 +19,9 @@ public enum CarStatus {
         if (this == INACTIVE) {
             return next == ACTIVE;
         }
+        if (this == REJECTED) {
+            return next == PENDING_APPROVAL; // Sau khi bị từ chối, chủ xe sửa và gửi duyệt lại
+        }
         return false;
     }
 
