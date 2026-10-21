@@ -45,4 +45,13 @@ export function sumAmounts(rows, pick) {
 }
 const vndFormatter = new Intl.NumberFormat("vi-VN");
 export const formatVnd = (amount) => `${vndFormatter.format(amount)} đ`;
+/** Rút gọn VND thành triệu, ví dụ 16.950.000 → "16,95 Tr VND". */
+export function formatTrVnd(amount) {
+    const abs = Math.abs(Math.trunc(amount));
+    const thousandths = Math.round(abs / 1000);
+    const whole = Math.floor(thousandths / 1000);
+    const fraction = String(thousandths % 1000).padStart(3, "0").replace(/0+$/, "");
+    const body = fraction ? `${vndFormatter.format(whole)},${fraction}` : vndFormatter.format(whole);
+    return `${amount < 0 ? "-" : ""}${body} Tr VND`;
+}
 export const formatPercent = (rate) => `${new Intl.NumberFormat("vi-VN", { maximumFractionDigits: 2 }).format(rate)}%`;

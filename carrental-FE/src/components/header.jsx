@@ -16,11 +16,12 @@ export function Header({ previewState } = {}) {
     const { loggedIn: authenticated, logout } = useAuth();
     const loggedIn = previewState ?? authenticated;
     const activePath = previewState === undefined ? path : loggedIn ? "/chuyen-xe-cua-toi" : "/kham-pha-xe";
+    const overPhoto = previewState === undefined && (path === "/dang-nhap" || path === "/dang-ky");
     const [menu, setMenu] = useState(false);
     const [account, setAccount] = useState(false);
     function close() { setMenu(false); setAccount(false); }
     function signOut() { logout(); close(); router.push("/"); }
-    return <header className={`site-header border-border-light bg-white/95 backdrop-blur-xl ${previewState === undefined ? "fixed inset-x-0 top-0 z-50 border-b" : "relative w-full rounded-2xl border shadow-sm"}`}>
+    return <header className={`site-header ${overPhoto ? "auth-overlay" : "border-border-light bg-white/95 backdrop-blur-xl"} ${previewState === undefined ? `fixed inset-x-0 top-0 z-50 ${overPhoto ? "" : "border-b"}` : "relative w-full rounded-2xl border shadow-sm"}`}>
     <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
       <SiteBrand compact onClick={close}/>
       <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 lg:flex">{navigation.map(([href, label]) => <Link key={href} href={href} onClick={close} aria-current={activePath.startsWith(href) ? "page" : undefined} className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${activePath.startsWith(href) ? "bg-accent-soft font-semibold text-brand-accent" : "text-text-secondary hover:bg-section-bg hover:text-text-primary"}`}>{label}</Link>)}</nav>

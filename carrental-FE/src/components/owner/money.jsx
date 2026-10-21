@@ -1,4 +1,5 @@
-import { formatVnd } from "@/lib/owner/finance";
-export function Money({ amount, sign, className = "" }) {
-    return <span className={`ui-money ${className}`}>{sign ? `${sign} ` : ""}{formatVnd(amount)}</span>;
+import { formatTrVnd, formatVnd } from "@/lib/owner/finance";
+export function Money({ amount, sign, compact = false, className = "" }) {
+    const text = compact ? formatTrVnd(amount) : formatVnd(amount);
+    return <span className={`ui-money ${className}`}>{sign ? `${sign} ` : ""}{text}</span>;
 }

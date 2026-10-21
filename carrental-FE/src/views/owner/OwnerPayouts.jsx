@@ -7,7 +7,7 @@ import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/ow
 import { StatusBadge } from "@/components/owner/status-badge";
 import { useOwnerPayouts } from "@/hooks/owner/use-owner-payouts";
 import { maskBankAccount } from "@/lib/owner/format";
-import { formatVnd } from "@/lib/owner/finance";
+import { formatTrVnd } from "@/lib/owner/finance";
 import { payoutStatusMeta } from "@/lib/owner/status";
 const filters = [
     { id: "all", label: "Tất cả" },
@@ -44,17 +44,17 @@ export default function OwnerPayouts() {
       <div className="grid gap-3 lg:grid-cols-3">
         <article className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">Tổng doanh thu</p>
-          <p className="mt-2 text-2xl font-bold text-charcoal"><Money amount={data.totals.grossAmount}/></p>
+          <p className="mt-2 text-2xl font-bold text-charcoal"><Money amount={data.totals.grossAmount} compact/></p>
           <p className="mt-1 text-xs text-muted-gray">Tổng tiền thuê của {rows.length} chuyến đã ghi nhận</p>
         </article>
         <article className="rounded-2xl border border-amber-200 bg-status-amber-bg p-5 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wide text-status-amber-dark">Đang giữ escrow</p>
-          <p className="mt-2 text-2xl font-bold text-charcoal"><Money amount={heldNet}/></p>
+          <p className="mt-2 text-2xl font-bold text-charcoal"><Money amount={heldNet} compact/></p>
           <p className="mt-1 text-xs text-status-amber-dark">{held.length} đơn chờ ký C10-B rồi mới chi trả</p>
         </article>
         <article className="rounded-2xl border border-emerald-200 bg-status-green-bg p-5 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wide text-status-success-ink">Đã chi trả</p>
-          <p className="mt-2 text-2xl font-bold text-charcoal"><Money amount={paidNet}/></p>
+          <p className="mt-2 text-2xl font-bold text-charcoal"><Money amount={paidNet} compact/></p>
           <p className="mt-1 text-xs text-status-success-ink">{paid.length} đợt đã chuyển khoản</p>
         </article>
       </div>
@@ -89,9 +89,9 @@ export default function OwnerPayouts() {
                 <span className="block font-semibold text-charcoal">{row.car.brand} {row.car.model}</span>
                 <span className="text-xs text-muted-gray">{row.car.licensePlate}</span>
               </td>
-              <td className="whitespace-nowrap px-4 py-3"><Money amount={row.payout.grossAmount}/></td>
-              <td className="whitespace-nowrap px-4 py-3"><Money amount={row.payout.platformFee} sign="-"/></td>
-              <td className="whitespace-nowrap px-4 py-3 font-bold"><Money amount={row.payout.netAmount}/></td>
+              <td className="whitespace-nowrap px-4 py-3"><Money amount={row.payout.grossAmount} compact/></td>
+              <td className="whitespace-nowrap px-4 py-3"><Money amount={row.payout.platformFee} sign="-" compact/></td>
+              <td className="whitespace-nowrap px-4 py-3 font-bold"><Money amount={row.payout.netAmount} compact/></td>
               <td className="px-4 py-3"><StatusBadge meta={payoutStatusMeta[row.payout.status]}/></td>
               <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-gray">{row.payout.paidAt ? paidAt.format(new Date(row.payout.paidAt)) : "Sau khi ký C10-B"}</td>
             </tr>)}
@@ -99,7 +99,7 @@ export default function OwnerPayouts() {
         </table>
       </div>
       <p className="text-sm text-muted-gray">
-        Tổng doanh thu {formatVnd(data.totals.grossAmount)} • Phí dịch vụ {formatVnd(data.totals.platformFee)} • Thực nhận {formatVnd(data.totals.netAmount)}. Voucher của khách không làm giảm số thực nhận.
+        Tổng doanh thu {formatTrVnd(data.totals.grossAmount)} • Phí dịch vụ {formatTrVnd(data.totals.platformFee)} • Thực nhận {formatTrVnd(data.totals.netAmount)}. Voucher của khách không làm giảm số thực nhận.
       </p>
     </> : null}
   </div>;

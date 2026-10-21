@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { AdminPageHeader, StatusPill } from "@/components/admin/admin-ui";
 import { Money } from "@/components/owner/money";
-import { calculatePayout, formatVnd } from "@/lib/owner/finance";
+import { calculatePayout, formatTrVnd } from "@/lib/owner/finance";
 import { adminRoutes } from "@/lib/admin/routes";
 import { adminSeed } from "@/services/mock/admin-db";
 
@@ -14,8 +14,8 @@ export default function AdminDashboard() {
     return <div className="flex flex-col gap-5">
     <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Báo cáo chỉ số vận hành, hồ sơ chờ duyệt và đơn thuê toàn quốc."/>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <Stat label="GMV tháng 10" value={formatVnd(1280000000)} hint="+22,4% so với T9"/>
-      <Stat label="Phí nền tảng 10%" value={formatVnd(128000000)} hint="128.000.000 đ trên GMV"/>
+      <Stat label="GMV tháng 10" value={formatTrVnd(1280000000)} hint="+22,4% so với T9"/>
+      <Stat label="Phí nền tảng 10%" value={formatTrVnd(128000000)} hint={`${formatTrVnd(128000000)} trên GMV`}/>
       <Stat label="Tổng đơn" value="342 đơn" hint="48 đang lăn bánh"/>
       <Stat label="Hồ sơ SLA" value="20 hồ sơ" hint="12 KYC • 8 xe"/>
     </section>
