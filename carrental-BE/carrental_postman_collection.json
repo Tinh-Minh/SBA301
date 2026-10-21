@@ -5,7 +5,22 @@
     "description": "Collection kiểm thử toàn diện các API của SBA301 Car Rental Marketplace Backend.\nĐược tạo dựa trên mã nguồn thực tế tại các Controller và Schema PostgreSQL v3.\n\nStack: Spring Boot 4.0.8, Java 21, PostgreSQL (Supabase).\nCổng mặc định: http://localhost:8080",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
   "variable": [
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
     {
       "key": "baseUrl",
       "value": "http://localhost:8080",
@@ -53,6 +68,60 @@
     }
   ],
   "item": [
+    {
+      "name": "0. Xác thực & Đăng nhập (Auth Login)",
+      "description": "Đăng nhập tài khoản để tự động lưu JWT token vào collection variable authToken.",
+      "item": [
+        {
+          "name": "0.1 Đăng nhập lấy Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set(\"authToken\", jsonData.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@carrental.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
     {
       "name": "1. Giao dịch & Thanh toán (Transactions)",
       "description": "Các API xử lý đặt cọc, thanh toán đơn thuê, mô phỏng thanh toán qua cổng và hoàn tiền.",
@@ -444,7 +513,7 @@
                   "pm.sendRequest({",
                   "    url: pm.collectionVariables.get('baseUrl') + '/api/extra-fees',",
                   "    method: 'POST',",
-                  "    header: { 'Content-Type': 'application/json' },",
+                  "    header: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pm.collectionVariables.get('authToken') },",
                   "    body: {",
                   "        mode: 'raw',",
                   "        raw: JSON.stringify({",
