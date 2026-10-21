@@ -10,10 +10,18 @@ public enum CarStatus {
     REJECTED;
 
     public boolean canTransitionTo(CarStatus next) {
-        if (this == PENDING_APPROVAL) return next == ACTIVE || next == REJECTED;
-        if (this == ACTIVE) return next == INACTIVE;
-        if (this == INACTIVE) return next == ACTIVE;
-        if (this == REJECTED) return next == PENDING_APPROVAL; // Sau khi bị từ chối, chủ xe sửa và gửi duyệt lại
+        if (this == PENDING_APPROVAL) {
+            return next == ACTIVE || next == REJECTED;
+        }
+        if (this == ACTIVE) {
+            return next == INACTIVE;
+        }
+        if (this == INACTIVE) {
+            return next == ACTIVE;
+        }
+        if (this == REJECTED) {
+            return next == PENDING_APPROVAL; // Sau khi bị từ chối, chủ xe sửa và gửi duyệt lại
+        }
         return false;
     }
 

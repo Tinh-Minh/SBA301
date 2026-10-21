@@ -17,11 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Voucher {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Voucher extends BaseEntity {
 
     @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
@@ -65,11 +61,4 @@ public class Voucher {
     @Builder.Default
     private VoucherStatus status = VoucherStatus.ACTIVE;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
 }

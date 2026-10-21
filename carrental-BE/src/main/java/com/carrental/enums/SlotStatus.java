@@ -9,8 +9,12 @@ public enum SlotStatus {
     CANCELLED;
 
     public boolean canTransitionTo(SlotStatus next) {
-        if (this == OPEN) return next == CLOSED || next == CANCELLED;
-        if (this == CLOSED) return next == OPEN || next == CANCELLED; // Chủ xe có quyền huỷ slot đang đóng
+        if (this == OPEN) {
+            return next == CLOSED || next == CANCELLED;
+        }
+        if (this == CLOSED) {
+            return next == OPEN || next == CANCELLED; // Chủ xe có quyền huỷ slot đang đóng
+        }
         return false; // CANCELLED là trạng thái cuối
     }
 
