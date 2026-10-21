@@ -1,0 +1,10 @@
+# Ignore all files and directories at root level
+/*
+
+# Whitelist allowed directories and files
+!/carrental-BE/
+!/carrental-FE/
+!/docs/
+!/BACKEND_CONVENTIONS.md
+!/.gitignore
+/.idea/
