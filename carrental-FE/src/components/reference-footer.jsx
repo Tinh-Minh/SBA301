@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Icon } from "./icon";
 import { SiteBrand } from "./site-brand";
 const groups = [
-    { title: "Dịch vụ", links: [["Thuê xe tự lái", "/kham-pha-xe"], ["Thuê xe có tài xế", "/xe-kem-tai-xe"], ["Bảng giá & Cách tính", "/cach-tinh-gia"], ["Thuê xe theo tháng", "/thue-xe-dai-han"]] },
-    { title: "Chính sách & Hỗ trợ", links: [["Bảo hiểm chuyến đi", "/chinh-sach-bao-hiem"], ["Quy định đặt cọc", "/quy-dinh-dat-coc"], ["Chính sách hoàn hủy", "/chinh-sach-huy-chuyen"], ["Câu hỏi thường gặp", "/cau-hoi-thuong-gap"]] },
-    { title: "Về CarDB", links: [["Ưu đãi khách hàng", "/uu-dai"], ["Tuyển dụng tài xế", "/lien-he"], ["Liên hệ hợp tác", "/cho-thue-xe"]] },
+    { title: "Dịch vụ", links: [["Thuê xe tự lái", "/explore"], ["Thuê xe có tài xế", "/explore"], ["Bảng giá & Cách tính", "/pricing"], ["Thuê xe theo tháng", "/long-term"]] },
+    { title: "Chính sách & Hỗ trợ", links: [["Bảo hiểm chuyến đi", "/insurance"], ["Quy định đặt cọc", "/deposit-policy"], ["Chính sách hoàn hủy", "/cancellation-policy"], ["Câu hỏi thường gặp", "/faq"]] },
+    { title: "Về CarDB", links: [["Ưu đãi khách hàng", "/explore"], ["Tuyển dụng tài xế", "/contact"], ["Liên hệ hợp tác", "/list-your-car"]] },
 ];
 export function ReferenceFooter() {
     return <footer className="relative z-10 border-t border-border-light bg-section-bg px-6 pt-12 pb-8 text-text-primary md:px-10">
@@ -19,7 +19,7 @@ export function ReferenceFooter() {
       </div>
       <div className="flex flex-col items-center justify-between gap-4 pt-6 text-xs text-text-secondary md:flex-row">
         <p className="text-center md:text-left">© 2026 CarDB Việt Nam. Bảo lưu mọi quyền.</p>
-        <nav aria-label="Chính sách" className="flex flex-wrap justify-center gap-x-6 gap-y-3"><Link href="/dieu-khoan-su-dung" className="hover:text-brand-accent">Điều khoản dịch vụ</Link><Link href="/chinh-sach-bao-mat" className="hover:text-brand-accent">Chính sách bảo mật</Link><Link href="/dieu-khoan-su-dung" className="hover:text-brand-accent">Quy chế hoạt động</Link></nav>
+        <nav aria-label="Chính sách" className="flex flex-wrap justify-center gap-x-6 gap-y-3"><Link href="/terms" className="hover:text-brand-accent">Điều khoản dịch vụ</Link><Link href="/privacy" className="hover:text-brand-accent">Chính sách bảo mật</Link><Link href="/terms" className="hover:text-brand-accent">Quy chế hoạt động</Link></nav>
       </div>
     </div>
   </footer>;

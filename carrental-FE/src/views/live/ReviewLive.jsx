@@ -13,7 +13,7 @@ export default function ReviewLive() {
     const orderId = useSearchParams().get("orderId");
     return <LivePage width="max-w-xl">
     <RequireAuth title="Đăng nhập để đánh giá">
-      {orderId ? <Form orderId={orderId}/> : <p className="text-sm">Chọn đơn đã hoàn thành trong <Link href="/tai-khoan/lich-su" className="font-bold text-[#FC6C26]">lịch sử chuyến đi</Link>.</p>}
+      {orderId ? <Form orderId={orderId}/> : <p className="text-sm">Chọn đơn đã hoàn thành trong <Link href="/account/history" className="font-bold text-[#FC6C26]">lịch sử chuyến đi</Link>.</p>}
     </RequireAuth>
   </LivePage>;
 }
@@ -29,13 +29,13 @@ function Form({ orderId }) {
     const [comment, setComment] = useState("");
     const send = useAsyncAction(async () => {
         await reviewService.create({ orderId, revieweeId: detail.data.order.ownerId, rating, comment });
-        router.push(`/don-thue/${orderId}`);
+        router.push(`/orders/${orderId}`);
     });
     if (!detail.data)
         return <LiveState loading={detail.loading} error={detail.error} label="đơn đánh giá" onRetry={detail.reload}/>;
     const { order, mine } = detail.data;
     return <form className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm" onSubmit={event => { event.preventDefault(); void send.run(); }}>
-    <Link href={`/don-thue/${order.id}`} className="text-sm font-bold text-[#FC6C26]">← {order.orderCode}</Link>
+    <Link href={`/orders/${order.id}`} className="text-sm font-bold text-[#FC6C26]">← {order.orderCode}</Link>
     <h1 className="text-xl font-bold">Đánh giá chủ xe {order.ownerName}</h1>
     <p className="text-sm text-[#666666]">{order.carName}</p>
     {mine ? <p className="rounded-xl bg-[#ECFDF5] p-3 text-sm text-[#047857]">Bạn đã đánh giá {mine.rating}/5. {mine.comment}</p> : order.status !== "COMPLETED" ? <p className="text-sm text-[#B45309]">Chỉ đánh giá được khi chuyến đã hoàn thành.</p> : <>

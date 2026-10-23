@@ -6,7 +6,7 @@ export default function Banks() {
 
 
 
-    <ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center space-x-2 bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-[#FC6C26]/20 transition-all flex-shrink-0 cursor-pointer" type="button" aria-label="+ Thêm tài khoản ngân hàng" data-route="/tai-khoan/ngan-hang/them">
+    <ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center space-x-2 bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-[#FC6C26]/20 transition-all flex-shrink-0 cursor-pointer" type="button" aria-label="+ Thêm tài khoản ngân hàng" data-route="/account/bank/add">
         <svg className="w-4 h-4 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5"></path>
         </svg>
@@ -79,7 +79,7 @@ export default function Banks() {
     </div>
     <div className="flex-wrap gap-y-2 flex items-center space-x-2">
     <button className="ui-action px-2.5 py-1 text-xs font-medium text-[#666666] hover:text-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-action="bank-details">{"Xem chi tiết"}</button>
-    <button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-route="/tai-khoan/ngan-hang/them?edit=1">{"Chỉnh sửa"}</button>
+    <button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-route="/account/bank/add?edit=1">{"Chỉnh sửa"}</button>
     </div>
     </div>
     </article>
@@ -132,7 +132,7 @@ export default function Banks() {
     </button>
     <div className="flex-wrap gap-y-2 flex items-center space-x-2">
     <button className="ui-action px-2.5 py-1 text-xs font-medium text-[#666666] hover:text-[#FC6C26] transition-colors cursor-pointer" type="button" aria-label="Xem chi tiết" data-action="bank-details">{"Xem chi tiết"}</button>
-    <button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-route="/tai-khoan/ngan-hang/them?edit=1">{"Chỉnh sửa"}</button>
+    <button className="ui-action px-3 py-1 text-xs font-medium rounded-lg bg-white hover:border-[#FC6C26] text-[#292929] border border-[#E9E9E7] transition-colors cursor-pointer" type="button" aria-label="Chỉnh sửa" data-route="/account/bank/add?edit=1">{"Chỉnh sửa"}</button>
     </div>
     </div>
     </article>
@@ -151,7 +151,7 @@ export default function Banks() {
     <p className="text-xs text-[#666666] mt-1 leading-relaxed max-w-2xl">{"\nTài khoản ngân hàng được sử dụng để nhận các khoản chi trả khi bạn cho thuê xe trên CarDB. Hệ thống tự động chuyển khoản tới tài khoản có đánh dấu mặc định theo chu kỳ thanh toán.\n"}</p>
     </div>
     </div>
-    <Link className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#292929] hover:text-[#FC6C26] bg-white hover:border-[#FC6C26] border border-[#E9E9E7] px-4 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap" href="/tai-khoan/don-thue">
+    <Link className="inline-flex items-center space-x-1.5 text-xs font-semibold text-[#292929] hover:text-[#FC6C26] bg-white hover:border-[#FC6C26] border border-[#E9E9E7] px-4 py-2.5 rounded-xl transition-all shadow-sm whitespace-nowrap" href="/account/orders">
     <span>{"Xem doanh thu cho thuê xe"}</span>
     <span className="text-sm text-[#FC6C26]">{"→"}</span>
     </Link>

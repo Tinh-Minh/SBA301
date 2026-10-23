@@ -43,24 +43,30 @@ export default function AdminUsers() {
     <AdminPageHeader code="A02" title="Người dùng & KYC" description="Tra cứu khách hàng, đối chiếu giấy tờ CCCD/GPLX và khóa/mở tài khoản."/>
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <Tabs items={tabs} value={tab} onChange={id => { setTab(id); setPage(0); }}/>
-      <form className="flex gap-2" onSubmit={event => { event.preventDefault(); setQuery(keyword.trim()); setPage(0); }}>
-        <input value={keyword} onChange={event => setKeyword(event.target.value)} placeholder="Tên, email, SĐT…" className={`${adminInput} w-56`}/>
-        <button type="submit" className="rounded-xl bg-[#292929] px-4 py-2 text-sm font-bold text-white">Tìm</button>
+      <form className="flex min-w-0 gap-2" onSubmit={event => { event.preventDefault(); setQuery(keyword.trim()); setPage(0); }}>
+        <input value={keyword} onChange={event => setKeyword(event.target.value)} placeholder="Tên, email, SĐT…" className={`${adminInput} w-full sm:w-56`}/>
+        <button type="submit" className="shrink-0 rounded-xl bg-[#292929] px-4 py-2 text-sm font-bold text-white">Tìm</button>
       </form>
     </div>
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
-      <div className="flex flex-col gap-3">
+    <div className="grid min-w-0 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="flex min-w-0 flex-col gap-3">
         <AdminState loading={list.loading && !list.data} error={list.error} empty={list.data && !rows.length} label="khách hàng" onRetry={list.reload}/>
-        {rows.length ? <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
-          <table className="min-w-full text-left text-sm">
-            <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã KH", "Khách hàng", "Liên hệ", "KYC", "Tài khoản"].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
+        {rows.length ? <div className="overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
+          <table className="w-full text-left text-sm">
+            <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>
+              <th className="px-3 py-3 font-bold">Mã KH</th>
+              <th className="px-3 py-3 font-bold">Khách hàng</th>
+              <th className="px-3 py-3 font-bold">Liên hệ</th>
+              <th className="px-3 py-3 font-bold">KYC</th>
+              <th className="px-3 py-3 font-bold">Tài khoản</th>
+            </tr></thead>
             <tbody>
               {rows.map(user => <tr key={user.id} onClick={() => setSelectedId(user.id)} className={`cursor-pointer border-t border-[#E9E9E7] ${user.id === activeId ? "bg-[#FFF7F2]" : ""}`}>
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-[#FC6C26]">#{user.id}</td>
-                <td className="whitespace-nowrap px-4 py-3 font-semibold text-[#292929]">{user.fullName}{user.role === "ADMIN" ? <span className="ml-2 text-[10px] font-bold text-blue-700">ADMIN</span> : null}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-[#666666]">{user.email}<br/><span className="text-xs">{user.phone}</span></td>
-                <td className="px-4 py-3"><StatusPill tone={kycTone[user.kycStatus]}>{kycStatusLabels[user.kycStatus] ?? user.kycStatus}</StatusPill></td>
-                <td className="px-4 py-3"><StatusPill tone={user.status === "LOCKED" ? "danger" : "success"}>{user.status === "LOCKED" ? "Bị khóa" : "Hoạt động"}</StatusPill></td>
+                <td className="px-3 py-3 font-mono text-xs font-bold text-[#FC6C26]">#{user.id}</td>
+                <td className="px-3 py-3 font-semibold text-[#292929]"><span className="break-words">{user.fullName}</span>{user.role === "ADMIN" ? <span className="ml-2 text-[10px] font-bold text-blue-700">ADMIN</span> : null}</td>
+                <td className="px-3 py-3 text-[#666666]"><span className="break-all">{user.email}</span><br/><span className="text-xs">{user.phone}</span></td>
+                <td className="px-3 py-3"><StatusPill tone={kycTone[user.kycStatus]}>{kycStatusLabels[user.kycStatus] ?? user.kycStatus}</StatusPill></td>
+                <td className="px-3 py-3"><StatusPill tone={user.status === "LOCKED" ? "danger" : "success"}>{user.status === "LOCKED" ? "Bị khóa" : "Hoạt động"}</StatusPill></td>
               </tr>)}
             </tbody>
           </table>
@@ -91,9 +97,9 @@ function UserDetail({ id, onChanged }) {
         return <aside><AdminState loading={detail.loading} error={detail.error} label="hồ sơ"/></aside>;
     const { profile, kyc, documents } = detail.data;
     const locked = profile.status === "LOCKED";
-    return <aside className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+    return <aside className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div>
-      <h2 className="text-base font-bold text-[#292929]">{profile.fullName}</h2>
+      <h2 className="break-words text-base font-bold text-[#292929]">{profile.fullName}</h2>
       <p className="text-xs text-[#666666]">KH #{profile.id} • tạo {formatDate(profile.createdAt)}</p>
     </div>
     <dl className="grid gap-2 text-sm">
@@ -113,7 +119,9 @@ function UserDetail({ id, onChanged }) {
     <div className="flex flex-col gap-2 border-t border-[#E9E9E7] pt-4">
       {locked
             ? <PrimaryButton disabled={lock.running} onClick={() => void lock.run("ACTIVE")}>Mở khóa tài khoản</PrimaryButton>
-            : <button type="button" disabled={lock.running || profile.role === "ADMIN"} onClick={() => setDialog({ type: "lock" })} className="whitespace-nowrap rounded-xl border border-[#EF4444] px-4 py-2.5 text-sm font-bold text-[#EF4444] disabled:opacity-50">Khóa tài khoản</button>}
+            : profile.role === "ADMIN"
+                ? <p className="rounded-xl bg-[#F7F7F5] px-4 py-2.5 text-center text-sm text-[#666666]">Tài khoản quản trị không khóa tại đây.</p>
+                : <button type="button" disabled={lock.running} onClick={() => setDialog({ type: "lock" })} className="rounded-xl border border-[#EF4444] px-4 py-2.5 text-sm font-bold text-[#EF4444] disabled:opacity-50">Khóa tài khoản</button>}
       {lock.error ? <p className="text-sm text-[#B91C1C]">{lock.error.message}</p> : null}
     </div>
     {dialog ? <AdminDialog title={dialog.type === "lock" ? "Khóa tài khoản" : "Từ chối giấy tờ"} onClose={() => setDialog(null)}>
@@ -154,5 +162,5 @@ function DocumentCard({ doc, busy, onApprove, onReject }) {
 }
 
 function Row({ term, value }) {
-    return <div className="flex items-start justify-between gap-3"><dt className="whitespace-nowrap text-[#666666]">{term}</dt><dd className="text-right font-semibold text-[#292929]">{value}</dd></div>;
+    return <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><dt className="text-[#666666]">{term}</dt><dd className="break-all text-right font-semibold text-[#292929]">{value}</dd></div>;
 }

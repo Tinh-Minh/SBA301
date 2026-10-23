@@ -41,7 +41,7 @@ export default function DriverLive() {
         {register.error ? <p className="text-sm text-[#B91C1C]">{register.error.message}</p> : null}
         <Primary disabled={register.running} onClick={() => void register.run()}>{register.running ? "Đang đăng ký…" : "Đăng ký hồ sơ tài xế"}</Primary>
       </> : null}
-      <Link href="/tai-khoan/xac-minh" className="text-sm font-bold text-[#FC6C26]">Nộp giấy tờ xác minh</Link>
+      <Link href="/account/verification" className="text-sm font-bold text-[#FC6C26]">Nộp giấy tờ xác minh</Link>
     </section> : null}
   </ProfileLayout>;
 }

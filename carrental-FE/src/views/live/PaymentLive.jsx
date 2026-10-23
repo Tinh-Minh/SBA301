@@ -13,7 +13,7 @@ export default function PaymentLive() {
     const orderId = useSearchParams().get("orderId");
     return <LivePage width="max-w-xl">
     <RequireAuth title="Đăng nhập để thanh toán">
-      {orderId ? <Pay orderId={orderId}/> : <p className="text-sm">Thiếu mã đơn. Mở thanh toán từ <Link href="/chuyen-xe-cua-toi" className="font-bold text-[#FC6C26]">chuyến xe của tôi</Link>.</p>}
+      {orderId ? <Pay orderId={orderId}/> : <p className="text-sm">Thiếu mã đơn. Mở thanh toán từ <Link href="/my-trips" className="font-bold text-[#FC6C26]">chuyến xe của tôi</Link>.</p>}
     </RequireAuth>
   </LivePage>;
 }
@@ -43,7 +43,7 @@ function Pay({ orderId }) {
     const { order } = detail.data;
     const paid = order.paymentStatus === "PAID";
     return <div className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
-    <Link href={`/don-thue/${order.id}`} className="text-sm font-bold text-[#FC6C26]">← {order.orderCode}</Link>
+    <Link href={`/orders/${order.id}`} className="text-sm font-bold text-[#FC6C26]">← {order.orderCode}</Link>
     <h1 className="text-xl font-bold">Thanh toán tiền thuê</h1>
     <p className="text-sm text-[#666666]">{order.carName} • {paymentStatusLabels[order.paymentStatus] ?? order.paymentStatus}</p>
     <p className="text-2xl font-bold text-[#FC6C26]">{formatMoney(order.totalAmount)}</p>

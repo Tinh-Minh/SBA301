@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/admin-ui";
+import { DateTimeField } from "@/components/date-field";
 import { useAsyncAction, useAsyncResource } from "@/hooks/use-async-resource";
 import { formatDateTime, toInputDateTime } from "@/lib/datetime";
 import { formatMoney } from "@/lib/labels";
@@ -67,15 +68,16 @@ function CreateDialog({ onClose, onCreated }) {
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
     const create = useAsyncAction(() => adminVoucherService.create({ ...form, startAt: new Date(form.startAt), endAt: new Date(form.endAt) }), onCreated);
     return <AdminDialog title="Tạo voucher mới" onClose={onClose}>
-    <form className="grid grid-cols-2 gap-3 text-sm" onSubmit={event => { event.preventDefault(); void create.run(); }}>
+    <form className="grid grid-cols-2 gap-3 text-sm" onSubmit={event => { event.preventDefault(); if (!event.currentTarget.reportValidity())
+        return; void create.run(); }}>
       <Field label="Mã voucher" wide><input required maxLength={50} value={form.code} onChange={update("code")} className={`${adminInput} uppercase`} placeholder="CARDB10"/></Field>
       <Field label="Mô tả" wide><input value={form.description} onChange={update("description")} className={adminInput}/></Field>
       <Field label="Loại giảm"><select value={form.discountType} onChange={update("discountType")} className={adminInput}><option value="PERCENT">Phần trăm (%)</option><option value="FIXED">Số tiền cố định</option></select></Field>
       <Field label={form.discountType === "PERCENT" ? "Giá trị (%)" : "Giá trị (đ)"}><input required type="number" min="1" value={form.discountValue} onChange={update("discountValue")} className={adminInput}/></Field>
       <Field label="Giảm tối đa (đ)"><input type="number" min="0" value={form.maxDiscount} onChange={update("maxDiscount")} className={adminInput} placeholder="Không giới hạn"/></Field>
       <Field label="Đơn tối thiểu (đ)"><input type="number" min="0" value={form.minOrderAmount} onChange={update("minOrderAmount")} className={adminInput}/></Field>
-      <Field label="Bắt đầu"><input required type="datetime-local" value={form.startAt} onChange={update("startAt")} className={adminInput}/></Field>
-      <Field label="Kết thúc"><input required type="datetime-local" value={form.endAt} onChange={update("endAt")} className={adminInput}/></Field>
+      <Field label="Bắt đầu"><DateTimeField required value={form.startAt} onChange={update("startAt")} className={adminInput}/></Field>
+      <Field label="Kết thúc"><DateTimeField required value={form.endAt} onChange={update("endAt")} className={adminInput}/></Field>
       <Field label="Tổng lượt dùng"><input type="number" min="1" value={form.usageLimit} onChange={update("usageLimit")} className={adminInput} placeholder="Không giới hạn"/></Field>
       <Field label="Lượt / khách"><input required type="number" min="1" value={form.perUserLimit} onChange={update("perUserLimit")} className={adminInput}/></Field>
       {create.error ? <p className="col-span-2 text-sm text-[#B91C1C]">{create.error.message}</p> : null}

@@ -5,11 +5,11 @@ export default function ConfirmedOrder() {
     <section className="flex flex-col gap-4">
     <div className="flex flex-wrap items-center justify-between gap-3">
     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm text-[#666666]">
-    <Link className="hover:text-[#FC6C26] transition-colors flex items-center gap-1" href="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-[#FC6C26] transition-colors flex items-center gap-1" href="/my-trips">{"Chuyến xe của tôi"}</Link>
     <span className="text-[#E9E9E7]">{"/"}</span>
     <span className="text-[#FC6C26] font-semibold">{"Chi tiết đơn thuê"}</span>
     </nav>
-    <Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#E9E9E7] text-[#292929] hover:bg-gray-50 text-sm font-medium transition-all shadow-xs" href="/chuyen-xe-cua-toi">
+    <Link className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-[#E9E9E7] text-[#292929] hover:bg-gray-50 text-sm font-medium transition-all shadow-xs" href="/my-trips">
     <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
     <span>{"Quay lại Chuyến xe của tôi"}</span>
     </Link>
@@ -132,7 +132,7 @@ export default function ConfirmedOrder() {
     <h3 className="text-2xl lg:text-3xl font-bold text-white drop-shadow-sm">{"\nVinFast VF 9 Plus AWD\n"}</h3>
     <p className="text-sm text-gray-200 mt-1">{"Hiệu suất 402 mã lực • Pin lithium thế hệ mới"}</p>
     </div>
-    <Link className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-[#292929] hover:bg-gray-100 text-xs font-semibold transition-all shadow-md" href="/xe/vinfast-vf8-plus-2024">
+    <Link className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-[#292929] hover:bg-gray-100 text-xs font-semibold transition-all shadow-md" href="/cars/vinfast-vf8-plus-2024">
     <span>{"Xem chi tiết xe"}</span>
     <span className="material-symbols-outlined text-[16px]">{"north_east"}</span>
     </Link>
@@ -403,17 +403,17 @@ export default function ConfirmedOrder() {
     <span>{"Thời hạn thanh toán còn lại: "}<strong>{"11 giờ 24 phút"}</strong>{". Vui lòng thanh toán để xác nhận giữ xe thành công."}</span>
     </div>
 
-    <Link className="w-full py-4 px-6 rounded-xl bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-base text-center flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all" href="/thanh-toan">
+    <Link className="w-full py-4 px-6 rounded-xl bg-[#FC6C26] hover:bg-[#e05a18] text-white font-bold text-base text-center flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all" href="/payment">
     <span className="material-symbols-outlined text-[20px]">{"payment"}</span>
     <span>{"Thanh toán ngay 3.700.000 đ ➔"}</span>
     </Link>
 
-    <Link className="w-full py-3 px-6 rounded-xl bg-white hover:bg-gray-50 border border-[#E9E9E7] text-[#292929] font-medium text-sm text-center flex items-center justify-center gap-2 transition-all shadow-xs" href="/chuyen-xe-cua-toi">
+    <Link className="w-full py-3 px-6 rounded-xl bg-white hover:bg-gray-50 border border-[#E9E9E7] text-[#292929] font-medium text-sm text-center flex items-center justify-center gap-2 transition-all shadow-xs" href="/my-trips">
     <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
     <span>{"← Quay lại Chuyến xe của tôi"}</span>
     </Link>
     <div className="text-center">
-    <Link className="text-xs text-[#666666] hover:text-[#FC6C26] underline font-medium" href="/kham-pha-xe">{"Xem danh sách xe khác"}</Link>
+    <Link className="text-xs text-[#666666] hover:text-[#FC6C26] underline font-medium" href="/explore">{"Xem danh sách xe khác"}</Link>
     </div>
 
     <div className="pt-3 border-t border-[#E9E9E7] flex items-center justify-between text-xs">

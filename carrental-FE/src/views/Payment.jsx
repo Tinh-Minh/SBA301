@@ -10,9 +10,9 @@ export default function Payment() {
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-border-light mb-6">
     <div className="flex flex-col gap-1.5">
     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs font-medium text-muted-gray">
-    <Link className="hover:text-primary transition-colors" href="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-primary transition-colors" href="/my-trips">{"Chuyến xe của tôi"}</Link>
     <span className="text-muted-gray/50">{"/"}</span>
-    <Link className="hover:text-primary transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
+    <Link className="hover:text-primary transition-colors" href="/cars/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
     <span className="text-muted-gray/50">{"/"}</span>
     <span className="text-primary font-semibold">{"Thanh toán"}</span>
     </nav>
@@ -44,7 +44,7 @@ export default function Payment() {
     <span className="material-symbols-outlined text-primary text-[22px]">{"receipt_long"}</span>
     <h2 className="text-lg font-bold text-charcoal">{"Thông tin đơn thuê"}</h2>
     </div>
-    <Link className="flex items-center gap-1 text-xs font-medium text-muted-gray hover:text-primary transition-colors" href="/xe/vinfast-vf8-plus-2024">
+    <Link className="flex items-center gap-1 text-xs font-medium text-muted-gray hover:text-primary transition-colors" href="/cars/vinfast-vf8-plus-2024">
     <span>{"Xem chi tiết đơn thuê ↗"}</span>
     </Link>
     </div>
@@ -341,11 +341,11 @@ export default function Payment() {
     <PaymentActions />
 
     <div className="flex items-center justify-between text-xs font-medium text-muted-gray pt-1">
-    <Link className="flex items-center gap-1 hover:text-charcoal transition-colors" href="/chuyen-xe-cua-toi">
+    <Link className="flex items-center gap-1 hover:text-charcoal transition-colors" href="/my-trips">
     <span className="material-symbols-outlined text-[15px]">{"arrow_back"}</span>
     <span>{"Quay lại chi tiết đơn thuê"}</span>
     </Link>
-    <Link className="hover:text-primary transition-colors" href="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-primary transition-colors" href="/my-trips">{"Chuyến xe của tôi"}</Link>
     </div>
     </div>
 

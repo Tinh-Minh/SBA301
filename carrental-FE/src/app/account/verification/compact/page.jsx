@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function Page() {
-    redirect("/tai-khoan/xac-minh");
+    redirect("/account/verification");
 }

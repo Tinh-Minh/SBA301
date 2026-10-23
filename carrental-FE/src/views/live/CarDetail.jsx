@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useAuth } from "@/components/auth-provider";
+import { DateTimeField } from "@/components/date-field";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/live-ui";
 import { useAsyncAction, useAsyncResource } from "@/hooks/use-async-resource";
 import { formatDateTime, hoursBetween, parseQueryDateTime, toInputDateTime } from "@/lib/datetime";
@@ -42,7 +43,7 @@ function Body({ car, slot, presetStart, presetEnd }) {
             return;
         }
         const next = `${window.location.pathname}${window.location.search}`;
-        router.push(`/dang-nhap?next=${encodeURIComponent(next)}`);
+        router.push(`/login?next=${encodeURIComponent(next)}`);
     }
     const options = slot?.rentalOption === "HOURLY" ? ["HOURLY"] : slot?.rentalOption === "DAILY" ? ["DAILY"] : ["DAILY", "HOURLY"];
     const [type, setType] = useState(options[0]);
@@ -58,7 +59,7 @@ function Body({ car, slot, presetStart, presetEnd }) {
     const features = parseFeatures(car.features);
     function goCheckout() {
         const search = new URLSearchParams({ slotId: String(slot.id), start: startTime, end: endTime, type, voucher });
-        router.push(`/dat-xe/xac-nhan?${search}`);
+        router.push(`/booking/confirm?${search}`);
     }
     return <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
     <article className="overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
@@ -83,8 +84,8 @@ function Body({ car, slot, presetStart, presetEnd }) {
           <label className="text-xs font-semibold text-[#666666]">Hình thức thuê
             <select value={type} onChange={event => setType(event.target.value)} className={`${fieldClass} mt-1`}>{options.map(option => <option key={option} value={option}>{rentalTypeLabels[option]}</option>)}</select>
           </label>
-          <label className="text-xs font-semibold text-[#666666]">Nhận xe<input type="datetime-local" value={startTime} onChange={event => setStartTime(event.target.value)} className={`${fieldClass} mt-1`}/></label>
-          <label className="text-xs font-semibold text-[#666666]">Trả xe<input type="datetime-local" value={endTime} onChange={event => setEndTime(event.target.value)} className={`${fieldClass} mt-1`}/></label>
+          <label className="text-xs font-semibold text-[#666666]">Nhận xe<DateTimeField value={startTime} onChange={event => setStartTime(event.target.value)} className={`${fieldClass} mt-1`}/></label>
+          <label className="text-xs font-semibold text-[#666666]">Trả xe<DateTimeField value={endTime} onChange={event => setEndTime(event.target.value)} className={`${fieldClass} mt-1`}/></label>
           <label className="text-xs font-semibold text-[#666666]">Mã voucher (nếu có)<input value={voucher} onChange={event => setVoucher(event.target.value.toUpperCase())} className={`${fieldClass} mt-1 uppercase`} placeholder="CARDB10"/></label>
           {startTime && endTime ? <p className="text-xs text-[#666666]">Thời lượng khoảng {hoursBetween(startTime, endTime).toFixed(1)} giờ.</p> : null}
           <div className="flex flex-wrap gap-2">
@@ -97,7 +98,7 @@ function Body({ car, slot, presetStart, presetEnd }) {
       </> : <>
         <h2 className="text-lg font-bold text-[#292929]">Chưa chọn khung giờ</h2>
         <p className="mt-2 text-sm text-[#666666]">Xe chỉ đặt được trong khung giờ chủ xe đang mở.</p>
-        <Link href="/kham-pha-xe" className="mt-4 inline-flex font-bold text-[#FC6C26]">Tìm khung giờ trống</Link>
+        <Link href="/explore" className="mt-4 inline-flex font-bold text-[#FC6C26]">Tìm khung giờ trống</Link>
       </>}
     </aside>
   </div>;

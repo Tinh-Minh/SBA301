@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
+import { DateTimeField } from "@/components/date-field";
 import { Icon } from "@/components/icon";
 import { Money } from "@/components/owner/money";
 import { OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/owner-screen";
@@ -160,9 +161,10 @@ function SlotManager({ car, onChanged }) {
       <p className="text-sm text-muted-gray">Khách chỉ tìm thấy xe trong các khung giờ đang mở. Để trống giá tùy chỉnh để dùng giá niêm yết ({formatVnd(car.pricePerHour)}/giờ • {formatVnd(car.pricePerDay)}/ngày).</p>
       {notActive ? <p className="text-sm font-semibold text-status-amber-dark">Xe đang ở trạng thái {car.status} — cần được CarDB duyệt (ACTIVE) trước khi mở lịch.</p> : null}
     </div>
-    <form className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={event => { event.preventDefault(); void create.run(); }}>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Bắt đầu<input type="datetime-local" required value={form.startTime} onChange={update("startTime")} className={inputClass}/></label>
-      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Kết thúc<input type="datetime-local" required value={form.endTime} onChange={update("endTime")} className={inputClass}/></label>
+    <form className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={event => { event.preventDefault(); if (!event.currentTarget.reportValidity())
+        return; void create.run(); }}>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Bắt đầu<DateTimeField required value={form.startTime} onChange={update("startTime")} className={inputClass}/></label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Kết thúc<DateTimeField required value={form.endTime} onChange={update("endTime")} className={inputClass}/></label>
       <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Hình thức thuê
         <select value={form.rentalOption} onChange={update("rentalOption")} className={inputClass}>
           {Object.entries(rentalOptionLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}

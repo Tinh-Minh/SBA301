@@ -1,5 +1,6 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { DateField } from "@/components/date-field";
 import { ProfileLayout } from "@/components/profile-layout";
 import { LiveState, Primary, fieldClass } from "@/components/live-ui";
 import { useAsyncAction, useAsyncResource } from "@/hooks/use-async-resource";
@@ -28,10 +29,13 @@ function Editor({ profile, kyc, onSaved }) {
     const [phone, setPhone] = useState(profile.phone ?? "");
     const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? "");
     const [dateOfBirth, setDob] = useState(toLocalDate(profile.dateOfBirth) ?? "");
+    const birthDate = useRef(null);
     const [address, setAddress] = useState(profile.address ?? "");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const save = useAsyncAction(async () => {
+        if (birthDate.current && !birthDate.current.reportValidity())
+            return;
         const updated = await updateMyProfile({
             fullName: fullName.trim(),
             email: email.trim(),
@@ -52,7 +56,7 @@ function Editor({ profile, kyc, onSaved }) {
         setNewPassword("");
         setPasswordNote("Đã đổi mật khẩu.");
     });
-    return <section className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+    return <div className="flex flex-col gap-4"><section className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 className="text-lg font-bold">Thông tin cá nhân</h2>
@@ -64,7 +68,7 @@ function Editor({ profile, kyc, onSaved }) {
       <Field label="Họ và tên">{editing ? <input value={fullName} onChange={event => setFullName(event.target.value)} className={fieldClass}/> : <b>{profile.fullName}</b>}</Field>
       <Field label="Email">{editing ? <input type="email" value={email} onChange={event => setEmail(event.target.value)} className={fieldClass}/> : <>{profile.email} {profile.emailVerified ? "• đã xác thực" : ""}</>}</Field>
       <Field label="Số điện thoại">{editing ? <input value={phone} onChange={event => setPhone(event.target.value)} className={fieldClass} placeholder="09xxxxxxxx"/> : (profile.phone || "—")}</Field>
-      <Field label="Ngày sinh">{editing ? <input type="date" value={dateOfBirth} onChange={event => setDob(event.target.value)} className={fieldClass}/> : formatDate(profile.dateOfBirth)}</Field>
+      <Field label="Ngày sinh">{editing ? <DateField ref={birthDate} value={dateOfBirth} onChange={event => setDob(event.target.value)} className={fieldClass}/> : formatDate(profile.dateOfBirth)}</Field>
       <Field label="Trạng thái tài khoản">{profile.status === "LOCKED" ? "Bị khóa" : "Đang hoạt động"}</Field>
       <Field label="KYC">{kycStatusLabels[kyc?.kycStatus] ?? kycStatusLabels[profile.kycStatus] ?? "—"}{kyc?.evaluatedOn ? ` • ${formatDate(kyc.evaluatedOn)}` : ""}</Field>
       <div className="sm:col-span-2"><Field label="Địa chỉ">{editing ? <input value={address} onChange={event => setAddress(event.target.value)} className={fieldClass}/> : (profile.address || "Chưa cập nhật")}</Field></div>
@@ -81,7 +85,7 @@ function Editor({ profile, kyc, onSaved }) {
     </div>
     {password.error ? <p className="text-sm text-[#B91C1C]">{password.error.message}</p> : passwordNote ? <p className="text-sm text-[#166534]">{passwordNote}</p> : null}
     <Primary disabled={password.running || !currentPassword || newPassword.length < 8} onClick={() => void password.run()}>{password.running ? "Đang đổi…" : "Cập nhật mật khẩu"}</Primary>
-  </section>;
+  </section></div>;
 }
 
 function Field({ label, children }) {

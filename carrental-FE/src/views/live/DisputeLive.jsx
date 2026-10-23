@@ -13,7 +13,7 @@ export default function DisputeLive() {
     const orderId = useSearchParams().get("orderId");
     return <LivePage width="max-w-xl">
     <RequireAuth title="Đăng nhập để gửi khiếu nại">
-      {orderId ? <Form orderId={orderId}/> : <p className="text-sm">Mở khiếu nại từ <Link href="/chuyen-xe-cua-toi" className="font-bold text-[#FC6C26]">chi tiết đơn thuê</Link>.</p>}
+      {orderId ? <Form orderId={orderId}/> : <p className="text-sm">Mở khiếu nại từ <Link href="/my-trips" className="font-bold text-[#FC6C26]">chi tiết đơn thuê</Link>.</p>}
     </RequireAuth>
   </LivePage>;
 }
@@ -35,14 +35,14 @@ function Form({ orderId }) {
     const send = useAsyncAction(async () => {
         const evidences = fileUrl.trim() ? [{ fileUrl: fileUrl.trim(), fileType, description: null }] : [];
         const created = await disputeService.create({ orderId, reason: reason.trim(), description: description.trim(), evidences });
-        router.push(`/don-thue/${orderId}?dispute=${created.id}`);
+        router.push(`/orders/${orderId}?dispute=${created.id}`);
     });
     if (!detail.data)
         return <LiveState loading={detail.loading} error={detail.error} label="đơn khiếu nại" onRetry={detail.reload}/>;
     const { order, disputes } = detail.data;
     return <div className="flex flex-col gap-4">
     <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
-      <Link href={`/don-thue/${order.id}`} className="text-sm font-bold text-[#FC6C26]">← {order.orderCode}</Link>
+      <Link href={`/orders/${order.id}`} className="text-sm font-bold text-[#FC6C26]">← {order.orderCode}</Link>
       <h1 className="mt-2 text-xl font-bold">Khiếu nại chuyến {order.carName}</h1>
       {disputes.map(item => <p key={item.id} className="mt-3 rounded-xl bg-[#F7F7F5] p-3 text-sm"><b>KN-{item.id}</b> • {disputeStatusLabels[item.status] ?? item.status} • {item.reason}</p>)}
     </section>

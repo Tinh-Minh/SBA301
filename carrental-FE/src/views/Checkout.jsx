@@ -7,9 +7,9 @@ export default function Checkout() {
 
     <div className="flex flex-col gap-space-xs">
     <nav aria-label="Breadcrumb" className="flex items-center gap-2">
-    <Link className="font-label-sm text-label-sm text-[#666666] hover:text-[#FC6C26] transition-colors font-medium" href="/kham-pha-xe">{"Khám phá xe"}</Link>
+    <Link className="font-label-sm text-label-sm text-[#666666] hover:text-[#FC6C26] transition-colors font-medium" href="/explore">{"Khám phá xe"}</Link>
     <span className="font-label-sm text-label-sm text-[#666666]">{"/"}</span>
-    <Link className="font-label-sm text-label-sm text-[#666666] hover:text-[#FC6C26] transition-colors font-medium" href="/xe/vinfast-vf8-plus-2024">{"VinFast VF 9 Plus AWD"}</Link>
+    <Link className="font-label-sm text-label-sm text-[#666666] hover:text-[#FC6C26] transition-colors font-medium" href="/cars/vinfast-vf8-plus-2024">{"VinFast VF 9 Plus AWD"}</Link>
     <span className="font-label-sm text-label-sm text-[#666666]">{"/"}</span>
     <span className="font-label-sm text-label-sm text-[#FC6C26] font-semibold">{"Xác nhận yêu cầu thuê xe"}</span>
     </nav>
@@ -260,11 +260,11 @@ export default function Checkout() {
     </div>
 
     <div className="flex flex-col gap-2.5 pt-1">
-    <button className="w-full py-3.5 px-4 rounded-xl bg-[#FC6C26] hover:bg-[#e05b19] text-white font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-sm transition-all duration-300 transform active:scale-[0.98] cursor-pointer" id="btn-submit-booking" type="button" aria-label="Gửi yêu cầu thuê xe" data-route="/dat-xe/thanh-cong">
+    <button className="w-full py-3.5 px-4 rounded-xl bg-[#FC6C26] hover:bg-[#e05b19] text-white font-label-lg text-label-lg font-bold flex items-center justify-center gap-2 shadow-sm transition-all duration-300 transform active:scale-[0.98] cursor-pointer" id="btn-submit-booking" type="button" aria-label="Gửi yêu cầu thuê xe" data-route="/booking/success">
     <span>{"Gửi yêu cầu thuê xe"}</span>
     <span className="material-symbols-outlined text-[18px]">{"arrow_forward"}</span>
     </button>
-    <Link className="w-full py-2.5 px-4 rounded-xl bg-white border border-[#E9E9E7] hover:bg-[#F7F7F5] text-[#292929] font-label-md text-label-md font-bold text-center transition-colors flex items-center justify-center gap-1.5" href="/chuyen-xe-cua-toi">
+    <Link className="w-full py-2.5 px-4 rounded-xl bg-white border border-[#E9E9E7] hover:bg-[#F7F7F5] text-[#292929] font-label-md text-label-md font-bold text-center transition-colors flex items-center justify-center gap-1.5" href="/my-trips">
     <span className="material-symbols-outlined text-[16px]">{"arrow_back"}</span>
     <span>{"Quay lại chi tiết xe"}</span>
     </Link>

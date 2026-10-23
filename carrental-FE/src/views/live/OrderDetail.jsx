@@ -47,7 +47,7 @@ function Detail({ orderId, justCreated }) {
     const waitingForOwner = draft && draft.renterConfirmedAt && !draft.ownerConfirmedAt;
     const canCancel = order.status === "PENDING" || order.status === "CONFIRMED";
     return <div className="flex flex-col gap-4">
-    <Link href="/chuyen-xe-cua-toi" className="text-sm font-bold text-[#FC6C26]">← Chuyến xe của tôi</Link>
+    <Link href="/my-trips" className="text-sm font-bold text-[#FC6C26]">← Chuyến xe của tôi</Link>
     {justCreated ? <p className="rounded-xl bg-[#ECFDF5] p-3 text-sm text-[#047857]">Đã gửi yêu cầu. Chủ xe có 24 giờ để xác nhận.</p> : null}
     <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -72,9 +72,9 @@ function Detail({ orderId, justCreated }) {
       {order.note ? <p className="mt-3 rounded-xl bg-[#F7F7F5] p-3 text-sm">Ghi chú: {order.note}</p> : null}
       {order.cancelReason ? <p className="mt-3 rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Lý do: {order.cancelReason}</p> : null}
       <div className="mt-4 flex flex-wrap gap-2">
-        {order.paymentStatus === "UNPAID" && (order.status === "CONFIRMED" || order.status === "ONGOING") ? <Link href={`/thanh-toan?orderId=${order.id}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thanh toán</Link> : null}
-        {order.status === "COMPLETED" ? <Link href={`/danh-gia?orderId=${order.id}`} className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold">Đánh giá</Link> : null}
-        {order.status === "ONGOING" || order.status === "COMPLETED" ? <Link href={`/tranh-chap?orderId=${order.id}`} className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold">Khiếu nại</Link> : null}
+        {order.paymentStatus === "UNPAID" && (order.status === "CONFIRMED" || order.status === "ONGOING") ? <Link href={`/payment?orderId=${order.id}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thanh toán</Link> : null}
+        {order.status === "COMPLETED" ? <Link href={`/reviews?orderId=${order.id}`} className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold">Đánh giá</Link> : null}
+        {order.status === "ONGOING" || order.status === "COMPLETED" ? <Link href={`/disputes?orderId=${order.id}`} className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold">Khiếu nại</Link> : null}
       </div>
       {canCancel ? <CancelBox busy={cancel.running} error={cancel.error} onCancel={reason => void cancel.run(reason)}/> : null}
     </section>
