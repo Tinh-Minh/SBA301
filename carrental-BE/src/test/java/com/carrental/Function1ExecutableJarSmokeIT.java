@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.URI;
@@ -131,7 +132,7 @@ class Function1ExecutableJarSmokeIT {
 
             String suffix = UUID.randomUUID().toString().replace("-", "");
             String customerEmail = "p10-jar-customer-" + suffix + "@example.test";
-            String customerPhone = "7" + suffix.substring(0, 19);
+            String customerPhone = syntheticPhone(suffix, 1);
             HttpResponse<String> registered = request(base, "POST", "/api/auth/register", null,
                     "{\"fullName\":\"P10 Jar Synthetic Customer\",\"email\":\"" + customerEmail
                             + "\",\"phone\":\"" + customerPhone + "\",\"password\":\"" + PASSWORD + "\"}", String.class);
@@ -144,7 +145,7 @@ class Function1ExecutableJarSmokeIT {
             assertThat(MAPPER.readTree(me.body()).path("data").path("id").asLong()).isEqualTo(customerId);
 
             String adminEmail = "p10-jar-admin-" + suffix + "@example.test";
-            String adminPhone = "8" + suffix.substring(0, 19);
+            String adminPhone = syntheticPhone(suffix, 2);
             try (Connection connection = DriverManager.getConnection(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword());
                     PreparedStatement insert = connection.prepareStatement("insert into customers(full_name,email,phone,password_hash,email_verified,kyc_status,role,status) values(?,?,?,?,true,'NONE','ADMIN','ACTIVE')")) {
                 insert.setString(1, "P10 Jar Synthetic Admin");
@@ -166,7 +167,7 @@ class Function1ExecutableJarSmokeIT {
             assertThat(ownedDownload.headers().firstValue("Cache-Control").orElse("")).contains("no-store");
             assertThat(ownedDownload.headers().firstValue("X-Request-ID")).isPresent();
             String peerEmail = "p10-jar-peer-" + suffix + "@example.test";
-            String peerPhone = "6" + suffix.substring(0, 19);
+            String peerPhone = syntheticPhone(suffix, 3);
             request(base, "POST", "/api/auth/register", null,
                     "{\"fullName\":\"P10 Jar Synthetic Peer\",\"email\":\"" + peerEmail
                             + "\",\"phone\":\"" + peerPhone + "\",\"password\":\"" + PASSWORD + "\"}", String.class);
@@ -211,6 +212,11 @@ class Function1ExecutableJarSmokeIT {
             cleanupTemp(configDirectory, tempBase, repo, "sba301-p10-config-");
             cleanupTemp(privateRoot, tempBase, repo, "sba301-p10-storage-");
         }
+    }
+
+    private static String syntheticPhone(String suffix, int lane) {
+        int mixed = new BigInteger(suffix, 16).mod(BigInteger.valueOf(10_000_000L)).intValue();
+        return String.format("09%d%07d", lane, mixed);
     }
 
     private static int awaitHttpHealth(Process process, Path logFile) throws Exception {

@@ -28,6 +28,37 @@ export function PrimaryButton({ children, onClick, type = "button", disabled = f
     return <button type={type} onClick={onClick} disabled={disabled} className="inline-flex w-full items-center justify-center whitespace-nowrap rounded-xl bg-[#FC6C26] px-4 py-3 text-sm font-bold text-white hover:bg-[#e05a18] disabled:opacity-60">{children}</button>;
 }
 
+export const adminInput = "w-full rounded-xl border border-[#E9E9E7] bg-white px-3 py-2 text-sm text-[#292929]";
+
+export function AdminState({ loading, error, empty, label = "dữ liệu", onRetry }) {
+    if (loading)
+        return <p className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm text-[#666666]">Đang tải {label}…</p>;
+    if (error)
+        return <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#FECACA] bg-[#FEF2F2] p-5 text-sm text-[#B91C1C]">
+      <span>{error.message}</span>
+      {onRetry ? <button type="button" onClick={onRetry} className="font-bold underline">Thử lại</button> : null}
+    </div>;
+    if (empty)
+        return <p className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm text-[#666666]">Chưa có {label}.</p>;
+    return null;
+}
+
+export function Pager({ page, totalPages, onPage }) {
+    if (!totalPages || totalPages <= 1)
+        return null;
+    return <div className="flex items-center justify-end gap-2 text-sm">
+    <button type="button" disabled={page <= 0} onClick={() => onPage(page - 1)} className="rounded-lg border border-[#E9E9E7] bg-white px-3 py-1.5 font-bold disabled:opacity-40">‹ Trước</button>
+    <span className="text-[#666666]">Trang {page + 1}/{totalPages}</span>
+    <button type="button" disabled={page + 1 >= totalPages} onClick={() => onPage(page + 1)} className="rounded-lg border border-[#E9E9E7] bg-white px-3 py-1.5 font-bold disabled:opacity-40">Sau ›</button>
+  </div>;
+}
+
+export function Tabs({ items, value, onChange }) {
+    return <div className="flex flex-wrap gap-2">
+    {items.map(item => <button key={item.id} type="button" onClick={() => onChange(item.id)} className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-bold ${value === item.id ? "bg-[#FC6C26] text-white" : "border border-[#E9E9E7] bg-white text-[#292929]"}`}>{item.label}</button>)}
+  </div>;
+}
+
 export function AdminDialog({ title, children, onClose }) {
     useEffect(() => {
         function onKey(event) { if (event.key === "Escape") onClose(); }

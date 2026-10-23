@@ -1,44 +1,50 @@
 "use client";
 import Link from "next/link";
-import { AdminPageHeader, StatusPill } from "@/components/admin/admin-ui";
+import { AdminPageHeader, AdminState, StatusPill } from "@/components/admin/admin-ui";
 import { Money } from "@/components/owner/money";
-import { calculatePayout, formatTrVnd } from "@/lib/owner/finance";
+import { useAsyncResource } from "@/hooks/use-async-resource";
+import { formatTrVnd } from "@/lib/owner/finance";
 import { adminRoutes } from "@/lib/admin/routes";
-import { adminSeed } from "@/services/mock/admin-db";
+import { formatDateTime } from "@/lib/datetime";
+import { kycStatusLabels, orderStatusLabels } from "@/lib/labels";
+import { getAdminOverview } from "@/services/admin.service";
 
-const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger" };
-const orderLabel = { CONFIRMED: "Đã xác nhận", ONGOING: "Đang thuê", COMPLETED: "Hoàn thành", PENDING: "Chờ xác nhận", CANCELLED: "Đã hủy" };
+const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger", REJECTED: "danger", EXPIRED: "neutral" };
 
 export default function AdminDashboard() {
-    const orders = adminSeed.orders.slice(0, 3);
+    const { data, loading, error, reload } = useAsyncResource(getAdminOverview, "overview");
+    const totals = data?.totals;
     return <div className="flex flex-col gap-5">
-    <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Báo cáo chỉ số vận hành, hồ sơ chờ duyệt và đơn thuê toàn quốc."/>
+    <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Chỉ số vận hành, hồ sơ chờ duyệt và đơn thuê mới nhất lấy trực tiếp từ hệ thống." actions={<button type="button" onClick={reload} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold">Làm mới</button>}/>
+    <AdminState loading={loading && !data} error={error} label="tổng quan" onRetry={reload}/>
+    {totals ? <>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <Stat label="GMV tháng 10" value={formatTrVnd(1280000000)} hint="+22,4% so với T9"/>
-      <Stat label="Phí nền tảng 10%" value={formatTrVnd(128000000)} hint={`${formatTrVnd(128000000)} trên GMV`}/>
-      <Stat label="Tổng đơn" value="342 đơn" hint="48 đang lăn bánh"/>
-      <Stat label="Hồ sơ SLA" value="20 hồ sơ" hint="12 KYC • 8 xe"/>
+      <Stat label="GMV (đơn đã xác nhận)" value={formatTrVnd(totals.gmv)} hint={`${totals.ordersThisMonth} đơn tạo trong tháng này`}/>
+      <Stat label="Phí nền tảng" value={formatTrVnd(totals.platformFee)} hint="Tính theo hoa hồng trên từng đơn"/>
+      <Stat label="Tổng đơn" value={`${totals.orders} đơn`} hint={`${totals.ongoing} đang lăn bánh`}/>
+      <Stat label="Việc cần xử lý" value={`${totals.pendingDocs + totals.pendingCars + totals.openDisputes + totals.pendingPayouts} mục`} hint={`${totals.pendingDocs} giấy tờ • ${totals.pendingCars} xe • ${totals.openDisputes} khiếu nại • ${totals.pendingPayouts} chi trả`}/>
     </section>
     <section className="grid gap-4 xl:grid-cols-2">
       <article className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
         <h2 className="text-base font-bold text-[#292929]">Hồ sơ chờ phê duyệt</h2>
         <ul className="mt-4 flex flex-col gap-3">
-          <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9E9E7] p-3">
-            <div>
-              <p className="whitespace-nowrap font-bold text-[#292929]">Nguyễn Hoàng Minh</p>
-              <p className="whitespace-nowrap text-xs text-[#666666]">CDB-KH-3392 • CCCD + GPLX B2</p>
+          {data.pendingKyc.map(customer => <li key={`c${customer.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9E9E7] p-3">
+            <div className="min-w-0">
+              <p className="truncate font-bold text-[#292929]">{customer.fullName}</p>
+              <p className="truncate text-xs text-[#666666]">KH #{customer.id} • {customer.email}</p>
             </div>
-            <StatusPill tone="warning">Chờ duyệt eKYC</StatusPill>
-            <Link href={adminRoutes.users} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Duyệt eKYC →</Link>
-          </li>
-          <li className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9E9E7] p-3">
-            <div>
-              <p className="whitespace-nowrap font-bold text-[#292929]">VinFast VF 9 Plus AWD</p>
-              <p className="whitespace-nowrap text-xs text-[#666666]">51K-889.92 • Trần Đức Nam • CDB-VN-88492</p>
+            <StatusPill tone="warning">{kycStatusLabels[customer.kycStatus] ?? customer.kycStatus}</StatusPill>
+            <Link href={`${adminRoutes.users}?id=${customer.id}`} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Duyệt eKYC →</Link>
+          </li>)}
+          {data.pendingCars.map(car => <li key={`v${car.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9E9E7] p-3">
+            <div className="min-w-0">
+              <p className="truncate font-bold text-[#292929]">{car.brand} {car.model}</p>
+              <p className="truncate text-xs text-[#666666]">{car.licensePlate} • {car.city}</p>
             </div>
             <StatusPill tone="warning">Chờ duyệt niêm yết</StatusPill>
-            <Link href={adminRoutes.vehicles} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Thẩm định xe →</Link>
-          </li>
+            <Link href={`${adminRoutes.vehicles}?id=${car.id}`} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Thẩm định xe →</Link>
+          </li>)}
+          {!data.pendingKyc.length && !data.pendingCars.length ? <li className="text-sm text-[#666666]">Không có hồ sơ nào đang chờ.</li> : null}
         </ul>
       </article>
       <article className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
@@ -47,21 +53,20 @@ export default function AdminDashboard() {
           <Link href={adminRoutes.orders} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Xem tất cả →</Link>
         </div>
         <ul className="mt-4 flex flex-col gap-3">
-          {orders.map(order => {
-                const money = calculatePayout(order);
-                return <li key={order.id} className="rounded-xl border border-[#E9E9E7] p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="whitespace-nowrap font-mono text-xs font-bold text-[#FC6C26]">{order.orderCode}</span>
-                <StatusPill tone={orderTone[order.status]}>{orderLabel[order.status]}</StatusPill>
-              </div>
-              <p className="mt-1 whitespace-nowrap text-sm font-bold text-[#292929]">{order.carTitle}</p>
-              <p className="whitespace-nowrap text-xs text-[#666666]">{order.renter} • {order.owner}</p>
-              <p className="mt-1 whitespace-nowrap text-sm text-[#292929]"><Money amount={money.grossAmount}/> • phí 10% <Money amount={money.platformFee}/></p>
-            </li>;
-            })}
+          {data.latestOrders.map(order => <li key={order.id} className="rounded-xl border border-[#E9E9E7] p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="whitespace-nowrap font-mono text-xs font-bold text-[#FC6C26]">{order.orderCode}</span>
+              <StatusPill tone={orderTone[order.status]}>{orderStatusLabels[order.status] ?? order.status}</StatusPill>
+            </div>
+            <p className="mt-1 truncate text-sm font-bold text-[#292929]">{order.carName} • {order.licensePlate}</p>
+            <p className="truncate text-xs text-[#666666]">{order.customerName} → {order.ownerName} • {formatDateTime(order.startTime)}</p>
+            <p className="mt-1 whitespace-nowrap text-sm text-[#292929]"><Money amount={order.totalAmount}/> • phí {order.commissionRate}% <Money amount={Math.round(order.rentalAmount * order.commissionRate / 100)}/></p>
+          </li>)}
+          {!data.latestOrders.length ? <li className="text-sm text-[#666666]">Chưa có đơn thuê nào.</li> : null}
         </ul>
       </article>
     </section>
+    </> : null}
   </div>;
 }
 

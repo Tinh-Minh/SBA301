@@ -9,7 +9,7 @@ import { useAsyncAction } from "@/hooks/use-async-resource";
 import { calculatePlatformFee, formatVnd } from "@/lib/owner/finance";
 import { ownerRoutes } from "@/lib/owner/routes";
 import { carService } from "@/services/car.service";
-import { ownerDb } from "@/services/mock/owner-db";
+import { useAuth } from "@/components/auth-provider";
 const DRAFT_KEY = "cardb-vehicle-draft";
 const steps = [
     { id: 1, title: "Thông tin & Giấy tờ", next: "Tiếp tục: Thông số & Tiện nghi (Bước 2)", blurb: "Cung cấp thông tin đăng ký, biển số và chứng từ pháp lý của phương tiện." },
@@ -111,11 +111,6 @@ function amount(value) {
     const parsed = Number(digitsOf(value));
     return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
 }
-function fileSize(bytes) {
-    if (bytes < 1024 * 1024)
-        return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
 function Field({ label, children }) {
     return <label className="flex flex-col gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-gray">
     {label}
@@ -124,12 +119,13 @@ function Field({ label, children }) {
 }
 export default function OwnerVehicleNew() {
     const router = useRouter();
-    const create = useAsyncAction(carService.create);
+    const { user } = useAuth();
+    const create = useAsyncAction(submitCar);
     const [step, setStep] = useState(1);
     const [reached, setReached] = useState(1);
     const [form, setForm] = useState(initial);
-    const [cavet, setCavet] = useState([]);
-    const [inspection, setInspection] = useState(null);
+    const [cavet, setCavet] = useState("");
+    const [inspection, setInspection] = useState("");
     const [photos, setPhotos] = useState({});
     const [zoom, setZoom] = useState(null);
     const [agreed, setAgreed] = useState(false);
@@ -143,6 +139,12 @@ export default function OwnerVehicleNew() {
             const saved = JSON.parse(raw);
             if (saved.form)
                 setForm(current => ({ ...current, ...saved.form, amenities: saved.form?.amenities ?? current.amenities }));
+            if (saved.photos)
+                setPhotos(saved.photos);
+            if (typeof saved.cavet === "string")
+                setCavet(saved.cavet);
+            if (typeof saved.inspection === "string")
+                setInspection(saved.inspection);
             if (saved.step && saved.step >= 1 && saved.step <= 4) {
                 setStep(saved.step);
                 setReached(saved.step);
@@ -159,13 +161,13 @@ export default function OwnerVehicleNew() {
     const fee = dayPrice ? calculatePlatformFee(dayPrice, 10) : 0;
     const photoCount = Object.keys(photos).length;
     const identityReady = Boolean(form.brand.trim() && form.model.trim() && form.licensePlate.trim().length >= 4 && form.pickupAddress.trim());
-    const papersReady = cavet.length > 0 && Boolean(inspection);
+    const papersReady = [cavet, inspection].every(url => !url.trim() || isUrl(url));
     const priceReady = dayPrice !== null && dayPrice > 0 && weekend !== null && weekend > 0 && deposit !== null && kmLimit !== null && kmLimit > 0 && extraKm !== null;
     const ready = [identityReady, true, priceReady, agreed];
     const gaps = [
         form.licensePlate.trim().length < 4 ? "Biển số cần ít nhất 4 ký tự." : "",
         !form.pickupAddress.trim() ? "Chưa nhập địa chỉ bãi xe." : "",
-        !papersReady ? "Cavet và sổ kiểm định cần chọn trước khi gửi hồ sơ. Hai giấy tờ này không chặn bước 2." : "",
+        !papersReady ? "Link giấy tờ phải bắt đầu bằng http:// hoặc https://." : "",
     ].filter(Boolean);
     function chooseSegment(id) {
         const next = segments.find(item => item.id === id) ?? segments[0];
@@ -177,25 +179,38 @@ export default function OwnerVehicleNew() {
     function chooseCity(city) {
         set({ city, area: areas[city][0] });
     }
-    function addPhoto(id, file) {
-        if (!file)
-            return;
-        const preview = URL.createObjectURL(file);
+    function addPhoto(id, url) {
         setPhotos(current => {
-            if (current[id])
-                URL.revokeObjectURL(current[id].preview);
-            return { ...current, [id]: { name: file.name, size: file.size, preview } };
+            const next = { ...current };
+            if (url.trim())
+                next[id] = { url: url.trim() };
+            else
+                delete next[id];
+            return next;
         });
     }
     function saveDraft() {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step }));
-        setDraftNote("Đã lưu bản nháp trên máy này. Ảnh và giấy tờ cần chọn lại khi mở lại.");
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, photos, cavet, inspection }));
+        setDraftNote("Đã lưu bản nháp trên máy này.");
+    }
+    async function submitCar(draft) {
+        const car = await carService.create(draft);
+        const documents = [["REGISTRATION", cavet], ["INSPECTION", inspection]].filter(([, url]) => url.trim());
+        for (const [docType, fileUrl] of documents)
+            await carService.addDocument(car.id, { docType, fileUrl: fileUrl.trim() });
+        return car;
     }
     async function submit() {
         if (!identityReady || !papersReady || !priceReady || !agreed || dayPrice === null || deposit === null || kmLimit === null || extraKm === null)
             return;
-        const cover = photos.front ?? Object.values(photos)[0];
-        const primaryImageUrl = cover ? await blobToDataUrl(cover.preview) : undefined;
+        const ordered = photoSlots.map(slot => photos[slot.id]?.url).filter(url => url && isUrl(url));
+        const details = [
+            form.powerNote.trim() ? `${form.fuelType === "ELECTRIC" ? "Pin/công suất" : "Động cơ"}: ${form.powerNote.trim()}` : "",
+            form.rangeKm ? `Tầm vận hành: ${form.rangeKm} km` : "",
+            weekend ? `Giá cuối tuần: ${formatVnd(weekend)}` : "",
+            form.lateFee ? `Phí trễ giờ: ${formatVnd(Number(form.lateFee))}/giờ` : "",
+            form.cancellation,
+        ].filter(Boolean).join(". ");
         const car = await create.run({
             licensePlate: form.licensePlate.trim(),
             brand: form.brand.trim(),
@@ -205,13 +220,17 @@ export default function OwnerVehicleNew() {
             seats: Number(form.seats),
             transmission: form.transmission,
             fuelType: form.fuelType,
-            pickupAddress: `${form.pickupAddress.trim()}, ${form.area}, ${form.city}`,
+            city: form.city,
+            district: form.area,
+            pickupAddress: form.pickupAddress.trim(),
+            description: details,
+            features: JSON.stringify(form.amenities),
             pricePerDay: dayPrice,
             pricePerHour: Math.max(1, Math.round(dayPrice / 10)),
             depositAmount: deposit,
             kmLimitPerDay: kmLimit,
             extraKmFee: extraKm,
-            ...(primaryImageUrl ? { primaryImageUrl } : {}),
+            imageUrls: ordered,
         });
         if (!car)
             return;
@@ -252,12 +271,12 @@ export default function OwnerVehicleNew() {
         })}
     </ol>
 
-    {step > 1 ? <p className="text-sm text-muted-gray">Chủ xe đại diện <span className="font-semibold text-charcoal">{ownerDb.owner.fullName}</span> • {subtitle}</p> : null}
+    {step > 1 ? <p className="text-sm text-muted-gray">Chủ xe đại diện <span className="font-semibold text-charcoal">{user?.fullName ?? "Chủ xe"}</span> • {subtitle}</p> : null}
 
     {step === 1 ? <StepOne form={form} cavet={cavet} inspection={inspection} onChange={set} onBrand={chooseBrand} onSegment={chooseSegment} onCity={chooseCity} onCavet={files => setCavet(files)} onInspection={setInspection}/> : null}
     {step === 2 ? <StepTwo form={form} onChange={set}/> : null}
     {step === 3 ? <StepThree form={form} dayPrice={dayPrice} weekend={weekend} fee={fee} onChange={set}/> : null}
-    {step === 4 ? <StepFour form={form} photos={photos} photoCount={photoCount} dayPrice={dayPrice} deposit={deposit} agreed={agreed} onAgree={setAgreed} onPhoto={addPhoto} onZoom={setZoom} hasCavet={cavet.length > 0} hasInspection={!!inspection}/> : null}
+    {step === 4 ? <StepFour form={form} photos={photos} photoCount={photoCount} dayPrice={dayPrice} deposit={deposit} agreed={agreed} onAgree={setAgreed} onPhoto={addPhoto} onZoom={setZoom} hasCavet={Boolean(cavet.trim())} hasInspection={Boolean(inspection.trim())}/> : null}
 
     {step === 1 && gaps.length ? <p className="text-sm text-muted-gray">{gaps.join(" ")}</p> : null}
     {draftNote ? <p className="text-sm font-semibold text-status-success-ink">{draftNote}</p> : null}
@@ -316,17 +335,15 @@ function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment, onCity
     </section>
     <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="text-base font-bold text-charcoal">Giấy tờ bắt buộc</h2>
-      <label className="cursor-pointer rounded-xl border border-dashed border-card-border p-3 text-sm">
+      <p className="text-xs text-muted-gray">Hệ thống lưu giấy tờ dạng đường dẫn (Google Drive, ảnh đã tải lên...). Có thể bổ sung sau khi gửi hồ sơ.</p>
+      <label className="rounded-xl border border-dashed border-card-border p-3 text-sm">
         <span className="font-bold text-charcoal">Giấy đăng ký xe (cavet)</span>
-        <span className="mt-2 block text-xs font-bold text-brand-accent">Chọn ảnh mặt trước và mặt sau</span>
-        <input type="file" accept="image/*,.pdf" multiple className="sr-only" onChange={event => onCavet(Array.from(event.target.files ?? []).slice(0, 2))}/>
-        <span className="mt-1 block text-xs text-muted-gray">{cavet.length ? cavet.map(file => file.name).join(", ") : "Chưa chọn tệp."}</span>
+        <input type="url" value={cavet} placeholder="https://..." onChange={event => onCavet(event.target.value)} className={`${fieldClass} mt-2`}/>
       </label>
-      <label className="cursor-pointer rounded-xl border border-dashed border-card-border p-3 text-sm">
+      <label className="rounded-xl border border-dashed border-card-border p-3 text-sm">
         <span className="font-bold text-charcoal">Sổ kiểm định an toàn</span>
-        <span className="mt-2 block text-xs font-bold text-brand-accent">Chọn tệp kiểm định</span>
-        <input type="file" accept="image/*,.pdf" className="sr-only" onChange={event => onInspection(event.target.files?.[0] ?? null)}/>
-        <span className="mt-1 block text-xs text-muted-gray">{inspection ? inspection.name : "Còn hạn tối thiểu 3 tháng khi niêm yết."}</span>
+        <input type="url" value={inspection} placeholder="https://..." onChange={event => onInspection(event.target.value)} className={`${fieldClass} mt-2`}/>
+        <span className="mt-1 block text-xs text-muted-gray">Còn hạn tối thiểu 3 tháng khi niêm yết.</span>
       </label>
       <div className="rounded-xl bg-status-green-bg px-3 py-3 text-xs leading-relaxed text-status-success-ink">
         <p className="font-bold">Bảo hiểm vật chất CarDB Care</p>
@@ -427,25 +444,21 @@ function StepFour({ form, photos, photoCount, dayPrice, deposit, agreed, onAgree
         <h2 className="text-base font-bold text-charcoal">Bộ ảnh niêm yết tiêu chuẩn</h2>
         <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-bold text-charcoal">{photoCount}/6 đã chọn</span>
       </div>
-      <p className="mt-1 text-xs text-muted-gray">Ảnh rõ, chụp ban ngày, không đóng watermark. Ảnh góc trước làm ảnh đại diện.</p>
+      <p className="mt-1 text-xs text-muted-gray">Dán đường dẫn ảnh (https://...). Ảnh góc trước làm ảnh đại diện, các ảnh còn lại hiển thị trong thư viện xe.</p>
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {photoSlots.map(slot => {
             const photo = photos[slot.id];
+            const valid = photo && isUrl(photo.url);
             return <div key={slot.id} className="overflow-hidden rounded-xl border border-card-border">
             <div className="relative flex h-28 items-center justify-center bg-bg-light">
-              {photo ? <img src={photo.preview} alt={slot.title} className="h-full w-full object-cover"/> : <span className="px-3 text-center text-xs text-muted-gray">{slot.hint}</span>}
+              {valid ? <img src={photo.url} alt={slot.title} className="h-full w-full object-cover"/> : <span className="px-3 text-center text-xs text-muted-gray">{slot.hint}</span>}
               {slot.id === "front" ? <span className="absolute left-2 top-2 rounded-full bg-brand-accent px-2 py-0.5 text-[10px] font-bold text-white">Ảnh đại diện</span> : null}
             </div>
             <div className="p-2">
               <p className="text-xs font-bold text-charcoal">{slot.title}</p>
-              <p className="text-[11px] text-muted-gray">{photo ? `${fileSize(photo.size)} • Đã chọn` : "Chưa có ảnh"}</p>
-              <div className="mt-2 flex gap-2">
-                <label className="cursor-pointer text-[11px] font-bold text-brand-accent">
-                  {photo ? "Thay ảnh" : "Tải ảnh"}
-                  <input type="file" accept="image/*" className="sr-only" onChange={event => onPhoto(slot.id, event.target.files?.[0])}/>
-                </label>
-                {photo ? <button type="button" className="text-[11px] font-bold text-charcoal" onClick={() => onZoom(photo.preview)}>Phóng to</button> : null}
-              </div>
+              <input type="url" value={photo?.url ?? ""} placeholder="https://..." onChange={event => onPhoto(slot.id, event.target.value)} className="mt-1 w-full rounded-lg border border-card-border px-2 py-1 text-[11px]"/>
+              {photo && !valid ? <p className="mt-1 text-[11px] text-on-error-container">Đường dẫn chưa hợp lệ.</p> : null}
+              {valid ? <button type="button" className="mt-1 text-[11px] font-bold text-charcoal" onClick={() => onZoom(photo.url)}>Phóng to</button> : null}
             </div>
           </div>;
         })}
@@ -474,11 +487,6 @@ function StepFour({ form, photos, photoCount, dayPrice, deposit, agreed, onAgree
     </aside>
   </div>;
 }
-function blobToDataUrl(preview) {
-    return fetch(preview).then(response => response.blob()).then(blob => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(blob);
-    }));
+function isUrl(value) {
+    return /^https?:\/\/\S+$/i.test(value.trim()) && value.trim().length <= 500;
 }

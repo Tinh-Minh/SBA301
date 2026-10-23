@@ -6,7 +6,9 @@ import com.carrental.dto.response.ReviewResponse;
 import com.carrental.entity.Customer;
 import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Review;
+import com.carrental.enums.OrderStatus;
 import com.carrental.exception.AppException;
+import com.carrental.service.OrderAccess;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.ReviewRepository;
@@ -27,6 +29,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final RentalOrderRepository rentalOrderRepository;
     private final CustomerRepository customerRepository;
+    private final OrderAccess orderAccess;
 
     @Override
     @Transactional
@@ -35,10 +38,34 @@ public class ReviewServiceImpl implements ReviewService {
                 request.getOrderId(), request.getReviewerId(), request.getRevieweeId(), request.getRating());
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
-            Customer reviewer = findCustomerOrThrow(request.getReviewerId());
-            Customer reviewee = findCustomerOrThrow(request.getRevieweeId());
+            Customer reviewer = orderAccess.requireUser();
+            orderAccess.requireSelf(request.getReviewerId());
+            if (order.getStatus() != OrderStatus.COMPLETED) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ đánh giá được đơn đã hoàn thành");
+            }
+            boolean renter = orderAccess.isRenter(order, reviewer);
+            boolean owner = orderAccess.isOwner(order, reviewer);
+            if (!renter && !owner) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe của đơn này được đánh giá");
+            }
+            Long otherPartyId;
+            if (renter) {
+                if (order.getCar() == null || order.getCar().getOwner() == null) {
+                    throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê chưa gắn chủ xe để đánh giá");
+                }
+                otherPartyId = order.getCar().getOwner().getId();
+            } else {
+                otherPartyId = order.getCustomer().getId();
+            }
+            if (otherPartyId.equals(reviewer.getId())) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Không thể tự đánh giá chính mình");
+            }
+            if (request.getRevieweeId() == null || !request.getRevieweeId().equals(otherPartyId)) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Người được đánh giá phải là bên còn lại của đơn");
+            }
+            Customer reviewee = findCustomerOrThrow(otherPartyId);
 
-            if (reviewRepository.existsByOrderIdAndReviewerId(request.getOrderId(), request.getReviewerId())) {
+            if (reviewRepository.existsByOrderIdAndReviewerId(request.getOrderId(), reviewer.getId())) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Bạn đã gửi đánh giá cho đơn thuê này rồi");
             }
 

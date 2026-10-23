@@ -4,7 +4,6 @@ import com.carrental.dto.request.CreateExtraFeeRequest;
 import com.carrental.dto.request.PayExtraFeeRequest;
 import com.carrental.dto.response.ExtraFeeResponse;
 import com.carrental.dto.response.PageResponse;
-import com.carrental.entity.Customer;
 import com.carrental.entity.ExtraFee;
 import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Transaction;
@@ -13,11 +12,11 @@ import com.carrental.enums.PaymentMethod;
 import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.TransactionType;
 import com.carrental.exception.AppException;
-import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.ExtraFeeRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.TransactionRepository;
 import com.carrental.service.ExtraFeeService;
+import com.carrental.service.OrderAccess;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -36,8 +35,8 @@ public class ExtraFeeServiceImpl implements ExtraFeeService {
 
     private final ExtraFeeRepository extraFeeRepository;
     private final RentalOrderRepository rentalOrderRepository;
-    private final CustomerRepository customerRepository;
     private final TransactionRepository transactionRepository;
+    private final OrderAccess orderAccess;
 
     @Override
     @Transactional
@@ -46,13 +45,11 @@ public class ExtraFeeServiceImpl implements ExtraFeeService {
                 request.getOrderId(), request.getFeeType(), request.getAmount());
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
+            orderAccess.requireOwnerOrAdmin(order);
+            orderAccess.requireSelf(request.getCreatedById());
             ExtraFee extraFee = request.toEntity();
             extraFee.setOrder(order);
-
-            if (request.getCreatedById() != null) {
-                Customer creator = customerRepository.findById(request.getCreatedById()).orElse(null);
-                extraFee.setCreatedBy(creator);
-            }
+            extraFee.setCreatedBy(orderAccess.requireUser());
 
             ExtraFee saved = extraFeeRepository.save(extraFee);
             log.info("Tạo phí phát sinh thành công id={}", saved.getId());
@@ -72,6 +69,7 @@ public class ExtraFeeServiceImpl implements ExtraFeeService {
         log.info("Thanh toán phí phát sinh id={}", extraFeeId);
         try {
             ExtraFee extraFee = findExtraFeeOrThrow(extraFeeId);
+            orderAccess.requireRenter(extraFee.getOrder());
             ExtraFeeStatus current = extraFee.getStatus();
             current.validateTransitionTo(ExtraFeeStatus.PAID);
 
@@ -117,6 +115,7 @@ public class ExtraFeeServiceImpl implements ExtraFeeService {
         log.info("Miễn trừ phí phát sinh id={}, note={}", extraFeeId, note);
         try {
             ExtraFee extraFee = findExtraFeeOrThrow(extraFeeId);
+            orderAccess.requireAdmin();
             ExtraFeeStatus current = extraFee.getStatus();
             current.validateTransitionTo(ExtraFeeStatus.WAIVED);
 
@@ -141,12 +140,19 @@ public class ExtraFeeServiceImpl implements ExtraFeeService {
     @Override
     @Transactional(readOnly = true)
     public ExtraFeeResponse getById(Long id) {
-        return ExtraFeeResponse.from(findExtraFeeOrThrow(id));
+        ExtraFee extraFee = findExtraFeeOrThrow(id);
+        orderAccess.requireParty(extraFee.getOrder());
+        return ExtraFeeResponse.from(extraFee);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ExtraFeeResponse> getPaged(Long orderId, String status, Pageable pageable) {
+        if (orderId != null) {
+            orderAccess.requireParty(findOrderOrThrow(orderId));
+        } else {
+            orderAccess.requireAdmin();
+        }
         Page<ExtraFee> page;
         if (orderId != null) {
             page = extraFeeRepository.findByOrderId(orderId, pageable);

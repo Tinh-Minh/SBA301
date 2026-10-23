@@ -1,15 +1,18 @@
 package com.carrental.service;
 
 import com.carrental.entity.Customer;
+import java.util.Optional;
 
 /**
- * Lấy người dùng đang gọi API.
- * Function 3 chỉ phụ thuộc vào interface này; Function 1 cung cấp bản cài đặt đọc từ JWT.
+ * Người dùng của request hiện tại, lấy từ JWT trong SecurityContext.
+ * Header X-User-Id không còn được dùng làm danh tính.
  */
 public interface CurrentUserService {
 
     /** @throws com.carrental.exception.UnauthorizedException nếu chưa đăng nhập */
     Customer getCurrentUser();
+
+    Optional<Customer> optionalCurrentUser();
 
     boolean isAdmin(Customer customer);
 }

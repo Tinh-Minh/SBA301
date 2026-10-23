@@ -26,6 +26,7 @@ function tripGroup(status) {
 export default function OwnerTrips() {
     const resource = useAsyncResource(() => orderService.listMine());
     const createHandover = useAsyncAction((orderId, input) => handoverService.create(orderId, input), resource.reload);
+    const confirmHandover = useAsyncAction(handoverService.confirm, resource.reload);
     const [filter, setFilter] = useState("all");
     const rows = (resource.data ?? []).filter(item => item.order.status === "CONFIRMED" || item.order.status === "ONGOING" || item.order.status === "COMPLETED");
     const visible = useMemo(() => rows.filter(item => filter === "all" || tripGroup(item.order.status) === filter), [rows, filter]);
@@ -46,7 +47,7 @@ export default function OwnerTrips() {
       <FilterBar value={filter} onChange={setFilter} options={filters.map(item => ({ ...item, label: `${item.label} (${item.id === "all" ? rows.length : rows.filter(row => tripGroup(row.order.status) === item.id).length})` }))}/>
       {visible.length === 0 ? <div className="rounded-2xl border border-card-border bg-white p-10 text-center text-sm text-muted-gray">Không có chuyến trong bộ lọc này.</div> : null}
       <div className="flex flex-col gap-4">
-        {visible.map(item => <TripCard key={item.order.id} item={item} busy={createHandover.running} error={createHandover.error} onCreate={input => void createHandover.run(item.order.id, input)}/>)}
+        {visible.map(item => <TripCard key={item.order.id} item={item} busy={createHandover.running || confirmHandover.running} error={createHandover.error ?? confirmHandover.error} onCreate={input => void createHandover.run(item.order.id, input)} onConfirm={id => void confirmHandover.run(id)}/>)}
       </div>
     </> : null}
   </div>;
@@ -58,7 +59,7 @@ function Summary({ label, value, hint }) {
     <p className="text-xs text-muted-gray">{hint}</p>
   </div>;
 }
-function TripCard({ item, busy, error, onCreate }) {
+function TripCard({ item, busy, error, onCreate, onConfirm }) {
     const { order, car, renter, handovers } = item;
     const period = formatRentalPeriod(order);
     const next = nextHandoverType(handovers);
@@ -66,6 +67,7 @@ function TripCard({ item, busy, error, onCreate }) {
     const returned = findHandover(handovers, "RETURN");
     const draft = next ? findHandover(handovers, next) : undefined;
     const waitingOnRenter = !!draft?.ownerConfirmedAt && !draft.renterConfirmedAt;
+    const waitingOnOwner = !!draft?.renterConfirmedAt && !draft.ownerConfirmedAt;
     const [open, setOpen] = useState(false);
     const [odometer, setOdometer] = useState(pickup ? String(pickup.odometerKm) : "");
     const [fuel, setFuel] = useState(pickup ? String(pickup.fuelPercent) : "100");
@@ -100,7 +102,12 @@ function TripCard({ item, busy, error, onCreate }) {
         </div>
         {pickup && !returned ? <p className="text-sm text-charcoal">{fuelLabel} lúc nhận: {pickup.fuelPercent}% • ODO {pickup.odometerKm.toLocaleString("vi-VN")} km{pickup.conditionNote ? ` • ${pickup.conditionNote}` : ""}</p> : null}
         {waitingOnRenter ? <p className="text-sm font-semibold text-charcoal">Biên bản {next === "PICKUP" ? "C10-A" : "C10-B"} đã lưu. Đang chờ khách thuê xác nhận.</p> : null}
-        {next && !waitingOnRenter ? <div className="flex flex-col gap-2">
+        {waitingOnOwner ? <div className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-status-amber-bg p-3">
+          <p className="text-sm font-semibold text-charcoal">Khách thuê đã lập biên bản {next === "PICKUP" ? "C10-A" : "C10-B"}: ODO {draft.odometerKm.toLocaleString("vi-VN")} km • {fuelLabel} {draft.fuelPercent}%{draft.conditionNote ? ` • ${draft.conditionNote}` : ""}</p>
+          <button type="button" disabled={busy} onClick={() => onConfirm(draft.id)} className="inline-flex w-fit items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white disabled:opacity-60"><Icon name="task_alt" className="text-[18px]"/>Xác nhận biên bản</button>
+          {error ? <p className="text-sm text-on-error-container">{error.message}</p> : null}
+        </div> : null}
+        {next && !waitingOnRenter && !waitingOnOwner ? <div className="flex flex-col gap-2">
           <button type="button" onClick={() => setOpen(value => !value)} className="inline-flex w-fit items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white hover:bg-primary-hover">
             <Icon name="assignment_turned_in" className="text-[18px]"/>
             {next === "PICKUP" ? "Tạo biên bản nhận xe (C10-A)" : "Tạo biên bản trả xe (C10-B)"}

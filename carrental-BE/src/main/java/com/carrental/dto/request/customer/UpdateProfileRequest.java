@@ -10,9 +10,15 @@ public final class UpdateProfileRequest {
     private boolean fullNamePresent;
     private boolean dateOfBirthPresent;
     private boolean addressPresent;
+    private boolean emailPresent;
+    private boolean phonePresent;
+    private boolean avatarUrlPresent;
     private String fullName;
     private String dateOfBirth;
     private String address;
+    private String email;
+    private String phone;
+    private String avatarUrl;
 
     @JsonProperty("fullName")
     public void setFullName(JsonNode value) {
@@ -35,6 +41,27 @@ public final class UpdateProfileRequest {
         address = strictText(value);
     }
 
+    @JsonProperty("email")
+    public void setEmail(JsonNode value) {
+        rejectDuplicate(emailPresent);
+        emailPresent = true;
+        email = strictText(value);
+    }
+
+    @JsonProperty("phone")
+    public void setPhone(JsonNode value) {
+        rejectDuplicate(phonePresent);
+        phonePresent = true;
+        phone = strictText(value);
+    }
+
+    @JsonProperty("avatarUrl")
+    public void setAvatarUrl(JsonNode value) {
+        rejectDuplicate(avatarUrlPresent);
+        avatarUrlPresent = true;
+        avatarUrl = strictText(value);
+    }
+
     @JsonAnySetter
     public void rejectUnknownField(String ignoredName, JsonNode ignoredValue) {
         throw new IllegalArgumentException("Unknown customer profile field");
@@ -44,12 +71,19 @@ public final class UpdateProfileRequest {
     public boolean fullNameWasProvided() { return fullNamePresent; }
     public boolean dateOfBirthWasProvided() { return dateOfBirthPresent; }
     public boolean addressWasProvided() { return addressPresent; }
+    public boolean emailWasProvided() { return emailPresent; }
+    public boolean phoneWasProvided() { return phonePresent; }
+    public boolean avatarUrlWasProvided() { return avatarUrlPresent; }
     public String getFullName() { return fullName; }
     public String getDateOfBirth() { return dateOfBirth; }
     public String getAddress() { return address; }
+    public String getEmail() { return email; }
+    public String getPhone() { return phone; }
+    public String getAvatarUrl() { return avatarUrl; }
 
     public boolean hasAnyAllowedField() {
-        return fullNamePresent || dateOfBirthPresent || addressPresent;
+        return fullNamePresent || dateOfBirthPresent || addressPresent
+                || emailPresent || phonePresent || avatarUrlPresent;
     }
 
     private static String strictText(JsonNode value) {

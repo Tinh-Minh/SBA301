@@ -1,47 +1,141 @@
 "use client";
-import { useMemo, useState } from "react";
-import { AdminPageHeader, StatusPill } from "@/components/admin/admin-ui";
+import { useCallback, useState } from "react";
+import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/admin-ui";
 import { Money } from "@/components/owner/money";
+import { useAsyncAction, useAsyncResource } from "@/hooks/use-async-resource";
+import { formatDateTime } from "@/lib/datetime";
+import { formatMoney, paymentMethodLabels, transactionStatusLabels, transactionTypeLabels } from "@/lib/labels";
 import { calculatePayout } from "@/lib/owner/finance";
-import { loadAdminSeed } from "@/services/mock/admin-db";
+import { request, toPage } from "@/services/http";
+import { adminOrderService, adminPayoutService } from "@/services/admin.service";
+
+const tabs = [{ id: "payouts", label: "Chi trả chủ xe" }, { id: "transactions", label: "Giao dịch thanh toán" }];
+const payoutTone = { PENDING: "warning", PROCESSING: "info", PAID: "success", FAILED: "danger" };
+const payoutLabel = { PENDING: "Chờ xử lý", PROCESSING: "Đang chuyển", PAID: "Đã chi trả", FAILED: "Thất bại" };
+const txTone = { PENDING: "warning", SUCCESS: "success", FAILED: "danger" };
 
 export default function AdminPayouts() {
-    const seed = useMemo(() => loadAdminSeed(), []);
-    const [rows, setRows] = useState(seed.payouts);
-    const orders = seed.orders;
-
-    function approve(id) {
-        setRows(list => list.map(row => row.id === id ? { ...row, status: "PAID" } : row));
-    }
-
+    const [tab, setTab] = useState("payouts");
     return <div className="flex flex-col gap-5">
-    <AdminPageHeader code="A06" title="Giao dịch & Chi trả" description="Phí nền tảng 10% trên tiền thuê. Thực nhận chủ xe bằng 90%."/>
-    <p className="rounded-2xl border border-[#E9E9E7] bg-white px-4 py-3 text-sm text-[#292929]">Đơn CDB-ORD-20261026-904: tiền thuê 3.700.000 đ, phí 370.000 đ, thực nhận 3.330.000 đ. Cọc 15.000.000 đ do chủ xe thu tại điểm giao.</p>
+    <AdminPageHeader code="A06" title="Giao dịch & Chi trả" description="Phí nền tảng tính trên tiền thuê theo tỷ lệ hoa hồng của đơn. Chủ xe nhận phần còn lại sau khi chuyến hoàn thành."/>
+    <Tabs items={tabs} value={tab} onChange={setTab}/>
+    {tab === "payouts" ? <Payouts/> : <Transactions/>}
+  </div>;
+}
+
+function Payouts() {
+    const load = useCallback(async () => {
+        const [payouts, completed] = await Promise.all([adminPayoutService.listAll(), adminOrderService.listAll("COMPLETED")]);
+        const paidOrders = new Set(payouts.filter(payout => payout.status !== "FAILED").map(payout => payout.orderId));
+        return { payouts, awaiting: completed.filter(order => !paidOrders.has(order.id)) };
+    }, []);
+    const data = useAsyncResource(load, "payouts");
+    const [creating, setCreating] = useState(null);
+    const [processing, setProcessing] = useState(null);
+    if (!data.data)
+        return <AdminState loading={data.loading} error={data.error} label="chi trả" onRetry={data.reload}/>;
+    const { payouts, awaiting } = data.data;
+    return <>
+    <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+      <h2 className="text-base font-bold text-[#292929]">Đơn hoàn thành chờ tạo chi trả ({awaiting.length})</h2>
+      {!awaiting.length ? <p className="mt-2 text-sm text-[#666666]">Mọi đơn hoàn thành đều đã có lệnh chi trả.</p> : null}
+      <ul className="mt-3 flex flex-col gap-2">
+        {awaiting.map(order => {
+                const money = calculatePayout(order);
+                return <li key={order.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9E9E7] p-3 text-sm">
+            <div>
+              <p className="font-mono text-xs font-bold text-[#FC6C26]">{order.orderCode}</p>
+              <p className="font-semibold">{order.carName} • chủ xe {order.ownerName}</p>
+              <p className="text-xs text-[#666666]">Tiền thuê <Money amount={money.grossAmount}/> • phí {order.commissionRate}% <Money amount={money.platformFee}/> • thực nhận <b><Money amount={money.netAmount}/></b></p>
+            </div>
+            <button type="button" onClick={() => setCreating(order)} className="rounded-lg bg-[#FC6C26] px-3 py-1.5 text-xs font-bold text-white">Tạo lệnh chi trả</button>
+          </li>;
+            })}
+      </ul>
+    </section>
     <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
       <table className="min-w-full text-left text-sm">
-        <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã giao dịch", "Mã đơn", "Người nhận", "Ngân hàng", "Gross", "Phí 10%", "Thực nhận", "Trạng thái"].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
+        <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã", "Mã đơn", "Người nhận", "Gross", "Phí", "Thực nhận", "Ngày tạo", "Trạng thái", ""].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
         <tbody>
-          {rows.map(row => {
-                const order = orders.find(item => item.id === row.orderId);
-                const money = calculatePayout(order);
-                return <tr key={row.id} className="border-t border-[#E9E9E7]">
-              <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold">{row.txnCode}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#FC6C26]">{order.orderCode}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-semibold">{order.owner}</td>
-              <td className="whitespace-nowrap px-4 py-3">{order.bank}</td>
-              <td className="whitespace-nowrap px-4 py-3"><Money amount={money.grossAmount}/></td>
-              <td className="whitespace-nowrap px-4 py-3"><Money amount={money.platformFee}/></td>
-              <td className="whitespace-nowrap px-4 py-3 font-bold"><Money amount={money.netAmount}/></td>
-              <td className="px-4 py-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <StatusPill tone={row.status === "PAID" ? "success" : "warning"}>{row.status === "PAID" ? "PAID" : "PENDING"}</StatusPill>
-                  {row.status === "PENDING" ? <button type="button" onClick={() => approve(row.id)} className="whitespace-nowrap rounded-lg bg-[#FC6C26] px-3 py-1.5 text-xs font-bold text-white">✓ Duyệt chi trả nhanh ➔</button> : null}
-                </div>
-              </td>
-            </tr>;
-            })}
+          {payouts.map(row => <tr key={row.id} className="border-t border-[#E9E9E7]">
+            <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold">PO-{row.id}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#FC6C26]">{row.orderCode}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-semibold">{row.recipientName}</td>
+            <td className="whitespace-nowrap px-4 py-3"><Money amount={row.grossAmount}/></td>
+            <td className="whitespace-nowrap px-4 py-3"><Money amount={row.platformFee}/></td>
+            <td className="whitespace-nowrap px-4 py-3 font-bold"><Money amount={row.netAmount}/></td>
+            <td className="whitespace-nowrap px-4 py-3 text-xs">{formatDateTime(row.createdAt)}{row.paidAt ? <><br/>Trả: {formatDateTime(row.paidAt)}</> : null}</td>
+            <td className="px-4 py-3"><StatusPill tone={payoutTone[row.status]}>{payoutLabel[row.status] ?? row.status}</StatusPill></td>
+            <td className="whitespace-nowrap px-4 py-3 text-right">{row.status === "PENDING" || row.status === "PROCESSING" ? <button type="button" onClick={() => setProcessing(row)} className="rounded-lg bg-[#292929] px-3 py-1.5 text-xs font-bold text-white">Xử lý</button> : null}</td>
+          </tr>)}
+          {!payouts.length ? <tr><td colSpan={9} className="px-4 py-6 text-center text-[#666666]">Chưa có lệnh chi trả.</td></tr> : null}
         </tbody>
       </table>
     </div>
-  </div>;
+    {creating ? <CreatePayout order={creating} onClose={() => setCreating(null)} onDone={() => { setCreating(null); data.reload(); }}/> : null}
+    {processing ? <ProcessPayout payout={processing} onClose={() => setProcessing(null)} onDone={() => { setProcessing(null); data.reload(); }}/> : null}
+  </>;
+}
+
+function CreatePayout({ order, onClose, onDone }) {
+    const money = calculatePayout(order);
+    const [note, setNote] = useState(`Chi trả đơn ${order.orderCode}`);
+    const create = useAsyncAction(() => adminPayoutService.create({ orderId: order.id, recipientId: order.ownerId, bankAccountId: null, ...money, note }), onDone);
+    return <AdminDialog title={`Chi trả đơn ${order.orderCode}`} onClose={onClose}>
+    <div className="flex flex-col gap-3 text-sm">
+      <p>Người nhận: <b>{order.ownerName}</b> (#{order.ownerId})</p>
+      <p>Gross <Money amount={money.grossAmount}/> − phí <Money amount={money.platformFee}/> = <b><Money amount={money.netAmount}/></b></p>
+      <p className="text-xs text-[#666666]">Hệ thống chuyển vào tài khoản ngân hàng mặc định mà chủ xe đã khai báo.</p>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-[#666666]">Ghi chú<input value={note} onChange={event => setNote(event.target.value)} className={adminInput}/></label>
+      {create.error ? <p className="text-[#B91C1C]">{create.error.message}</p> : null}
+      <PrimaryButton disabled={create.running} onClick={() => void create.run()}>Tạo lệnh chi trả</PrimaryButton>
+    </div>
+  </AdminDialog>;
+}
+
+function ProcessPayout({ payout, onClose, onDone }) {
+    const [note, setNote] = useState("");
+    const process = useAsyncAction((status) => adminPayoutService.process(payout.id, status, note), onDone);
+    return <AdminDialog title={`Xử lý chi trả PO-${payout.id}`} onClose={onClose}>
+    <div className="flex flex-col gap-3 text-sm">
+      <p>{payout.recipientName} • thực nhận <b>{formatMoney(payout.netAmount)}</b></p>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-[#666666]">Ghi chú / mã chuyển khoản<input value={note} onChange={event => setNote(event.target.value)} className={adminInput}/></label>
+      {process.error ? <p className="text-[#B91C1C]">{process.error.message}</p> : null}
+      <div className="grid grid-cols-3 gap-2">
+        {payout.status === "PENDING" ? <button type="button" disabled={process.running} onClick={() => void process.run("PROCESSING")} className="rounded-xl border border-[#E9E9E7] px-3 py-2 font-bold">Đang chuyển</button> : <span/>}
+        <button type="button" disabled={process.running} onClick={() => void process.run("PAID")} className="rounded-xl bg-[#047857] px-3 py-2 font-bold text-white">Đã chi trả</button>
+        <button type="button" disabled={process.running} onClick={() => void process.run("FAILED")} className="rounded-xl border border-[#EF4444] px-3 py-2 font-bold text-[#EF4444]">Thất bại</button>
+      </div>
+    </div>
+  </AdminDialog>;
+}
+
+function Transactions() {
+    const [page, setPage] = useState(0);
+    const [status, setStatus] = useState("");
+    const load = useCallback(async () => toPage(await request("/api/transactions", { query: { status: status || undefined, page, size: 20, sort: "id,desc" } })), [page, status]);
+    const list = useAsyncResource(load, `${status}|${page}`);
+    const rows = list.data?.content ?? [];
+    return <>
+    <Tabs items={[{ id: "", label: "Tất cả" }, { id: "SUCCESS", label: "Thành công" }, { id: "PENDING", label: "Đang chờ" }, { id: "FAILED", label: "Thất bại" }]} value={status} onChange={id => { setStatus(id); setPage(0); }}/>
+    <AdminState loading={list.loading && !list.data} error={list.error} empty={list.data && !rows.length} label="giao dịch" onRetry={list.reload}/>
+    {rows.length ? <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
+      <table className="min-w-full text-left text-sm">
+        <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã GD", "Mã đơn", "Loại", "Phương thức", "Số tiền", "Mã cổng TT", "Thời gian", "Trạng thái"].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
+        <tbody>
+          {rows.map(tx => <tr key={tx.id} className="border-t border-[#E9E9E7]">
+            <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold">TX-{tx.id}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#FC6C26]">{tx.orderCode}</td>
+            <td className="whitespace-nowrap px-4 py-3">{transactionTypeLabels[tx.transactionType] ?? tx.transactionType}</td>
+            <td className="whitespace-nowrap px-4 py-3">{paymentMethodLabels[tx.method] ?? tx.method}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-semibold">{formatMoney(tx.amount)}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{tx.providerRef ?? "—"}</td>
+            <td className="whitespace-nowrap px-4 py-3 text-xs">{formatDateTime(tx.paidAt ?? tx.createdAt)}</td>
+            <td className="px-4 py-3"><StatusPill tone={txTone[tx.status]}>{transactionStatusLabels[tx.status] ?? tx.status}</StatusPill></td>
+          </tr>)}
+        </tbody>
+      </table>
+    </div> : null}
+    <Pager page={page} totalPages={list.data?.totalPages} onPage={setPage}/>
+  </>;
 }

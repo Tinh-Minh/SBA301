@@ -14,6 +14,7 @@ import com.carrental.repository.BankAccountRepository;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.PayoutRepository;
 import com.carrental.repository.RentalOrderRepository;
+import com.carrental.service.OrderAccess;
 import com.carrental.service.PayoutService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,7 @@ public class PayoutServiceImpl implements PayoutService {
     private final RentalOrderRepository rentalOrderRepository;
     private final CustomerRepository customerRepository;
     private final BankAccountRepository bankAccountRepository;
+    private final OrderAccess orderAccess;
 
     @Override
     @Transactional
@@ -39,6 +41,7 @@ public class PayoutServiceImpl implements PayoutService {
         log.info("Tạo yêu cầu chi trả orderId={}, recipientId={}, grossAmount={}",
                 request.getOrderId(), request.getRecipientId(), request.getGrossAmount());
         try {
+            orderAccess.requireAdmin();
             RentalOrder order = findOrderOrThrow(request.getOrderId());
             Customer recipient = findCustomerOrThrow(request.getRecipientId());
 
@@ -69,6 +72,7 @@ public class PayoutServiceImpl implements PayoutService {
     public PayoutResponse processPayout(Long payoutId, ProcessPayoutRequest request) {
         log.info("Cập nhật trạng thái chi trả payoutId={}, nextStatus={}", payoutId, request.getStatus());
         try {
+            orderAccess.requireAdmin();
             Payout payout = findPayoutOrThrow(payoutId);
             request.applyTo(payout);
 
@@ -87,12 +91,22 @@ public class PayoutServiceImpl implements PayoutService {
     @Override
     @Transactional(readOnly = true)
     public PayoutResponse getById(Long id) {
-        return PayoutResponse.from(findPayoutOrThrow(id));
+        Payout payout = findPayoutOrThrow(id);
+        Customer user = orderAccess.requireUser();
+        boolean recipient = payout.getRecipient() != null && user.getId().equals(payout.getRecipient().getId());
+        if (!orderAccess.isAdmin(user) && !recipient) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Bạn không được xem khoản chi trả này");
+        }
+        return PayoutResponse.from(payout);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<PayoutResponse> getPaged(Long recipientId, Long orderId, String status, Pageable pageable) {
+        Customer user = orderAccess.requireUser();
+        if (!orderAccess.isAdmin(user) && (recipientId == null || !recipientId.equals(user.getId()))) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ xem được khoản chi trả của mình");
+        }
         Page<Payout> page;
         if (recipientId != null) {
             page = payoutRepository.findByRecipientId(recipientId, pageable);
