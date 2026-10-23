@@ -159,7 +159,7 @@ export default function History() {
 
     <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
     <div className="flex flex-wrap items-center gap-2">
-    <button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Xem đánh giá 5.0" data-route="/danh-gia">
+    <button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Xem đánh giá 5.0" data-route="/reviews">
     <span className="material-symbols-outlined text-amber-500 text-[18px]" style={{ "fontVariationSettings": "'FILL' 1" }}>{"star"}</span>
     <span className="">{"Xem đánh giá 5.0"}</span>
     </button>
@@ -167,12 +167,12 @@ export default function History() {
     <span className="material-symbols-outlined text-outline text-[18px]">{"receipt"}</span>
     <span className="">{"Tải hóa đơn VAT"}</span>
     </button>
-    <button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Biên bản trả xe C10-B" data-route="/ban-giao/tra-xe">
+    <button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Biên bản trả xe C10-B" data-route="/handover/return">
     <span className="material-symbols-outlined text-outline text-[18px]">{"description"}</span>
     <span className="">{"Biên bản trả xe C10-B"}</span>
     </button>
     </div>
-    <button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này" data-route="/xe/vinfast-vf8-plus-2024">
+    <button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này" data-route="/cars/vinfast-vf8-plus-2024">
     <span className="material-symbols-outlined text-[18px]">{"replay"}</span>
     <span className="">{"Đặt lại xe này"}</span>
     </button>
@@ -240,7 +240,7 @@ export default function History() {
 
     <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
     <div className="flex flex-wrap items-center gap-2">
-    <button className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100/80 text-amber-900 font-label-md text-label-md flex items-center gap-1.5 transition-colors font-semibold" type="button" aria-label="★ Viết đánh giá" data-route="/danh-gia">
+    <button className="px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100/80 text-amber-900 font-label-md text-label-md flex items-center gap-1.5 transition-colors font-semibold" type="button" aria-label="★ Viết đánh giá" data-route="/reviews">
     <span className="material-symbols-outlined text-amber-600 text-[18px]">{"rate_review"}</span>
     <span className="">{"★ Viết đánh giá"}</span>
     </button>
@@ -249,7 +249,7 @@ export default function History() {
     <span className="">{"Tải hóa đơn VAT"}</span>
     </button>
     </div>
-    <button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này" data-route="/xe/vinfast-vf8-plus-2024">
+    <button className="px-4 py-2 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary font-label-md text-label-md font-semibold flex items-center gap-1.5 shadow-sm transition-all active:scale-[0.99]" type="button" aria-label="Đặt lại xe này" data-route="/cars/vinfast-vf8-plus-2024">
     <span className="material-symbols-outlined text-[18px]">{"replay"}</span>
     <span className="">{"Đặt lại xe này"}</span>
     </button>
@@ -314,7 +314,7 @@ export default function History() {
     </div>
 
     <div className="flex flex-wrap items-center justify-between gap-space-sm pt-space-xs">
-    <button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Chính sách hoàn tiền" data-route="/chinh-sach-huy-chuyen">
+    <button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md text-label-md flex items-center gap-1.5 transition-colors" type="button" aria-label="Chính sách hoàn tiền" data-route="/cancellation-policy">
     <span className="material-symbols-outlined text-outline text-[18px]">{"policy"}</span>
     <span className="">{"Chính sách hoàn tiền"}</span>
     </button>

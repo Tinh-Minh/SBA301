@@ -42,11 +42,11 @@ function Confirm() {
     const detail = useAsyncResource(load, `${slotId}|${start}|${end}|${type}|${voucherQuery}`);
     const create = useAsyncAction(async () => {
         const order = await rentalService.create({ carSlotId: slotId, rentalType: type, startTime: new Date(start), endTime: new Date(end), voucherCode: voucherQuery, note });
-        router.push(`/don-thue/${order.id}?created=1`);
+        router.push(`/orders/${order.id}?created=1`);
     });
     return <div className="flex flex-col gap-5">
     <div>
-      <Link href={slotId ? `/xe/${detail.data?.car.id ?? ""}?slotId=${slotId}` : "/kham-pha-xe"} className="text-sm font-bold text-[#FC6C26]">← Quay lại xe</Link>
+      <Link href={slotId ? `/cars/${detail.data?.car.id ?? ""}?slotId=${slotId}` : "/explore"} className="text-sm font-bold text-[#FC6C26]">← Quay lại xe</Link>
       <h1 className="mt-2 text-2xl font-bold text-[#292929]">Xác nhận yêu cầu thuê xe</h1>
       <p className="mt-1 text-sm text-[#666666]">Đơn ở trạng thái chờ chủ xe xác nhận trong 24 giờ. Tiền thuê thanh toán sau khi được duyệt.</p>
     </div>

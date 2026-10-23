@@ -13,16 +13,16 @@ const activityTone = {
     payment: "border-blue-200 bg-blue-light text-brand-accent",
 };
 function StatCard({ label, value, hint, pill, icon, iconClass }) {
-    return <div className="flex items-start justify-between gap-4 rounded-2xl border border-card-border bg-white p-5 shadow-sm transition-colors hover:border-gray-300">
+    return <div className="flex h-full items-start justify-between gap-3 rounded-2xl border border-card-border bg-white p-5 shadow-sm transition-colors hover:border-gray-300">
     <div className="flex min-w-0 flex-1 flex-col">
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-        <span className="whitespace-nowrap text-[11px] font-bold uppercase tracking-wide text-muted-gray">{label}</span>
+      <span className="truncate text-[11px] font-bold uppercase tracking-wide text-muted-gray">{label}</span>
+      <div className="mt-2 flex h-6 items-center">
         {pill ? <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium ${pill.className}`}>{pill.text}</span> : null}
       </div>
-      <span className="mt-2 text-[26px] font-bold leading-none tracking-tight text-charcoal">{value}</span>
-      <span className="mt-1.5 text-xs leading-snug text-muted-gray">{hint}</span>
+      <span className="text-[26px] font-bold leading-none tracking-tight text-charcoal">{value}</span>
+      <span className="mt-1.5 min-h-10 text-xs leading-snug text-muted-gray">{hint}</span>
     </div>
-    <div className={`mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-xl border ${iconClass}`}>
+    <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl border ${iconClass}`}>
       <Icon name={icon} className="text-[22px]"/>
     </div>
   </div>;
@@ -154,7 +154,7 @@ export default function OwnerDashboard() {
       </div>
     </div>
 
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard label="Xe đã đăng" value={`${data.totalCars} xe`} hint="Tổng phương tiện sở hữu" icon="directions_car" iconClass="border-card-border bg-bg-light text-charcoal"/>
       <StatCard label="Xe đã duyệt" value={`${data.approvedCars} xe`} hint="Đủ điều kiện niêm yết" pill={{ text: "Đang mở lịch", className: "border-emerald-200 bg-emerald-light/60 text-emerald-accent" }} icon="verified" iconClass="border-emerald-200 bg-status-green-bg text-emerald-accent"/>
       <StatCard label="Yêu cầu chờ" value={`${data.pendingOrders} yêu cầu`} hint="Cần chủ xe phản hồi" pill={{ text: "Cần xử lý", className: "border-amber-200 bg-status-amber-bg text-status-amber-dark" }} icon="pending_actions" iconClass="border-amber-200 bg-status-amber-bg text-status-amber-dark"/>
@@ -268,7 +268,7 @@ export default function OwnerDashboard() {
             <p className="font-medium leading-normal text-charcoal">Doanh thu được giữ an toàn và chi trả tự động sau khi hoàn tất trả xe.</p>
           </div>
         </div>
-        <Link href="/tai-khoan/ngan-hang" className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-card-border bg-white px-4 py-2.5 text-center text-xs font-medium text-charcoal shadow-sm transition-all hover:border-brand-accent hover:text-brand-accent">
+        <Link href="/account/bank" className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-card-border bg-white px-4 py-2.5 text-center text-xs font-medium text-charcoal shadow-sm transition-all hover:border-brand-accent hover:text-brand-accent">
           <Icon name="account_balance" className="text-[18px]"/>
           Quản lý tài khoản nhận tiền
         </Link>

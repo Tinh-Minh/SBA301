@@ -76,12 +76,24 @@ const photoSlots = [
     { id: "trunk", title: "Cốp xe", hint: "Khoang hành lý" },
 ];
 const cancelPolicies = ["Hủy miễn phí trước 24 giờ", "Hủy miễn phí trước 12 giờ", "Hủy miễn phí trước 48 giờ"];
+const carTypes = [
+    { id: "SUV", label: "SUV" },
+    { id: "SEDAN", label: "Sedan" },
+    { id: "HATCHBACK", label: "Hatchback" },
+    { id: "MPV", label: "MPV" },
+    { id: "PICKUP", label: "Bán tải" },
+    { id: "LUXURY", label: "Hạng sang" },
+    { id: "OTHER", label: "Khác" },
+];
+const OTHER = "__other__";
 const initial = {
     brand: "VinFast",
     model: "VF 9 Plus AWD",
     licensePlate: "",
     manufactureYear: "2024",
     segment: segments[0].id,
+    customSegment: "",
+    carType: "SUV",
     city: cities[0],
     area: areas[cities[0]][0],
     pickupAddress: "",
@@ -116,6 +128,22 @@ function Field({ label, children }) {
     {label}
     {children}
   </label>;
+}
+function listed(options) {
+    return options.map(item => typeof item === "string" ? { value: item, label: item } : item);
+}
+function ChoiceSelect({ value, options, onPick, onType, placeholder, inputMode, maxLength }) {
+    const items = listed(options);
+    const known = items.some(item => item.value === value);
+    const shown = known ? value : OTHER;
+    const type = onType ?? onPick;
+    return <>
+    <select className={fieldClass} value={shown} onChange={event => onPick(event.target.value === OTHER ? "" : event.target.value)}>
+      {items.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+      <option value={OTHER}>Khác — tự nhập</option>
+    </select>
+    {shown === OTHER ? <input className={`${fieldClass} normal-case`} value={value} placeholder={placeholder} inputMode={inputMode} maxLength={maxLength} onChange={event => type(event.target.value)}/> : null}
+  </>;
 }
 export default function OwnerVehicleNew() {
     const router = useRouter();
@@ -160,24 +188,38 @@ export default function OwnerVehicleNew() {
     const extraKm = amount(form.extraKmFee);
     const fee = dayPrice ? calculatePlatformFee(dayPrice, 10) : 0;
     const photoCount = Object.keys(photos).length;
-    const identityReady = Boolean(form.brand.trim() && form.model.trim() && form.licensePlate.trim().length >= 4 && form.pickupAddress.trim());
+    const year = Number(form.manufactureYear);
+    const yearReady = Number.isInteger(year) && year >= 1990 && year <= 2100;
+    const seatCount = Number(form.seats);
+    const seatsReady = Number.isInteger(seatCount) && seatCount >= 1 && seatCount <= 60;
+    const identityReady = Boolean(form.brand.trim() && form.model.trim() && form.city.trim() && yearReady && form.licensePlate.trim().length >= 4 && form.pickupAddress.trim() && (form.segment !== OTHER || form.carType));
     const papersReady = [cavet, inspection].every(url => !url.trim() || isUrl(url));
     const priceReady = dayPrice !== null && dayPrice > 0 && weekend !== null && weekend > 0 && deposit !== null && kmLimit !== null && kmLimit > 0 && extraKm !== null;
-    const ready = [identityReady, true, priceReady, agreed];
+    const ready = [identityReady, seatsReady, priceReady, agreed];
     const gaps = [
         form.licensePlate.trim().length < 4 ? "Biển số cần ít nhất 4 ký tự." : "",
         !form.pickupAddress.trim() ? "Chưa nhập địa chỉ bãi xe." : "",
         !papersReady ? "Link giấy tờ phải bắt đầu bằng http:// hoặc https://." : "",
     ].filter(Boolean);
     function chooseSegment(id) {
+        if (id === OTHER) {
+            set({ segment: OTHER, carType: form.carType || "OTHER" });
+            return;
+        }
         const next = segments.find(item => item.id === id) ?? segments[0];
-        set({ segment: id, seats: next.seats, fuelType: next.fuel });
+        set({ segment: id, customSegment: "", carType: next.carType, seats: next.seats, fuelType: next.fuel });
     }
     function chooseBrand(brand) {
-        set({ brand, model: modelsByBrand[brand]?.[0] ?? "" });
+        if (brand === OTHER)
+            set({ brand: "", model: "" });
+        else
+            set({ brand, model: modelsByBrand[brand]?.[0] ?? "" });
     }
     function chooseCity(city) {
-        set({ city, area: areas[city][0] });
+        if (areas[city])
+            set({ city, area: areas[city][0] });
+        else
+            set({ city, area: "" });
     }
     function addPhoto(id, url) {
         setPhotos(current => {
@@ -209,19 +251,20 @@ export default function OwnerVehicleNew() {
             form.rangeKm ? `Tầm vận hành: ${form.rangeKm} km` : "",
             weekend ? `Giá cuối tuần: ${formatVnd(weekend)}` : "",
             form.lateFee ? `Phí trễ giờ: ${formatVnd(Number(form.lateFee))}/giờ` : "",
+            form.segment === OTHER && form.customSegment.trim() ? `Phân khúc: ${form.customSegment.trim()}` : "",
             form.cancellation,
         ].filter(Boolean).join(". ");
         const car = await create.run({
             licensePlate: form.licensePlate.trim(),
             brand: form.brand.trim(),
             model: form.model.trim(),
-            manufactureYear: Number(form.manufactureYear),
-            carType: segment.carType,
-            seats: Number(form.seats),
+            manufactureYear: year,
+            carType: form.segment === OTHER ? form.carType : segment.carType,
+            seats: seatCount,
             transmission: form.transmission,
             fuelType: form.fuelType,
-            city: form.city,
-            district: form.area,
+            city: form.city.trim(),
+            district: form.area.trim(),
             pickupAddress: form.pickupAddress.trim(),
             description: details,
             features: JSON.stringify(form.amenities),
@@ -301,31 +344,39 @@ export default function OwnerVehicleNew() {
 }
 function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment, onCity, onCavet, onInspection }) {
     const models = modelsByBrand[form.brand] ?? [];
+    const areaOptions = areas[form.city] ?? [];
     return <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
     <section className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="flex items-center gap-2 text-base font-bold text-charcoal"><Icon name="directions_car" className="text-[20px] text-brand-accent"/> Thông tin định danh phương tiện</h2>
       <p className="mt-1 text-xs text-muted-gray">Nhập đúng biển số và địa chỉ trên giấy đăng ký xe.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <Field label="Hãng xe">
-          <select className={fieldClass} value={form.brand} onChange={event => onBrand(event.target.value)}>{brands.map(brand => <option key={brand}>{brand}</option>)}</select>
+          <ChoiceSelect value={form.brand} options={brands} onPick={onBrand} onType={brand => onChange({ brand })} placeholder="Nhập hãng xe" maxLength={50}/>
         </Field>
         <Field label="Dòng xe / phiên bản">
-          {models.length ? <select className={fieldClass} value={form.model} onChange={event => onChange({ model: event.target.value })}>{models.map(model => <option key={model}>{model}</option>)}</select> : <input className={fieldClass} value={form.model} onChange={event => onChange({ model: event.target.value })}/>}
+          {models.length ? <ChoiceSelect value={form.model} options={models} onPick={model => onChange({ model })} placeholder="Nhập dòng xe" maxLength={50}/> : <input className={`${fieldClass} normal-case`} value={form.model} maxLength={50} placeholder="Nhập dòng xe" onChange={event => onChange({ model: event.target.value })}/>}
         </Field>
         <Field label="Biển kiểm soát">
           <input className={fieldClass} value={form.licensePlate} placeholder="51K-889.92" onChange={event => onChange({ licensePlate: event.target.value.toUpperCase() })}/>
         </Field>
         <Field label="Năm sản xuất">
-          <select className={fieldClass} value={form.manufactureYear} onChange={event => onChange({ manufactureYear: event.target.value })}>{years.map(year => <option key={year}>{year}</option>)}</select>
+          <ChoiceSelect value={form.manufactureYear} options={years} onPick={manufactureYear => onChange({ manufactureYear })} placeholder="Ví dụ 2016" inputMode="numeric" maxLength={4}/>
         </Field>
         <Field label="Phân khúc xe">
-          <select className={fieldClass} value={form.segment} onChange={event => onSegment(event.target.value)}>{segments.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+          <select className={fieldClass} value={form.segment} onChange={event => onSegment(event.target.value)}>
+            {segments.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
+            <option value={OTHER}>Khác — tự nhập</option>
+          </select>
+          {form.segment === OTHER ? <>
+            <input className={`${fieldClass} normal-case`} value={form.customSegment} maxLength={80} placeholder="Tên phân khúc" onChange={event => onChange({ customSegment: event.target.value })}/>
+            <select className={fieldClass} value={form.carType} onChange={event => onChange({ carType: event.target.value })}>{carTypes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+          </> : null}
         </Field>
         <Field label="Thành phố vận hành">
-          <select className={fieldClass} value={form.city} onChange={event => onCity(event.target.value)}>{cities.map(city => <option key={city}>{city}</option>)}</select>
+          <ChoiceSelect value={form.city} options={cities} onPick={onCity} onType={city => onChange({ city })} placeholder="Nhập thành phố" maxLength={100}/>
         </Field>
         <Field label="Khu vực giao nhận">
-          <select className={fieldClass} value={form.area} onChange={event => onChange({ area: event.target.value })}>{areas[form.city].map(area => <option key={area}>{area}</option>)}</select>
+          {areaOptions.length ? <ChoiceSelect value={form.area} options={areaOptions} onPick={area => onChange({ area })} placeholder="Nhập khu vực" maxLength={100}/> : <input className={`${fieldClass} normal-case`} value={form.area} maxLength={100} placeholder="Nhập khu vực" onChange={event => onChange({ area: event.target.value })}/>}
         </Field>
         <Field label="Địa chỉ bãi xe cố định">
           <input className={fieldClass} value={form.pickupAddress} placeholder="128 Thảo Điền, P. Thảo Điền" onChange={event => onChange({ pickupAddress: event.target.value })}/>
@@ -365,11 +416,12 @@ function StepTwo({ form, onChange }) {
           <select className={fieldClass} value={form.fuelType} onChange={event => onChange({ fuelType: event.target.value })}>{fuels.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
         </Field>
         <Field label="Số chỗ ngồi">
-          <select className={fieldClass} value={form.seats} onChange={event => onChange({ seats: event.target.value })}>{seatOptions.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
+          <ChoiceSelect value={form.seats} options={seatOptions} onPick={seats => onChange({ seats: digitsOf(seats).slice(0, 2) })} placeholder="Ví dụ 9" inputMode="numeric" maxLength={2}/>
         </Field>
         <Field label="Hộp số">
           <select className={fieldClass} value={form.transmission} onChange={event => onChange({ transmission: event.target.value })}>{gearOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
         </Field>
+        <p className="text-xs font-medium normal-case text-muted-gray">Nhiên liệu và hộp số chỉ gồm các loại hệ thống đang lưu được.</p>
         <Field label={form.fuelType === "ELECTRIC" ? "Dung lượng pin / công suất" : "Động cơ / công suất"}>
           <input className={fieldClass} value={form.powerNote} placeholder={form.fuelType === "ELECTRIC" ? "Ví dụ 123 kWh" : "Ví dụ 2.0L"} onChange={event => onChange({ powerNote: event.target.value })}/>
         </Field>
@@ -409,7 +461,7 @@ function StepThree({ form, dayPrice, weekend, fee, onChange }) {
           <input inputMode="numeric" className={fieldClass} value={grouped(form.depositAmount)} onChange={event => onChange({ depositAmount: digitsOf(event.target.value) })}/>
         </Field>
         <Field label="Chính sách hủy">
-          <select className={fieldClass} value={form.cancellation} onChange={event => onChange({ cancellation: event.target.value })}>{cancelPolicies.map(item => <option key={item}>{item}</option>)}</select>
+          <ChoiceSelect value={form.cancellation} options={cancelPolicies} onPick={cancellation => onChange({ cancellation })} placeholder="Nhập chính sách hủy" maxLength={120}/>
         </Field>
         <Field label="Giới hạn km / ngày">
           <input inputMode="numeric" className={fieldClass} value={form.kmLimitPerDay} onChange={event => onChange({ kmLimitPerDay: digitsOf(event.target.value) })}/>

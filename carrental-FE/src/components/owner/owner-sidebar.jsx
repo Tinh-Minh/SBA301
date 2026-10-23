@@ -69,7 +69,7 @@ export function OwnerSidebar() {
     </nav>
 
     <div className="flex flex-col gap-3 rounded-2xl border border-card-border bg-white p-4 shadow-sm">
-      <Link href="/kham-pha-xe" className="flex items-center gap-1.5 text-xs font-semibold text-muted-gray transition-colors hover:text-brand-accent">
+      <Link href="/explore" className="flex items-center gap-1.5 text-xs font-semibold text-muted-gray transition-colors hover:text-brand-accent">
         <Icon name="arrow_back" className="text-[16px]"/>
         <span className="whitespace-nowrap">Khám phá xe tự lái</span>
       </Link>

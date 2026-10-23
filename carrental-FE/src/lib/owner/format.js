@@ -1,13 +1,14 @@
+import { parseDate } from "@/lib/datetime";
 const dateTime = new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
 const dateTimeShort = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 export function formatRentalPeriod(order) {
-    const start = dateTime.format(new Date(order.startTime));
-    const end = dateTime.format(new Date(order.endTime));
+    const start = dateTime.format(parseDate(order.startTime));
+    const end = dateTime.format(parseDate(order.endTime));
     const unit = order.rentalType === "DAILY" ? "ngày" : "giờ";
     return { range: `${start} — ${end}`, duration: `Tổng thời gian: ${order.quantity} ${unit}` };
 }
 export function formatActivityTime(iso) {
-    return dateTimeShort.format(new Date(iso));
+    return dateTimeShort.format(parseDate(iso));
 }
 export function maskBankAccount(accountNumber) {
     const digits = accountNumber.replace(/\D/g, "");

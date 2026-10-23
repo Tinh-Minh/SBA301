@@ -6,6 +6,7 @@ import { Money } from "@/components/owner/money";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/owner-screen";
 import { StatusBadge } from "@/components/owner/status-badge";
 import { useOwnerPayouts } from "@/hooks/owner/use-owner-payouts";
+import { formatDateTime } from "@/lib/datetime";
 import { maskBankAccount } from "@/lib/owner/format";
 import { formatTrVnd } from "@/lib/owner/finance";
 import { payoutStatusMeta } from "@/lib/owner/status";
@@ -14,7 +15,6 @@ const filters = [
     { id: "held", label: "Đang giữ escrow" },
     { id: "paid", label: "Đã chi trả" },
 ];
-const paidAt = new Intl.DateTimeFormat("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
 export default function OwnerPayouts() {
     const { data, loading, error } = useOwnerPayouts();
     const [filter, setFilter] = useState("all");
@@ -64,7 +64,7 @@ export default function OwnerPayouts() {
           <p className="text-sm font-bold text-charcoal">{bank ? bank.bankName : "Chưa có tài khoản nhận tiền"}</p>
           <p className="text-sm text-muted-gray">{bank ? `${bank.accountHolder} • ${maskBankAccount(bank.accountNumber)}` : "Thêm tài khoản ngân hàng để nhận chi trả."}</p>
         </div>
-        <Link href="/tai-khoan/ngan-hang" className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent">Cập nhật tài khoản <Icon name="arrow_forward" className="text-[16px]"/></Link>
+        <Link href="/account/bank" className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent">Cập nhật tài khoản <Icon name="arrow_forward" className="text-[16px]"/></Link>
       </section>
 
       <FilterBar value={filter} onChange={setFilter} options={filters.map(item => ({ ...item, label: `${item.label} (${item.id === "all" ? rows.length : item.id === "paid" ? paid.length : held.length})` }))}/>
@@ -93,7 +93,7 @@ export default function OwnerPayouts() {
               <td className="whitespace-nowrap px-4 py-3"><Money amount={row.payout.platformFee} sign="-" compact/></td>
               <td className="whitespace-nowrap px-4 py-3 font-bold"><Money amount={row.payout.netAmount} compact/></td>
               <td className="px-4 py-3"><StatusBadge meta={payoutStatusMeta[row.payout.status]}/></td>
-              <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-gray">{row.payout.paidAt ? paidAt.format(new Date(row.payout.paidAt)) : "Sau khi ký C10-B"}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-gray">{row.payout.paidAt ? formatDateTime(row.payout.paidAt) : "Sau khi ký C10-B"}</td>
             </tr>)}
           </tbody>
         </table>

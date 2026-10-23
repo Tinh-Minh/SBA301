@@ -7,9 +7,9 @@ export default function Handover() {
 
     <div className="flex flex-wrap items-center justify-between gap-4">
     <nav className="flex items-center gap-2 text-xs text-muted font-medium">
-    <Link className="hover:text-primary transition-colors" href="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-primary transition-colors" href="/my-trips">{"Chuyến xe của tôi"}</Link>
     <span className="text-border-light">{"/"}</span>
-    <Link className="hover:text-primary transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
+    <Link className="hover:text-primary transition-colors" href="/cars/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
     <span className="text-border-light">{"/"}</span>
     <span className="text-primary font-semibold">{"Bàn giao nhận xe"}</span>
     </nav>
@@ -107,7 +107,7 @@ export default function Handover() {
     <span className="text-muted text-xs">{"• SUV 7 Chỗ Thương Gia"}</span>
     </div>
     </div>
-    <Link className="inline-flex items-center gap-1 text-muted hover:text-primary text-xs font-semibold transition-colors" href="/xe/vinfast-vf8-plus-2024">
+    <Link className="inline-flex items-center gap-1 text-muted hover:text-primary text-xs font-semibold transition-colors" href="/cars/vinfast-vf8-plus-2024">
     <span className="">{"Xem chi tiết đơn thuê ↗"}</span>
     </Link>
     </div>

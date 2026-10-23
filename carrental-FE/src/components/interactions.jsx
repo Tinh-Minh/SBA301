@@ -49,10 +49,10 @@ export function Interactions({ children }) {
         if (dialog) {
             dialog.setAttribute("role", "dialog");
             dialog.setAttribute("aria-modal", "true");
-            dialog.setAttribute("aria-label", path.endsWith("/them") ? "Thêm tài khoản ngân hàng" : "Đổi tài khoản mặc định");
+            dialog.setAttribute("aria-label", path.endsWith("/add") ? "Thêm tài khoản ngân hàng" : "Đổi tài khoản mặc định");
             dialog.querySelector("input,button")?.focus();
         }
-        if (path.endsWith("ngan-hang/them") && params.get("edit") === "1") {
+        if (path.endsWith("bank/add") && params.get("edit") === "1") {
             const heading = dialog?.querySelector("h2,h3");
             if (heading)
                 heading.textContent = "Chỉnh sửa tài khoản ngân hàng";
@@ -60,7 +60,7 @@ export function Interactions({ children }) {
             if (number)
                 number.value = "0071001234982";
         }
-        if (path === "/tai-khoan")
+        if (path === "/account")
             try {
                 const saved = JSON.parse(localStorage.getItem("cardb:profile:v1") ?? "{}");
                 for (const [id, value] of Object.entries(saved)) {
@@ -85,11 +85,11 @@ export function Interactions({ children }) {
         const location = container?.querySelector("select")?.value ?? "TP. Hồ Chí Minh";
         const fields = container?.querySelectorAll('input[type="text"]');
         const params = new URLSearchParams({ location, start: fields?.[0]?.value ?? "08:00, 25/10/2026", end: fields?.[1]?.value ?? "20:00, 27/10/2026" });
-        if (path === "/kham-pha-xe") {
+        if (path === "/explore") {
             notify("Đã cập nhật thời gian tìm xe.");
             return;
         }
-        router.push("/kham-pha-xe?" + params);
+        router.push("/explore?" + params);
     }
     function click(event) {
         const target = event.target;
@@ -118,7 +118,7 @@ export function Interactions({ children }) {
             return;
         }
         if (handler === "switchAuthTab") {
-            router.push(arg === "register" ? "/dang-ky" : "/dang-nhap");
+            router.push(arg === "register" ? "/register" : "/login");
             return;
         }
         if (handler === "togglePasswordVisibility" || action === "password") {
@@ -279,7 +279,7 @@ export function Interactions({ children }) {
             return;
         }
         if (action === "demo-login") {
-            router.push("/dang-nhap");
+            router.push("/login");
             return;
         }
         if (action === "edit-profile" || button.id === "btnEditProfile") {
@@ -329,7 +329,7 @@ export function Interactions({ children }) {
                 return;
             }
             notify("Đã gửi đánh giá chuyến đi.");
-            router.push("/tai-khoan/lich-su");
+            router.push("/account/history");
             return;
         }
         if (action === "dispute" || button.id === "submit-dispute-btn") {
@@ -340,7 +340,7 @@ export function Interactions({ children }) {
                 return;
             }
             notify("Đã gửi yêu cầu xem xét.");
-            router.push("/don-thue/CDB-ORD-20261026-904");
+            router.push("/orders/CDB-ORD-20261026-904");
             return;
         }
         if (action === "upload") {
@@ -358,7 +358,7 @@ export function Interactions({ children }) {
             return;
         }
         if (action === "default-bank") {
-            router.push("/tai-khoan/ngan-hang/mac-dinh");
+            router.push("/account/bank/default");
             return;
         }
         if (action === "bank-details") {
@@ -379,23 +379,23 @@ export function Interactions({ children }) {
             setModal({ kind: "info", title: "Gỡ liên kết tài khoản", body: "Tài khoản mẫu đã được gỡ liên kết trong phiên xem trước." });
             return;
         }
-        if (action === "handover" || (/Xác nhận của tôi/.test(text) && path === "/ban-giao/nhan-xe")) {
+        if (action === "handover" || (/Xác nhận của tôi/.test(text) && path === "/handover/pickup")) {
             notify("Đã xác nhận biên bản nhận xe.");
-            router.push("/chuyen-xe-cua-toi");
+            router.push("/my-trips");
             return;
         }
-        if (action === "return" || (/Xác nhận của tôi/.test(text) && path === "/ban-giao/tra-xe")) {
+        if (action === "return" || (/Xác nhận của tôi/.test(text) && path === "/handover/return")) {
             notify("Đã xác nhận biên bản trả xe.");
-            router.push("/danh-gia");
+            router.push("/reviews");
             return;
         }
-        if (path.includes("ngan-hang/") && /Hủy|Đóng/.test(text)) {
-            router.push("/tai-khoan/ngan-hang");
+        if (path.includes("/bank/") && /Hủy|Đóng/.test(text)) {
+            router.push("/account/bank");
             return;
         }
-        if (path.endsWith("ngan-hang/mac-dinh") && /Xác nhận|Lưu/.test(text)) {
+        if (path.endsWith("bank/default") && /Xác nhận|Lưu/.test(text)) {
             notify("Đã đổi tài khoản mặc định.");
-            router.push("/tai-khoan/ngan-hang");
+            router.push("/account/bank");
             return;
         }
         if (/Lưu bản nháp/.test(text)) {
@@ -405,7 +405,7 @@ export function Interactions({ children }) {
         if (button.tagName === "A")
             return;
         if (/Quay lại|Trở về/.test(text)) {
-            router.push("/chuyen-xe-cua-toi");
+            router.push("/my-trips");
             return;
         }
         if (/Áp dụng/.test(text)) {
@@ -434,7 +434,7 @@ export function Interactions({ children }) {
             const session = await login({ email, password });
             notify(`Xin chào ${session.account.fullName}!`);
             const next = new URLSearchParams(window.location.search).get("next");
-            router.push(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/kham-pha-xe");
+            router.push(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/explore");
         }
         catch (error) {
             notify(error.status === 401 ? "Email hoặc mật khẩu không đúng." : error.message);
@@ -458,7 +458,7 @@ export function Interactions({ children }) {
             await register(payload);
             await login({ email: payload.email, password: payload.password });
             notify("Tạo tài khoản thành công. Chào mừng bạn đến với CarDB!");
-            router.push("/tai-khoan");
+            router.push("/account");
         }
         catch (error) {
             notify(error.message);
@@ -472,25 +472,25 @@ export function Interactions({ children }) {
             return;
         event.preventDefault();
         const form = event.target;
-        if (path === "/dang-nhap") {
+        if (path === "/login") {
             void submitLogin(form);
             return;
         }
-        if (path === "/dang-ky") {
+        if (path === "/register") {
             void submitRegister(form);
             return;
         }
-        if (path.includes("ngan-hang/")) {
+        if (path.includes("/bank/")) {
             try {
                 localStorage.setItem("cardb:bank:v1", JSON.stringify({ name: form.querySelector('#bank-name')?.value, number: form.querySelector('#account-number')?.value }));
             }
             catch { }
             notify("Đã lưu tài khoản ngân hàng mẫu.");
-            router.push("/tai-khoan/ngan-hang");
+            router.push("/account/bank");
             return;
         }
-        if (path === "/dat-xe/xac-nhan") {
-            router.push("/dat-xe/thanh-cong");
+        if (path === "/booking/confirm") {
+            router.push("/booking/success");
             return;
         }
         notify("Đã lưu thông tin trong bản xem trước.");
@@ -503,12 +503,12 @@ export function Interactions({ children }) {
                 event.preventDefault();
                 el.click();
             }
-            if (event.key === "Escape" && path.includes("ngan-hang/"))
-                router.push("/tai-khoan/ngan-hang");
+            if (event.key === "Escape" && path.includes("/bank/"))
+                router.push("/account/bank");
         }}>
   {children}
-  {empty ? <p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path === "/kham-pha-xe" ? "Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc." : "Chưa có chuyến xe ở trạng thái này."}</p> : null}
+  {empty ? <p role="status" className="mx-auto my-4 max-w-xl rounded-lg border border-border-light bg-white p-6 text-center text-text-secondary">{path === "/explore" ? "Chưa có xe phù hợp. Hãy thử xóa hoặc thay đổi bộ lọc." : "Chưa có chuyến xe ở trạng thái này."}</p> : null}
   {toast ? <div role="status" className="toast fixed inset-x-4 bottom-5 z-[150] mx-auto flex w-fit max-w-[calc(100%-2rem)] items-center gap-3 rounded-xl border border-border-light bg-text-primary px-5 py-4 text-sm text-white shadow-xl"><Icon name="check_circle" className="text-[20px] text-brand-accent"/>{toast}<button type="button" aria-label="Đóng thông báo" onClick={() => setToast("")}><Icon name="close" className="text-[18px]"/></button></div> : null}
-  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { setModal(null); router.push("/chuyen-xe-cua-toi?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy đặt xe</HoldButton></div> : null}</Modal> : null}
+  {modal ? <Modal title={modal.title} close={() => setModal(null)}>{modal.kind === "image" ? <img src={modal.image} alt={modal.title} className="max-h-[70vh] w-full rounded-lg object-contain"/> : <p className="text-sm leading-7 text-text-secondary">{modal.body}</p>}{modal.kind === "cancel" ? <div className="mt-5"><HoldButton danger onComplete={() => { setModal(null); router.push("/my-trips?cancelled=1"); notify("Đã hủy yêu cầu thuê xe."); }}>Giữ để hủy đặt xe</HoldButton></div> : null}</Modal> : null}
  </div>;
 }

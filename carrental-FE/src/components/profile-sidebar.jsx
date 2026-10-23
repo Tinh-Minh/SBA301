@@ -5,14 +5,14 @@ import { Icon } from "./icon";
 import { initials } from "@/lib/labels";
 const groups = [
     { title: "Cài đặt tài khoản", links: [
-            { section: "account", href: "/tai-khoan", label: "Thông tin cá nhân", icon: "person" },
-            { section: "verification", href: "/tai-khoan/xac-minh", label: "Xác minh giấy tờ", icon: "verified_user" },
-            { section: "driver", href: "/tai-khoan/ho-so-tai-xe", label: "Hồ sơ tài xế", icon: "badge" },
-            { section: "banks", href: "/tai-khoan/ngan-hang", label: "Tài khoản ngân hàng", icon: "account_balance" },
+            { section: "account", href: "/account", label: "Thông tin cá nhân", icon: "person" },
+            { section: "verification", href: "/account/verification", label: "Xác minh giấy tờ", icon: "verified_user" },
+            { section: "driver", href: "/account/driver", label: "Hồ sơ tài xế", icon: "badge" },
+            { section: "banks", href: "/account/bank", label: "Tài khoản ngân hàng", icon: "account_balance" },
         ] },
     { title: "Quản lý chuyến đi", links: [
-            { section: "orders", href: "/tai-khoan/don-thue", label: "Đơn thuê xe", icon: "directions_car" },
-            { section: "history", href: "/tai-khoan/lich-su", label: "Lịch sử chuyến đi", icon: "history" },
+            { section: "orders", href: "/account/orders", label: "Đơn thuê xe", icon: "directions_car" },
+            { section: "history", href: "/account/history", label: "Lịch sử chuyến đi", icon: "history" },
             { section: "owner", href: "/owner/dashboard", label: "Kênh chủ xe", icon: "garage_home" },
         ] },
 ];

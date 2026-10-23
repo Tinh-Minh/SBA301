@@ -7,6 +7,6 @@ export const metadata = { title: "Chi tiết xe" };
 export default async function Page({ params }) {
     const { id } = await params;
     if (!/^\d+$/.test(id))
-        redirect("/kham-pha-xe");
+        redirect("/explore");
     return <Suspense fallback={<p className="px-6 pt-28 text-sm text-[#666666]">Đang tải xe…</p>}><CarDetail carId={id} /></Suspense>;
 }

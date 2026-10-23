@@ -7,12 +7,12 @@ export default function Dispute() {
     <header className="flex flex-col gap-space-sm mb-8">
 
     <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-[13px] text-[#666666]">
-    <Link className="hover:text-[#FC6C26] transition-colors flex items-center gap-1" href="/chuyen-xe-cua-toi">
+    <Link className="hover:text-[#FC6C26] transition-colors flex items-center gap-1" href="/my-trips">
     <span className="material-symbols-outlined text-[16px]">{"arrow_back"}</span>
     <span>{"Chuyến xe của tôi"}</span>
     </Link>
     <span className="text-[#E9E9E7] font-mono">{"/"}</span>
-    <Link className="hover:text-[#FC6C26] transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
+    <Link className="hover:text-[#FC6C26] transition-colors" href="/cars/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
     <span className="text-[#E9E9E7] font-mono">{"/"}</span>
     <span className="text-[#FC6C26] font-semibold">{"Tranh chấp & Bằng chứng"}</span>
     </nav>
@@ -211,7 +211,7 @@ export default function Dispute() {
     <span className="w-6 h-6 rounded-full bg-[#FC6C26] text-white flex items-center justify-center text-[12px] font-bold">{"4"}</span>
     <h2 className="text-[18px] text-[#292929] font-bold">{"Bằng chứng đính kèm"}</h2>
     </div>
-    <Link className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#FC6C26] hover:underline transition-all" href="/ban-giao/nhan-xe"><span className="material-symbols-outlined text-[16px]">{"compare"}</span><span>{"Xem ảnh và thông tin bàn giao nhận (C10-A) & trả xe (C10-B)"}</span></Link>
+    <Link className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#FC6C26] hover:underline transition-all" href="/handover/pickup"><span className="material-symbols-outlined text-[16px]">{"compare"}</span><span>{"Xem ảnh và thông tin bàn giao nhận (C10-A) & trả xe (C10-B)"}</span></Link>
     </div>
     <p className="text-[14px] text-[#666666] mb-4">{"\n            Đính kèm hình ảnh hiện trạng thực tế, ảnh táp-lô xe, biên nhận hoặc tài liệu để đội ngũ đối soát CarDB thẩm tra.\n          "}</p>
 
@@ -266,7 +266,7 @@ export default function Dispute() {
     </div>
 
     <div className="flex-wrap gap-y-2 flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-    <button className="w-full sm:w-auto px-6 py-3 rounded-[12px] bg-[#FFFFFF] border border-[#E9E9E7] text-[#292929] text-[14px] font-semibold hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2 shadow-sm" type="button" aria-label="Quay lại chi tiết đơn" data-route="/don-thue/CDB-ORD-20261026-904">
+    <button className="w-full sm:w-auto px-6 py-3 rounded-[12px] bg-[#FFFFFF] border border-[#E9E9E7] text-[#292929] text-[14px] font-semibold hover:bg-[#F7F7F5] transition-all flex items-center justify-center gap-2 shadow-sm" type="button" aria-label="Quay lại chi tiết đơn" data-route="/orders/CDB-ORD-20261026-904">
     <span className="material-symbols-outlined text-[18px]">{"arrow_back"}</span>
     <span>{"Quay lại chi tiết đơn"}</span>
     </button>

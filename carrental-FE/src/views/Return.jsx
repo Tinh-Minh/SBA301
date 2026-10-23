@@ -6,9 +6,9 @@ export default function Return() {
 
     <div className="flex flex-col gap-space-xs">
     <nav className="flex items-center gap-space-xs text-[#666666] text-sm">
-    <Link className="hover:text-[#FC6C26] transition-colors" href="/chuyen-xe-cua-toi">{"Chuyến xe của tôi"}</Link>
+    <Link className="hover:text-[#FC6C26] transition-colors" href="/my-trips">{"Chuyến xe của tôi"}</Link>
     <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
-    <Link className="hover:text-[#FC6C26] transition-colors" href="/xe/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
+    <Link className="hover:text-[#FC6C26] transition-colors" href="/cars/vinfast-vf8-plus-2024">{"Chi tiết đơn thuê"}</Link>
     <span className="material-symbols-outlined text-[14px]">{"chevron_right"}</span>
     <span className="text-[#FC6C26] font-medium">{"Bàn giao trả xe"}</span>
     </nav>
@@ -92,7 +92,7 @@ export default function Return() {
     <span className="text-xs text-[#FC6C26] uppercase font-bold tracking-wider">{"SUV 7 Chỗ Thương Gia"}</span>
     <h2 className="text-xl md:text-2xl font-bold text-[#292929]">{"VinFast VF 9 Plus AWD"}</h2>
     </div>
-    <Link className="text-sm font-semibold text-[#FC6C26] hover:underline flex items-center gap-1" href="/xe/vinfast-vf8-plus-2024">{"\n                Xem chi tiết đơn thuê\n                "}<span className="material-symbols-outlined text-[16px]">{"arrow_forward"}</span>
+    <Link className="text-sm font-semibold text-[#FC6C26] hover:underline flex items-center gap-1" href="/cars/vinfast-vf8-plus-2024">{"\n                Xem chi tiết đơn thuê\n                "}<span className="material-symbols-outlined text-[16px]">{"arrow_forward"}</span>
     </Link>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-space-sm pt-space-xs">
@@ -372,7 +372,7 @@ export default function Return() {
     <span className="material-symbols-outlined text-[#FC6C26] text-[24px]">{"receipt_long"}</span>
     <h2 className="text-lg md:text-xl font-bold text-[#292929]">{"Phí phát sinh và đối soát"}</h2>
     </div>
-    <button className="ui-action px-space-md py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-[#E9E9E7] text-[#292929] text-xs font-semibold border border-[#E9E9E7] transition-colors flex items-center gap-1.5 self-start sm:self-auto" type="button" aria-label="Yêu cầu xem xét khoản phí" data-route="/tranh-chap">
+    <button className="ui-action px-space-md py-1.5 rounded-lg bg-[#F7F7F5] hover:bg-[#E9E9E7] text-[#292929] text-xs font-semibold border border-[#E9E9E7] transition-colors flex items-center gap-1.5 self-start sm:self-auto" type="button" aria-label="Yêu cầu xem xét khoản phí" data-route="/disputes">
     <span className="material-symbols-outlined text-[#F5A623] text-[18px]">{"gavel"}</span>{"\n            Yêu cầu xem xét khoản phí\n          "}</button>
     </div>
 

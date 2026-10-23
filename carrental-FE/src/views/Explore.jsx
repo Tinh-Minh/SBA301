@@ -337,7 +337,7 @@ export default function Explore() {
     <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/cars/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
     </div>
     </div>
     </article>
@@ -397,7 +397,7 @@ export default function Explore() {
     <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/cars/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
     </div>
     </div>
     </article>
@@ -457,7 +457,7 @@ export default function Explore() {
     <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/cars/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
     </div>
     </div>
     </article>
@@ -517,7 +517,7 @@ export default function Explore() {
     <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/cars/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
     </div>
     </div>
     </article>
@@ -577,7 +577,7 @@ export default function Explore() {
     <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/cars/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
     </div>
     </div>
     </article>
@@ -636,7 +636,7 @@ export default function Explore() {
     <span className="text-[10px] text-[#666666] font-normal">{"/giờ"}</span>
     </div>
     </div>
-    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/xe/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
+    <Link className="shrink-0 whitespace-nowrap rounded-xl bg-[#fc6c26] px-4 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-[#e05b1b] transition-all active:scale-95 text-center" href="/cars/vinfast-vf8-plus-2024">{"\n        Xem chi tiết\n      "}</Link>
     </div>
     </div>
     </article>

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { DateTimeField } from "@/components/date-field";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/live-ui";
 import { useAsyncResource } from "@/hooks/use-async-resource";
 import { formatDateTime, parseQueryDateTime, toInputDateTime } from "@/lib/datetime";
@@ -59,7 +60,8 @@ function Explorer() {
       <h1 className="mt-1 text-2xl font-bold text-[#292929]">Khám phá xe đang trống lịch</h1>
       <p className="mt-1 text-sm text-[#666666]">Chỉ hiện các khung giờ chủ xe đang mở. Chọn xe để xem giá và gửi yêu cầu thuê.</p>
     </div>
-    <form className="grid gap-3 rounded-2xl border border-[#E9E9E7] bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4" onSubmit={event => { event.preventDefault(); setPage(0); setQuery(form); }}>
+    <form className="grid gap-3 rounded-2xl border border-[#E9E9E7] bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-4" onSubmit={event => { event.preventDefault(); if (!event.currentTarget.reportValidity())
+        return; setPage(0); setQuery(form); }}>
       <label className="text-xs font-semibold text-[#666666]">Thành phố<input value={form.city} onChange={update("city")} placeholder="Hồ Chí Minh" className={`${fieldClass} mt-1`}/></label>
       <label className="text-xs font-semibold text-[#666666]">Loại xe
         <select value={form.carType} onChange={update("carType")} className={`${fieldClass} mt-1`}>{carTypes.map(type => <option key={type || "all"} value={type}>{type ? carTypeLabels[type] : "Tất cả"}</option>)}</select>
@@ -68,8 +70,8 @@ function Explorer() {
       <label className="text-xs font-semibold text-[#666666]">Hình thức
         <select value={form.rentalType} onChange={update("rentalType")} className={`${fieldClass} mt-1`}><option value="">Giờ hoặc ngày</option><option value="HOURLY">Theo giờ</option><option value="DAILY">Theo ngày</option></select>
       </label>
-      <label className="text-xs font-semibold text-[#666666]">Nhận xe<input type="datetime-local" value={form.startTime} onChange={update("startTime")} className={`${fieldClass} mt-1`}/></label>
-      <label className="text-xs font-semibold text-[#666666]">Trả xe<input type="datetime-local" value={form.endTime} onChange={update("endTime")} className={`${fieldClass} mt-1`}/></label>
+      <label className="text-xs font-semibold text-[#666666]">Nhận xe<DateTimeField value={form.startTime} onChange={update("startTime")} className={`${fieldClass} mt-1`}/></label>
+      <label className="text-xs font-semibold text-[#666666]">Trả xe<DateTimeField value={form.endTime} onChange={update("endTime")} className={`${fieldClass} mt-1`}/></label>
       <label className="text-xs font-semibold text-[#666666]">Giá ngày tối đa (đ)<input type="number" min="0" step="10000" value={form.maxPricePerDay} onChange={update("maxPricePerDay")} className={`${fieldClass} mt-1`}/></label>
       <div className="flex items-end"><Primary type="submit">Tìm xe trống</Primary></div>
     </form>
@@ -84,7 +86,7 @@ function Explorer() {
           <p className="text-xs text-[#292929]">Trống {formatDateTime(slot.startTime)} → {formatDateTime(slot.endTime)}</p>
           <p className="text-sm font-bold text-[#FC6C26]">{formatMoney(slot.pricePerHour)}/giờ • {formatMoney(slot.pricePerDay)}/ngày</p>
           <p className="text-[11px] text-[#666666]">{rentalTypeLabels[slot.rentalOption] ?? slot.rentalOption} • tối thiểu {slot.minRentalHours} giờ</p>
-          <Link href={`/xe/${slot.carId}?slotId=${slot.id}&start=${encodeURIComponent(query.startTime)}&end=${encodeURIComponent(query.endTime)}`} className="mt-1 inline-flex w-fit rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thuê xe này</Link>
+          <Link href={`/cars/${slot.carId}?slotId=${slot.id}&start=${encodeURIComponent(query.startTime)}&end=${encodeURIComponent(query.endTime)}`} className="mt-1 inline-flex w-fit rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thuê xe này</Link>
         </div>
       </article>)}
     </div>

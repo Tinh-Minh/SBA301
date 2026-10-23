@@ -10,7 +10,13 @@ export function parseDate(value) {
         const [y, m = 1, d = 1, h = 0, mi = 0, s = 0] = value;
         return new Date(y, m - 1, d, h, mi, s);
     }
-    const date = new Date(value);
+    const text = String(value).trim();
+    const local = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?$/);
+    if (local) {
+        const date = new Date(Number(local[1]), Number(local[2]) - 1, Number(local[3]), Number(local[4] ?? 0), Number(local[5] ?? 0), Number(local[6] ?? 0));
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+    const date = new Date(text);
     return Number.isNaN(date.getTime()) ? null : date;
 }
 
@@ -62,6 +68,55 @@ export function formatDate(value, fallback = "—") {
     if (!date)
         return fallback;
     return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+/** Hiện ngày theo ngày/tháng/năm, không phụ thuộc định dạng vùng của máy. */
+export function formatInputDate(value) {
+    const date = parseDate(value);
+    if (!date)
+        return "";
+    return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+/** Hiện ngày giờ theo dd/mm/yyyy hh:mm. */
+export function formatInputDateTime(value) {
+    const date = parseDate(value);
+    if (!date)
+        return "";
+    return `${formatInputDate(date)} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function calendarDate(day, month, year) {
+    if (year < 1000 || year > 9999 || month < 1 || month > 12 || day < 1)
+        return null;
+    const date = new Date(year, month - 1, day);
+    if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day)
+        return null;
+    return date;
+}
+
+/** Đọc ô nhập ngày/tháng/năm thành YYYY-MM-DD. Chuỗi chưa đủ hoặc không hợp lệ trả về rỗng. */
+export function parseInputDate(value) {
+    const match = String(value).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!match)
+        return "";
+    const date = calendarDate(Number(match[1]), Number(match[2]), Number(match[3]));
+    if (!date)
+        return "";
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** Đọc ô nhập dd/mm/yyyy hh:mm thành YYYY-MM-DDTHH:mm. */
+export function parseInputDateTime(value) {
+    const match = String(value).trim().match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
+    if (!match)
+        return "";
+    const date = calendarDate(Number(match[1]), Number(match[2]), Number(match[3]));
+    const hour = Number(match[4]);
+    const minute = Number(match[5]);
+    if (!date || hour > 23 || minute > 59)
+        return "";
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(hour)}:${pad(minute)}`;
 }
 
 export function hoursBetween(start, end) {
