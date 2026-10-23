@@ -1,6 +1,7 @@
 package com.carrental.service.impl;
 
 import com.carrental.config.CustomerProperties;
+import com.carrental.dto.request.auth.AuthInputNormalizer;
 import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
 import com.carrental.dto.request.customer.CustomerListQuery;
 import com.carrental.dto.request.customer.UpdateProfileRequest;
@@ -27,6 +28,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
+
+    private static final Pattern PHONE = Pattern.compile("^(?:\\+84|0)[0-9]{8,14}$");
 
     private static final char LIKE_ESCAPE = '\\';
 
@@ -93,6 +97,34 @@ public class CustomerServiceImpl implements CustomerService {
             String address = normalizedAddress(request.getAddress());
             if (!java.util.Objects.equals(address, customer.getAddress())) {
                 customer.setAddress(address);
+                changed = true;
+            }
+        }
+        if (request.emailWasProvided()) {
+            String email = normalizedEmail(request.getEmail());
+            if (!email.equalsIgnoreCase(customer.getEmail())) {
+                customers.findByEmailIgnoreCase(email)
+                        .filter(other -> !other.getId().equals(customer.getId()))
+                        .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
+                customer.setEmail(email);
+                customer.setEmailVerified(false);
+                changed = true;
+            }
+        }
+        if (request.phoneWasProvided()) {
+            String phone = normalizedPhone(request.getPhone());
+            if (!phone.equals(customer.getPhone())) {
+                customers.findByPhone(phone)
+                        .filter(other -> !other.getId().equals(customer.getId()))
+                        .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
+                customer.setPhone(phone);
+                changed = true;
+            }
+        }
+        if (request.avatarUrlWasProvided()) {
+            String avatarUrl = normalizedAvatar(request.getAvatarUrl());
+            if (!java.util.Objects.equals(avatarUrl, customer.getAvatarUrl())) {
+                customer.setAvatarUrl(avatarUrl);
                 changed = true;
             }
         }
@@ -210,6 +242,33 @@ public class CustomerServiceImpl implements CustomerService {
         String normalized = value.strip();
         if (normalized.length() > 300) throw fieldError("address", "Địa chỉ tối đa 300 ký tự");
         return normalized.isEmpty() ? null : normalized;
+    }
+
+    private String normalizedEmail(String value) {
+        String email = AuthInputNormalizer.email(value);
+        if (email == null || email.isBlank()) throw fieldError("email", "Email không được để trống");
+        if (email.length() > 150) throw fieldError("email", "Email tối đa 150 ký tự");
+        int at = email.indexOf('@');
+        if (at <= 0 || at != email.lastIndexOf('@') || at == email.length() - 1 || email.contains(" ")) {
+            throw fieldError("email", "Email không hợp lệ");
+        }
+        return email;
+    }
+
+    private String normalizedPhone(String value) {
+        String phone = value == null ? null : value.strip();
+        if (phone == null || !PHONE.matcher(phone).matches()) {
+            throw fieldError("phone", "Số điện thoại không đúng định dạng");
+        }
+        return phone;
+    }
+
+    private String normalizedAvatar(String value) {
+        if (value == null) return null;
+        String avatar = value.strip();
+        if (avatar.isEmpty()) return null;
+        if (avatar.length() > 500) throw fieldError("avatarUrl", "Ảnh đại diện tối đa 500 ký tự");
+        return avatar;
     }
 
     private String validateStatusRequest(ChangeCustomerStatusRequest request) {

@@ -14,6 +14,7 @@ import com.carrental.entity.RentalOrder;
 import com.carrental.enums.DisputeStatus;
 import com.carrental.enums.ExtraFeeStatus;
 import com.carrental.exception.AppException;
+import com.carrental.service.OrderAccess;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.DisputeEvidenceRepository;
 import com.carrental.repository.DisputeRepository;
@@ -41,6 +42,7 @@ public class DisputeServiceImpl implements DisputeService {
     private final RentalOrderRepository rentalOrderRepository;
     private final CustomerRepository customerRepository;
     private final ExtraFeeRepository extraFeeRepository;
+    private final OrderAccess orderAccess;
 
     @Override
     @Transactional
@@ -49,7 +51,11 @@ public class DisputeServiceImpl implements DisputeService {
                 request.getOrderId(), request.getRaisedById(), request.getReason());
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
-            Customer raisedBy = findCustomerOrThrow(request.getRaisedById());
+            Customer raisedBy = orderAccess.requireUser();
+            orderAccess.requireSelf(request.getRaisedById());
+            if (!orderAccess.isRenter(order, raisedBy) && !orderAccess.isOwner(order, raisedBy)) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe của đơn này được mở khiếu nại");
+            }
 
             Dispute dispute = request.toEntity();
             dispute.setOrder(order);
@@ -94,8 +100,9 @@ public class DisputeServiceImpl implements DisputeService {
         log.info("Thêm bằng chứng cho khiếu nại disputeId={}", disputeId);
         try {
             Dispute dispute = findDisputeOrThrow(disputeId);
-            Long uploaderId = request.getUploadedById() != null ? request.getUploadedById() : dispute.getRaisedBy().getId();
-            Customer uploader = findCustomerOrThrow(uploaderId);
+            orderAccess.requireParty(dispute.getOrder());
+            orderAccess.requireSelf(request.getUploadedById());
+            Customer uploader = orderAccess.requireUser();
 
             DisputeEvidence evidence = request.toEntity();
             evidence.setDispute(dispute);
@@ -119,10 +126,9 @@ public class DisputeServiceImpl implements DisputeService {
         log.info("Giải quyết khiếu nại disputeId={}, nextStatus={}", disputeId, request.getStatus());
         try {
             Dispute dispute = findDisputeOrThrow(disputeId);
-            if (request.getResolvedById() != null) {
-                Customer resolver = findCustomerOrThrow(request.getResolvedById());
-                dispute.setResolvedBy(resolver);
-            }
+            orderAccess.requireAdmin();
+            orderAccess.requireSelf(request.getResolvedById());
+            dispute.setResolvedBy(orderAccess.requireUser());
 
             request.applyTo(dispute);
             Dispute saved = disputeRepository.save(dispute);
@@ -142,6 +148,7 @@ public class DisputeServiceImpl implements DisputeService {
     @Transactional(readOnly = true)
     public DisputeResponse getById(Long id) {
         Dispute dispute = findDisputeOrThrow(id);
+        orderAccess.requireParty(dispute.getOrder());
         List<DisputeEvidence> evidences = disputeEvidenceRepository.findByDisputeId(id);
         return DisputeResponse.from(dispute, evidences);
     }
@@ -149,6 +156,16 @@ public class DisputeServiceImpl implements DisputeService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<DisputeResponse> getPaged(Long orderId, Long raisedById, String status, Pageable pageable) {
+        Customer user = orderAccess.requireUser();
+        if (orderId != null) {
+            orderAccess.requireParty(findOrderOrThrow(orderId));
+        } else if (raisedById != null) {
+            if (!orderAccess.isAdmin(user) && !raisedById.equals(user.getId())) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ xem được khiếu nại của mình");
+            }
+        } else if (!orderAccess.isAdmin(user)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ admin được xem toàn bộ khiếu nại");
+        }
         Page<Dispute> page;
         if (orderId != null) {
             page = disputeRepository.findByOrderId(orderId, pageable);

@@ -23,7 +23,7 @@ public class VNPayConfig {
     @Value("${vnpay.api-url:https://sandbox.vnpayment.vn/merchant_webapi/api/transaction}")
     private String apiUrl;
 
-    @Value("${vnpay.return-url:http://localhost:8080/api/payments/vnpay/return}")
+    @Value("${vnpay.return-url:http://localhost:3000/thanh-toan}")
     private String returnUrl;
 
     @Value("${vnpay.tmn-code:${VNPAY_TMN_CODE:UWOEOW84}}")

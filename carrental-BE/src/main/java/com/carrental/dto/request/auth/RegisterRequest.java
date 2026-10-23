@@ -3,6 +3,7 @@ package com.carrental.dto.request.auth;
 import com.carrental.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import tools.jackson.databind.JsonNode;
@@ -20,6 +21,7 @@ public final class RegisterRequest {
 
     @NotBlank(message = "Số điện thoại không được để trống")
     @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự")
+    @Pattern(regexp = "^(?:\\+84|0)[0-9]{8,14}$", message = "Số điện thoại không đúng định dạng")
     private String phone;
 
     @NotBlank(message = "Mật khẩu không được để trống")

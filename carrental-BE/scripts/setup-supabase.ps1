@@ -39,5 +39,4 @@ foreach ($name in $generated.Keys) {
 }
 [IO.File]::WriteAllText($envPath, $contents, [Text.UTF8Encoding]::new($false))
 Write-Output 'Local .env and private storage are ready. Existing keys and nonblank configuration were preserved.'
-Write-Output 'Fill DB_URL, DB_USERNAME and DB_PASSWORD in .env using Supabase Connect. No database was contacted.'
-Write-Output 'Run with profile supabase from the repository root; see docs/SUPABASE_SETUP.md.'
+Write-Output 'Database settings stay in carrental-BE/.env as spring.datasource.*. No database was contacted.'

@@ -12,6 +12,7 @@ import com.carrental.enums.Role;
 import com.carrental.exception.ErrorCode;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.math.BigInteger;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -496,10 +497,15 @@ class Function1WorkflowPostgresIT {
         return new Account(id, email);
     }
 
+    private static String syntheticPhone(String suffix) {
+        int mixed = new BigInteger(suffix, 16).mod(BigInteger.valueOf(100_000_000L)).intValue();
+        return String.format("09%08d", mixed);
+    }
+
     private Account register(String label, String name) throws Exception {
         String suffix = UUID.randomUUID().toString().replace("-", "");
         String email = label + "-" + suffix + "@example.test";
-        String phone = "7" + suffix.substring(0, 19);
+        String phone = syntheticPhone(suffix);
         HttpResponse<String> response = send("POST", "/api/auth/register", null,
                 "{\"fullName\":\"" + name + "\",\"email\":\"" + email + "\",\"phone\":\"" + phone
                         + "\",\"password\":\"" + PASSWORD + "\"}");

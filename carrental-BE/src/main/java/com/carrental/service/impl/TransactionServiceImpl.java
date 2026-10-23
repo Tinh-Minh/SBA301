@@ -15,11 +15,13 @@ import com.carrental.enums.TransactionType;
 import com.carrental.exception.AppException;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.TransactionRepository;
+import com.carrental.service.OrderAccess;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -41,6 +43,10 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final RentalOrderRepository rentalOrderRepository;
     private final VNPayService vnPayService;
+    private final OrderAccess orderAccess;
+
+    @Value("${app.payment.simulate-gateway-enabled:false}")
+    private boolean simulateGatewayEnabled;
 
     @Override
     @Transactional
@@ -48,6 +54,7 @@ public class TransactionServiceImpl implements TransactionService {
         log.info("Tạo giao dịch đặt cọc orderId={}, amount={}", request.getOrderId(), request.getAmount());
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
+            orderAccess.requireRenter(order);
             BigDecimal amount = request.getAmount() != null ? request.getAmount() : order.getDepositAmount();
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền cọc không hợp lệ");
@@ -75,8 +82,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw e;
         } catch (Exception e) {
             log.error("Lỗi không mong muốn khi tạo giao dịch đặt cọc orderId={}", request.getOrderId(), e);
-            String detail = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể tạo giao dịch đặt cọc: " + detail);
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể tạo giao dịch đặt cọc");
         }
     }
 
@@ -86,6 +92,7 @@ public class TransactionServiceImpl implements TransactionService {
         log.info("Tạo giao dịch thanh toán đơn thuê orderId={}, amount={}", request.getOrderId(), request.getAmount());
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
+            orderAccess.requireRenter(order);
             BigDecimal amount = request.getAmount() != null ? request.getAmount() : order.getTotalAmount();
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán không hợp lệ");
@@ -113,8 +120,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw e;
         } catch (Exception e) {
             log.error("Lỗi không mong muốn khi tạo giao dịch thanh toán orderId={}", request.getOrderId(), e);
-            String detail = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể tạo giao dịch thanh toán: " + detail);
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể tạo giao dịch thanh toán");
         }
     }
 
@@ -123,7 +129,15 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionResponse simulatePaymentGateway(Long transactionId, MockPaymentProcessRequest request) {
         log.info("Giả lập cổng thanh toán cho giao dịch id={}, success={}", transactionId, request.isSimulateSuccess());
         try {
+            if (!simulateGatewayEnabled) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Giả lập cổng thanh toán chưa được bật");
+            }
             Transaction transaction = findTransactionOrThrow(transactionId);
+            if (transaction.getOrder() == null) {
+                orderAccess.requireAdmin();
+            } else {
+                orderAccess.requireRenterOrAdmin(transaction.getOrder());
+            }
             TransactionStatus current = transaction.getStatus();
             TransactionStatus next = request.isSimulateSuccess() ? TransactionStatus.SUCCESS : TransactionStatus.FAILED;
 
@@ -156,8 +170,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw e;
         } catch (Exception e) {
             log.error("Lỗi không mong muốn khi giả lập cổng thanh toán id={}", transactionId, e);
-            String detail = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xử lý cổng thanh toán: " + detail);
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể xử lý cổng thanh toán");
         }
     }
 
@@ -166,6 +179,7 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionResponse refund(RefundRequest request) {
         log.info("Hoàn tiền cho giao dịch id={}, amount={}", request.getParentTransactionId(), request.getAmount());
         try {
+            orderAccess.requireAdmin();
             Transaction parent = findTransactionOrThrow(request.getParentTransactionId());
             if (parent.getStatus() != TransactionStatus.SUCCESS) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể hoàn tiền cho giao dịch đã thành công (SUCCESS)");
@@ -204,20 +218,30 @@ public class TransactionServiceImpl implements TransactionService {
             throw e;
         } catch (Exception e) {
             log.error("Lỗi không mong muốn khi hoàn tiền parentId={}", request.getParentTransactionId(), e);
-            String detail = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể thực hiện hoàn tiền: " + detail);
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể thực hiện hoàn tiền");
         }
     }
 
     @Override
     @Transactional(readOnly = true)
     public TransactionResponse getById(Long id) {
-        return TransactionResponse.from(findTransactionOrThrow(id));
+        Transaction transaction = findTransactionOrThrow(id);
+        if (transaction.getOrder() == null) {
+            orderAccess.requireAdmin();
+        } else {
+            orderAccess.requireParty(transaction.getOrder());
+        }
+        return TransactionResponse.from(transaction);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<TransactionResponse> getPaged(Long orderId, String transactionType, String status, Pageable pageable) {
+        if (orderId != null) {
+            orderAccess.requireParty(findOrderOrThrow(orderId));
+        } else {
+            orderAccess.requireAdmin();
+        }
         Page<Transaction> page;
         if (orderId != null) {
             page = transactionRepository.findByOrderId(orderId, pageable);
@@ -234,7 +258,14 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional
     public String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request) {
+        Transaction transaction = findTransactionOrThrow(transactionId);
+        if (transaction.getOrder() == null) {
+            orderAccess.requireAdmin();
+        } else {
+            orderAccess.requireRenter(transaction.getOrder());
+        }
         HttpServletRequest req = request != null ? request : getCurrentHttpRequest();
         return vnPayService.createPaymentUrl(transactionId, bankCode, req);
     }

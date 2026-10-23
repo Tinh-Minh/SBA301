@@ -73,6 +73,8 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @Import(AuthSecurityTestFixtures.class)
 class AuthSecurityPostgresIT {
     private static final String SUFFIX = UUID.randomUUID().toString().replace("-", "");
+    private static final java.util.concurrent.atomic.AtomicInteger PHONE_SEQUENCE =
+            new java.util.concurrent.atomic.AtomicInteger(100_000_000);
     private static final String PASSWORD = "  fake-test-password  ";
     private static final String ALLOWED_ORIGIN = "http://localhost:5173";
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
@@ -181,7 +183,7 @@ class AuthSecurityPostgresIT {
         String emailMarker = "r1-email-" + SUFFIX + "@example.test";
         String emailOwnerPhone = phone("em");
         String phoneOwnerEmail = email("phone-owner");
-        String phoneMarker = "P" + SUFFIX.substring(0, 19);
+        String phoneMarker = phone("pm");
         String emailCandidatePhone = phone("ec");
         String phoneCandidateEmail = email("phone-candidate");
         String passwordMarker = "R1_PASSWORD_SENTINEL_" + SUFFIX;
@@ -667,7 +669,7 @@ class AuthSecurityPostgresIT {
     }
 
     private String email(String label) { return label + "-" + SUFFIX + "@example.test"; }
-    private String phone(String prefix) { return prefix + SUFFIX.substring(0, 18); }
+    private String phone(String ignoredPrefix) { return "09" + PHONE_SEQUENCE.getAndIncrement(); }
 
     private HttpResponse<String> awaitAndPost(CountDownLatch start, String body) {
         try {

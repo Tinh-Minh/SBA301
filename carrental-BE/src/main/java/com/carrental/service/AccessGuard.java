@@ -5,25 +5,26 @@ import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
-import com.carrental.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-// TODO: Đổi sang CustomerService của Người 1 khi hoàn thành JWT
+/** Id truyền vào phải trùng người dùng trong JWT. Header X-User-Id không được tin. */
 @Component
 @RequiredArgsConstructor
 public class AccessGuard {
 
-    private final CustomerRepository customerRepository;
+    private final CurrentUserService currentUserService;
 
     public Customer requireActiveUser(Long customerId) {
-        Customer u = customerRepository.findById(customerId)
-                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "Không xác định được người dùng"));
-        if (u.getStatus() != CustomerStatus.ACTIVE) {
+        Customer current = currentUserService.getCurrentUser();
+        if (customerId == null || !current.getId().equals(customerId)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Không được dùng danh tính của người khác");
+        }
+        if (current.getStatus() != CustomerStatus.ACTIVE) {
             throw new AppException(HttpStatus.FORBIDDEN, "Tài khoản đang bị khoá");
         }
-        return u;
+        return current;
     }
 
     public Customer requireAdmin(Long customerId) {
@@ -36,8 +37,9 @@ public class AccessGuard {
 
     public boolean isAdmin(Long customerId) {
         if (customerId == null) return false;
-        return customerRepository.findById(customerId)
-                .map(u -> u.getRole() == Role.ADMIN && u.getStatus() == CustomerStatus.ACTIVE)
+        return currentUserService.optionalCurrentUser()
+                .filter(user -> user.getId().equals(customerId))
+                .map(user -> user.getRole() == Role.ADMIN && user.getStatus() == CustomerStatus.ACTIVE)
                 .orElse(false);
     }
 

@@ -11,6 +11,7 @@ export const kycStatusMeta = {
     PENDING: { label: "Đang xét duyệt", tone: "warning" },
     VERIFIED: { label: "Đã xác minh", tone: "success" },
     REJECTED: { label: "Bị từ chối", tone: "danger" },
+    UNKNOWN: { label: "KYC do CarDB kiểm tra", tone: "neutral" },
 };
 export const carStatusMeta = {
     PENDING_APPROVAL: { label: "Chờ duyệt", tone: "warning" },

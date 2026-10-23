@@ -1,10 +1,13 @@
 "use client";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Icon } from "@/components/icon";
 import { Money } from "@/components/owner/money";
 import { OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/owner-screen";
 import { useOwnerCalendar } from "@/hooks/owner/use-owner-calendar";
+import { useAsyncAction, useAsyncResource } from "@/hooks/use-async-resource";
+import { formatDateTime, toInputDateTime } from "@/lib/datetime";
+import { slotService } from "@/services/slot.service";
 import { formatVnd } from "@/lib/owner/finance";
 import { ownerRoutes } from "@/lib/owner/routes";
 const weekdayLabels = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
@@ -33,7 +36,7 @@ function cellFor(day, carId, slots, orders) {
 export default function OwnerCalendar() {
     const today = new Date();
     const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
-    const { data, loading, error } = useOwnerCalendar(cursor.year, cursor.month);
+    const { data, loading, error, reload } = useOwnerCalendar(cursor.year, cursor.month);
     const cars = data?.cars ?? [];
     const [carId, setCarId] = useState(null);
     const selectedCarId = carId ?? cars.find(car => car.status === "ACTIVE")?.id ?? cars[0]?.id ?? null;
@@ -121,7 +124,84 @@ export default function OwnerCalendar() {
 
       <DayPanel car={car} day={dayDate} info={dayInfo}/>
     </div> : null}
+    {data && car ? <SlotManager key={car.id} car={car} onChanged={reload}/> : null}
+    {data && !cars.length ? <div className="rounded-2xl border border-card-border bg-white p-6 text-sm text-muted-gray">Bạn chưa có xe nào. <Link href={ownerRoutes.vehicleNew} className="font-bold text-brand-accent">Đăng xe đầu tiên</Link> để mở lịch cho thuê.</div> : null}
   </div>;
+}
+const slotStatusLabel = { OPEN: "Đang mở", CLOSED: "Tạm đóng", CANCELLED: "Đã hủy" };
+const rentalOptionLabel = { BOTH: "Theo giờ & ngày", HOURLY: "Theo giờ", DAILY: "Theo ngày" };
+function defaultSlotRange() {
+    const start = new Date();
+    start.setDate(start.getDate() + 1);
+    start.setHours(8, 0, 0, 0);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 7);
+    end.setHours(20, 0, 0, 0);
+    return { startTime: toInputDateTime(start), endTime: toInputDateTime(end) };
+}
+/** Quản lý khung giờ cho thuê: GET /api/slots/car/{id}, POST /api/slots, PATCH /api/slots/{id}/close|reopen|cancel. */
+function SlotManager({ car, onChanged }) {
+    const load = useCallback(() => slotService.listByCar(car.id), [car.id]);
+    const slots = useAsyncResource(load, car.id);
+    const [form, setForm] = useState(() => ({ ...defaultSlotRange(), rentalOption: "BOTH", minRentalHours: "4", customPricePerHour: "", customPricePerDay: "" }));
+    const refresh = () => { slots.reload(); onChanged?.(); };
+    const create = useAsyncAction(() => {
+        if (!form.startTime || !form.endTime || new Date(form.endTime) <= new Date(form.startTime))
+            return Promise.reject(new Error("Thời gian kết thúc phải sau thời gian bắt đầu."));
+        return slotService.create({ carId: car.id, ...form, startTime: new Date(form.startTime), endTime: new Date(form.endTime) });
+    }, refresh);
+    const act = useAsyncAction((kind, id) => slotService[kind](id), refresh);
+    const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
+    const inputClass = "rounded-xl border border-card-border bg-white px-3 py-2 text-sm text-charcoal";
+    const notActive = car.status !== "ACTIVE";
+    return <section className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
+    <div className="flex flex-col gap-1">
+      <h2 className="text-base font-bold text-charcoal">Khung giờ cho thuê • {car.brand} {car.model}</h2>
+      <p className="text-sm text-muted-gray">Khách chỉ tìm thấy xe trong các khung giờ đang mở. Để trống giá tùy chỉnh để dùng giá niêm yết ({formatVnd(car.pricePerHour)}/giờ • {formatVnd(car.pricePerDay)}/ngày).</p>
+      {notActive ? <p className="text-sm font-semibold text-status-amber-dark">Xe đang ở trạng thái {car.status} — cần được CarDB duyệt (ACTIVE) trước khi mở lịch.</p> : null}
+    </div>
+    <form className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" onSubmit={event => { event.preventDefault(); void create.run(); }}>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Bắt đầu<input type="datetime-local" required value={form.startTime} onChange={update("startTime")} className={inputClass}/></label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Kết thúc<input type="datetime-local" required value={form.endTime} onChange={update("endTime")} className={inputClass}/></label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Hình thức thuê
+        <select value={form.rentalOption} onChange={update("rentalOption")} className={inputClass}>
+          {Object.entries(rentalOptionLabel).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Số giờ thuê tối thiểu<input type="number" min="1" value={form.minRentalHours} onChange={update("minRentalHours")} className={inputClass}/></label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Giá giờ tùy chỉnh (đ)<input type="number" min="0" step="1000" value={form.customPricePerHour} onChange={update("customPricePerHour")} placeholder={String(car.pricePerHour ?? "")} className={inputClass}/></label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-charcoal">Giá ngày tùy chỉnh (đ)<input type="number" min="0" step="1000" value={form.customPricePerDay} onChange={update("customPricePerDay")} placeholder={String(car.pricePerDay ?? "")} className={inputClass}/></label>
+      <div className="flex flex-wrap items-center gap-3 sm:col-span-2 lg:col-span-3">
+        <button type="submit" disabled={create.running || notActive} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white disabled:opacity-60"><Icon name="add" className="text-[18px]"/>{create.running ? "Đang mở…" : "Mở khung giờ"}</button>
+        {create.error ? <span className="text-sm text-on-error-container">{create.error.message}</span> : null}
+        {act.error ? <span className="text-sm text-on-error-container">{act.error.message}</span> : null}
+      </div>
+    </form>
+    <div className="mt-5 overflow-x-auto">
+      {slots.loading && !slots.data ? <p className="text-sm text-muted-gray">Đang tải khung giờ…</p> : null}
+      {slots.error ? <p className="text-sm text-on-error-container">{slots.error.message}</p> : null}
+      {slots.data && !slots.data.length ? <p className="text-sm text-muted-gray">Chưa có khung giờ nào cho xe này.</p> : null}
+      {slots.data?.length ? <table className="w-full min-w-[640px] text-left text-sm">
+        <thead className="text-[11px] uppercase tracking-wide text-muted-gray">
+          <tr><th className="py-2">#</th><th>Thời gian</th><th>Hình thức</th><th>Giá</th><th>Trạng thái</th><th className="text-right">Thao tác</th></tr>
+        </thead>
+        <tbody className="divide-y divide-card-border">
+          {slots.data.map(slot => <tr key={slot.id}>
+            <td className="py-2 font-mono text-xs">{slot.id}</td>
+            <td>{formatDateTime(slot.startTime)} → {formatDateTime(slot.endTime)}</td>
+            <td>{rentalOptionLabel[slot.rentalOption] ?? slot.rentalOption} • tối thiểu {slot.minRentalHours}h</td>
+            <td>{formatVnd(slot.pricePerHour)}/giờ<br/><span className="text-xs text-muted-gray">{formatVnd(slot.pricePerDay)}/ngày</span></td>
+            <td><span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${slot.status === "OPEN" ? "bg-status-green-bg text-status-success-ink" : "bg-badge-gray text-muted-gray"}`}>{slotStatusLabel[slot.status] ?? slot.status}</span></td>
+            <td className="space-x-2 text-right">
+              {slot.status === "OPEN" ? <button type="button" disabled={act.running} onClick={() => void act.run("close", slot.id)} className="text-xs font-bold text-charcoal">Tạm đóng</button> : null}
+              {slot.status === "CLOSED" ? <button type="button" disabled={act.running} onClick={() => void act.run("reopen", slot.id)} className="text-xs font-bold text-brand-accent">Mở lại</button> : null}
+              {slot.status !== "CANCELLED" ? <button type="button" disabled={act.running} onClick={() => { if (window.confirm("Hủy khung giờ này?")) void act.run("cancel", slot.id); }} className="text-xs font-bold text-on-error-container">Hủy</button> : null}
+            </td>
+          </tr>)}
+        </tbody>
+      </table> : null}
+    </div>
+  </section>;
 }
 function DayPanel({ car, day, info }) {
     const label = new Intl.DateTimeFormat("vi-VN", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }).format(day);

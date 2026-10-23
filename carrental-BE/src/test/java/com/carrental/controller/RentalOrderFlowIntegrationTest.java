@@ -16,8 +16,10 @@ import com.carrental.enums.Role;
 import com.carrental.enums.SlotStatus;
 import com.carrental.enums.Transmission;
 import com.carrental.enums.VoucherStatus;
+import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.VoucherRepository;
+import com.carrental.security.CurrentAccount;
 import com.carrental.service.RentalOrderService;
 import com.carrental.support.MutableClock;
 import com.jayway.jsonpath.JsonPath;
@@ -31,6 +33,9 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -81,6 +86,7 @@ class RentalOrderFlowIntegrationTest {
     }
 
     @Autowired private MockMvc mockMvc;
+    @Autowired private CustomerRepository customerRepository;
     @Autowired private MutableClock clock;
     @Autowired private VoucherRepository voucherRepository;
     @Autowired private RentalOrderRepository rentalOrderRepository;
@@ -310,8 +316,8 @@ class RentalOrderFlowIntegrationTest {
     void validationAndBusinessRules() throws Exception {
         as(renterId, post("/api/orders").content("{}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.data.carSlotId").exists())
-                .andExpect(jsonPath("$.data.rentalType").exists());
+                .andExpect(jsonPath("$.errors[*].field", hasItem("carSlotId")))
+                .andExpect(jsonPath("$.errors[*].field", hasItem("rentalType")));
 
         // Dưới số giờ tối thiểu (4h)
         as(renterId, post("/api/orders").content(orderJson("HOURLY", "2026-11-03T08:00:00", "2026-11-03T10:00:00", null, null)))
@@ -353,7 +359,15 @@ class RentalOrderFlowIntegrationTest {
     private ResultActions as(Long userId,
                              org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder req)
             throws Exception {
-        return mockMvc.perform(req.header("X-User-Id", String.valueOf(userId)).contentType(MediaType.APPLICATION_JSON));
+        Customer customer = customerRepository.findById(userId).orElseThrow();
+        CurrentAccount account = new CurrentAccount(customer.getId(), customer.getRole());
+        SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
+                account, null, List.of(new SimpleGrantedAuthority("ROLE_" + customer.getRole().name()))));
+        try {
+            return mockMvc.perform(req.contentType(MediaType.APPLICATION_JSON));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     private Long createOrder(Long userId, String type, String start, String end, String voucher) throws Exception {

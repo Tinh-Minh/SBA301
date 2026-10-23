@@ -1,9 +1,7 @@
 # Copy to config/application-local.properties and activate with the local profile.
 # Keep real credentials out of this example and out of version control.
 app.time.zone=Asia/Ho_Chi_Minh
-spring.datasource.url=${DB_URL}
-spring.datasource.username=${DB_USERNAME}
-spring.datasource.password=${DB_PASSWORD}
+# Database connection lives only in carrental-BE/.env.
 app.security.jwt.issuer=${JWT_ISSUER}
 app.security.jwt.audience=${JWT_AUDIENCE}
 app.security.jwt.access-token-ttl=${JWT_ACCESS_TOKEN_TTL:PT30M}

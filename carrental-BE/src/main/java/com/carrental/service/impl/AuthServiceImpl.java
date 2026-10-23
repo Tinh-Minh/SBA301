@@ -1,6 +1,7 @@
 package com.carrental.service.impl;
 
 import com.carrental.config.security.JwtProperties;
+import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.AuthInputNormalizer;
 import com.carrental.dto.request.auth.LoginRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
@@ -15,6 +16,7 @@ import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.AccountUserDetails;
+import com.carrental.security.CurrentAccount;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.Clock;
@@ -92,6 +94,11 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
                 log.info("Registration conflict traceId={} constraint={}", com.carrental.web.RequestTraceFilter.currentTraceId(), constraint);
                 throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, exception);
             }
+            if (isCustomersPrimaryKeyCollision(exception)) {
+                log.error("Registration blocked because the customers id sequence is behind existing rows traceId={}",
+                        com.carrental.web.RequestTraceFilter.currentTraceId());
+                throw new AppException(ErrorCode.INTERNAL_ERROR);
+            }
             throw exception;
         }
     }
@@ -127,6 +134,20 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
                 new TokenResponse.AccountSummary(account.customerId(), account.fullName(), account.role()));
     }
 
+    @Override
+    @Transactional
+    public void changePassword(CurrentAccount account, ChangePasswordRequest request) {
+        if (account == null) throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
+        Customer customer = customers.findByIdForUpdate(account.customerId())
+                .orElseThrow(() -> new AppException(ErrorCode.AUTHENTICATION_FAILED));
+        if (customer.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
+        if (!passwordEncoder.matches(request.getCurrentPassword(), customer.getPasswordHash())) {
+            throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
+        }
+        customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        customers.flush();
+    }
+
     private String recognizedUniqueConstraint(DataIntegrityViolationException exception) {
         for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
             if (cause instanceof ConstraintViolationException constraintViolation) {
@@ -139,5 +160,18 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
             }
         }
         return null;
+    }
+
+    private boolean isCustomersPrimaryKeyCollision(DataIntegrityViolationException exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (cause instanceof ConstraintViolationException constraintViolation) {
+                SQLException sqlException = constraintViolation.getSQLException();
+                if ("23505".equals(sqlException == null ? null : sqlException.getSQLState())
+                        && "customers_pkey".equals(constraintViolation.getConstraintName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

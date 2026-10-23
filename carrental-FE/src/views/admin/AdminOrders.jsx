@@ -1,61 +1,86 @@
 "use client";
-import { useMemo, useState } from "react";
-import { AdminPageHeader, StatusPill } from "@/components/admin/admin-ui";
-import { Money } from "@/components/owner/money";
-import { calculatePayout } from "@/lib/owner/finance";
-import { loadAdminSeed } from "@/services/mock/admin-db";
+import { useCallback, useState } from "react";
+import { AdminDialog, AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/components/admin/admin-ui";
+import { useAsyncResource } from "@/hooks/use-async-resource";
+import { formatDateTime } from "@/lib/datetime";
+import { formatMoney, orderStatusLabels, paymentMethodLabels, paymentStatusLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/lib/labels";
+import { request, toPage } from "@/services/http";
+import { adminOrderService } from "@/services/admin.service";
 
-const filters = ["all", "PENDING", "CONFIRMED", "ONGOING", "COMPLETED", "CANCELLED"];
-const tone = { PENDING: "warning", CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", CANCELLED: "danger" };
-const label = { PENDING: "PENDING", CONFIRMED: "CONFIRMED", ONGOING: "ONGOING", COMPLETED: "COMPLETED", CANCELLED: "CANCELLED" };
+const tabs = [{ id: "", label: "Tất cả" }, ...["PENDING", "CONFIRMED", "ONGOING", "COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"].map(id => ({ id, label: orderStatusLabels[id] }))];
+const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger", REJECTED: "danger", EXPIRED: "neutral" };
+const payTone = { UNPAID: "warning", PAID: "success", REFUNDED: "info" };
 
 export default function AdminOrders() {
-    const orders = useMemo(() => loadAdminSeed().orders, []);
-    const [filter, setFilter] = useState("all");
-    const [selectedId, setSelectedId] = useState("ord-904");
-    const visible = orders.filter(order => filter === "all" || order.status === filter);
-    const selected = orders.find(order => order.id === selectedId) ?? visible[0];
-    const money = selected ? calculatePayout(selected) : null;
-
+    const [status, setStatus] = useState("");
+    const [page, setPage] = useState(0);
+    const [openId, setOpenId] = useState(null);
+    const load = useCallback(() => adminOrderService.list({ status: status || undefined, page, size: 15 }), [status, page]);
+    const list = useAsyncResource(load, `${status}|${page}`);
+    const rows = list.data?.content ?? [];
     return <div className="flex flex-col gap-5">
-    <AdminPageHeader code="A05" title="Quản lý đơn thuê toàn hệ thống" description="Theo dõi đơn, tiền thuê và telemetry. Phí nền tảng tính 10% trên tiền thuê."/>
-    <div className="flex flex-wrap gap-2">{filters.map(item => <button key={item} type="button" onClick={() => setFilter(item)} className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-bold ${filter === item ? "bg-[#FC6C26] text-white" : "border border-[#E9E9E7] bg-white text-[#292929]"}`}>{item === "all" ? "Tất cả" : item}</button>)}</div>
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)]">
-      <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
-        <table className="min-w-full text-left text-sm">
-          <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã đơn", "Xe", "Người thuê", "Chủ xe", "Thời gian", "Tổng tiền", "Trạng thái"].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
-          <tbody>
-            {visible.map(order => <tr key={order.id} onClick={() => setSelectedId(order.id)} className={`cursor-pointer border-t border-[#E9E9E7] ${order.id === selected?.id ? "bg-[#FFF7F2]" : ""}`}>
-              <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-[#FC6C26]">{order.orderCode}</td>
-              <td className="whitespace-nowrap px-4 py-3 font-semibold">{order.carTitle}<div className="text-xs text-[#666666]">{order.plate}</div></td>
-              <td className="whitespace-nowrap px-4 py-3">{order.renter}</td>
-              <td className="whitespace-nowrap px-4 py-3">{order.owner}</td>
-              <td className="whitespace-nowrap px-4 py-3">{order.period}</td>
-              <td className="whitespace-nowrap px-4 py-3"><Money amount={order.rentalAmount}/></td>
-              <td className="px-4 py-3"><StatusPill tone={tone[order.status]}>{label[order.status]}</StatusPill></td>
-            </tr>)}
-          </tbody>
-        </table>
-      </div>
-      {selected && money ? <aside className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
-        <h2 className="whitespace-nowrap text-base font-bold text-[#292929]">{selected.orderCode}</h2>
-        <p className="mt-1 whitespace-nowrap text-sm text-[#666666]">{selected.carTitle} • {selected.plate}</p>
-        <dl className="mt-4 grid gap-2 text-sm">
-          <Line term="GPS" value={selected.telemetry.gps}/>
-          <Line term="Odometer" value={`${selected.telemetry.odometerKm} km`}/>
-          <Line term="Pin" value={selected.telemetry.batteryPercent == null ? "—" : `${selected.telemetry.batteryPercent}%`}/>
-          <Line term="Tiền thuê" value={<Money amount={money.grossAmount}/>}/>
-          <Line term="Phí CarDB 10%" value={<Money amount={money.platformFee}/>}/>
-          <Line term="Thực nhận chủ xe" value={<Money amount={money.netAmount}/>}/>
-          <Line term="Cọc tại điểm giao" value={<Money amount={selected.depositAmount}/>}/>
-        </dl>
-        <p className="mt-3 text-xs text-[#666666]">Cọc do chủ xe thu khi nhận xe, không giữ escrow. Tiền thuê giải ngân trong 24 giờ sau khi biên bản trả xe C10-B được xác nhận.</p>
-        <div className="mt-3"><StatusPill tone="warning">Escrow chờ C10-B</StatusPill></div>
-      </aside> : null}
-    </div>
+    <AdminPageHeader code="A05" title="Đơn thuê toàn hệ thống" description={`Theo dõi trạng thái đơn, thanh toán và nhật ký xử lý${list.data ? ` • ${list.data.totalElements} đơn` : ""}.`}/>
+    <Tabs items={tabs} value={status} onChange={id => { setStatus(id); setPage(0); }}/>
+    <AdminState loading={list.loading && !list.data} error={list.error} empty={list.data && !rows.length} label="đơn thuê" onRetry={list.reload}/>
+    {rows.length ? <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
+      <table className="min-w-full text-left text-sm">
+        <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã đơn", "Xe", "Khách → Chủ xe", "Thời gian", "Tổng tiền", "Thanh toán", "Trạng thái"].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
+        <tbody>
+          {rows.map(order => <tr key={order.id} onClick={() => setOpenId(order.id)} className="cursor-pointer border-t border-[#E9E9E7] hover:bg-[#FFF7F2]">
+            <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold text-[#FC6C26]">{order.orderCode}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-semibold">{order.carName}<p className="text-xs font-normal text-[#666666]">{order.licensePlate}</p></td>
+            <td className="whitespace-nowrap px-4 py-3">{order.customerName}<p className="text-xs text-[#666666]">→ {order.ownerName}</p></td>
+            <td className="whitespace-nowrap px-4 py-3 text-xs">{formatDateTime(order.startTime)}<br/>→ {formatDateTime(order.endTime)}</td>
+            <td className="whitespace-nowrap px-4 py-3 font-semibold">{formatMoney(order.totalAmount)}</td>
+            <td className="px-4 py-3"><StatusPill tone={payTone[order.paymentStatus]}>{paymentStatusLabels[order.paymentStatus] ?? order.paymentStatus}</StatusPill></td>
+            <td className="px-4 py-3"><StatusPill tone={orderTone[order.status]}>{orderStatusLabels[order.status] ?? order.status}</StatusPill></td>
+          </tr>)}
+        </tbody>
+      </table>
+    </div> : null}
+    <Pager page={page} totalPages={list.data?.totalPages} onPage={setPage}/>
+    {openId ? <OrderDialog order={rows.find(order => order.id === openId)} onClose={() => setOpenId(null)}/> : null}
   </div>;
 }
 
-function Line({ term, value }) {
-    return <div className="flex items-center justify-between gap-3"><dt className="text-[#666666]">{term}</dt><dd className="whitespace-nowrap font-semibold text-[#292929]">{value}</dd></div>;
+function OrderDialog({ order, onClose }) {
+    const load = useCallback(async () => {
+        const [logs, transactions] = await Promise.all([
+            request(`/api/orders/${order.id}/logs`).catch(() => []),
+            request("/api/transactions", { query: { orderId: order.id, size: 50 } }).then(toPage).then(page => page.content).catch(() => []),
+        ]);
+        return { logs: Array.isArray(logs) ? logs : [], transactions };
+    }, [order.id]);
+    const detail = useAsyncResource(load, order.id);
+    return <AdminDialog title={`Đơn ${order.orderCode}`} onClose={onClose}>
+    <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto text-sm">
+      <dl className="grid grid-cols-2 gap-2">
+        <Item term="Hình thức" value={`${rentalTypeLabels[order.rentalType] ?? order.rentalType} × ${order.quantity}`}/>
+        <Item term="Đơn giá" value={formatMoney(order.unitPrice)}/>
+        <Item term="Tiền thuê" value={formatMoney(order.rentalAmount)}/>
+        <Item term="Giảm giá" value={`${formatMoney(order.discountAmount)}${order.voucherCode ? ` (${order.voucherCode})` : ""}`}/>
+        <Item term="Tổng thanh toán" value={formatMoney(order.totalAmount)}/>
+        <Item term="Tiền cọc" value={formatMoney(order.depositAmount)}/>
+      </dl>
+      {order.cancelReason ? <p className="rounded-xl bg-[#FEF2F2] p-3 text-[#B91C1C]">Lý do hủy/từ chối: {order.cancelReason}</p> : null}
+      {order.note ? <p className="rounded-xl bg-[#F7F7F5] p-3">Ghi chú: {order.note}</p> : null}
+      <AdminState loading={detail.loading && !detail.data} error={detail.error} label="nhật ký"/>
+      {detail.data ? <>
+        <section>
+          <h3 className="font-bold">Giao dịch ({detail.data.transactions.length})</h3>
+          {detail.data.transactions.map(tx => <p key={tx.id} className="mt-1 text-xs">#{tx.id} • {transactionTypeLabels[tx.transactionType] ?? tx.transactionType} • {paymentMethodLabels[tx.method] ?? tx.method} • {formatMoney(tx.amount)} • <b>{transactionStatusLabels[tx.status] ?? tx.status}</b></p>)}
+        </section>
+        <section>
+          <h3 className="font-bold">Nhật ký trạng thái</h3>
+          <ol className="mt-1 flex flex-col gap-1 border-l border-[#E9E9E7] pl-3 text-xs">
+            {detail.data.logs.map((log, index) => <li key={log.id ?? index}><b>{orderStatusLabels[log.toStatus] ?? log.toStatus ?? log.action}</b> • {formatDateTime(log.createdAt)}{log.actorName ? ` • ${log.actorName}` : ""}{log.note ? ` • ${log.note}` : ""}</li>)}
+          </ol>
+        </section>
+      </> : null}
+    </div>
+  </AdminDialog>;
+}
+
+function Item({ term, value }) {
+    return <div><dt className="text-[11px] uppercase text-[#666666]">{term}</dt><dd className="font-semibold text-[#292929]">{value}</dd></div>;
 }

@@ -8,6 +8,7 @@ import com.carrental.dto.response.CarSummaryResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.enums.CarStatus;
 import com.carrental.service.CarService;
+import com.carrental.service.CurrentUserService;
 import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,13 @@ import java.util.Set;
 public class AdminCarController {
 
     private final CarService carService;
+    private final CurrentUserService currentUserService;
 
     private static final Set<String> ALLOWED_ADMIN_CAR_SORT_FIELDS = Set.of("createdAt", "brand", "model", "status");
 
     // Admin xem danh sách xe kèm lọc theo trạng thái
     @GetMapping
     public ApiResponse<PageResponse<CarSummaryResponse>> getCars(
-            @RequestHeader("X-User-Id") Long adminId,
             @RequestParam(required = false) CarStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -37,27 +38,25 @@ public class AdminCarController {
             @RequestParam(defaultValue = "DESC") String direction
     ) {
         Pageable pageable = PageRequestFactory.of(page, size, sortBy, direction, ALLOWED_ADMIN_CAR_SORT_FIELDS, "createdAt");
-        return ApiResponse.ok(carService.getCarsByStatus(adminId, status, pageable));
+        return ApiResponse.ok(carService.getCarsByStatus(currentUserId(), status, pageable));
     }
 
     // Admin duyệt xe
     @PostMapping("/{id}/approve")
     public ApiResponse<CarResponse> approveCar(
-            @RequestHeader("X-User-Id") Long adminId,
             @PathVariable Long id
     ) {
-        return ApiResponse.ok("Duyệt xe thành công", carService.approveCar(adminId, id));
+        return ApiResponse.ok("Duyệt xe thành công", carService.approveCar(currentUserId(), id));
     }
 
     // Admin từ chối xe kèm lý do
     @PostMapping("/{id}/reject")
     public ApiResponse<CarResponse> rejectCar(
-            @RequestHeader("X-User-Id") Long adminId,
             @PathVariable Long id,
             @RequestBody Map<String, String> body
     ) {
         String reason = body != null ? body.get("reason") : null;
-        return ApiResponse.ok("Từ chối duyệt xe thành công", carService.rejectCar(adminId, id, reason));
+        return ApiResponse.ok("Từ chối duyệt xe thành công", carService.rejectCar(currentUserId(), id, reason));
     }
 
     // Admin duyệt hoặc từ chối giấy tờ xe
@@ -65,9 +64,12 @@ public class AdminCarController {
     public ApiResponse<CarDocumentResponse> verifyCarDocument(
             @PathVariable Long id,
             @PathVariable Long docId,
-            @RequestHeader("X-User-Id") Long adminId,
             @Valid @RequestBody CarDocumentVerifyRequest request
     ) {
-        return ApiResponse.ok("Xác minh giấy tờ xe thành công", carService.verifyCarDocumentByAdmin(adminId, id, docId, request));
+        return ApiResponse.ok("Xác minh giấy tờ xe thành công", carService.verifyCarDocumentByAdmin(currentUserId(), id, docId, request));
+    }
+
+    private Long currentUserId() {
+        return currentUserService.getCurrentUser().getId();
     }
 }

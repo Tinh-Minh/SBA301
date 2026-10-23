@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon } from "./icon";
 import { ProfileSidebar } from "./profile-sidebar";
+import { RequireAuth } from "./require-auth";
 import "../styles/profile.css";
 const labels = {
     account: "Hồ sơ cá nhân",
@@ -10,8 +11,9 @@ const labels = {
     orders: "Quản lý đơn thuê",
     history: "Lịch sử chuyến đi",
 };
-export function ProfileLayout({ active, title, description, actions, children }) {
-    return <main className="profile-layout w-full bg-background pt-20">
+/** `live`: màn lấy dữ liệu backend — bỏ qua bộ xử lý click demo và yêu cầu đăng nhập. */
+export function ProfileLayout({ active, title, description, actions, children, live = false }) {
+    return <main data-native={live ? "" : undefined} className="profile-layout w-full bg-background pt-20">
     <div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg">
       <nav aria-label="Đường dẫn hồ sơ" className="flex flex-wrap items-center gap-space-xs mb-space-md text-on-surface-variant font-body-sm text-body-sm">
         <Link href="/" className="hover:text-primary-container transition-colors">Trang chủ</Link>
@@ -24,8 +26,6 @@ export function ProfileLayout({ active, title, description, actions, children })
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-space-xs mb-space-xs">
             <span className="px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm uppercase tracking-wider">{labels[active]}</span>
-            <span className="size-1.5 rounded-full bg-primary-container"/>
-            <span className="font-technical-data text-technical-data text-on-surface-variant">Thành viên cao cấp</span>
           </div>
           <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">{title}</h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-space-xs max-w-2xl">{description}</p>
@@ -35,7 +35,7 @@ export function ProfileLayout({ active, title, description, actions, children })
       <div className="profile-columns grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
         <ProfileSidebar active={active} className="lg:col-span-4 xl:col-span-3"/>
         <section className="profile-content min-w-0 lg:col-span-8 xl:col-span-9 flex flex-col gap-space-lg" data-purpose={active === "banks" ? "bank-account-content" : "profile-content"}>
-          {children}
+          {live ? <RequireAuth>{children}</RequireAuth> : children}
         </section>
       </div>
     </div>

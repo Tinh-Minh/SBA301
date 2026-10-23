@@ -18,7 +18,7 @@ function Modal({ title, close, children }) {
 export function Interactions({ children }) {
     const router = useRouter();
     const path = usePathname();
-    const { login, logout } = useAuth();
+    const { login, register } = useAuth();
     const root = useRef(null);
     const toastTimer = useRef(null);
     const [toast, setToast] = useState("");
@@ -93,7 +93,7 @@ export function Interactions({ children }) {
     }
     function click(event) {
         const target = event.target;
-        if (target.closest("[data-hold-control]"))
+        if (target.closest("[data-hold-control],[data-native]"))
             return;
         const button = target.closest("button,a,[data-action],[data-handler],[data-tab-target]");
         if (!button) {
@@ -279,9 +279,7 @@ export function Interactions({ children }) {
             return;
         }
         if (action === "demo-login") {
-            login();
-            router.push("/tai-khoan");
-            notify("Đăng nhập thành công.");
+            router.push("/dang-nhap");
             return;
         }
         if (action === "edit-profile" || button.id === "btnEditProfile") {
@@ -419,19 +417,67 @@ export function Interactions({ children }) {
             notify("Đã cập nhật lựa chọn.");
         }
     }
+    const value = (id) => document.getElementById(id)?.value ?? "";
+    async function submitLogin(form) {
+        const email = value("login-account").trim();
+        const password = value("login-password");
+        if (!/^\S+@\S+\.\S+$/.test(email)) {
+            notify("Vui lòng nhập email đã đăng ký (hệ thống đăng nhập bằng email).");
+            return;
+        }
+        if (!password) {
+            notify("Vui lòng nhập mật khẩu.");
+            return;
+        }
+        form.setAttribute("aria-busy", "true");
+        try {
+            const session = await login({ email, password });
+            notify(`Xin chào ${session.account.fullName}!`);
+            const next = new URLSearchParams(window.location.search).get("next");
+            router.push(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/kham-pha-xe");
+        }
+        catch (error) {
+            notify(error.status === 401 ? "Email hoặc mật khẩu không đúng." : error.message);
+        }
+        finally {
+            form.removeAttribute("aria-busy");
+        }
+    }
+    async function submitRegister(form) {
+        const payload = { fullName: value("reg-fullname"), email: value("reg-email"), phone: value("reg-phone"), password: value("reg-password") };
+        if (!payload.fullName.trim() || !payload.email.trim() || !payload.phone.trim() || !payload.password) {
+            notify("Vui lòng nhập đầy đủ họ tên, email, số điện thoại và mật khẩu.");
+            return;
+        }
+        if (payload.password !== value("reg-confirm-password")) {
+            notify("Mật khẩu xác nhận chưa khớp.");
+            return;
+        }
+        form.setAttribute("aria-busy", "true");
+        try {
+            await register(payload);
+            await login({ email: payload.email, password: payload.password });
+            notify("Tạo tài khoản thành công. Chào mừng bạn đến với CarDB!");
+            router.push("/tai-khoan");
+        }
+        catch (error) {
+            notify(error.message);
+        }
+        finally {
+            form.removeAttribute("aria-busy");
+        }
+    }
     function submit(event) {
+        if (event.target.closest?.("[data-native]"))
+            return;
         event.preventDefault();
         const form = event.target;
-        if (path === "/dang-nhap" || path === "/dang-ky") {
-            const password = document.getElementById("reg-password");
-            const confirm = document.getElementById("reg-confirm-password");
-            if (path === "/dang-ky" && password?.value !== confirm?.value) {
-                notify("Mật khẩu xác nhận chưa khớp.");
-                return;
-            }
-            login();
-            router.push("/tai-khoan");
-            notify("Đăng nhập thành công.");
+        if (path === "/dang-nhap") {
+            void submitLogin(form);
+            return;
+        }
+        if (path === "/dang-ky") {
+            void submitRegister(form);
             return;
         }
         if (path.includes("ngan-hang/")) {
