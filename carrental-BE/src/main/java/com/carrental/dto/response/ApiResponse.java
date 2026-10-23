@@ -30,9 +30,26 @@ public record ApiResponse<T>(
         return new ApiResponse<>(true, ErrorCode.OK.name(), message, data, List.of(), null);
     }
 
+    /** Created envelope used by controllers. */
+    public static <T> ApiResponse<T> created(String message, T data) {
+        return new ApiResponse<>(true, ErrorCode.OK.name(), message, data, List.of(), null);
+    }
+
     /** Compatibility factory for controllers that return a simple error envelope. */
     public static <T> ApiResponse<T> error(String message) {
         return new ApiResponse<>(false, ErrorCode.INTERNAL_ERROR.name(), message, null, List.of(), null);
+    }
+
+    public static <T> ApiResponse<T> error(org.springframework.http.HttpStatus status, String message) {
+        return new ApiResponse<>(false, status.name(), message, null, List.of(), null);
+    }
+
+    public static <T> ApiResponse<T> error(org.springframework.http.HttpStatus status, String message, T data) {
+        return new ApiResponse<>(false, status.name(), message, data, List.of(), null);
+    }
+
+    public static <T> ApiResponse<T> error(String code, String message) {
+        return new ApiResponse<>(false, code, message, null, List.of(), null);
     }
 
     public static <T> ApiResponse<T> failure(

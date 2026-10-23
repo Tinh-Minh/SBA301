@@ -37,6 +37,7 @@ public class VNPayServiceImpl implements VNPayService {
     private static final DateTimeFormatter VNP_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     @Override
+    @Transactional(readOnly = true)
     public String createPaymentUrl(Long transactionId, String bankCode, HttpServletRequest request) {
         Transaction transaction = transactionRepository.findById(transactionId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + transactionId));
