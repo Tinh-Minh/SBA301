@@ -6,9 +6,6 @@ import { clearSession, readSession } from "@/storage/sessionStorage.js";
  */
 const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
-/** Chỉ dùng dữ liệu mẫu khi bật rõ ràng `VITE_USE_MOCK_API=true`. */
-export const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
-
 export class ApiError extends Error {
     status;
     code;
@@ -118,10 +115,6 @@ export async function request(path, init = {}) {
 }
 
 export const jsonBody = (value) => JSON.stringify(value);
-
-export function mockResponse(value, delayMs = 200) {
-    return new Promise(resolve => setTimeout(() => resolve(structuredClone(value)), delayMs));
-}
 
 /** Chuẩn hóa trang Spring `{content,page,size,totalElements,totalPages}` (hoặc mảng) về một dạng. */
 export function toPage(data) {

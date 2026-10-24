@@ -1,10 +1,9 @@
 import { sumAmounts } from "@/utils/owner.js";
 import { currentUserId } from "@/storage/sessionStorage.js";
-import { fetchAllPages, mockResponse, request, toPage, USE_MOCK_API } from "./http";
+import { fetchAllPages, request, toPage } from "./http";
 import { carFromOrder, normalizeOrder, normalizePayout } from "./adapters";
 import { bankAccountService } from "./bank-account.service";
 import { loadCarsById } from "./order.service";
-import { ownerDb, toPayoutView } from "./mock/owner-db";
 
 /** Ghép payout với đơn thuê và xe để hiển thị sao kê. */
 export async function toPayoutRows(payouts) {
@@ -26,19 +25,6 @@ export async function toPayoutRows(payouts) {
 export const payoutService = {
     /** Sao kê chủ xe: GET /api/payouts?recipientId={tôi} + tài khoản mặc định. */
     async getStatement() {
-        if (USE_MOCK_API) {
-            const rows = ownerDb.payouts.map(toPayoutView).sort((a, b) => Date.parse(b.order.startTime) - Date.parse(a.order.startTime));
-            const payouts = rows.map(row => row.payout);
-            return mockResponse({
-                defaultBankAccount: ownerDb.bankAccounts.find(account => account.isDefault),
-                rows,
-                totals: {
-                    grossAmount: sumAmounts(payouts, item => item.grossAmount),
-                    platformFee: sumAmounts(payouts, item => item.platformFee),
-                    netAmount: sumAmounts(payouts, item => item.netAmount),
-                },
-            });
-        }
         const [payouts, defaultBankAccount] = await Promise.all([
             fetchAllPages("/api/payouts", { recipientId: currentUserId(), sort: "id,desc" }).then(list => list.map(normalizePayout)),
             bankAccountService.getDefault().catch(() => null),

@@ -3,18 +3,13 @@ import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { ownerNavigation, ownerRoutes } from "@/routes/owner.routes.js";
 import { useAuth } from "@/components/AuthProvider.jsx";
-import { request, toPage, USE_MOCK_API } from "@/services/http.js";
-import { ownerDb } from "@/services/mock/owner-db.js";
+import { request, toPage } from "@/services/http.js";
 import { Icon } from "@/components/Icon.jsx";
 
 /** Đếm số xe (GET /api/cars/my-cars) và yêu cầu chờ duyệt (GET /api/orders/my-cars?status=PENDING). */
 function useOwnerCounts(path, loggedIn) {
     const [counts, setCounts] = useState({ cars: null, pending: null });
     useEffect(() => {
-        if (USE_MOCK_API) {
-            setCounts({ cars: ownerDb.cars.length, pending: ownerDb.orders.filter(order => order.status === "PENDING").length });
-            return;
-        }
         if (!loggedIn)
             return;
         let cancelled = false;
@@ -44,7 +39,7 @@ export function OwnerSidebar() {
         <span aria-hidden="true" className="size-2 rounded-full bg-emerald-accent shadow-[0_0_8px_rgba(16,185,129,0.5)]"/>
         <span className="text-[11px] font-bold uppercase tracking-wider text-muted-gray">Chủ xe đối tác</span>
       </div>
-      <h2 className="truncate text-lg font-bold text-charcoal">{user?.fullName ?? (USE_MOCK_API ? ownerDb.owner.fullName : "Chưa đăng nhập")}</h2>
+      <h2 className="truncate text-lg font-bold text-charcoal">{user?.fullName ?? "Chưa đăng nhập"}</h2>
       <div className="flex items-center justify-between pt-1">
         <span className="font-mono text-xs text-muted-gray">{user ? `Mã TK #${user.id}` : "—"}</span>
         <span className="whitespace-nowrap rounded-full bg-card-border/60 px-2 py-0.5 text-[11px] font-semibold text-charcoal">{counts.cars === null ? "Chủ xe" : `${counts.cars} xe niêm yết`}</span>

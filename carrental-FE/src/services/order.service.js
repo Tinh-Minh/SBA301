@@ -1,22 +1,6 @@
-import { canRespondToOrder, isOrderExpired } from "@/utils/owner.js";
 import { toLocalIso } from "@/utils/datetime.js";
-import { ApiError, fetchAllPages, mockResponse, request, toPage, USE_MOCK_API } from "./http";
+import { fetchAllPages, request, toPage } from "./http";
 import { carFromOrder, normalizeCar, normalizeHandover, normalizeOrder, renterFromOrder } from "./adapters";
-import { findOrFail, ownerDb, toOrderView } from "./mock/owner-db";
-
-function expireStaleMockOrders() {
-    for (const order of ownerDb.orders)
-        if (isOrderExpired(order))
-            order.status = "EXPIRED";
-}
-function respond(id, status) {
-    expireStaleMockOrders();
-    const order = findOrFail(ownerDb.orders, id, "đơn thuê");
-    if (!canRespondToOrder(order))
-        throw new ApiError(409, `Đơn ${order.orderCode} không còn chờ phản hồi`);
-    order.status = status;
-    return mockResponse(toOrderView(order));
-}
 
 const reasonBody = (reason) => (reason ? { reason } : {});
 
@@ -55,29 +39,19 @@ export async function toOwnerViews(orders, { withHandovers = false } = {}) {
 export const orderService = {
     /** Chủ xe: GET /api/orders/my-cars */
     async listMine(status) {
-        if (USE_MOCK_API) {
-            expireStaleMockOrders();
-            return mockResponse(ownerDb.orders.filter(order => !status || order.status === status).map(toOrderView));
-        }
         const orders = await fetchAllPages("/api/orders/my-cars", { status, sortBy: "createdAt", direction: "desc" });
         return toOwnerViews(orders, { withHandovers: status !== "PENDING" });
     },
     async getById(id) {
-        if (USE_MOCK_API)
-            return mockResponse(toOrderView(findOrFail(ownerDb.orders, id, "đơn thuê")));
         const [view] = await toOwnerViews([await request(`/api/orders/${id}`)], { withHandovers: true });
         return view;
     },
     /** PUT /api/orders/{id}/confirm */
     async approve(id) {
-        if (USE_MOCK_API)
-            return respond(id, "CONFIRMED");
         return normalizeOrder(await request(`/api/orders/${id}/confirm`, { method: "PUT", json: {} }));
     },
     /** PUT /api/orders/{id}/reject { reason } */
     async reject(id, reason) {
-        if (USE_MOCK_API)
-            return respond(id, "REJECTED");
         return normalizeOrder(await request(`/api/orders/${id}/reject`, { method: "PUT", json: reasonBody(reason) }));
     },
 };

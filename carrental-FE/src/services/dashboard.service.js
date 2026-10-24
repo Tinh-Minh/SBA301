@@ -1,26 +1,13 @@
 import { isApprovedCar, formatVnd, sumAmounts, isOrderExpired } from "@/utils/owner.js";
 
 import { readSession } from "@/storage/sessionStorage.js";
-import { fetchAllPages, mockResponse, USE_MOCK_API } from "./http";
+import { fetchAllPages } from "./http";
 import { normalizePayout } from "./adapters";
 import { bankAccountService } from "./bank-account.service";
 import { carService } from "./car.service";
 import { toOwnerViews } from "./order.service";
 import { toPayoutRows } from "./payout.service";
 import { slotService } from "./slot.service";
-import { ownerDb, toOrderView, toPayoutView } from "./mock/owner-db";
-
-function buildMockActivities() {
-    const items = [];
-    for (const rentalOrder of ownerDb.orders.filter(order => order.status === "PENDING" && !isOrderExpired(order))) {
-        const car = ownerDb.cars.find(item => item.id === rentalOrder.carId);
-        const renter = ownerDb.renters.find(item => item.id === rentalOrder.customerId);
-        items.push({ id: `req-${rentalOrder.id}`, icon: "pending_actions", tone: "warning", title: `Yêu cầu thuê mới (${car.brand} ${car.model})`, subtitle: renter.fullName, at: rentalOrder.startTime });
-    }
-    for (const rentalOrder of ownerDb.orders.filter(order => order.paymentStatus === "PAID"))
-        items.push({ id: `pay-${rentalOrder.id}`, icon: "payments", tone: "payment", title: "Nhận thanh toán", highlight: formatVnd(rentalOrder.totalAmount), orderCode: rentalOrder.orderCode, at: rentalOrder.startTime });
-    return items.sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, 6);
-}
 
 function buildActivities(views) {
     const items = [];
@@ -38,28 +25,6 @@ function buildActivities(views) {
 
 export const dashboardService = {
     async getSummary() {
-        if (USE_MOCK_API) {
-            const { owner, cars, orders, payouts, bankAccounts } = ownerDb;
-            const held = payouts.filter(item => item.status === "PENDING" || item.status === "PROCESSING");
-            const paid = payouts.filter(item => item.status === "PAID");
-            const pendingRequests = orders.filter(order => order.status === "PENDING" && !isOrderExpired(order)).map(toOrderView);
-            return mockResponse({
-                owner,
-                activeCars: cars.filter(car => car.status === "ACTIVE").length,
-                approvedCars: cars.filter(car => isApprovedCar(car.status)).length,
-                totalCars: cars.length,
-                pendingOrders: pendingRequests.length,
-                ongoingTrips: orders.filter(order => order.status === "ONGOING").length,
-                recognizedGross: sumAmounts(payouts, item => item.grossAmount),
-                escrowNet: sumAmounts(held, item => item.netAmount),
-                paidNet: sumAmounts(paid, item => item.netAmount),
-                defaultBankAccount: bankAccounts.find(account => account.isDefault),
-                pendingRequests,
-                managedCars: cars.slice(0, 3).map(car => ({ car, openSlots: ownerDb.slots.filter(slot => slot.carId === car.id && slot.status === "OPEN").length })),
-                activities: buildMockActivities(),
-                recentPayouts: payouts.map(toPayoutView).slice(0, 5),
-            });
-        }
         const session = readSession();
         const [cars, orders, payouts, defaultBankAccount] = await Promise.all([
             carService.listMine(),

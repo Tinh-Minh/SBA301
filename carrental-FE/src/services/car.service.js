@@ -1,6 +1,5 @@
-import { ApiError, fetchAllPages, mockResponse, request, toPage, USE_MOCK_API } from "./http";
+import { fetchAllPages, request, toPage } from "./http";
 import { normalizeCar } from "./adapters";
-import { findOrFail, nextMockId, ownerDb } from "./mock/owner-db";
 
 const nullable = (value) => (value === "" || value === undefined ? null : value);
 const numberOrNull = (value) => (value === "" || value === null || value === undefined ? null : Number(value));
@@ -38,14 +37,6 @@ async function getCar(id) {
 export const carService = {
     /** POST /api/cars — xe mới luôn ở PENDING_APPROVAL; ảnh gửi tiếp qua POST /api/cars/{id}/images. */
     async create(draft) {
-        if (USE_MOCK_API) {
-            const plate = draft.licensePlate.trim().toUpperCase();
-            if (ownerDb.cars.some(car => car.licensePlate.toUpperCase() === plate))
-                throw new ApiError(409, "Biển số này đã có trong đội xe");
-            const car = { ...draft, licensePlate: plate, id: nextMockId(), ownerId: ownerDb.owner.id, status: "PENDING_APPROVAL" };
-            ownerDb.cars.push(car);
-            return mockResponse(car);
-        }
         const created = await request("/api/cars", { method: "POST", json: { licensePlate: draft.licensePlate.trim().toUpperCase(), ...carPayload(draft) } });
         const imageUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
         if (imageUrls.length)
@@ -54,8 +45,6 @@ export const carService = {
     },
     /** GET /api/cars/my-cars (tóm tắt) + GET /api/cars/{id} để có đủ địa chỉ, cọc, km... */
     async listMine() {
-        if (USE_MOCK_API)
-            return mockResponse(ownerDb.cars);
         const summaries = await fetchAllPages("/api/cars/my-cars", {}, { pageSize: 50 });
         const details = await Promise.all(summaries.map(summary => getCar(summary.id).catch(() => normalizeCar(summary))));
         return details;
@@ -64,22 +53,16 @@ export const carService = {
         return toPage(await request("/api/cars/my-cars", { query: { status, page: 0, size: 100 } }));
     },
     async getById(id) {
-        if (USE_MOCK_API)
-            return mockResponse(findOrFail(ownerDb.cars, id, "xe"));
         return getCar(id);
     },
     /** PUT /api/cars/{id} cần gửi đủ trường, nên gộp với dữ liệu hiện tại trước khi gửi. */
     async update(id, changes) {
-        if (USE_MOCK_API)
-            return mockResponse(Object.assign(findOrFail(ownerDb.cars, id, "xe"), changes));
         const current = await getCar(id);
         const updated = await request(`/api/cars/${id}`, { method: "PUT", json: carPayload({ ...current, ...changes }) });
         return normalizeCar(updated);
     },
     /** PATCH /api/cars/{id}/status?status=ACTIVE|INACTIVE */
     async setStatus(id, status) {
-        if (USE_MOCK_API)
-            return mockResponse(Object.assign(findOrFail(ownerDb.cars, id, "xe"), { status }));
         return normalizeCar(await request(`/api/cars/${id}/status`, { method: "PATCH", query: { status } }));
     },
     /** POST /api/cars/{id}/images — backend chỉ nhận URL ảnh. */
