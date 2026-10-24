@@ -93,7 +93,13 @@ export default function OwnerPayouts() {
               <td className="whitespace-nowrap px-4 py-3"><Money amount={row.payout.platformFee} sign="-" compact/></td>
               <td className="whitespace-nowrap px-4 py-3 font-bold"><Money amount={row.payout.netAmount} compact/></td>
               <td className="px-4 py-3"><StatusBadge meta={payoutStatusMeta[row.payout.status]}/></td>
-              <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-gray">{row.payout.paidAt ? formatDateTime(row.payout.paidAt) : "Sau khi ký C10-B"}</td>
+              <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-gray">
+                {row.payout.paidAt
+                  ? formatDateTime(row.payout.paidAt)
+                  : row.order?.status === "COMPLETED"
+                  ? "Chờ Admin duyệt chi trả"
+                  : "Sau khi ký C10-B"}
+              </td>
             </tr>)}
           </tbody>
         </table>
