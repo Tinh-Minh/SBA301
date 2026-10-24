@@ -9,7 +9,11 @@ test.beforeEach(async ({ page }) => {
   }));
 });
 
-test("public, customer, owner and admin routes render after direct visits and reloads", async ({ page }) => {
+for (const signedIn of [false, true]) {
+test(`routes render on direct visits and reloads (${signedIn ? "authenticated" : "guest"})`, async ({ page }) => {
+  if (signedIn) await page.addInitScript(() => localStorage.setItem("cardb:session:v2", JSON.stringify({
+    accessToken: "frontend-test-token", account: { id: 1, fullName: "Test Admin", role: "ADMIN" },
+  })));
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   const routes = [
@@ -31,9 +35,11 @@ test("public, customer, owner and admin routes render after direct visits and re
     await expect(page.getByText("Unexpected Application Error!"), route).toHaveCount(0);
   }
   await page.reload();
-  await expect(page.getByRole("heading", { name: "Đăng nhập tài khoản quản trị" })).toBeVisible();
+  if (!signedIn) await expect(page.getByRole("heading", { name: "Đăng nhập tài khoản quản trị" })).toBeVisible();
+  await expect(page).toHaveTitle("Tranh chấp & Khiếu nại | CarDB");
   expect(errors).toEqual([]);
 });
+}
 
 test("aliases preserve query strings and hashes, including dynamic IDs", async ({ page }) => {
   await page.goto("/cach-tinh-gia?city=HCM#pricing");
