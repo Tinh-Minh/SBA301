@@ -17,14 +17,18 @@ public class VNPayCallbackController {
 
     private final TransactionService transactionService;
 
-    @GetMapping(value = "/return", produces = {MediaType.TEXT_HTML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/return")
     public ResponseEntity<?> handleVNPayReturn(
             @RequestParam Map<String, String> params,
-            @RequestHeader(value = "Accept", defaultValue = "") String acceptHeader,
+            @RequestHeader(value = "Accept", required = false) String acceptHeader,
             @RequestParam(required = false, defaultValue = "") String format) {
         TransactionResponse response = transactionService.processVNPayReturn(params);
-        if ("json".equalsIgnoreCase(format) || acceptHeader.contains("application/json")) {
-            return ResponseEntity.ok(ApiResponse.ok("Xử lý kết quả VNPay thành công", response));
+        boolean wantsJson = "json".equalsIgnoreCase(format)
+                || (acceptHeader != null && acceptHeader.contains(MediaType.APPLICATION_JSON_VALUE));
+        if (wantsJson) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ApiResponse.ok("Xử lý kết quả VNPay thành công", response));
         }
 
         boolean isSuccess = "SUCCESS".equalsIgnoreCase(response.status());

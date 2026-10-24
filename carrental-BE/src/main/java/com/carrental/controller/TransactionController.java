@@ -75,14 +75,18 @@ public class TransactionController {
         return ApiResponse.ok("Tạo link thanh toán VNPay thành công", java.util.Map.of("paymentUrl", url));
     }
 
-    @GetMapping(value = "/vnpay-return", produces = {org.springframework.http.MediaType.TEXT_HTML_VALUE, org.springframework.http.MediaType.APPLICATION_JSON_VALUE})
+    @GetMapping(value = "/vnpay-return")
     public org.springframework.http.ResponseEntity<?> handleVNPayReturn(
             @RequestParam java.util.Map<String, String> params,
-            @RequestHeader(value = "Accept", defaultValue = "") String acceptHeader,
+            @RequestHeader(value = "Accept", required = false) String acceptHeader,
             @RequestParam(required = false, defaultValue = "") String format) {
         TransactionResponse response = transactionService.processVNPayReturn(params);
-        if ("json".equalsIgnoreCase(format) || acceptHeader.contains("application/json")) {
-            return org.springframework.http.ResponseEntity.ok(ApiResponse.ok("Xử lý kết quả VNPay thành công", response));
+        boolean wantsJson = "json".equalsIgnoreCase(format)
+                || (acceptHeader != null && acceptHeader.contains(org.springframework.http.MediaType.APPLICATION_JSON_VALUE));
+        if (wantsJson) {
+            return org.springframework.http.ResponseEntity.ok()
+                    .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                    .body(ApiResponse.ok("Xử lý kết quả VNPay thành công", response));
         }
 
         boolean isSuccess = "SUCCESS".equalsIgnoreCase(response.status());

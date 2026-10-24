@@ -213,16 +213,20 @@ public class VNPayServiceImpl implements VNPayService {
     private void validateChecksum(Map<String, String> queryParams) {
         String secureHash = queryParams.get("vnp_SecureHash");
         if (secureHash == null || secureHash.isBlank()) {
-            return;
+            throw new AppException(HttpStatus.BAD_REQUEST, "Thiếu chữ ký bảo mật vnp_SecureHash");
         }
 
-        Map<String, String> fields = new TreeMap<>(queryParams);
-        fields.remove("vnp_SecureHash");
-        fields.remove("vnp_SecureHashType");
+        Map<String, String> fields = new TreeMap<>();
+        queryParams.forEach((k, v) -> {
+            if (k != null && k.startsWith("vnp_") && !k.equals("vnp_SecureHash") && !k.equals("vnp_SecureHashType")) {
+                fields.put(k, v);
+            }
+        });
 
         String calculatedHash = vnPayConfig.hashAllFields(fields);
         if (!secureHash.equalsIgnoreCase(calculatedHash)) {
             log.warn("Sai lệch chữ ký VNPay: nhận được={}, tính toán={}", secureHash, calculatedHash);
+            throw new AppException(HttpStatus.BAD_REQUEST, "Chữ ký bảo mật VNPay không hợp lệ");
         }
     }
 
