@@ -2,7 +2,7 @@
 #   docker compose up --build
 #
 # Database lấy từ carrental-BE/.env (Supabase). File đó không được copy vào image.
-# Khóa JWT và thư mục giấy tờ lưu ngay trong thư mục ./data của dự án.
+# Khóa JWT và thư mục giấy tờ trên máy được gắn vào container.
 
 services:
   backend:
@@ -15,14 +15,14 @@ services:
       JWT_PUBLIC_KEY_LOCATION: file:/keys/public_key.pem
       APP_DOCUMENT_STORAGE_ROOT: /data/private-documents
     ports:
-      - "${BACKEND_PORT:-8088}:8080"
+      - "8080:8080"
     volumes:
       - type: bind
-        source: ./data/keys
+        source: ${SBA301_KEYS_DIR:-C:/Users/letan/AppData/Local/SBA301_RentCar/keys}
         target: /keys
         read_only: true
       - type: bind
-        source: ./data/private-documents
+        source: ${SBA301_DOCUMENTS_DIR:-C:/Users/letan/AppData/Local/SBA301_RentCar/private-documents}
         target: /data/private-documents
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
