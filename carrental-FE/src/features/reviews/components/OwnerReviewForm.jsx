@@ -5,7 +5,7 @@ import { LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
 
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 
-export function Form({ orderId }) {
+export function OwnerReviewForm({ orderId }) {
     const navigate = useNavigate();
     const detail = useOrderReview(orderId);
     const [rating, setRating] = useState(5);

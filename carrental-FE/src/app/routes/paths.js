@@ -25,7 +25,7 @@ export const pageTitles = {
     "payment/failed": "Thanh toán chưa thành công",
     "handover/pickup": "Biên bản nhận xe",
     "handover/return": "Biên bản trả xe",
-    "reviews": "Đánh giá chuyến thuê",
+    "reviews": "Đánh giá chủ xe",
     "disputes": "Tranh chấp và bằng chứng",
     "components/navigation": "Thành phần điều hướng",
     "list-your-car": "Đăng ký cho thuê xe",

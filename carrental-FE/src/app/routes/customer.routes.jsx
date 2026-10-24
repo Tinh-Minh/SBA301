@@ -8,7 +8,7 @@ const CheckoutPage = lazy(() => import("@/features/bookings/pages/CheckoutPage.j
 const DisputePage = lazy(() => import("@/features/disputes/pages/DisputePage.jsx"));
 const OrderDetailPage = lazy(() => import("@/features/bookings/pages/OrderDetailPage.jsx").then(module => ({ default: module.OrderDetailPage })));
 const PaymentPage = lazy(() => import("@/features/payments/pages/PaymentPage.jsx"));
-const ReviewPage = lazy(() => import("@/features/reviews/pages/ReviewPage.jsx"));
+const OwnerReviewPage = lazy(() => import("@/features/reviews/pages/OwnerReviewPage.jsx"));
 import { page, AliasRedirect, OrderRoute } from "@/app/routes/elements.jsx";
 
 export const customerPages = [
@@ -22,7 +22,7 @@ export const customerPages = [
     page("booking/confirm", <CheckoutPage />),
     page("orders/:id", <OrderRoute Screen={OrderDetailPage} />, "Chi tiết đơn thuê"),
     page("payment", <PaymentPage />),
-    page("reviews", <ReviewPage />),
+    page("reviews", <OwnerReviewPage />),
     page("disputes", <DisputePage />),
     page("account/bank/add", <AliasRedirect to="/account/bank" />),
     page("account/bank/default", <AliasRedirect to="/account/bank" />),
