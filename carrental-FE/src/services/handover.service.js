@@ -1,4 +1,4 @@
-import { isHandoverConfirmed, isPayoutReleasable, nextHandoverType } from "@/utils/owner/rules.js";
+import { isHandoverConfirmed, isPayoutReleasable, nextHandoverType } from "@/utils/owner.js";
 import { ApiError, mockResponse, request, USE_MOCK_API } from "./http";
 import { normalizeHandover } from "./adapters";
 import { findOrFail, nextMockId, ownerDb } from "./mock/owner-db";

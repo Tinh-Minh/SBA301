@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { calculatePayout, formatPercent, formatVnd } from "@/utils/owner/finance.js";
+import { calculatePayout, formatPercent, formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/owner.routes.js";
 import { Money } from "@/components/owner/Money.jsx";
 export function OwnerCrumb({ current, parent }) {

@@ -1,4 +1,4 @@
-import { canRespondToOrder, isOrderExpired } from "@/utils/owner/rules.js";
+import { canRespondToOrder, isOrderExpired } from "@/utils/owner.js";
 import { toLocalIso } from "@/utils/datetime.js";
 import { ApiError, fetchAllPages, mockResponse, request, toPage, USE_MOCK_API } from "./http";
 import { carFromOrder, normalizeCar, normalizeHandover, normalizeOrder, renterFromOrder } from "./adapters";

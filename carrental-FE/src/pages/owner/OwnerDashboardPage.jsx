@@ -2,10 +2,10 @@ import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { useOwnerDashboard } from "@/hooks/owner/useOwnerDashboard.js";
-import { carSubtitle, formatActivityTime, formatRentalPeriod, maskBankAccount } from "@/utils/owner/format.js";
-import { formatVnd } from "@/utils/owner/finance.js";
+import { carSubtitle, formatActivityTime, formatRentalPeriod, maskBankAccount, formatVnd, kycStatusMeta } from "@/utils/owner.js";
+
 import { ownerRoutes } from "@/routes/owner.routes.js";
-import { kycStatusMeta } from "@/utils/owner/status.js";
+
 const activityTone = {
     warning: "bg-status-amber-bg border-amber-200 text-status-amber-dark",
     success: "bg-status-green-bg border-emerald-200 text-emerald-accent",

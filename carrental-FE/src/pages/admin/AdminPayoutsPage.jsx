@@ -4,7 +4,7 @@ import { Money } from "@/components/owner/Money.jsx";
 import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, paymentMethodLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
-import { calculatePayout } from "@/utils/owner/finance.js";
+import { calculatePayout } from "@/utils/owner.js";
 import { request, toPage } from "@/services/http.js";
 import { adminOrderService, adminPayoutService } from "@/services/admin.service";
 

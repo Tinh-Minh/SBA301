@@ -5,7 +5,7 @@ import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Pill, Primary, fieldClass } from "@/components/LiveUi.jsx";
 import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
 import { formatDateTime } from "@/utils/datetime.js";
-import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner/rules.js";
+import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner.js";
 import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/utils/labels.js";
 import { handoverService } from "@/services/handover.service";
 import { rentalService } from "@/services/order.service";

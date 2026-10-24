@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { AdminPageHeader, AdminState, StatusPill } from "@/components/admin/AdminUi.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { useAsyncResource } from "@/hooks/useAsyncResource.js";
-import { formatTrVnd } from "@/utils/owner/finance.js";
+import { formatTrVnd } from "@/utils/owner.js";
 import { adminRoutes } from "@/routes/admin.routes.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { kycStatusLabels, orderStatusLabels } from "@/utils/labels.js";

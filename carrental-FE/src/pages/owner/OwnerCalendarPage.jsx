@@ -8,7 +8,7 @@ import { useOwnerCalendar } from "@/hooks/owner/useOwnerCalendar.js";
 import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
 import { formatDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { slotService } from "@/services/slot.service";
-import { formatVnd } from "@/utils/owner/finance.js";
+import { formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/owner.routes.js";
 const weekdayLabels = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 function startOfDay(date) {
