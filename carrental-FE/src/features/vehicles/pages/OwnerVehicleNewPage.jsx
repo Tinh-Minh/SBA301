@@ -13,7 +13,7 @@ import { calculatePlatformFee, formatVnd } from "@/shared/utils/owner.js";
 import { ownerRoutes } from "@/app/routes/paths.js";
 import { carService } from "@/shared/hooks/useVehicles.js";
 import { useAuth } from "@/shared/hooks/useAuth.js";
-import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, amenities, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/features/vehicles/components/Field.jsx";
+import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, amenities, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/features/vehicles/components/VehicleRegistrationSteps.jsx";
 
 export default function OwnerVehicleNew() {
     const navigate = useNavigate();

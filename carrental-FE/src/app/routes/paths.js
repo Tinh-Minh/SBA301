@@ -62,5 +62,3 @@ export const adminRoutes = {
     payouts: "/admin/payouts",
     disputes: "/admin/disputes",
 };
-
-

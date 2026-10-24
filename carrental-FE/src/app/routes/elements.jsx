@@ -33,4 +33,3 @@ export function page(path, element, title = pageTitles[path]) {
         handle: { title },
     };
 }
-

@@ -1,3 +1,4 @@
+import { DetailItem } from "@/shared/components/DetailItem.jsx";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
@@ -45,12 +46,12 @@ export function Confirm() {
       <h2 className="text-lg font-bold">{carName(detail.data.car)}</h2>
       <p className="text-sm text-[#666666]">{formatDateTime(start)} → {formatDateTime(end)} • {rentalTypeLabels[type] ?? type}</p>
       <dl className="grid grid-cols-2 gap-2 text-sm">
-        <Item term="Đơn giá" value={formatMoney(detail.data.quote.unitPrice)}/>
-        <Item term="Số lượng" value={detail.data.quote.quantity}/>
-        <Item term="Tiền thuê" value={formatMoney(detail.data.quote.rentalAmount)}/>
-        <Item term="Giảm giá" value={formatMoney(detail.data.quote.discountAmount)}/>
-        <Item term="Tổng thanh toán" value={formatMoney(detail.data.quote.totalAmount)}/>
-        <Item term="Tiền cọc (thu khi nhận xe)" value={formatMoney(detail.data.quote.depositAmount)}/>
+        <DetailItem term="Đơn giá" value={formatMoney(detail.data.quote.unitPrice)}/>
+        <DetailItem term="Số lượng" value={detail.data.quote.quantity}/>
+        <DetailItem term="Tiền thuê" value={formatMoney(detail.data.quote.rentalAmount)}/>
+        <DetailItem term="Giảm giá" value={formatMoney(detail.data.quote.discountAmount)}/>
+        <DetailItem term="Tổng thanh toán" value={formatMoney(detail.data.quote.totalAmount)}/>
+        <DetailItem term="Tiền cọc (thu khi nhận xe)" value={formatMoney(detail.data.quote.depositAmount)}/>
       </dl>
       <form className="grid gap-3" onSubmit={event => { event.preventDefault(); setVoucherQuery(voucher.trim()); }}>
         <label className="text-xs font-semibold text-[#666666]">Mã voucher
@@ -64,8 +65,4 @@ export function Confirm() {
       <Primary disabled={create.running} onClick={() => void create.run()}>{create.running ? "Đang gửi…" : "Gửi yêu cầu thuê"}</Primary>
     </section> : null}
   </div>;
-}
-
-function Item({ term, value }) {
-    return <div><dt className="text-[11px] uppercase text-[#666666]">{term}</dt><dd className="font-semibold text-[#292929]">{value}</dd></div>;
 }

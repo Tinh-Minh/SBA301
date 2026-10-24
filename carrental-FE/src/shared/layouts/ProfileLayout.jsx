@@ -13,7 +13,7 @@ const labels = {
     orders: "Quản lý đơn thuê",
     history: "Lịch sử chuyến đi",
 };
-/** `live`: màn lấy dữ liệu backend — bỏ qua bộ xử lý click demo và yêu cầu đăng nhập. */
+/** Authenticated account screens opt into the profile access guard. */
 export function ProfileLayout({ active, title, description, actions, children, live = false }) {
     return <main data-native={live ? "" : undefined} className="profile-layout w-full bg-background pt-20">
     <div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg">

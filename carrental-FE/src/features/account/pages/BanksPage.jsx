@@ -4,7 +4,7 @@ import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
 import { LiveState } from "@/shared/components/LiveUi.jsx";
 
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { AddForm } from "@/features/account/components/AddForm.jsx";
+import { AddForm } from "@/features/account/components/BankAccountForm.jsx";
 
 export default function BanksLive() {
     const list = useBankAccounts();

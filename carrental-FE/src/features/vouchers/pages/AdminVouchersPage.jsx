@@ -5,7 +5,7 @@ import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { formatMoney } from "@/shared/utils/labels.js";
 import { adminVoucherService } from "@/shared/hooks/useAdmin.js";
-import { CreateDialog, EditDialog, tabs, windowLabel } from "@/features/vouchers/components/CreateDialog.jsx";
+import { CreateDialog, EditDialog, tabs, windowLabel } from "@/features/vouchers/components/VoucherDialogs.jsx";
 
 export default function AdminVouchers() {
     const [windowState, setWindowState] = useState("");

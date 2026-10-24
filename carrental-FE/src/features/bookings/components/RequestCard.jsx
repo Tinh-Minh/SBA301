@@ -14,13 +14,6 @@ export const filters = [
 function initials(name) {
     return name.split(" ").slice(-2).map(part => part[0] ?? "").join("").toUpperCase();
 }
-export function Summary({ label, value, hint }) {
-    return <div className="rounded-2xl border border-card-border bg-white p-4 shadow-sm">
-    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">{label}</p>
-    <p className="mt-1 text-2xl font-bold text-charcoal">{value}</p>
-    <p className="text-xs text-muted-gray">{hint}</p>
-  </div>;
-}
 export function RequestCard({ item, rejecting, reason, busy, error, onReason, onStartReject, onCancelReject, onApprove, onReject }) {
     const { order, car, renter } = item;
     const period = formatRentalPeriod(order);

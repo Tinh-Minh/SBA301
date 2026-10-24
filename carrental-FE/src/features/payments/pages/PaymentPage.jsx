@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router";
 import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
 import { LivePage } from "@/shared/components/LiveUi.jsx";
-import { Pay } from "@/features/payments/components/Pay.jsx";
+import { Pay } from "@/features/payments/components/PaymentForm.jsx";
 
 export default function PaymentLive() {
     const orderId = useSearchParams()[0].get("orderId");

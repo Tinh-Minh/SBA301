@@ -114,4 +114,3 @@ export function useOwnerCounts() {
     });
     return data ?? { cars: null, pending: null };
 }
-

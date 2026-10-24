@@ -1,3 +1,4 @@
+import { DetailItem } from "@/shared/components/DetailItem.jsx";
 import { useAdminOrderDetail } from "@/shared/hooks/useAdmin.js";
 import { AdminDialog, AdminState } from "@/shared/components/admin/AdminUi.jsx";
 import { formatDateTime } from "@/shared/utils/datetime.js";
@@ -12,12 +13,12 @@ export function OrderDialog({ order, onClose }) {
     return <AdminDialog title={`Đơn ${order.orderCode}`} onClose={onClose}>
     <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto text-sm">
       <dl className="grid grid-cols-2 gap-2">
-        <Item term="Hình thức" value={`${rentalTypeLabels[order.rentalType] ?? order.rentalType} × ${order.quantity}`}/>
-        <Item term="Đơn giá" value={formatMoney(order.unitPrice)}/>
-        <Item term="Tiền thuê" value={formatMoney(order.rentalAmount)}/>
-        <Item term="Giảm giá" value={`${formatMoney(order.discountAmount)}${order.voucherCode ? ` (${order.voucherCode})` : ""}`}/>
-        <Item term="Tổng thanh toán" value={formatMoney(order.totalAmount)}/>
-        <Item term="Tiền cọc" value={formatMoney(order.depositAmount)}/>
+        <DetailItem term="Hình thức" value={`${rentalTypeLabels[order.rentalType] ?? order.rentalType} × ${order.quantity}`}/>
+        <DetailItem term="Đơn giá" value={formatMoney(order.unitPrice)}/>
+        <DetailItem term="Tiền thuê" value={formatMoney(order.rentalAmount)}/>
+        <DetailItem term="Giảm giá" value={`${formatMoney(order.discountAmount)}${order.voucherCode ? ` (${order.voucherCode})` : ""}`}/>
+        <DetailItem term="Tổng thanh toán" value={formatMoney(order.totalAmount)}/>
+        <DetailItem term="Tiền cọc" value={formatMoney(order.depositAmount)}/>
       </dl>
       {order.cancelReason ? <p className="rounded-xl bg-[#FEF2F2] p-3 text-[#B91C1C]">Lý do hủy/từ chối: {order.cancelReason}</p> : null}
       {order.note ? <p className="rounded-xl bg-[#F7F7F5] p-3">Ghi chú: {order.note}</p> : null}
@@ -36,8 +37,4 @@ export function OrderDialog({ order, onClose }) {
       </> : null}
     </div>
   </AdminDialog>;
-}
-
-function Item({ term, value }) {
-    return <div><dt className="text-[11px] uppercase text-[#666666]">{term}</dt><dd className="font-semibold text-[#292929]">{value}</dd></div>;
 }

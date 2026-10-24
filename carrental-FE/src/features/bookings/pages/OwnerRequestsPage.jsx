@@ -1,10 +1,11 @@
+import { SummaryCard } from "@/shared/components/SummaryCard.jsx";
 import { useMemo, useState } from "react";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { ownerRoutes } from "@/app/routes/paths.js";
 import { orderService } from "@/shared/hooks/useBookings.js";
-import { RequestCard, Summary, filters } from "@/features/bookings/components/Summary.jsx";
+import { RequestCard, filters } from "@/features/bookings/components/RequestCard.jsx";
 
 export default function OwnerRequests() {
     const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());
@@ -29,9 +30,9 @@ export default function OwnerRequests() {
       <OwnerHeading title="Yêu cầu đặt xe" description="Xem hồ sơ khách, thời hạn phản hồi 2 giờ và chấp nhận hoặc từ chối yêu cầu giữ chỗ."/>
     </div>
     <div className="grid gap-3 sm:grid-cols-3">
-      <Summary label="Chờ xử lý" value={`${pending} đơn`} hint="Cần phản hồi trước khi hết hạn"/>
-      <Summary label="Đã duyệt" value={`${rows.filter(item => item.order.status === "CONFIRMED" || item.order.status === "ONGOING" || item.order.status === "COMPLETED").length}`} hint="Đơn chủ xe đã nhận"/>
-      <Summary label="Không nhận" value={`${rows.filter(item => item.order.status === "REJECTED" || item.order.status === "EXPIRED").length}`} hint="Từ chối hoặc quá hạn"/>
+      <SummaryCard label="Chờ xử lý" value={`${pending} đơn`} hint="Cần phản hồi trước khi hết hạn"/>
+      <SummaryCard label="Đã duyệt" value={`${rows.filter(item => item.order.status === "CONFIRMED" || item.order.status === "ONGOING" || item.order.status === "COMPLETED").length}`} hint="Đơn chủ xe đã nhận"/>
+      <SummaryCard label="Không nhận" value={`${rows.filter(item => item.order.status === "REJECTED" || item.order.status === "EXPIRED").length}`} hint="Từ chối hoặc quá hạn"/>
     </div>
     <OwnerState loading={resource.loading && !resource.data} error={resource.error} label="yêu cầu"/>
     {resource.data ? <>

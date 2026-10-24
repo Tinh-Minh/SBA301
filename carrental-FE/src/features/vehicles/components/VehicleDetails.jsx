@@ -1,3 +1,4 @@
+import { DetailItem } from "@/shared/components/DetailItem.jsx";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { useAuth } from "@/shared/hooks/useAuth.js";
@@ -101,18 +102,16 @@ function QuoteBox({ quote }) {
     if (!quote?.totalAmount && quote?.totalAmount !== 0)
         return null;
     return <dl className="grid grid-cols-2 gap-2 rounded-xl bg-[#FFF7F2] p-3 text-sm">
-    <Item term="Đơn giá" value={formatMoney(quote.unitPrice)}/>
-    <Item term="Số lượng" value={`${quote.quantity} ${quote.rentalType === "HOURLY" ? "giờ" : "ngày"}`}/>
-    <Item term="Tiền thuê" value={formatMoney(quote.rentalAmount)}/>
-    <Item term="Giảm giá" value={formatMoney(quote.discountAmount)}/>
-    <Item term="Tổng thanh toán" value={formatMoney(quote.totalAmount)}/>
-    <Item term="Tiền cọc" value={formatMoney(quote.depositAmount)}/>
+    <DetailItem term="Đơn giá" value={formatMoney(quote.unitPrice)}/>
+    <DetailItem term="Số lượng" value={`${quote.quantity} ${quote.rentalType === "HOURLY" ? "giờ" : "ngày"}`}/>
+    <DetailItem term="Tiền thuê" value={formatMoney(quote.rentalAmount)}/>
+    <DetailItem term="Giảm giá" value={formatMoney(quote.discountAmount)}/>
+    <DetailItem term="Tổng thanh toán" value={formatMoney(quote.totalAmount)}/>
+    <DetailItem term="Tiền cọc" value={formatMoney(quote.depositAmount)}/>
   </dl>;
 }
 
-function Item({ term, value }) {
-    return <div><dt className="text-[11px] uppercase text-[#666666]">{term}</dt><dd className="font-semibold text-[#292929]">{value}</dd></div>;
-}
+
 
 function parseFeatures(raw) {
     if (!raw)

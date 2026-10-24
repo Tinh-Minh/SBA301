@@ -1,10 +1,11 @@
+import { SummaryCard } from "@/shared/components/SummaryCard.jsx";
 import { useMemo, useState } from "react";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { ownerRoutes } from "@/app/routes/paths.js";
 import { useHandoverActions } from "@/shared/hooks/useHandovers.js";
 import { orderService } from "@/shared/hooks/useBookings.js";
-import { Summary, TripCard, filters, tripGroup } from "@/features/bookings/components/OwnerTripsComponents.jsx";
+import { TripCard, filters, tripGroup } from "@/features/bookings/components/TripCard.jsx";
 
 export default function OwnerTrips() {
     const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());
@@ -20,9 +21,9 @@ export default function OwnerTrips() {
       <OwnerHeading title="Quản lý chuyến xe" description="Theo dõi giao nhận, biên bản C10-A trước chuyến và C10-B khi trả xe."/>
     </div>
     <div className="grid gap-3 sm:grid-cols-3">
-      <Summary label="Đang lăn bánh" value={`${ongoing.length} chuyến`} hint="Đã ký nhận xe"/>
-      <Summary label="Sắp giao" value={`${rows.filter(item => item.order.status === "CONFIRMED").length} xe`} hint="Cần lập biên bản C10-A"/>
-      <Summary label="Cọc chủ xe đang giữ" value={new Intl.NumberFormat("vi-VN").format(deposits) + " đ"} hint="Thu khi ký C10-A, không qua escrow"/>
+      <SummaryCard compact label="Đang lăn bánh" value={`${ongoing.length} chuyến`} hint="Đã ký nhận xe"/>
+      <SummaryCard compact label="Sắp giao" value={`${rows.filter(item => item.order.status === "CONFIRMED").length} xe`} hint="Cần lập biên bản C10-A"/>
+      <SummaryCard compact label="Cọc chủ xe đang giữ" value={new Intl.NumberFormat("vi-VN").format(deposits) + " đ"} hint="Thu khi ký C10-A, không qua escrow"/>
     </div>
     <OwnerState loading={resource.loading && !resource.data} error={resource.error} label="chuyến xe"/>
     {resource.data ? <>

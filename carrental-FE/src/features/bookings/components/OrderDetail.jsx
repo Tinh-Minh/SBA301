@@ -1,3 +1,4 @@
+import { DetailItem } from "@/shared/components/DetailItem.jsx";
 import { rentalService, useBookingDetail } from "@/shared/hooks/useBookings.js";
 import { Link } from "react-router";
 import { useState } from "react";
@@ -45,14 +46,14 @@ function Detail({ orderId, justCreated }) {
       <h2 className="mt-2 text-xl font-bold">{order.carName}</h2>
       <p className="text-sm text-[#666666]">{order.licensePlate} • chủ xe {order.ownerName}</p>
       <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
-        <Item term="Nhận xe" value={formatDateTime(order.startTime)}/>
-        <Item term="Trả xe" value={formatDateTime(order.endTime)}/>
-        <Item term="Hình thức" value={`${rentalTypeLabels[order.rentalType] ?? order.rentalType} × ${order.quantity}`}/>
-        <Item term="Tiền thuê" value={formatMoney(order.rentalAmount)}/>
-        <Item term="Giảm giá" value={`${formatMoney(order.discountAmount)}${order.voucherCode ? ` (${order.voucherCode})` : ""}`}/>
-        <Item term="Tổng thanh toán" value={formatMoney(order.totalAmount)}/>
-        <Item term="Tiền cọc" value={formatMoney(order.depositAmount)}/>
-        {order.expiresAt && order.status === "PENDING" ? <Item term="Hết hạn duyệt" value={formatDateTime(order.expiresAt)}/> : null}
+        <DetailItem term="Nhận xe" value={formatDateTime(order.startTime)}/>
+        <DetailItem term="Trả xe" value={formatDateTime(order.endTime)}/>
+        <DetailItem term="Hình thức" value={`${rentalTypeLabels[order.rentalType] ?? order.rentalType} × ${order.quantity}`}/>
+        <DetailItem term="Tiền thuê" value={formatMoney(order.rentalAmount)}/>
+        <DetailItem term="Giảm giá" value={`${formatMoney(order.discountAmount)}${order.voucherCode ? ` (${order.voucherCode})` : ""}`}/>
+        <DetailItem term="Tổng thanh toán" value={formatMoney(order.totalAmount)}/>
+        <DetailItem term="Tiền cọc" value={formatMoney(order.depositAmount)}/>
+        {order.expiresAt && order.status === "PENDING" ? <DetailItem term="Hết hạn duyệt" value={formatDateTime(order.expiresAt)}/> : null}
       </dl>
       {order.note ? <p className="mt-3 rounded-xl bg-[#F7F7F5] p-3 text-sm">Ghi chú: {order.note}</p> : null}
       {order.cancelReason ? <p className="mt-3 rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Lý do: {order.cancelReason}</p> : null}
@@ -126,8 +127,4 @@ function HandoverForm({ type, busy, error, onCreate }) {
     {error ? <p className="text-sm text-[#B91C1C]">{error.message}</p> : null}
     <Primary type="submit" disabled={busy}>{busy ? "Đang gửi…" : "Gửi biên bản"}</Primary>
   </form>;
-}
-
-function Item({ term, value }) {
-    return <div><dt className="text-[11px] uppercase text-[#666666]">{term}</dt><dd className="font-semibold text-[#292929]">{value}</dd></div>;
 }

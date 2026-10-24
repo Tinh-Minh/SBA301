@@ -130,7 +130,7 @@ export default function Home() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"1.250.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/cars/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/explore">{"\n                Xem chi tiết\n              "}</button>
     </div>
     </div>
 
@@ -163,7 +163,7 @@ export default function Home() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"2.450.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/cars/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/explore">{"\n                Xem chi tiết\n              "}</button>
     </div>
     </div>
 
@@ -196,7 +196,7 @@ export default function Home() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"1.400.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/cars/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/explore">{"\n                Xem chi tiết\n              "}</button>
     </div>
     </div>
 
@@ -229,7 +229,7 @@ export default function Home() {
     <p className="text-xs text-text-secondary">{"Giá chỉ từ"}</p>
     <p className="text-sm font-extrabold text-brand-accent">{"3.800.000 đ"}<span className="text-[10px] text-text-secondary font-normal">{"/ngày"}</span></p>
     </div>
-    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/cars/vinfast-vf8-plus-2024">{"\n                Xem chi tiết\n              "}</button>
+    <button className="ui-action px-3.5 py-1.5 rounded-xl bg-pill-bg hover:bg-brand-accent hover:text-white text-xs font-bold text-text-primary transition-colors" type="button" aria-label="Xem chi tiết" data-route="/explore">{"\n                Xem chi tiết\n              "}</button>
     </div>
     </div>
     </div>

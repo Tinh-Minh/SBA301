@@ -7,7 +7,7 @@ import { adminRoutes } from "@/app/routes/paths.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { kycStatusLabels, orderStatusLabels } from "@/shared/utils/labels.js";
 import { getAdminOverview } from "@/shared/hooks/useAdmin.js";
-import { Stat, orderTone } from "@/features/dashboards/components/Stat.jsx";
+import { Stat, orderTone } from "@/features/dashboards/components/DashboardStat.jsx";
 
 export default function AdminDashboard() {
     const { data, loading, error, reload } = useApiQuery(["admin", "dashboard"], getAdminOverview);

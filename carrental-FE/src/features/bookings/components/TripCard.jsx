@@ -17,13 +17,6 @@ export function tripGroup(status) {
         return "ongoing";
     return "done";
 }
-export function Summary({ label, value, hint }) {
-    return <div className="rounded-2xl border border-card-border bg-white p-4 shadow-sm">
-    <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">{label}</p>
-    <p className="mt-1 text-xl font-bold text-charcoal">{value}</p>
-    <p className="text-xs text-muted-gray">{hint}</p>
-  </div>;
-}
 export function TripCard({ item, busy, error, onCreate, onConfirm }) {
     const { order, car, renter, handovers } = item;
     const period = formatRentalPeriod(order);
