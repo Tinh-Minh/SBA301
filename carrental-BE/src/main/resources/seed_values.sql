@@ -1,4 +1,4 @@
-﻿--
+--
 -- PostgreSQL database dump
 --
 
@@ -12,7 +12,8 @@ SET idle_in_transaction_session_timeout = 0;
 SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
+SELECT pg_catalog.set_config('search_path', 'public', false);
+SET search_path = public;
 SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
@@ -29,7 +30,7 @@ INSERT INTO public.customers (id, created_at, updated_at, address, avatar_url, d
 INSERT INTO public.customers (id, created_at, updated_at, address, avatar_url, date_of_birth, email, email_verified, full_name, kyc_status, password_hash, phone, role, status) VALUES (7, '2026-10-17 15:54:18.584912', '2026-10-17 15:54:18.584912', 'Quận 1, TP. Hồ Chí Minh', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb', '1995-01-01', 'admin@carrental.com', true, 'Hệ Thống Admin', 'VERIFIED', '{bcrypt}$2a$10$5.bX5tG6sLfpovgUPVlgE.XB2KEX9pDeaUUiyNmGKTvPyh9xbBnlO', '0900000001', 'ADMIN', 'ACTIVE') ON CONFLICT DO NOTHING;
 INSERT INTO public.customers (id, created_at, updated_at, address, avatar_url, date_of_birth, email, email_verified, full_name, kyc_status, password_hash, phone, role, status) VALUES (9, '2026-10-17 15:54:18.584912', '2026-10-17 15:54:18.584912', '456 Le Van Viet, TP. Thu Duc, TP. HCM', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e', '1998-08-20', 'khach@gmail.com', true, 'Nguyen Van Khach', 'VERIFIED', '{bcrypt}$2a$10$5.bX5tG6sLfpovgUPVlgE.XB2KEX9pDeaUUiyNmGKTvPyh9xbBnlO', '0901234567', 'CUSTOMER', 'ACTIVE') ON CONFLICT DO NOTHING;
 INSERT INTO public.customers (id, created_at, updated_at, address, avatar_url, date_of_birth, email, email_verified, full_name, kyc_status, password_hash, phone, role, status) VALUES (8, '2026-10-17 15:54:18.584912', '2026-10-17 15:54:18.584912', '123 Nguyen Van Linh, Quan 7, TP. HCM', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d', '1990-05-15', 'chuxe@gmail.com', true, 'Tran Van ChuXe', 'VERIFIED', '{bcrypt}$2a$10$5.bX5tG6sLfpovgUPVlgE.XB2KEX9pDeaUUiyNmGKTvPyh9xbBnlO', '0909876543', 'CUSTOMER', 'ACTIVE') ON CONFLICT DO NOTHING;
-INSERT INTO public.customers (id, created_at, updated_at, address, avatar_url, date_of_birth, email, email_verified, full_name, kyc_status, password_hash, phone, role, status) VALUES (12, '2026-10-24 00:34:07.315912', '2026-10-24 00:34:07.315912', NULL, NULL, NULL, 'nno18346@gmail.com', false, 'Le Tan', 'NONE', '{bcrypt}$2a$10$5.bX5tG6sLfpovgUPVlgE.XB2KEX9pDeaUUiyNmGKTvPyh9xbBnlO', '0932474771', 'CUSTOMER', 'ACTIVE') ON CONFLICT DO NOTHING;
+INSERT INTO public.customers (id, created_at, updated_at, address, avatar_url, date_of_birth, email, email_verified, full_name, kyc_status, password_hash, phone, role, status) VALUES (12, '2026-10-24 00:20:00.000000', '2026-10-24 00:20:00.000000', '789 Dien Bien Phu, Binh Thanh, TP. HCM', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e', '1995-12-12', 'renter12@gmail.com', true, 'Nguyen Thi Renter', 'VERIFIED', '{bcrypt}$2a$10$5.bX5tG6sLfpovgUPVlgE.XB2KEX9pDeaUUiyNmGKTvPyh9xbBnlO', '0901234512', 'CUSTOMER', 'ACTIVE') ON CONFLICT DO NOTHING;
 INSERT INTO public.customers (id, created_at, updated_at, address, avatar_url, date_of_birth, email, email_verified, full_name, kyc_status, password_hash, phone, role, status) VALUES (13, '2026-10-24 16:24:32.646687', '2026-10-24 16:24:32.646687', NULL, NULL, NULL, 'sba301.f1.admin.089d448d54a077ed@example.com', false, 'SBA301 Function 1 Test Admin', 'NONE', '{bcrypt}$2a$10$rciCzS47a3Nbcd6O6kv0uOGN2wFwk9Nk9a9WAexnFZrCJRbsWxs.O', '+84982255016', 'ADMIN', 'ACTIVE') ON CONFLICT DO NOTHING;
 
 
@@ -100,9 +101,8 @@ INSERT INTO public.action_logs (id, action, created_at, from_status, note, to_st
 
 INSERT INTO public.bank_accounts (id, account_holder, account_number, bank_name, created_at, is_default, customer_id) VALUES (5, 'TRAN VAN CHUXE', '0071000888999', 'Vietcombank', '2026-10-17 15:54:18.584912', true, 8) ON CONFLICT DO NOTHING;
 INSERT INTO public.bank_accounts (id, account_holder, account_number, bank_name, created_at, is_default, customer_id) VALUES (6, 'NGUYEN VAN KHACH', '1903666888999', 'Techcombank', '2026-10-17 15:54:18.584912', true, 9) ON CONFLICT DO NOTHING;
-INSERT INTO public.bank_accounts (id, account_holder, account_number, bank_name, created_at, is_default, customer_id) VALUES (7, 'TRAN VAN CHUXE', '0071000888999', 'Vietcombank', '2026-10-17 16:17:28.77294', true, 2) ON CONFLICT DO NOTHING;
+INSERT INTO public.bank_accounts (id, account_holder, account_number, bank_name, created_at, is_default, customer_id) VALUES (1, 'TRAN VAN CHUXE', '0071000888999', 'Vietcombank', '2026-10-17 16:17:28.77294', true, 2) ON CONFLICT DO NOTHING;
 INSERT INTO public.bank_accounts (id, account_holder, account_number, bank_name, created_at, is_default, customer_id) VALUES (8, 'NGUYEN VAN KHACH', '1903666111111', 'Techcombank', '2026-10-17 16:17:28.779061', true, 1) ON CONFLICT DO NOTHING;
-INSERT INTO public.bank_accounts (id, account_holder, account_number, bank_name, created_at, is_default, customer_id) VALUES (1, 'TRAN VAN CHUXE', '0071000888999', 'Vietcombank', '2026-10-17 16:23:40.089507', true, 2) ON CONFLICT DO NOTHING;
 
 
 --
