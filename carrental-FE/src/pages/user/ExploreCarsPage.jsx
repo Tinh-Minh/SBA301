@@ -3,7 +3,7 @@ import { useCallback, useState } from "react";
 import { useSearchParams } from "react-router";
 import { DateTimeField } from "@/components/DateField.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatDateTime, parseQueryDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/utils/labels.js";
 import { slotService } from "@/services/slot.service";
@@ -50,7 +50,7 @@ function Explorer() {
         page,
         size: 12,
     }), [query, page]);
-    const result = useAsyncResource(load, JSON.stringify({ query, page }));
+    const result = useApiQuery(["vehicles", "search", { query, page }], load, { requiresAuth: false });
     const rows = result.data?.content ?? [];
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
     return <div className="flex flex-col gap-5">

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { AdminPageHeader, AdminState, StatusPill } from "@/components/admin/AdminUi.jsx";
 import { Money } from "@/components/owner/Money.jsx";
-import { useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatTrVnd } from "@/utils/owner.js";
 import { adminRoutes } from "@/routes/admin.routes.js";
 import { formatDateTime } from "@/utils/datetime.js";
@@ -11,7 +11,7 @@ import { getAdminOverview } from "@/services/admin.service";
 const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger", REJECTED: "danger", EXPIRED: "neutral" };
 
 export default function AdminDashboard() {
-    const { data, loading, error, reload } = useAsyncResource(getAdminOverview, "overview");
+    const { data, loading, error, reload } = useApiQuery(["admin", "dashboard"], getAdminOverview);
     const totals = data?.totals;
     return <div className="flex flex-col gap-5">
     <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Chỉ số vận hành, hồ sơ chờ duyệt và đơn thuê mới nhất lấy trực tiếp từ hệ thống." actions={<button type="button" onClick={reload} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold">Làm mới</button>}/>

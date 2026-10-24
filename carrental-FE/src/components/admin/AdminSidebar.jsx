@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { useLocation } from "react-router";
-import { useEffect, useState } from "react";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { adminNavigation, adminRoutes } from "@/routes/admin.routes.js";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { getAdminBadges } from "@/services/admin.service";
@@ -15,12 +15,7 @@ const badgeClass = {
 export function AdminSidebar() {
     const path = useLocation().pathname;
     const { user } = useAuth();
-    const [badges, setBadges] = useState({});
-    useEffect(() => {
-        let cancelled = false;
-        getAdminBadges().then(result => { if (!cancelled) setBadges(result); });
-        return () => { cancelled = true; };
-    }, [path]);
+    const { data: badges = {} } = useApiQuery(["admin", "badges"], getAdminBadges);
     return <div className="flex flex-col gap-4">
     <div className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
       <p className="text-[11px] font-bold uppercase tracking-wider text-[#666666]">CarDB Admin</p>

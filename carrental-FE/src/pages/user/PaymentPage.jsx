@@ -3,7 +3,8 @@ import { useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatMoney, paymentMethodLabels, paymentStatusLabels } from "@/utils/labels.js";
 import { rentalService } from "@/services/order.service";
 import { transactionService } from "@/services/customer-extra.service";
@@ -22,17 +23,17 @@ function Pay({ orderId }) {
         const [order, transactions] = await Promise.all([rentalService.getById(orderId), transactionService.listByOrder(orderId)]);
         return { order, transactions };
     }, [orderId]);
-    const detail = useAsyncResource(load, orderId);
+    const detail = useApiQuery(["payments", "order", orderId], load);
     const [method, setMethod] = useState("VNPAY");
     const [pending, setPending] = useState(null);
-    const pay = useAsyncAction(async () => {
+    const pay = useApiMutation(async () => {
         const tx = await transactionService.createPayment({ orderId, amount: Number(detail.data.order.totalAmount), method });
         setPending(tx);
         if (tx.paymentUrl)
             window.open(tx.paymentUrl, "_blank", "noopener");
         return tx;
     });
-    const simulate = useAsyncAction(async (success) => {
+    const simulate = useApiMutation(async (success) => {
         await transactionService.simulate(pending.id, success);
         setPending(null);
         detail.reload();

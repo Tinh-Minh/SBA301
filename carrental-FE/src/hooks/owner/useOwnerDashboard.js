@@ -1,5 +1,5 @@
 import { dashboardService } from "@/services/dashboard.service";
-import { useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
 export function useOwnerDashboard() {
-    return useAsyncResource(dashboardService.getSummary);
+    return useApiQuery(["owner", "dashboard"], dashboardService.getSummary);
 }

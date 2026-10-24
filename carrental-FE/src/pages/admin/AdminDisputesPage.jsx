@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { disputeStatusLabels } from "@/utils/labels.js";
 import { disputeService } from "@/services/admin.service";
@@ -19,7 +20,7 @@ export default function AdminDisputes() {
     const [page, setPage] = useState(0);
     const [selectedId, setSelectedId] = useState(null);
     const load = useCallback(() => disputeService.list({ status: status || undefined, page, size: 10 }), [status, page]);
-    const list = useAsyncResource(load, `${status}|${page}`);
+    const list = useApiQuery(["admin", "disputes", { status, page }], load);
     const rows = list.data?.content ?? [];
     const selected = rows.find(item => item.id === selectedId) ?? rows[0];
     return <div className="flex flex-col gap-5">
@@ -46,7 +47,7 @@ export default function AdminDisputes() {
 function DisputeDetail({ dispute, onDone }) {
     const [decision, setDecision] = useState("refund");
     const [note, setNote] = useState("");
-    const resolve = useAsyncAction((status) => {
+    const resolve = useApiMutation((status) => {
         const text = decisions.find(item => item.id === decision).text;
         return disputeService.resolve(dispute.id, status, status === "IN_REVIEW" ? note || "Đang xem xét" : [status === "RESOLVED" ? text : "Bác bỏ khiếu nại", note].filter(Boolean).join(". "));
     }, onDone);

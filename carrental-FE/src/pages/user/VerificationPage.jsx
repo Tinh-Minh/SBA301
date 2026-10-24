@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
 import { LiveState, Pill, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { DateField } from "@/components/DateField.jsx";
 import { formatDateTime } from "@/utils/datetime.js";
 import { docTypeLabels, verifyStatusLabels } from "@/utils/labels.js";
@@ -12,7 +13,7 @@ const empty = { docType: "CITIZEN_ID", docNumber: "", fullNameOnDoc: "", dateOfB
 
 export default function VerificationLive() {
     const load = useCallback(() => userDocumentService.listMine(), []);
-    const list = useAsyncResource(load, "docs");
+    const list = useApiQuery(["account", "documents"], load);
     return <ProfileLayout live active="verification" title="Xác minh giấy tờ" description="Nộp CCCD hoặc giấy phép lái xe. CarDB duyệt ảnh và cập nhật trạng thái KYC.">
     <LiveState loading={list.loading && !list.data} error={list.error} label="giấy tờ" onRetry={list.reload}/>
     <div className="flex flex-col gap-3">
@@ -35,7 +36,7 @@ function SubmitForm({ onDone }) {
     const [frontImage, setFront] = useState(null);
     const [backImage, setBack] = useState(null);
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
-    const submit = useAsyncAction(async () => {
+    const submit = useApiMutation(async () => {
         await userDocumentService.submit({ ...form, frontImage, backImage });
         setForm(empty);
         setFront(null);

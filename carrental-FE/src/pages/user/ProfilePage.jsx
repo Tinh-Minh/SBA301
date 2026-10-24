@@ -2,7 +2,8 @@ import { useCallback, useRef, useState } from "react";
 import { DateField } from "@/components/DateField.jsx";
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate, toLocalDate } from "@/utils/datetime.js";
 import { kycStatusLabels } from "@/utils/labels.js";
 import { updateSessionAccount } from "@/storage/sessionStorage.js";
@@ -14,7 +15,7 @@ export default function AccountLive() {
         const [profile, kyc] = await Promise.all([getMyProfile(), getMyKyc().catch(() => null)]);
         return { profile, kyc };
     }, []);
-    const detail = useAsyncResource(load, "me");
+    const detail = useApiQuery(["account", "profile"], load);
     return <ProfileLayout live active="account" title="Hồ sơ cá nhân" description="Thông tin dùng cho hợp đồng thuê và bàn giao xe. Email và số điện thoại phải còn duy nhất trong hệ thống.">
     <LiveState loading={detail.loading && !detail.data} error={detail.error} label="hồ sơ" onRetry={detail.reload}/>
     {detail.data ? <Editor profile={detail.data.profile} kyc={detail.data.kyc} onSaved={detail.reload}/> : null}
@@ -32,7 +33,7 @@ function Editor({ profile, kyc, onSaved }) {
     const [address, setAddress] = useState(profile.address ?? "");
     const [currentPassword, setCurrentPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
-    const save = useAsyncAction(async () => {
+    const save = useApiMutation(async () => {
         if (birthDate.current && !birthDate.current.reportValidity())
             return;
         const updated = await updateMyProfile({
@@ -48,7 +49,7 @@ function Editor({ profile, kyc, onSaved }) {
         onSaved();
     });
     const [passwordNote, setPasswordNote] = useState("");
-    const password = useAsyncAction(async () => {
+    const password = useApiMutation(async () => {
         setPasswordNote("");
         await changePassword({ currentPassword, newPassword });
         setCurrentPassword("");

@@ -4,7 +4,8 @@ import { useCallback, useState } from "react";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { DateTimeField } from "@/components/DateField.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime, hoursBetween, parseQueryDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/utils/labels.js";
 import { carService } from "@/services/car.service";
@@ -27,7 +28,7 @@ function Detail({ carId }) {
         ]);
         return { car, slot };
     }, [carId, slotId]);
-    const detail = useAsyncResource(load, `${carId}|${slotId ?? ""}`);
+    const detail = useApiQuery(["vehicles", "public-detail", { carId, slotId }], load, { requiresAuth: false });
     if (!detail.data)
         return <LiveState loading={detail.loading} error={detail.error} label="thông tin xe" onRetry={detail.reload}/>;
     return <Body car={detail.data.car} slot={detail.data.slot} presetStart={params.get("start")} presetEnd={params.get("end")}/>;
@@ -50,7 +51,7 @@ function Body({ car, slot, presetStart, presetEnd }) {
     const [endTime, setEndTime] = useState(parseQueryDateTime(presetEnd) || "");
     const [voucher, setVoucher] = useState("");
     const [priced, setPriced] = useState(null);
-    const quote = useAsyncAction(async () => {
+    const quote = useApiMutation(async () => {
         const result = await rentalService.quote({ carSlotId: slot.id, rentalType: type, startTime: new Date(startTime), endTime: new Date(endTime), voucherCode: voucher });
         setPriced(result);
         return result;

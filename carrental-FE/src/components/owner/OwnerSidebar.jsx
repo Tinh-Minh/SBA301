@@ -1,34 +1,27 @@
 import { Link } from "react-router";
 import { useLocation } from "react-router";
-import { useEffect, useState } from "react";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { ownerNavigation, ownerRoutes } from "@/routes/owner.routes.js";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { request, toPage } from "@/services/http.js";
 import { Icon } from "@/components/Icon.jsx";
 
 /** Đếm số xe (GET /api/cars/my-cars) và yêu cầu chờ duyệt (GET /api/orders/my-cars?status=PENDING). */
-function useOwnerCounts(path, loggedIn) {
-    const [counts, setCounts] = useState({ cars: null, pending: null });
-    useEffect(() => {
-        if (!loggedIn)
-            return;
-        let cancelled = false;
-        Promise.all([
+function useOwnerCounts() {
+    const { data } = useApiQuery(["owner", "counts"], async () => {
+        const [cars, pending] = await Promise.all([
             request("/api/cars/my-cars", { query: { page: 0, size: 1 } }).then(toPage).catch(() => null),
             request("/api/orders/my-cars", { query: { status: "PENDING", page: 0, size: 1 } }).then(toPage).catch(() => null),
-        ]).then(([cars, pending]) => {
-            if (!cancelled)
-                setCounts({ cars: cars?.totalElements ?? null, pending: pending?.totalElements ?? null });
-        });
-        return () => { cancelled = true; };
-    }, [path, loggedIn]);
-    return counts;
+        ]);
+        return { cars: cars?.totalElements ?? null, pending: pending?.totalElements ?? null };
+    });
+    return data ?? { cars: null, pending: null };
 }
 
 export function OwnerSidebar() {
     const path = useLocation().pathname;
-    const { user, loggedIn } = useAuth();
-    const counts = useOwnerCounts(path, loggedIn);
+    const { user } = useAuth();
+    const counts = useOwnerCounts();
     const badgeLabels = {
         cars: () => (counts.cars === null ? null : `${counts.cars} xe`),
         pending: () => (counts.pending ? `${counts.pending} mới` : null),

@@ -1,4 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { readSession, subscribeSession } from "@/storage/sessionStorage.js";
 import * as authService from "@/services/auth.service";
 
@@ -13,14 +14,24 @@ const AuthContext = createContext({
 });
 
 export function AuthProvider({ children }) {
+    const queryClient = useQueryClient();
+    const sessionToken = useRef(undefined);
     const [ready, setReady] = useState(false);
     const [session, setSession] = useState(null);
     useEffect(() => {
-        const sync = () => setSession(readSession());
+        const sync = () => {
+            const next = readSession();
+            if (sessionToken.current !== next?.accessToken) {
+                void queryClient.cancelQueries();
+                queryClient.clear();
+                sessionToken.current = next?.accessToken;
+            }
+            setSession(next);
+        };
         sync();
         setReady(true);
         return subscribeSession(sync);
-    }, []);
+    }, [queryClient]);
     const login = useCallback(async (credentials) => {
         const next = await authService.login(credentials);
         setSession(next);

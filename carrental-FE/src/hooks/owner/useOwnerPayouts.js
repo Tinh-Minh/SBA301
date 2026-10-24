@@ -1,5 +1,5 @@
 import { payoutService } from "@/services/payout.service";
-import { useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
 export function useOwnerPayouts() {
-    return useAsyncResource(payoutService.getStatement);
+    return useApiQuery(["owner", "payouts"], payoutService.getStatement);
 }

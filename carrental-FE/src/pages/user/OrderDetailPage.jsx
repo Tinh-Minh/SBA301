@@ -3,7 +3,8 @@ import { useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Pill, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner.js";
 import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/utils/labels.js";
@@ -32,11 +33,11 @@ function Detail({ orderId, justCreated }) {
         ]);
         return { order, handovers, logs: Array.isArray(logs) ? logs : [] };
     }, [orderId]);
-    const detail = useAsyncResource(load, orderId);
+    const detail = useApiQuery(["bookings", "detail", orderId], load);
     const reload = detail.reload;
-    const cancel = useAsyncAction((reason) => rentalService.cancel(orderId, reason), reload);
-    const createHandover = useAsyncAction((input) => handoverService.create(orderId, input), reload);
-    const confirmHandover = useAsyncAction(handoverService.confirm, reload);
+    const cancel = useApiMutation((reason) => rentalService.cancel(orderId, reason), reload);
+    const createHandover = useApiMutation((input) => handoverService.create(orderId, input), reload);
+    const confirmHandover = useApiMutation(handoverService.confirm, reload);
     if (!detail.data)
         return <LiveState loading={detail.loading} error={detail.error} label="đơn thuê" onRetry={reload}/>;
     const { order, handovers, logs } = detail.data;

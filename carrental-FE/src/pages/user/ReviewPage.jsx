@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { currentUserId } from "@/storage/sessionStorage.js";
 import { rentalService } from "@/services/order.service";
 import { reviewService } from "@/services/customer-extra.service";
@@ -23,10 +24,10 @@ function Form({ orderId }) {
         const [order, reviews] = await Promise.all([rentalService.getById(orderId), reviewService.listByOrder(orderId)]);
         return { order, mine: reviews.find(review => review.reviewerId === currentUserId()) ?? null };
     }, [orderId]);
-    const detail = useAsyncResource(load, orderId);
+    const detail = useApiQuery(["bookings", "review", orderId], load);
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
-    const send = useAsyncAction(async () => {
+    const send = useApiMutation(async () => {
         await reviewService.create({ orderId, revieweeId: detail.data.order.ownerId, rating, comment });
         navigate(`/orders/${orderId}`);
     });

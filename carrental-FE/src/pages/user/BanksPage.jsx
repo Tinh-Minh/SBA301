@@ -1,14 +1,15 @@
 import { useCallback, useState } from "react";
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { bankAccountService } from "@/services/bank-account.service";
 
 export default function BanksLive() {
     const load = useCallback(() => bankAccountService.list(), []);
-    const list = useAsyncResource(load, "banks");
-    const setDefault = useAsyncAction(bankAccountService.setDefault, list.reload);
-    const remove = useAsyncAction(bankAccountService.remove, list.reload);
+    const list = useApiQuery(["account", "banks"], load);
+    const setDefault = useApiMutation(bankAccountService.setDefault, list.reload);
+    const remove = useApiMutation(bankAccountService.remove, list.reload);
     return <ProfileLayout live active="banks" title="Tài khoản ngân hàng" description="Tài khoản nhận tiền thuê. Số tài khoản hiển thị dạng đã che sau khi lưu.">
     <LiveState loading={list.loading && !list.data} error={list.error} label="tài khoản ngân hàng" onRetry={list.reload}/>
     <div className="flex flex-col gap-3">
@@ -33,7 +34,7 @@ export default function BanksLive() {
 function AddForm({ onDone }) {
     const [form, setForm] = useState({ bankName: "", accountNumber: "", accountHolder: "", makeDefault: true });
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.type === "checkbox" ? event.target.checked : event.target.value }));
-    const create = useAsyncAction(() => bankAccountService.create(form), () => { setForm({ bankName: "", accountNumber: "", accountHolder: "", makeDefault: false }); onDone(); });
+    const create = useApiMutation(() => bankAccountService.create(form), () => { setForm({ bankName: "", accountNumber: "", accountHolder: "", makeDefault: false }); onDone(); });
     return <form className="grid gap-3 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm sm:grid-cols-2" onSubmit={event => { event.preventDefault(); void create.run(); }}>
     <h2 className="sm:col-span-2 text-lg font-bold">Thêm tài khoản</h2>
     <label className="text-xs font-semibold text-[#666666]">Ngân hàng<input required value={form.bankName} onChange={update("bankName")} className={`${fieldClass} mt-1`} placeholder="Vietcombank"/></label>

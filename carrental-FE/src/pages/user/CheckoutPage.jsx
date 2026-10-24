@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { carName, formatMoney, rentalTypeLabels } from "@/utils/labels.js";
 import { carService } from "@/services/car.service";
@@ -38,8 +39,8 @@ function Confirm() {
         ]);
         return { slot, car, quote };
     }, [slotId, start, end, type, voucherQuery]);
-    const detail = useAsyncResource(load, `${slotId}|${start}|${end}|${type}|${voucherQuery}`);
-    const create = useAsyncAction(async () => {
+    const detail = useApiQuery(["bookings", "quote", { slotId, start, end, type, voucherQuery }], load);
+    const create = useApiMutation(async () => {
         const order = await rentalService.create({ carSlotId: slotId, rentalType: type, startTime: new Date(start), endTime: new Date(end), voucherCode: voucherQuery, note });
         navigate(`/orders/${order.id}?created=1`);
     });

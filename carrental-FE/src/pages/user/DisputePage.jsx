@@ -3,7 +3,8 @@ import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { disputeStatusLabels } from "@/utils/labels.js";
 import { rentalService } from "@/services/order.service";
 import { disputeService } from "@/services/admin.service";
@@ -26,12 +27,12 @@ function Form({ orderId }) {
         ]);
         return { order, disputes };
     }, [orderId]);
-    const detail = useAsyncResource(load, orderId);
+    const detail = useApiQuery(["bookings", "dispute", orderId], load);
     const [reason, setReason] = useState("");
     const [description, setDescription] = useState("");
     const [fileUrl, setFileUrl] = useState("");
     const [fileType, setFileType] = useState("IMAGE");
-    const send = useAsyncAction(async () => {
+    const send = useApiMutation(async () => {
         const evidences = fileUrl.trim() ? [{ fileUrl: fileUrl.trim(), fileType, description: null }] : [];
         const created = await disputeService.create({ orderId, reason: reason.trim(), description: description.trim(), evidences });
         navigate(`/orders/${orderId}?dispute=${created.id}`);

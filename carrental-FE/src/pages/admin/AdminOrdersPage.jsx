@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, orderStatusLabels, paymentMethodLabels, paymentStatusLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
 import { request, toPage } from "@/services/http.js";
@@ -15,7 +15,7 @@ export default function AdminOrders() {
     const [page, setPage] = useState(0);
     const [openId, setOpenId] = useState(null);
     const load = useCallback(() => adminOrderService.list({ status: status || undefined, page, size: 15 }), [status, page]);
-    const list = useAsyncResource(load, `${status}|${page}`);
+    const list = useApiQuery(["admin", "orders", { status, page }], load);
     const rows = list.data?.content ?? [];
     return <div className="flex flex-col gap-5">
     <AdminPageHeader code="A05" title="Đơn thuê toàn hệ thống" description={`Theo dõi trạng thái đơn, thanh toán và nhật ký xử lý${list.data ? ` • ${list.data.totalElements} đơn` : ""}.`}/>
@@ -50,7 +50,7 @@ function OrderDialog({ order, onClose }) {
         ]);
         return { logs: Array.isArray(logs) ? logs : [], transactions };
     }, [order.id]);
-    const detail = useAsyncResource(load, order.id);
+    const detail = useApiQuery(["admin", "order-detail", order.id], load);
     return <AdminDialog title={`Đơn ${order.orderCode}`} onClose={onClose}>
     <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto text-sm">
       <dl className="grid grid-cols-2 gap-2">

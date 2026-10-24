@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate } from "@/utils/datetime.js";
 import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels, verifyStatusLabels } from "@/utils/labels.js";
 import { adminCarService } from "@/services/admin.service";
@@ -27,7 +28,7 @@ export default function AdminVehicles() {
             setSelectedId(id);
     }, []);
     const load = useCallback(() => adminCarService.list({ status: status || undefined, page, size: 12 }), [status, page]);
-    const list = useAsyncResource(load, `${status}|${page}`);
+    const list = useApiQuery(["admin", "vehicles", { status, page }], load);
     const rows = list.data?.content ?? [];
     const activeId = selectedId ?? rows[0]?.id ?? null;
     return <div className="flex flex-col gap-5">
@@ -57,13 +58,13 @@ function CarDetail({ id, onChanged }) {
         const [car, documents] = await Promise.all([adminCarService.getDetail(id), adminCarService.documents(id).catch(() => [])]);
         return { car, documents };
     }, [id]);
-    const detail = useAsyncResource(load, id);
+    const detail = useApiQuery(["admin", "vehicle-detail", id], load);
     const [dialog, setDialog] = useState(null);
     const [reason, setReason] = useState("");
     const done = () => { setDialog(null); setReason(""); detail.reload(); onChanged(); };
-    const approve = useAsyncAction(() => adminCarService.approve(id), done);
-    const reject = useAsyncAction((why) => adminCarService.reject(id, why), done);
-    const verify = useAsyncAction((docId, status, why) => adminCarService.verifyDocument(id, docId, status, why), done);
+    const approve = useApiMutation(() => adminCarService.approve(id), done);
+    const reject = useApiMutation((why) => adminCarService.reject(id, why), done);
+    const verify = useApiMutation((docId, status, why) => adminCarService.verifyDocument(id, docId, status, why), done);
     if (!detail.data)
         return <aside><AdminState loading={detail.loading} error={detail.error} label="chi tiết xe"/></aside>;
     const { car, documents } = detail.data;

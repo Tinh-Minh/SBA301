@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatRentalPeriod, findHandover, isHandoverConfirmed, nextHandoverType, handoverTypeMeta, orderStatusMeta } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/owner.routes.js";
 
@@ -22,9 +23,9 @@ function tripGroup(status) {
     return "done";
 }
 export default function OwnerTrips() {
-    const resource = useAsyncResource(() => orderService.listMine());
-    const createHandover = useAsyncAction((orderId, input) => handoverService.create(orderId, input), resource.reload);
-    const confirmHandover = useAsyncAction(handoverService.confirm, resource.reload);
+    const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());
+    const createHandover = useApiMutation((orderId, input) => handoverService.create(orderId, input), resource.reload);
+    const confirmHandover = useApiMutation(handoverService.confirm, resource.reload);
     const [filter, setFilter] = useState("all");
     const rows = (resource.data ?? []).filter(item => item.order.status === "CONFIRMED" || item.order.status === "ONGOING" || item.order.status === "COMPLETED");
     const visible = useMemo(() => rows.filter(item => filter === "all" || tripGroup(item.order.status) === filter), [rows, filter]);

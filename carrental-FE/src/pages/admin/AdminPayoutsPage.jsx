@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/AdminUi.jsx";
 import { Money } from "@/components/owner/Money.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, paymentMethodLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
 import { calculatePayout } from "@/utils/owner.js";
@@ -28,7 +29,7 @@ function Payouts() {
         const paidOrders = new Set(payouts.filter(payout => payout.status !== "FAILED").map(payout => payout.orderId));
         return { payouts, awaiting: completed.filter(order => !paidOrders.has(order.id)) };
     }, []);
-    const data = useAsyncResource(load, "payouts");
+    const data = useApiQuery(["admin", "payouts"], load);
     const [creating, setCreating] = useState(null);
     const [processing, setProcessing] = useState(null);
     if (!data.data)
@@ -79,7 +80,7 @@ function Payouts() {
 function CreatePayout({ order, onClose, onDone }) {
     const money = calculatePayout(order);
     const [note, setNote] = useState(`Chi trả đơn ${order.orderCode}`);
-    const create = useAsyncAction(() => adminPayoutService.create({ orderId: order.id, recipientId: order.ownerId, bankAccountId: null, ...money, note }), onDone);
+    const create = useApiMutation(() => adminPayoutService.create({ orderId: order.id, recipientId: order.ownerId, bankAccountId: null, ...money, note }), onDone);
     return <AdminDialog title={`Chi trả đơn ${order.orderCode}`} onClose={onClose}>
     <div className="flex flex-col gap-3 text-sm">
       <p>Người nhận: <b>{order.ownerName}</b> (#{order.ownerId})</p>
@@ -94,7 +95,7 @@ function CreatePayout({ order, onClose, onDone }) {
 
 function ProcessPayout({ payout, onClose, onDone }) {
     const [note, setNote] = useState("");
-    const process = useAsyncAction((status) => adminPayoutService.process(payout.id, status, note), onDone);
+    const process = useApiMutation((status) => adminPayoutService.process(payout.id, status, note), onDone);
     return <AdminDialog title={`Xử lý chi trả PO-${payout.id}`} onClose={onClose}>
     <div className="flex flex-col gap-3 text-sm">
       <p>{payout.recipientName} • thực nhận <b>{formatMoney(payout.netAmount)}</b></p>
@@ -113,7 +114,7 @@ function Transactions() {
     const [page, setPage] = useState(0);
     const [status, setStatus] = useState("");
     const load = useCallback(async () => toPage(await request("/api/transactions", { query: { status: status || undefined, page, size: 20, sort: "id,desc" } })), [page, status]);
-    const list = useAsyncResource(load, `${status}|${page}`);
+    const list = useApiQuery(["admin", "transactions", { status, page }], load);
     const rows = list.data?.content ?? [];
     return <>
     <Tabs items={[{ id: "", label: "Tất cả" }, { id: "SUCCESS", label: "Thành công" }, { id: "PENDING", label: "Đang chờ" }, { id: "FAILED", label: "Thất bại" }]} value={status} onChange={id => { setStatus(id); setPage(0); }}/>

@@ -2,7 +2,8 @@ import { useCallback } from "react";
 import { Link } from "react-router";
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
 import { LiveState, Primary } from "@/components/LiveUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate } from "@/utils/datetime.js";
 import { kycStatusLabels } from "@/utils/labels.js";
 import { driverService } from "@/services/customer-extra.service";
@@ -21,8 +22,8 @@ export default function DriverLive() {
         const [driver, eligibility] = await Promise.all([driverService.me(), driverService.eligibility().catch(() => null)]);
         return { driver, eligibility };
     }, []);
-    const detail = useAsyncResource(load, "driver");
-    const register = useAsyncAction(driverService.register, detail.reload);
+    const detail = useApiQuery(["account", "driver"], load);
+    const register = useApiMutation(driverService.register, detail.reload);
     const data = detail.data;
     return <ProfileLayout live active="driver" title="Hồ sơ tài xế" description="Đăng ký hồ sơ tài xế sau khi đã xác minh danh tính và giấy phép lái xe.">
     <LiveState loading={detail.loading && !data} error={detail.error} label="hồ sơ tài xế" onRetry={detail.reload}/>

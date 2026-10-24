@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/AdminUi.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate, formatDateTime } from "@/utils/datetime.js";
 import { docTypeLabels, kycStatusLabels, verifyStatusLabels } from "@/utils/labels.js";
 import { adminUserService } from "@/services/admin.service";
@@ -34,7 +35,7 @@ export default function AdminUsers() {
         page,
         size: 15,
     }), [kind, value, query, page]);
-    const list = useAsyncResource(load, `${tab}|${query}|${page}`);
+    const list = useApiQuery(["admin", "users", { tab, query, page }], load);
     const rows = list.data?.content ?? [];
     const activeId = selectedId ?? rows[0]?.id ?? null;
 
@@ -86,12 +87,12 @@ function UserDetail({ id, onChanged }) {
         ]);
         return { profile, kyc, documents };
     }, [id]);
-    const detail = useAsyncResource(load, id);
+    const detail = useApiQuery(["admin", "user-detail", id], load);
     const refresh = () => { detail.reload(); onChanged(); };
     const [dialog, setDialog] = useState(null);
     const [reason, setReason] = useState("");
-    const review = useAsyncAction((docId, status, why) => adminUserService.reviewDocument(docId, status, why), () => { setDialog(null); setReason(""); refresh(); });
-    const lock = useAsyncAction((status, why) => adminUserService.setStatus(id, status, why || null), () => { setDialog(null); setReason(""); refresh(); });
+    const review = useApiMutation((docId, status, why) => adminUserService.reviewDocument(docId, status, why), () => { setDialog(null); setReason(""); refresh(); });
+    const lock = useApiMutation((status, why) => adminUserService.setStatus(id, status, why || null), () => { setDialog(null); setReason(""); refresh(); });
     if (!detail.data)
         return <aside><AdminState loading={detail.loading} error={detail.error} label="hồ sơ"/></aside>;
     const { profile, kyc, documents } = detail.data;

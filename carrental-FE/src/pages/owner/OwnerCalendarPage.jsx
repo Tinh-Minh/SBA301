@@ -5,7 +5,8 @@ import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/OwnerScreen.jsx";
 import { useOwnerCalendar } from "@/hooks/owner/useOwnerCalendar.js";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { slotService } from "@/services/slot.service";
 import { formatVnd } from "@/utils/owner.js";
@@ -142,15 +143,15 @@ function defaultSlotRange() {
 /** Quản lý khung giờ cho thuê: GET /api/slots/car/{id}, POST /api/slots, PATCH /api/slots/{id}/close|reopen|cancel. */
 function SlotManager({ car, onChanged }) {
     const load = useCallback(() => slotService.listByCar(car.id), [car.id]);
-    const slots = useAsyncResource(load, car.id);
+    const slots = useApiQuery(["vehicles", "slots", car.id], load);
     const [form, setForm] = useState(() => ({ ...defaultSlotRange(), rentalOption: "BOTH", minRentalHours: "4", customPricePerHour: "", customPricePerDay: "" }));
     const refresh = () => { slots.reload(); onChanged?.(); };
-    const create = useAsyncAction(() => {
+    const create = useApiMutation(() => {
         if (!form.startTime || !form.endTime || new Date(form.endTime) <= new Date(form.startTime))
             return Promise.reject(new Error("Thời gian kết thúc phải sau thời gian bắt đầu."));
         return slotService.create({ carId: car.id, ...form, startTime: new Date(form.startTime), endTime: new Date(form.endTime) });
     }, refresh);
-    const act = useAsyncAction((kind, id) => slotService[kind](id), refresh);
+    const act = useApiMutation((kind, id) => slotService[kind](id), refresh);
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
     const inputClass = "rounded-xl border border-card-border bg-white px-3 py-2 text-sm text-charcoal";
     const notActive = car.status !== "ACTIVE";

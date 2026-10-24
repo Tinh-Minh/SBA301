@@ -3,7 +3,8 @@ import { Icon } from "@/components/Icon.jsx";
 import { CountdownBadge } from "@/components/owner/CountdownBadge.jsx";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatRentalPeriod, canRespondToOrder, kycStatusMeta, orderStatusMeta } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/owner.routes.js";
 
@@ -19,9 +20,9 @@ function initials(name) {
     return name.split(" ").slice(-2).map(part => part[0] ?? "").join("").toUpperCase();
 }
 export default function OwnerRequests() {
-    const resource = useAsyncResource(() => orderService.listMine());
-    const approve = useAsyncAction(orderService.approve, resource.reload);
-    const reject = useAsyncAction((id, reason) => orderService.reject(id, reason), resource.reload);
+    const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());
+    const approve = useApiMutation(orderService.approve, resource.reload);
+    const reject = useApiMutation((id, reason) => orderService.reject(id, reason), resource.reload);
     const [filter, setFilter] = useState("PENDING");
     const [query, setQuery] = useState("");
     const [rejectingId, setRejectingId] = useState(null);

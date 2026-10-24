@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/AdminUi.jsx";
 import { DateTimeField } from "@/components/DateField.jsx";
-import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { formatMoney } from "@/utils/labels.js";
 import { adminVoucherService } from "@/services/admin.service";
@@ -27,11 +28,11 @@ export default function AdminVouchers() {
     const [windowState, setWindowState] = useState("");
     const [page, setPage] = useState(0);
     const load = useCallback(() => adminVoucherService.list({ window: windowState || undefined, page, size: 15 }), [windowState, page]);
-    const list = useAsyncResource(load, `${windowState}|${page}`);
+    const list = useApiQuery(["admin", "vouchers", { windowState, page }], load);
     const rows = list.data?.content ?? [];
     const [creating, setCreating] = useState(false);
     const [editing, setEditing] = useState(null);
-    const toggle = useAsyncAction((voucher) => adminVoucherService.setStatus(voucher.id, voucher.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"), list.reload);
+    const toggle = useApiMutation((voucher) => adminVoucherService.setStatus(voucher.id, voucher.status === "ACTIVE" ? "INACTIVE" : "ACTIVE"), list.reload);
     return <div className="flex flex-col gap-5">
     <AdminPageHeader code="A04" title="Quản lý voucher" description="Tạo mã giảm giá, giới hạn lượt dùng và bật/tắt voucher." actions={<button type="button" onClick={() => setCreating(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">+ Tạo voucher</button>}/>
     <Tabs items={tabs} value={windowState} onChange={id => { setWindowState(id); setPage(0); }}/>
@@ -65,7 +66,7 @@ export default function AdminVouchers() {
 function CreateDialog({ onClose, onCreated }) {
     const [form, setForm] = useState(emptyForm);
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
-    const create = useAsyncAction(() => adminVoucherService.create({ ...form, startAt: new Date(form.startAt), endAt: new Date(form.endAt) }), onCreated);
+    const create = useApiMutation(() => adminVoucherService.create({ ...form, startAt: new Date(form.startAt), endAt: new Date(form.endAt) }), onCreated);
     return <AdminDialog title="Tạo voucher mới" onClose={onClose}>
     <form className="grid grid-cols-2 gap-3 text-sm" onSubmit={event => { event.preventDefault(); if (!event.currentTarget.reportValidity())
         return; void create.run(); }}>
@@ -88,7 +89,7 @@ function CreateDialog({ onClose, onCreated }) {
 function EditDialog({ voucher, onClose, onSaved }) {
     const [description, setDescription] = useState(voucher.description ?? "");
     const [usageLimit, setUsageLimit] = useState(voucher.usageLimit ?? "");
-    const save = useAsyncAction(() => adminVoucherService.update(voucher.id, { description, usageLimit }), onSaved);
+    const save = useApiMutation(() => adminVoucherService.update(voucher.id, { description, usageLimit }), onSaved);
     return <AdminDialog title={`Sửa voucher ${voucher.code}`} onClose={onClose}>
     <form className="grid gap-3 text-sm" onSubmit={event => { event.preventDefault(); void save.run(); }}>
       <Field label="Mô tả"><input value={description} onChange={event => setDescription(event.target.value)} className={adminInput}/></Field>

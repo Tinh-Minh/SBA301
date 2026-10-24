@@ -10,7 +10,7 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { OwnerCrumb } from "@/components/owner/OwnerScreen.jsx";
-import { useAsyncAction } from "@/hooks/useAsyncResource.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { calculatePlatformFee, formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/owner.routes.js";
 import { carService } from "@/services/car.service";
@@ -142,7 +142,7 @@ function ChoiceSelect({ value, options, onPick, onType, placeholder, inputMode, 
 export default function OwnerVehicleNew() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const create = useAsyncAction(submitCar);
+    const create = useApiMutation(submitCar);
     const [step, setStep] = useState(1);
     const [reached, setReached] = useState(1);
     const { control, register, setValue, getValues, reset, trigger, handleSubmit, formState: { errors, isSubmitting } } = useForm({
