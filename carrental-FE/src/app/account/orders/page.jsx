@@ -1,4 +1,4 @@
-import MyRentals from "@/views/live/MyRentals";
+import MyRentals from "@/pages/user/MyRentalsPage.jsx";
 
 export const metadata = { title: "Đơn thuê xe" };
 

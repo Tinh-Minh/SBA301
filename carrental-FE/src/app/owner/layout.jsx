@@ -1,5 +1,5 @@
-import { OwnerSidebar } from "@/components/owner/owner-sidebar";
-import { RequireAuth } from "@/components/require-auth";
+import { OwnerSidebar } from "@/components/owner/OwnerSidebar.jsx";
+import { RequireAuth } from "@/components/RequireAuth.jsx";
 export default function OwnerLayout({ children }) {
     return <main data-native className="w-full bg-bg-light pt-20">
     <RequireAuth title="Đăng nhập để quản lý xe cho thuê">

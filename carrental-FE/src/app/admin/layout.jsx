@@ -1,5 +1,5 @@
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
-import { RequireAuth } from "@/components/require-auth";
+import { AdminSidebar } from "@/components/admin/AdminSidebar.jsx";
+import { RequireAuth } from "@/components/RequireAuth.jsx";
 
 export default function AdminLayout({ children }) {
     return <main data-native className="w-full bg-[#F7F7F5] pt-20">

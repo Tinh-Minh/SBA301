@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import DisputeLive from "@/views/live/DisputeLive";
+import DisputeLive from "@/pages/user/DisputeLivePage.jsx";
 
 export const metadata = { title: "Tranh chấp và bằng chứng" };
 

@@ -1,4 +1,4 @@
-import { toLocalIso } from "@/lib/datetime";
+import { toLocalIso } from "@/utils/datetime.js";
 import { fetchAllPages, request, toPage } from "./http";
 import { normalizeSlot } from "./adapters";
 

@@ -1,5 +1,5 @@
-import { parseDate } from "@/lib/datetime";
-import { toNumber } from "@/lib/labels";
+import { parseDate } from "@/utils/datetime.js";
+import { toNumber } from "@/utils/labels.js";
 
 const isoOrNull = (value) => parseDate(value)?.toISOString() ?? null;
 const money = (value) => Math.round(toNumber(value));

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import PaymentLive from "@/views/live/PaymentLive";
+import PaymentLive from "@/pages/user/PaymentLivePage.jsx";
 
 export const metadata = { title: "Thanh toán tiền thuê xe" };
 

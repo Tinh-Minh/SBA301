@@ -1,4 +1,4 @@
-import AccountLive from "@/views/live/AccountLive";
+import AccountLive from "@/pages/user/AccountLivePage.jsx";
 
 export const metadata = { title: "Hồ sơ cá nhân" };
 

@@ -1,4 +1,4 @@
-import BanksLive from "@/views/live/BanksLive";
+import BanksLive from "@/pages/user/BanksLivePage.jsx";
 
 export const metadata = { title: "Tài khoản ngân hàng" };
 

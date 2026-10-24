@@ -1,8 +1,8 @@
-import { Header } from "@/components/header";
-import { ReferenceFooter } from "@/components/reference-footer";
-import { Interactions } from "@/components/interactions";
-import { AuthProvider } from "@/components/auth-provider";
-import "./globals.css";
+import { Header } from "@/components/Header.jsx";
+import { ReferenceFooter } from "@/components/ReferenceFooter.jsx";
+import { Interactions } from "@/components/Interactions.jsx";
+import { AuthProvider } from "@/components/AuthProvider.jsx";
+import "@/styles/globals.css";
 export const metadata = {
     title: { default: "CarDB — Đồng hành mọi chuyến đi", template: "%s | CarDB" },
     description: "Thuê xe tự lái, xe cao cấp theo ngày và theo giờ. Đội xe đời mới, giá minh bạch, giao xe tận nơi cùng CarDB.",

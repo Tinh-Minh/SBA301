@@ -1,194 +1,46 @@
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-
-export default function Header() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-
-  const isExplore =
-    location.pathname === '/trip' ||
-    location.pathname === '/trips' ||
-    location.pathname === '/cars';
-
-  return (
-    <header className="sticky top-0 left-0 w-full z-50 bg-[#001715]/95 backdrop-blur-xl border-b border-[#176d5c]/30 shadow-[0_4px_24px_rgba(0,23,21,0.7)]">
-      <div className="h-16 w-full max-w-[1440px] mx-auto px-6 md:px-10 flex items-center justify-between">
-        {/* Logo & Main Nav */}
-        <div className="flex items-center gap-10">
-          <Link
-            className="flex items-center gap-2.5 group transition-transform active:scale-95"
-            to="/"
-            title="CarDB Vietnam"
-          >
-            <img
-              alt="CarDB Logo"
-              className="h-7 w-auto object-contain transition-transform group-hover:scale-105"
-              src="https://lh3.googleusercontent.com/aida/AEtjO1WnoaN3L-g2X5UV_CavHBrqQj50xBeyrK8pGXbFLHvgrpo7aTVH9BADBIOfK5zt2n6tucOLOlrEbeAjP74rlwLNLiUIo6yhyMFfiVscm3vfLGshmy18X6v9FM93ahxdxjlGlzunE64w-QxkpHBFTyCyactMfJ7wW3u5f0F2MwkdrsieFmSqnP5gs7fVX80nT5YIeGWiMM2JSSFxQaXnYOi-pxQ_zPcWam72J7BwMpX4B4v0WXbWfXGXa8Ax"
-            />
-            <div className="flex flex-col">
-              <span className="text-xl font-bold tracking-tight text-on-surface leading-none">
-                Car<span className="text-primary font-extrabold">DB</span>
-              </span>
-              <span className="text-[9px] uppercase tracking-widest text-primary/70 leading-none mt-0.5 font-semibold">
-                Luxury Mobility
-              </span>
-            </div>
-          </Link>
-          <nav className="hidden md:flex items-center gap-2">
-            <Link
-              className={`text-sm font-semibold px-3.5 py-1.5 transition-colors ${
-                isExplore
-                  ? 'text-primary bg-[#176d5c]/30 rounded-full border border-secondary/30 shadow-[0_0_12px_rgba(74,220,200,0.15)]'
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 rounded-lg'
-              }`}
-              to="/trip"
-            >
-              Khám phá xe
-            </Link>
-            <Link
-              className="text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 px-3.5 py-1.5 rounded-lg transition-all"
-              to="/"
-            >
-              Chuyến xe của tôi
-            </Link>
-            <Link
-              className="text-sm font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 px-3.5 py-1.5 rounded-lg transition-all"
-              to="/"
-            >
-              Cho thuê xe
-            </Link>
-          </nav>
-        </div>
-
-        {/* Action CTAs */}
-        <div className="flex items-center gap-3">
-          <Link
-            className="text-sm font-medium text-on-surface hover:text-primary px-3.5 py-1.5 rounded-lg transition-colors hidden sm:inline-block"
-            to="/login"
-          >
-            Đăng nhập
-          </Link>
-          <Link
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-on-secondary-fixed bg-secondary-fixed hover:bg-secondary px-4 py-2 rounded-full shadow-[0_0_18px_rgba(74,220,200,0.35)] hover:shadow-[0_0_24px_rgba(74,220,200,0.55)] transition-all active:scale-95"
-            to="/register"
-          >
-            <span>Đăng ký</span>
-            <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
-          </Link>
-          {/* Profile User Dropdown */}
-          <div className="relative group pl-2">
-            <Link to="/profile" className="flex items-center gap-2.5 focus:outline-none cursor-pointer py-1" title="Hồ sơ cá nhân">
-              <div className="flex flex-col items-end hidden lg:flex">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-label-md text-xs text-on-surface font-semibold">Nguyễn Hoàng Minh</span>
-                  <span className="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_rgba(74,220,200,0.8)]"></span>
-                </div>
-                <span className="font-label-sm text-[10px] text-on-surface-variant font-mono">CDB-VN-88492</span>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-primary-container/40 p-0.5 border border-primary/30 flex items-center justify-center text-primary group-hover:border-primary transition-colors">
-                <span className="material-symbols-outlined text-[18px]">person</span>
-              </div>
-              <span className="material-symbols-outlined text-on-surface-variant text-[16px] group-hover:text-primary transition-transform duration-300 group-hover:rotate-180 hidden sm:inline">
-                expand_more
-              </span>
-            </Link>
-
-            {/* Dropdown Menu */}
-            <div className="absolute right-0 top-full mt-2 w-56 bg-surface-container-low/95 backdrop-blur-2xl rounded-xl p-1.5 shadow-2xl border border-surface-container-high hidden group-hover:flex flex-col gap-1 z-50">
-              <Link
-                to="/profile"
-                className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary-container/30 text-primary font-label-md text-xs font-semibold transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">badge</span> Hồ sơ cá nhân
-                </span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-              </Link>
-              <Link
-                to="/trip"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-xs font-medium"
-              >
-                <span className="material-symbols-outlined text-[18px]">commute</span> Chuyến xe của tôi
-              </Link>
-              <Link
-                to="/trip"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-xs font-medium"
-              >
-                <span className="material-symbols-outlined text-[18px]">directions_car</span> Quản lý xe của tôi
-              </Link>
-              <Link
-                to="/admin"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-secondary hover:text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-xs font-semibold"
-              >
-                <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span> Quản trị Admin
-              </Link>
-              <div className="h-px bg-surface-container-high my-1"></div>
-              <Link
-                to="/login"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-error hover:bg-error-container hover:text-on-error-container transition-colors font-label-md text-xs font-medium"
-              >
-                <span className="material-symbols-outlined text-[18px]">logout</span> Đăng xuất
-              </Link>
-            </div>
-          </div>
-
-          {/* Mobile hamburger menu toggle */}
-          <button
-            type="button"
-            className="md:hidden p-1 rounded-lg text-on-surface-variant hover:text-on-surface"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Menu"
-          >
-            <span className="material-symbols-outlined text-[24px]">
-              {mobileMenuOpen ? 'close' : 'menu'}
-            </span>
-          </button>
-        </div>
+"use client";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useId, useState } from "react";
+import { useAuth } from "@/components/AuthProvider.jsx";
+import { Icon } from "@/components/Icon.jsx";
+import { SiteBrand } from "@/components/SiteBrand.jsx";
+import { initials } from "@/utils/labels.js";
+const publicNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Chuyến xe của tôi"], ["/list-your-car", "Cho thuê xe"], ["/pricing", "Cách tính giá"]];
+const memberNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Chuyến xe của tôi"], ["/owner/dashboard", "Chủ xe"], ["/pricing", "Cách tính giá"]];
+const adminLink = ["/admin/dashboard", "Quản trị"];
+const accountLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/account/orders", "Đơn thuê xe", "receipt_long"], ["/account/history", "Lịch sử chuyến đi", "history"], ["/account/bank", "Tài khoản ngân hàng", "account_balance"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
+export function Header({ previewState } = {}) {
+    const instance = useId();
+    const mobileId = previewState === undefined ? "mobile-navigation" : `mobile-navigation-${instance}`;
+    const accountId = previewState === undefined ? "account-menu" : `account-menu-${instance}`;
+    const path = usePathname();
+    const router = useRouter();
+    const { loggedIn: authenticated, user, isAdmin, logout } = useAuth();
+    const loggedIn = previewState ?? authenticated;
+    const displayName = user?.fullName || (previewState ? "Khách hàng CarDB" : "Tài khoản");
+    const displayCode = user ? `${user.role === "ADMIN" ? "Quản trị viên" : "Khách hàng"} • #${user.id}` : "CarDB";
+    const navigation = loggedIn ? (isAdmin ? [...memberNavigation, adminLink] : memberNavigation) : publicNavigation;
+    const menuLinks = isAdmin ? [...accountLinks, ["/admin/dashboard", "Trang quản trị", "admin_panel_settings"]] : accountLinks;
+    const activePath = previewState === undefined ? path : loggedIn ? "/my-trips" : "/explore";
+    const overPhoto = previewState === undefined && (path === "/login" || path === "/register");
+    const [menu, setMenu] = useState(false);
+    const [account, setAccount] = useState(false);
+    function close() { setMenu(false); setAccount(false); }
+    function signOut() { logout(); close(); router.push("/"); }
+    return <header className={`site-header ${overPhoto ? "auth-overlay" : "border-border-light bg-white/95 backdrop-blur-xl"} ${previewState === undefined ? `fixed inset-x-0 top-0 z-50 ${overPhoto ? "" : "border-b"}` : "relative w-full rounded-2xl border shadow-sm"}`}>
+    <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
+      <SiteBrand compact onClick={close}/>
+      <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 lg:flex">{navigation.map(([href, label]) => <Link key={href} href={href} onClick={close} aria-current={activePath.startsWith(href) ? "page" : undefined} className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${activePath.startsWith(href) ? "bg-accent-soft font-semibold text-brand-accent" : "text-text-secondary hover:bg-section-bg hover:text-text-primary"}`}>{label}</Link>)}</nav>
+      <div className="flex items-center gap-2 sm:gap-4">
+        <a href="tel:19008899" className="hidden shrink-0 items-center gap-2 md:flex"><span className="flex size-8 items-center justify-center rounded-full bg-accent-soft text-brand-accent"><Icon name="call" className="text-[16px]"/></span><span className="flex flex-col gap-1"><span className="text-[9px] font-semibold uppercase leading-none text-text-secondary">Hỗ trợ 24/7</span><strong className="text-xs leading-none text-brand-accent">1900 8899</strong></span></a>
+        {loggedIn ? <div className="relative"><button type="button" aria-label={`Tài khoản ${displayName}`} aria-expanded={account} aria-controls={accountId} onClick={() => { setAccount(value => !value); setMenu(false); }} className="flex items-center gap-2 border-l border-border-light py-2 pl-3 text-left sm:gap-3 sm:pl-5"><span className="relative"><span className="flex size-8 items-center justify-center rounded-full bg-gradient-to-tr from-brand-accent to-[#ff8f59] text-xs font-bold text-white shadow-inner">{initials(displayName)}</span><span className="absolute bottom-0 right-0 size-2.5 rounded-full border-2 border-white bg-emerald-500"/></span><span className="hidden flex-col gap-1 sm:flex"><span className="flex items-center gap-1.5 text-xs font-bold leading-none text-text-primary">{displayName}{isAdmin ? <span className="rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] text-amber-700">ADMIN</span> : null}</span><span className="text-[10px] leading-none text-text-secondary">{displayCode}</span></span><Icon name="expand_more" className="text-[18px] text-text-secondary"/></button>
+          {account ? <><button type="button" tabIndex={-1} aria-label="Đóng menu tài khoản" onClick={() => setAccount(false)} className="fixed inset-0 z-[-1] cursor-default"/><nav id={accountId} aria-label="Tài khoản" onKeyDown={event => { if (event.key === "Escape")
+            setAccount(false); }} className="absolute right-0 top-full mt-2 w-60 rounded-xl border border-border-light bg-white p-2 shadow-xl">{menuLinks.map(([href, label, icon]) => <Link key={href} href={href} onClick={close} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-text-primary hover:bg-accent-soft hover:text-brand-accent"><Icon name={icon} className="text-[18px]"/>{label}</Link>)}<button type="button" onClick={signOut} className="mt-1 flex w-full items-center gap-2 rounded-lg border-t border-border-light px-3 py-2.5 text-sm text-error hover:bg-error-container/30"><Icon name="logout" className="text-[18px]"/>Đăng xuất</button></nav></> : null}
+        </div> : <><Link href="/login" className="rounded-lg px-2 py-2 text-xs font-semibold text-text-primary hover:text-brand-accent sm:text-sm">Đăng nhập</Link><Link href="/register" className="hidden items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-xs font-bold text-white shadow-sm transition-shadow hover:bg-primary-hover hover:shadow-md sm:inline-flex">Đăng ký<Icon name="arrow_forward" className="text-[16px]"/></Link></>}
+        <button type="button" aria-label={menu ? "Đóng menu" : "Mở menu"} aria-expanded={menu} aria-controls={mobileId} onClick={() => { setMenu(value => !value); setAccount(false); }} className="header-menu-toggle flex size-9 items-center justify-center rounded-lg border border-border-light text-text-primary lg:hidden"><Icon name={menu ? "close" : "menu"}/></button>
       </div>
-
-      {/* Mobile nav drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden px-6 pb-4 pt-2 border-t border-secondary/10 bg-surface-container-low/95 flex flex-col gap-2">
-          <Link
-            className={`text-sm font-semibold px-3 py-2 rounded-lg ${
-              isExplore ? 'bg-surface-container-highest/60 text-primary' : 'text-on-surface-variant'
-            }`}
-            to="/trip"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Khám phá xe
-          </Link>
-          <Link
-            className="text-sm font-medium text-on-surface-variant hover:text-on-surface px-3 py-2 rounded-lg"
-            to="/"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Chuyến xe của tôi
-          </Link>
-          <Link
-            className="text-sm font-medium text-on-surface-variant hover:text-on-surface px-3 py-2 rounded-lg"
-            to="/"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Cho thuê xe
-          </Link>
-          <Link
-            className="text-sm font-medium text-on-surface px-3 py-2 rounded-lg"
-            to="/login"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Đăng nhập
-          </Link>
-          <Link
-            className="text-sm font-medium text-secondary px-3 py-2 rounded-lg"
-            to="/register"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            Đăng ký tài khoản
-          </Link>
-        </div>
-      )}
-
-    </header>
-  );
+    </div>
+    {menu ? <nav id={mobileId} aria-label="Điều hướng di động" className="header-mobile-navigation border-t border-border-light bg-white px-4 py-3 shadow-lg lg:hidden">{navigation.map(([href, label]) => <Link key={href} href={href} onClick={close} aria-current={activePath.startsWith(href) ? "page" : undefined} className={`block rounded-lg px-4 py-3 text-sm font-semibold ${activePath.startsWith(href) ? "bg-accent-soft text-brand-accent" : "text-text-primary hover:bg-accent-soft hover:text-brand-accent"}`}>{label}</Link>)}<div className="mt-2 flex justify-between border-t border-border-light px-4 pt-4 text-sm"><Link href={loggedIn ? "/account" : "/register"} onClick={close}>{loggedIn ? "Hồ sơ cá nhân" : "Đăng ký tài khoản"}</Link><a href="tel:19008899" className="font-semibold text-brand-accent">1900 8899</a></div></nav> : null}
+  </header>;
 }

@@ -1,6 +1,6 @@
-import { toLocalIso } from "@/lib/datetime";
-import { toNumber } from "@/lib/labels";
-import { currentUserId, readSession } from "@/lib/session";
+import { toLocalIso } from "@/utils/datetime.js";
+import { toNumber } from "@/utils/labels.js";
+import { currentUserId, readSession } from "@/storage/sessionStorage.js";
 import { fetchAllPages, request, toPage } from "./http";
 import { normalizeCar, normalizeOrder } from "./adapters";
 import { listCustomers, getCustomer, getCustomerKyc, updateCustomerStatus } from "./customer.service";

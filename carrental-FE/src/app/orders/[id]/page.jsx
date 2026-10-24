@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { OrderDetailPage } from "@/views/live/OrderDetail";
+import { OrderDetailPage } from "@/pages/user/OrderDetailPage.jsx";
 
 export const metadata = { title: "Chi tiết đơn thuê" };
 

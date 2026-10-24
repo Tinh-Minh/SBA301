@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import CarDetail from "@/views/live/CarDetail";
+import CarDetail from "@/pages/user/CarDetailPage.jsx";
 
 export const metadata = { title: "Chi tiết xe" };
 

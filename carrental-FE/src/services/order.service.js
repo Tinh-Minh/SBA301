@@ -1,5 +1,5 @@
-import { canRespondToOrder, isOrderExpired } from "@/lib/owner/rules";
-import { toLocalIso } from "@/lib/datetime";
+import { canRespondToOrder, isOrderExpired } from "@/utils/owner/rules.js";
+import { toLocalIso } from "@/utils/datetime.js";
 import { ApiError, fetchAllPages, mockResponse, request, toPage, USE_MOCK_API } from "./http";
 import { carFromOrder, normalizeCar, normalizeHandover, normalizeOrder, renterFromOrder } from "./adapters";
 import { findOrFail, ownerDb, toOrderView } from "./mock/owner-db";

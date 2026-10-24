@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import OwnerVehicleEdit from "@/views/owner/OwnerVehicleEdit";
+import OwnerVehicleEdit from "@/pages/owner/OwnerVehicleEditPage.jsx";
 export const metadata = { title: "Chỉnh sửa xe" };
 export default async function Page({ params }) {
     const { id } = await params;

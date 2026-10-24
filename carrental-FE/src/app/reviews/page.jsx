@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ReviewLive from "@/views/live/ReviewLive";
+import ReviewLive from "@/pages/user/ReviewLivePage.jsx";
 
 export const metadata = { title: "Đánh giá chuyến thuê" };
 

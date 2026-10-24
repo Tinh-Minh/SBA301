@@ -1,4 +1,4 @@
-import { clearSession, readSession } from "@/lib/session";
+import { clearSession, readSession } from "@/storage/sessionStorage.js";
 
 /**
  * Mặc định gọi cùng origin `/api/...`; Next.js rewrite (next.config.mjs) chuyển tiếp sang backend.

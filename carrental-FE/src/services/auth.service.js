@@ -1,5 +1,5 @@
 import { request } from "./http";
-import { clearSession, saveSession } from "@/lib/session";
+import { clearSession, saveSession } from "@/storage/sessionStorage.js";
 
 /** POST /api/auth/login — backend chỉ nhận email + mật khẩu. */
 export async function login({ email, password }) {

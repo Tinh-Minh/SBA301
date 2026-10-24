@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ownerRoutes } from "@/lib/owner/routes";
+import { ownerRoutes } from "@/utils/owner/routes.js";
 export default function OwnerIndex() {
     redirect(ownerRoutes.dashboard);
 }

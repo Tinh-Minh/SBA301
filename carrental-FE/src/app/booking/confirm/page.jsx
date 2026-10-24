@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Checkout from "@/views/live/Checkout";
+import Checkout from "@/pages/user/CheckoutPage.jsx";
 
 export const metadata = { title: "Xác nhận yêu cầu thuê xe" };
 

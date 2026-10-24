@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import ExploreCars from "@/views/live/ExploreCars";
+import ExploreCars from "@/pages/user/ExploreCarsPage.jsx";
 
 export const metadata = { title: "Khám phá xe" };
 
