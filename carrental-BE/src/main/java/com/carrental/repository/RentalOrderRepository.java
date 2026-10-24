@@ -2,6 +2,7 @@ package com.carrental.repository;
 
 import com.carrental.entity.RentalOrder;
 import com.carrental.enums.OrderStatus;
+import com.carrental.enums.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -66,6 +67,10 @@ public interface RentalOrderRepository extends JpaRepository<RentalOrder, Long> 
 
     /** Các đơn PENDING đã quá hạn xác nhận (job tự chuyển EXPIRED). */
     List<RentalOrder> findByStatusAndExpiresAtBefore(OrderStatus status, LocalDateTime time);
+
+    /** Các đơn CONFIRMED chưa thanh toán (UNPAID) đã quá hạn thanh toán (job tự huỷ CANCELLED). */
+    List<RentalOrder> findByStatusAndPaymentStatusAndExpiresAtBefore(
+            OrderStatus status, PaymentStatus paymentStatus, LocalDateTime time);
 
     /** Số lần một khách đã dùng voucher (không tính các đơn đã bị huỷ/từ chối/hết hạn). */
     @Query("""

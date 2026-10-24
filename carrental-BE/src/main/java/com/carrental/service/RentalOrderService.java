@@ -45,5 +45,14 @@ public interface RentalOrderService {
      */
     boolean expireOrder(Long orderId);
 
+    /** Id các đơn CONFIRMED chưa thanh toán (UNPAID) đã quá hạn thanh toán. */
+    List<Long> findOverduePaymentOrderIds();
+
+    /**
+     * Hệ thống tự động huỷ đơn CONFIRMED quá hạn thanh toán sang CANCELLED,
+     * giải phóng voucher và đánh dấu các giao dịch PENDING thành FAILED.
+     */
+    boolean cancelOverduePaymentOrder(Long orderId);
+
     List<ActionLogDTO> getOrderLogs(Long orderId);
 }

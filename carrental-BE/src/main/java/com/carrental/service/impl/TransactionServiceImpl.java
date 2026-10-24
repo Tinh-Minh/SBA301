@@ -8,6 +8,7 @@ import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.TransactionResponse;
 import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Transaction;
+import com.carrental.enums.OrderStatus;
 import com.carrental.enums.PaymentMethod;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.TransactionStatus;
@@ -55,6 +56,12 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
             orderAccess.requireRenter(order);
+            if (order.getStatus() != OrderStatus.CONFIRMED) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể đặt cọc cho đơn đã được chủ xe xác nhận");
+            }
+            if (order.getExpiresAt() != null && LocalDateTime.now().isAfter(order.getExpiresAt())) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã quá thời hạn thanh toán/đặt cọc");
+            }
             BigDecimal amount = request.getAmount() != null ? request.getAmount() : order.getDepositAmount();
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền cọc không hợp lệ");
@@ -93,6 +100,15 @@ public class TransactionServiceImpl implements TransactionService {
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
             orderAccess.requireRenter(order);
+            if (order.getStatus() != OrderStatus.CONFIRMED) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể thanh toán cho đơn đã được chủ xe xác nhận");
+            }
+            if (order.getPaymentStatus() == PaymentStatus.PAID) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã được thanh toán");
+            }
+            if (order.getExpiresAt() != null && LocalDateTime.now().isAfter(order.getExpiresAt())) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã quá thời hạn thanh toán");
+            }
             BigDecimal amount = request.getAmount() != null ? request.getAmount() : order.getTotalAmount();
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán không hợp lệ");

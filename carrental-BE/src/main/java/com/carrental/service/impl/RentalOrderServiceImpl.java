@@ -9,15 +9,18 @@ import com.carrental.dto.response.PriceQuoteDTO;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Customer;
 import com.carrental.entity.RentalOrder;
+import com.carrental.entity.Transaction;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.OrderStatus;
 import com.carrental.enums.PaymentStatus;
+import com.carrental.enums.TransactionStatus;
 import com.carrental.exception.BadRequestException;
 import com.carrental.exception.ConflictException;
 import com.carrental.exception.ForbiddenException;
 import com.carrental.exception.ResourceNotFoundException;
 import com.carrental.repository.CarSlotRepository;
 import com.carrental.repository.RentalOrderRepository;
+import com.carrental.repository.TransactionRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;
@@ -47,6 +50,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
     private final RentalOrderRepository rentalOrderRepository;
     private final CarSlotRepository carSlotRepository;
     private final VoucherRepository voucherRepository;
+    private final TransactionRepository transactionRepository;
     private final PricingService pricingService;
     private final ActionLogService actionLogService;
     private final CurrentUserService currentUserService;
@@ -56,6 +60,10 @@ public class RentalOrderServiceImpl implements RentalOrderService {
     @Value("${app.order.confirm-timeout-minutes:1440}")
     private long confirmTimeoutMinutes;
 
+    /** Khách có bao lâu để hoàn tất thanh toán sau khi chủ xe xác nhận (không quá giờ nhận xe). */
+    @Value("${app.order.payment-timeout-minutes:30}")
+    private long paymentTimeoutMinutes;
+
     /** % hoa hồng nền tảng chụp vào đơn lúc tạo. */
     @Value("${app.order.commission-rate:10.00}")
     private BigDecimal commissionRate;
@@ -63,6 +71,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
     public RentalOrderServiceImpl(RentalOrderRepository rentalOrderRepository,
                                   CarSlotRepository carSlotRepository,
                                   VoucherRepository voucherRepository,
+                                  TransactionRepository transactionRepository,
                                   PricingService pricingService,
                                   ActionLogService actionLogService,
                                   CurrentUserService currentUserService,
@@ -70,6 +79,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
         this.rentalOrderRepository = rentalOrderRepository;
         this.carSlotRepository = carSlotRepository;
         this.voucherRepository = voucherRepository;
+        this.transactionRepository = transactionRepository;
         this.pricingService = pricingService;
         this.actionLogService = actionLogService;
         this.currentUserService = currentUserService;
@@ -212,6 +222,11 @@ public class RentalOrderServiceImpl implements RentalOrderService {
         }
         OrderStatus from = changeStatus(order, OrderStatus.CONFIRMED);
         order.setConfirmedAt(now);
+        LocalDateTime paymentDeadline = now.plusMinutes(paymentTimeoutMinutes);
+        if (order.getStartTime() != null && paymentDeadline.isAfter(order.getStartTime())) {
+            paymentDeadline = order.getStartTime();
+        }
+        order.setExpiresAt(paymentDeadline);
         rentalOrderRepository.saveAndFlush(order);
         actionLogService.log(order, user, ActionLogService.CONFIRM, from, OrderStatus.CONFIRMED, note);
         return OrderResponseDTO.fromEntity(order);
@@ -284,6 +299,46 @@ public class RentalOrderServiceImpl implements RentalOrderService {
         rentalOrderRepository.saveAndFlush(order);
         actionLogService.log(order, null, ActionLogService.EXPIRE, from, OrderStatus.EXPIRED,
                 "Chủ xe không xác nhận trước " + order.getExpiresAt());
+        return true;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> findOverduePaymentOrderIds() {
+        return rentalOrderRepository
+                .findByStatusAndPaymentStatusAndExpiresAtBefore(
+                        OrderStatus.CONFIRMED, PaymentStatus.UNPAID, LocalDateTime.now(clock))
+                .stream().map(RentalOrder::getId).toList();
+    }
+
+    @Override
+    @Transactional
+    public boolean cancelOverduePaymentOrder(Long orderId) {
+        RentalOrder order = findOrder(orderId);
+        LocalDateTime now = LocalDateTime.now(clock);
+        if (order.getStatus() != OrderStatus.CONFIRMED
+                || order.getPaymentStatus() != PaymentStatus.UNPAID
+                || order.getExpiresAt() == null || order.getExpiresAt().isAfter(now)) {
+            return false;
+        }
+        OrderStatus from = changeStatus(order, OrderStatus.CANCELLED);
+        order.setCancelledAt(now);
+        order.setCancelledBy(null);
+        order.setCancelReason("Quá thời hạn thanh toán");
+        releaseVoucher(order);
+
+        List<Transaction> transactions = transactionRepository.findByOrderId(orderId);
+        for (Transaction tx : transactions) {
+            if (tx.getStatus() == TransactionStatus.PENDING) {
+                tx.setStatus(TransactionStatus.FAILED);
+                tx.setUpdatedAt(now);
+                transactionRepository.save(tx);
+            }
+        }
+
+        rentalOrderRepository.saveAndFlush(order);
+        actionLogService.log(order, null, ActionLogService.CANCEL, from, OrderStatus.CANCELLED,
+                "Hệ thống tự động huỷ do quá thời hạn thanh toán (" + order.getExpiresAt() + ")");
         return true;
     }
 

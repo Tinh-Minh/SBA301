@@ -291,6 +291,35 @@ class RentalOrderFlowIntegrationTest {
         as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isConflict());
     }
 
+    @Test
+    void overduePaymentConfirmedOrder_isCancelledBySystem() throws Exception {
+        Long orderId = createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", "GIAM10");
+        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isOk());
+
+        // Hạn thanh toán mặc định là 30 phút sau khi xác nhận (2026-11-01 08:30)
+        as(renterId, get("/api/orders/" + orderId))
+                .andExpect(jsonPath("$.data.status").value("CONFIRMED"))
+                .andExpect(jsonPath("$.data.expiresAt").value("2026-11-01T08:30:00"));
+
+        assertThat(rentalOrderService.findOverduePaymentOrderIds()).isEmpty();
+
+        // Chuyển đồng hồ sang 2026-11-01 08:31 (quá hạn thanh toán)
+        clock.setTo(LocalDateTime.of(2026, 11, 1, 8, 31));
+        List<Long> overdue = rentalOrderService.findOverduePaymentOrderIds();
+        assertThat(overdue).containsExactly(orderId);
+
+        assertThat(rentalOrderService.cancelOverduePaymentOrder(orderId)).isTrue();
+        assertThat(rentalOrderService.cancelOverduePaymentOrder(orderId)).isFalse();
+
+        assertOrderStatus(orderId, OrderStatus.CANCELLED);
+        assertThat(voucherUsedCount()).isZero();
+
+        as(renterId, get("/api/orders/" + orderId + "/logs"))
+                .andExpect(jsonPath("$.data[2].action").value("CANCEL"))
+                .andExpect(jsonPath("$.data[2].actorId").doesNotExist())
+                .andExpect(jsonPath("$.data[2].actorName").value("Hệ thống"));
+    }
+
     // ===================================================================== quyền & dữ liệu vào
 
     @Test
