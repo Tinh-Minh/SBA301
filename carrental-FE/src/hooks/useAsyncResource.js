@@ -1,4 +1,3 @@
-"use client";
 import { useCallback, useEffect, useState } from "react";
 /**
  * Tải dữ liệu bất đồng bộ, bỏ qua kết quả trễ khi `key` đổi hoặc component unmount.

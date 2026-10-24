@@ -1,7 +1,6 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useCallback, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from "react-router";
 import { DateTimeField } from "@/components/DateField.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
 import { useAsyncResource } from "@/hooks/useAsyncResource.js";
@@ -36,7 +35,7 @@ export default function ExploreCars() {
 }
 
 function Explorer() {
-    const params = useSearchParams();
+    const [params] = useSearchParams();
     const [form, setForm] = useState(() => initialFilters(params));
     const [query, setQuery] = useState(form);
     const [page, setPage] = useState(0);
@@ -86,7 +85,7 @@ function Explorer() {
           <p className="text-xs text-[#292929]">Trống {formatDateTime(slot.startTime)} → {formatDateTime(slot.endTime)}</p>
           <p className="text-sm font-bold text-[#FC6C26]">{formatMoney(slot.pricePerHour)}/giờ • {formatMoney(slot.pricePerDay)}/ngày</p>
           <p className="text-[11px] text-[#666666]">{rentalTypeLabels[slot.rentalOption] ?? slot.rentalOption} • tối thiểu {slot.minRentalHours} giờ</p>
-          <Link href={`/cars/${slot.carId}?slotId=${slot.id}&start=${encodeURIComponent(query.startTime)}&end=${encodeURIComponent(query.endTime)}`} className="mt-1 inline-flex w-fit rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thuê xe này</Link>
+          <Link to={`/cars/${slot.carId}?slotId=${slot.id}&start=${encodeURIComponent(query.startTime)}&end=${encodeURIComponent(query.endTime)}`} className="mt-1 inline-flex w-fit rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thuê xe này</Link>
         </div>
       </article>)}
     </div>

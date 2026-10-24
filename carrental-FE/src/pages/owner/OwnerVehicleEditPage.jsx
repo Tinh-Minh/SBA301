@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
@@ -57,7 +56,7 @@ export default function OwnerVehicleEdit({ carId }) {
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
       <OwnerCrumb current={data ? `Chỉnh sửa ${data.brand} ${data.model}` : "Chỉnh sửa xe"} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }}/>
-      <OwnerHeading title="Chỉnh sửa thông tin xe" description={data ? `Cập nhật bảng giá và tiền cọc cho ${data.brand} ${data.model} (${data.licensePlate}).` : "Đang mở hồ sơ xe."} actions={<Link href={ownerRoutes.vehicles} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal hover:border-gray-300">
+      <OwnerHeading title="Chỉnh sửa thông tin xe" description={data ? `Cập nhật bảng giá và tiền cọc cho ${data.brand} ${data.model} (${data.licensePlate}).` : "Đang mở hồ sơ xe."} actions={<Link to={ownerRoutes.vehicles} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal hover:border-gray-300">
           <Icon name="arrow_back" className="text-[18px]"/>
           Quay lại Xe của tôi
         </Link>}/>

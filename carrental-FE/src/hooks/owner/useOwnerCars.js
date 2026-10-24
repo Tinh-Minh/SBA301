@@ -1,4 +1,3 @@
-"use client";
 import { useCallback } from "react";
 import { carService } from "@/services/car.service";
 import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";

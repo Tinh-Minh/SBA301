@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { useOwnerDashboard } from "@/hooks/owner/useOwnerDashboard.js";
@@ -58,7 +57,7 @@ function PendingRow({ item }) {
       </span>
     </td>
     <td className="px-4 py-3.5 text-right">
-      <Link href={ownerRoutes.requests} className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-card-border bg-bg-light px-3 py-1.5 text-xs font-bold text-charcoal shadow-sm transition-all hover:border-orange-200 hover:bg-accent-soft hover:text-brand-accent">
+      <Link to={ownerRoutes.requests} className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg border border-card-border bg-bg-light px-3 py-1.5 text-xs font-bold text-charcoal shadow-sm transition-all hover:border-orange-200 hover:bg-accent-soft hover:text-brand-accent">
         Xem yêu cầu
         <Icon name="arrow_forward" className="text-[14px]"/>
       </Link>
@@ -98,9 +97,9 @@ function VehicleCard({ item }) {
           <span className="text-xs text-muted-gray">/ngày</span>
         </div>
       </div>
-      {approved ? <Link href={ownerRoutes.vehicleEdit(car.id)} className="block w-full rounded-xl bg-brand-accent py-2.5 text-center text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-hover">
+      {approved ? <Link to={ownerRoutes.vehicleEdit(car.id)} className="block w-full rounded-xl bg-brand-accent py-2.5 text-center text-xs font-semibold text-white shadow-sm transition-all hover:bg-primary-hover">
         Quản lý xe →
-      </Link> : <Link href={ownerRoutes.vehicleEdit(car.id)} className="block w-full rounded-xl border-2 border-brand-accent py-2 px-4 text-center text-xs font-semibold text-brand-accent transition-all hover:bg-accent-soft">
+      </Link> : <Link to={ownerRoutes.vehicleEdit(car.id)} className="block w-full rounded-xl border-2 border-brand-accent py-2 px-4 text-center text-xs font-semibold text-brand-accent transition-all hover:bg-accent-soft">
         Cập nhật hồ sơ →
       </Link>}
     </div>
@@ -123,7 +122,7 @@ function ActivityRow({ item }) {
   </div>;
 }
 function QuickAction({ href, label }) {
-    return <Link href={href} className="group flex items-center justify-between rounded-xl border border-card-border bg-bg-light px-4 py-2.5 text-sm font-medium text-charcoal transition-all hover:border-brand-accent hover:bg-white hover:shadow-sm">
+    return <Link to={href} className="group flex items-center justify-between rounded-xl border border-card-border bg-bg-light px-4 py-2.5 text-sm font-medium text-charcoal transition-all hover:border-brand-accent hover:bg-white hover:shadow-sm">
     <span>{label}</span>
     <Icon name="chevron_right" className="text-[18px] text-muted-gray transition-all group-hover:translate-x-0.5 group-hover:text-brand-accent"/>
   </Link>;
@@ -138,7 +137,7 @@ export default function OwnerDashboard() {
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
       <nav aria-label="Đường dẫn" className="flex items-center gap-1.5 text-xs font-medium text-muted-gray">
-        <Link href={ownerRoutes.dashboard} className="transition-colors hover:text-charcoal">Cho thuê xe</Link>
+        <Link to={ownerRoutes.dashboard} className="transition-colors hover:text-charcoal">Cho thuê xe</Link>
         <span>/</span>
         <span className="font-semibold text-charcoal">Bảng điều khiển chủ xe</span>
       </nav>
@@ -147,7 +146,7 @@ export default function OwnerDashboard() {
           <h1 className="text-2xl font-bold leading-snug tracking-tight text-charcoal sm:text-[28px]">Bảng điều khiển chủ xe</h1>
           <p className="mt-0.5 text-sm text-muted-gray">Theo dõi xe, lịch cho thuê, yêu cầu đặt xe và đối soát doanh thu của bạn.</p>
         </div>
-        <Link href={ownerRoutes.vehicleNew} className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-hover sm:self-auto">
+        <Link to={ownerRoutes.vehicleNew} className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-primary-hover sm:self-auto">
           <Icon name="add" className="text-[18px]"/>
           Đăng xe mới
         </Link>
@@ -204,7 +203,7 @@ export default function OwnerDashboard() {
           <Icon name="garage_home" className="text-[22px] text-brand-accent"/>
           <h2 className="text-base font-bold text-charcoal sm:text-lg">Xe đang quản lý</h2>
         </div>
-        <Link href={ownerRoutes.vehicles} className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent transition-colors hover:text-primary-hover">
+        <Link to={ownerRoutes.vehicles} className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent transition-colors hover:text-primary-hover">
           Xem tất cả xe ({data.totalCars})
           <Icon name="arrow_forward" className="text-[16px]"/>
         </Link>
@@ -235,7 +234,7 @@ export default function OwnerDashboard() {
               <Icon name="payments" className="shrink-0 text-[20px] text-brand-accent"/>
               <h2 className="whitespace-nowrap text-base font-bold text-charcoal sm:text-lg">Tổng quan doanh thu</h2>
             </div>
-            <Link href={ownerRoutes.payouts} className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-bold text-brand-accent hover:text-primary-hover">
+            <Link to={ownerRoutes.payouts} className="flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-bold text-brand-accent hover:text-primary-hover">
               Chi tiết đối soát
               <Icon name="arrow_forward" className="text-[15px]"/>
             </Link>
@@ -268,7 +267,7 @@ export default function OwnerDashboard() {
             <p className="font-medium leading-normal text-charcoal">Doanh thu được giữ an toàn và chi trả tự động sau khi hoàn tất trả xe.</p>
           </div>
         </div>
-        <Link href="/account/bank" className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-card-border bg-white px-4 py-2.5 text-center text-xs font-medium text-charcoal shadow-sm transition-all hover:border-brand-accent hover:text-brand-accent">
+        <Link to="/account/bank" className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-card-border bg-white px-4 py-2.5 text-center text-xs font-medium text-charcoal shadow-sm transition-all hover:border-brand-accent hover:text-brand-accent">
           <Icon name="account_balance" className="text-[18px]"/>
           Quản lý tài khoản nhận tiền
         </Link>

@@ -1,4 +1,3 @@
-"use client";
 import { useEffect, useId, useRef, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 export function HoldButton({ children, onComplete, danger = false, disabled = false }) {

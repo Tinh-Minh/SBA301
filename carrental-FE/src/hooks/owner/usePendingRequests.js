@@ -1,4 +1,3 @@
-"use client";
 import { useCallback } from "react";
 import { orderService } from "@/services/order.service";
 import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";

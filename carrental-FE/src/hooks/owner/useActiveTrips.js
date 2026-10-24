@@ -1,4 +1,3 @@
-"use client";
 import { useCallback } from "react";
 import { handoverService } from "@/services/handover.service";
 import { orderService } from "@/services/order.service";

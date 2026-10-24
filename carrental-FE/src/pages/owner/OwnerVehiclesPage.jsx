@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
@@ -51,7 +50,7 @@ export default function OwnerVehicles() {
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
       <OwnerCrumb current="Xe của tôi"/>
-      <OwnerHeading title="Xe của tôi" description={`${counts.all} phương tiện. Quản lý niêm yết, trạng thái và bảng giá cho thuê.`} actions={<Link href={ownerRoutes.vehicleNew} className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-hover">
+      <OwnerHeading title="Xe của tôi" description={`${counts.all} phương tiện. Quản lý niêm yết, trạng thái và bảng giá cho thuê.`} actions={<Link to={ownerRoutes.vehicleNew} className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-hover">
           <Icon name="add" className="text-[18px]"/>
           Đăng xe mới
         </Link>}/>
@@ -89,11 +88,11 @@ export default function OwnerVehicles() {
               </div>
               <p className="text-sm text-muted-gray">{statusNote(car.status)} Điểm giao xe: {car.pickupAddress}</p>
               <div className="mt-auto flex flex-wrap items-center gap-2">
-                <Link href={ownerRoutes.vehicleEdit(car.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal hover:border-orange-200 hover:text-brand-accent">
+                <Link to={ownerRoutes.vehicleEdit(car.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal hover:border-orange-200 hover:text-brand-accent">
                   <Icon name="edit_square" className="text-[16px]"/>
                   {car.status === "PENDING_APPROVAL" ? "Cập nhật hồ sơ" : "Chỉnh sửa"}
                 </Link>
-                {car.status === "ACTIVE" ? <Link href={ownerRoutes.calendar} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal hover:border-orange-200 hover:text-brand-accent">
+                {car.status === "ACTIVE" ? <Link to={ownerRoutes.calendar} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal hover:border-orange-200 hover:text-brand-accent">
                   <Icon name="calendar_month" className="text-[16px]"/>
                   Lịch cho thuê
                 </Link> : null}

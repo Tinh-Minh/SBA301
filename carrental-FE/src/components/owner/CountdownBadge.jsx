@@ -1,4 +1,3 @@
-"use client";
 import { useCountdown } from "@/hooks/useCountdown.js";
 import { Icon } from "@/components/Icon.jsx";
 const URGENT_MS = 30 * 60 * 1000;

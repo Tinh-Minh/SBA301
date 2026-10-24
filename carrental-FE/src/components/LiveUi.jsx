@@ -1,4 +1,3 @@
-"use client";
 
 export function LivePage({ children, width = "max-w-6xl" }) {
     return <main data-native className="w-full bg-[#F7F7F5] pt-24 pb-16">

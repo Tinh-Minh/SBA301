@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
@@ -64,7 +63,7 @@ export default function OwnerPayouts() {
           <p className="text-sm font-bold text-charcoal">{bank ? bank.bankName : "Chưa có tài khoản nhận tiền"}</p>
           <p className="text-sm text-muted-gray">{bank ? `${bank.accountHolder} • ${maskBankAccount(bank.accountNumber)}` : "Thêm tài khoản ngân hàng để nhận chi trả."}</p>
         </div>
-        <Link href="/account/bank" className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent">Cập nhật tài khoản <Icon name="arrow_forward" className="text-[16px]"/></Link>
+        <Link to="/account/bank" className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent">Cập nhật tài khoản <Icon name="arrow_forward" className="text-[16px]"/></Link>
       </section>
 
       <FilterBar value={filter} onChange={setFilter} options={filters.map(item => ({ ...item, label: `${item.label} (${item.id === "all" ? rows.length : item.id === "paid" ? paid.length : held.length})` }))}/>

@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { ProfileSidebar } from "@/components/ProfileSidebar.jsx";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
@@ -16,9 +16,9 @@ export function ProfileLayout({ active, title, description, actions, children, l
     return <main data-native={live ? "" : undefined} className="profile-layout w-full bg-background pt-20">
     <div className="w-full max-w-7xl mx-auto px-margin-mobile md:px-margin py-space-lg">
       <nav aria-label="Đường dẫn hồ sơ" className="flex flex-wrap items-center gap-space-xs mb-space-md text-on-surface-variant font-body-sm text-body-sm">
-        <Link href="/" className="hover:text-primary-container transition-colors">Trang chủ</Link>
+        <Link to="/" className="hover:text-primary-container transition-colors">Trang chủ</Link>
         <Icon name="chevron_right" className="text-base text-outline"/>
-        <Link href="/account" className="hover:text-primary-container transition-colors">Hồ sơ &amp; Tài khoản</Link>
+        <Link to="/account" className="hover:text-primary-container transition-colors">Hồ sơ &amp; Tài khoản</Link>
         <Icon name="chevron_right" className="text-base text-outline"/>
         <span aria-current="page" className="text-on-surface font-label-sm text-label-sm">{title}</span>
       </nav>

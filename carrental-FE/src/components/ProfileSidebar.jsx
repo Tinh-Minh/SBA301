@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { Icon } from "@/components/Icon.jsx";
 import { initials } from "@/utils/labels.js";
@@ -29,7 +28,7 @@ export function ProfileSidebar({ active, className = "" }) {
     <nav aria-label="Hồ sơ và tài khoản" className="space-y-4 rounded-xl bg-surface-container-lowest p-2 shadow-sm">
       {groups.map(group => <div key={group.title}><h3 className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">{group.title}</h3><div className="space-y-1">{group.links.map(link => {
                 const selected = link.section === active;
-                return <Link key={link.href} href={link.href} aria-current={selected ? "page" : undefined} className={`group flex items-center gap-2 rounded-lg px-4 py-2.5 transition-colors ${selected ? "bg-primary-fixed/50 font-semibold text-primary-container shadow-sm" : "text-on-surface hover:bg-surface-container-low"}`}><Icon name={link.icon} className={`shrink-0 text-[20px] ${selected ? "text-primary-container" : "text-outline group-hover:text-primary-container"}`}/><span className="min-w-0 flex-1 whitespace-nowrap text-sm">{link.label}</span><Icon name="chevron_right" className="text-[16px] text-outline"/></Link>;
+                return <Link key={link.href} to={link.href} aria-current={selected ? "page" : undefined} className={`group flex items-center gap-2 rounded-lg px-4 py-2.5 transition-colors ${selected ? "bg-primary-fixed/50 font-semibold text-primary-container shadow-sm" : "text-on-surface hover:bg-surface-container-low"}`}><Icon name={link.icon} className={`shrink-0 text-[20px] ${selected ? "text-primary-container" : "text-outline group-hover:text-primary-container"}`}/><span className="min-w-0 flex-1 whitespace-nowrap text-sm">{link.label}</span><Icon name="chevron_right" className="text-[16px] text-outline"/></Link>;
             })}</div></div>)}
     </nav>
     <div className="space-y-3 rounded-xl bg-gradient-to-br from-surface-container-low to-surface-container p-4">

@@ -1,4 +1,3 @@
-"use client";
 import { forwardRef, useEffect, useState } from "react";
 import { formatInputDate, formatInputDateTime, parseInputDate, parseInputDateTime } from "@/utils/datetime.js";
 

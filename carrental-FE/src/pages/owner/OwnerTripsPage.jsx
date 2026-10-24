@@ -1,4 +1,3 @@
-"use client";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/OwnerScreen.jsx";

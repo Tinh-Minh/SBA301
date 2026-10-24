@@ -1,4 +1,3 @@
-"use client";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { readSession, subscribeSession } from "@/storage/sessionStorage.js";
 import * as authService from "@/services/auth.service";

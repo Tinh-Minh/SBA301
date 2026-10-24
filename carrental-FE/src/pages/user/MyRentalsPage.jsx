@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useCallback, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
@@ -29,7 +28,7 @@ export default function MyRentals({ mode = "all" }) {
       <Filter id="" label="Tất cả" value={status} onChange={setStatus}/>
       {[...new Set(list.data.map(order => order.status))].map(id => <Filter key={id} id={id} label={orderStatusLabels[id] ?? id} value={status} onChange={setStatus}/>)}
     </div> : null}
-    {rows.map(order => <Link key={order.id} href={`/orders/${order.id}`} className="rounded-2xl border border-[#E9E9E7] bg-white p-4 shadow-sm hover:border-[#FC6C26]">
+    {rows.map(order => <Link key={order.id} to={`/orders/${order.id}`} className="rounded-2xl border border-[#E9E9E7] bg-white p-4 shadow-sm hover:border-[#FC6C26]">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-xs font-bold text-[#FC6C26]">{order.orderCode}</span>
         <span className="flex gap-2">

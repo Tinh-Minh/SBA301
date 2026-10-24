@@ -1,4 +1,3 @@
-"use client";
 import { useCallback, useEffect, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
 import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";

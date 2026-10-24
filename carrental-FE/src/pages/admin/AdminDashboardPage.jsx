@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { AdminPageHeader, AdminState, StatusPill } from "@/components/admin/AdminUi.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { useAsyncResource } from "@/hooks/useAsyncResource.js";
@@ -34,7 +33,7 @@ export default function AdminDashboard() {
               <p className="truncate text-xs text-[#666666]">KH #{customer.id} • {customer.email}</p>
             </div>
             <StatusPill tone="warning">{kycStatusLabels[customer.kycStatus] ?? customer.kycStatus}</StatusPill>
-            <Link href={`${adminRoutes.users}?id=${customer.id}`} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Duyệt eKYC →</Link>
+            <Link to={`${adminRoutes.users}?id=${customer.id}`} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Duyệt eKYC →</Link>
           </li>)}
           {data.pendingCars.map(car => <li key={`v${car.id}`} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#E9E9E7] p-3">
             <div className="min-w-0">
@@ -42,7 +41,7 @@ export default function AdminDashboard() {
               <p className="truncate text-xs text-[#666666]">{car.licensePlate} • {car.city}</p>
             </div>
             <StatusPill tone="warning">Chờ duyệt niêm yết</StatusPill>
-            <Link href={`${adminRoutes.vehicles}?id=${car.id}`} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Thẩm định xe →</Link>
+            <Link to={`${adminRoutes.vehicles}?id=${car.id}`} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Thẩm định xe →</Link>
           </li>)}
           {!data.pendingKyc.length && !data.pendingCars.length ? <li className="text-sm text-[#666666]">Không có hồ sơ nào đang chờ.</li> : null}
         </ul>
@@ -50,7 +49,7 @@ export default function AdminDashboard() {
       <article className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base font-bold text-[#292929]">Đơn thuê mới nhất</h2>
-          <Link href={adminRoutes.orders} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Xem tất cả →</Link>
+          <Link to={adminRoutes.orders} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Xem tất cả →</Link>
         </div>
         <ul className="mt-4 flex flex-col gap-3">
           {data.latestOrders.map(order => <li key={order.id} className="rounded-xl border border-[#E9E9E7] p-3">

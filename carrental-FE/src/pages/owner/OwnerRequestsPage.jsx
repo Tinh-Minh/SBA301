@@ -1,4 +1,3 @@
-"use client";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { CountdownBadge } from "@/components/owner/CountdownBadge.jsx";

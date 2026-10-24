@@ -1,6 +1,5 @@
-"use client";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link } from "react-router";
+import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
 import { ownerNavigation, ownerRoutes } from "@/utils/owner/routes.js";
 import { useAuth } from "@/components/AuthProvider.jsx";
@@ -32,7 +31,7 @@ function useOwnerCounts(path, loggedIn) {
 }
 
 export function OwnerSidebar() {
-    const path = usePathname();
+    const path = useLocation().pathname;
     const { user, loggedIn } = useAuth();
     const counts = useOwnerCounts(path, loggedIn);
     const badgeLabels = {
@@ -57,7 +56,7 @@ export function OwnerSidebar() {
             const selected = item.href === ownerRoutes.dashboard ? path === item.href : path.startsWith(item.href);
             const badgeKey = "badgeKey" in item ? item.badgeKey : undefined;
             const badge = badgeKey ? badgeLabels[badgeKey]?.() : null;
-            return <Link key={item.href} href={item.href} aria-current={selected ? "page" : undefined} className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-all ${selected ? "bg-brand-accent font-semibold text-white shadow-sm" : "font-medium text-charcoal hover:bg-section-bg"}`}>
+            return <Link key={item.href} to={item.href} aria-current={selected ? "page" : undefined} className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-all ${selected ? "bg-brand-accent font-semibold text-white shadow-sm" : "font-medium text-charcoal hover:bg-section-bg"}`}>
           <span className="flex min-w-0 items-center gap-2.5">
             <Icon name={item.icon} className={`text-[19px] ${selected ? "text-white" : "text-muted-gray"}`}/>
             <span className="whitespace-nowrap">{item.label}</span>
@@ -69,7 +68,7 @@ export function OwnerSidebar() {
     </nav>
 
     <div className="flex flex-col gap-3 rounded-2xl border border-card-border bg-white p-4 shadow-sm">
-      <Link href="/explore" className="flex items-center gap-1.5 text-xs font-semibold text-muted-gray transition-colors hover:text-brand-accent">
+      <Link to="/explore" className="flex items-center gap-1.5 text-xs font-semibold text-muted-gray transition-colors hover:text-brand-accent">
         <Icon name="arrow_back" className="text-[16px]"/>
         <span className="whitespace-nowrap">Khám phá xe tự lái</span>
       </Link>

@@ -1,6 +1,5 @@
-"use client";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Link } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { DateTimeField } from "@/components/DateField.jsx";
@@ -19,7 +18,7 @@ export default function CarDetail({ carId }) {
 }
 
 function Detail({ carId }) {
-    const params = useSearchParams();
+    const [params] = useSearchParams();
     const slotId = params.get("slotId");
     const load = useCallback(async () => {
         const [car, slot] = await Promise.all([
@@ -35,7 +34,7 @@ function Detail({ carId }) {
 }
 
 function Body({ car, slot, presetStart, presetEnd }) {
-    const router = useRouter();
+    const navigate = useNavigate();
     const { loggedIn } = useAuth();
     function continueAsMember(action) {
         if (loggedIn) {
@@ -43,7 +42,7 @@ function Body({ car, slot, presetStart, presetEnd }) {
             return;
         }
         const next = `${window.location.pathname}${window.location.search}`;
-        router.push(`/login?next=${encodeURIComponent(next)}`);
+        navigate(`/login?next=${encodeURIComponent(next)}`);
     }
     const options = slot?.rentalOption === "HOURLY" ? ["HOURLY"] : slot?.rentalOption === "DAILY" ? ["DAILY"] : ["DAILY", "HOURLY"];
     const [type, setType] = useState(options[0]);
@@ -59,7 +58,7 @@ function Body({ car, slot, presetStart, presetEnd }) {
     const features = parseFeatures(car.features);
     function goCheckout() {
         const search = new URLSearchParams({ slotId: String(slot.id), start: startTime, end: endTime, type, voucher });
-        router.push(`/booking/confirm?${search}`);
+        navigate(`/booking/confirm?${search}`);
     }
     return <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
     <article className="overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
@@ -98,7 +97,7 @@ function Body({ car, slot, presetStart, presetEnd }) {
       </> : <>
         <h2 className="text-lg font-bold text-[#292929]">Chưa chọn khung giờ</h2>
         <p className="mt-2 text-sm text-[#666666]">Xe chỉ đặt được trong khung giờ chủ xe đang mở.</p>
-        <Link href="/explore" className="mt-4 inline-flex font-bold text-[#FC6C26]">Tìm khung giờ trống</Link>
+        <Link to="/explore" className="mt-4 inline-flex font-bold text-[#FC6C26]">Tìm khung giờ trống</Link>
       </>}
     </aside>
   </div>;

@@ -1,4 +1,3 @@
-"use client";
 import { useEffect, useLayoutEffect, useRef } from "react";
 export function HeroCarScene() {
     const video = useRef(null);

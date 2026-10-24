@@ -1,4 +1,3 @@
-"use client";
 import { useCallback, useState } from "react";
 import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/AdminUi.jsx";
 import { Money } from "@/components/owner/Money.jsx";

@@ -1,5 +1,4 @@
-"use client";
-import Link from "next/link";
+import { Link } from "react-router";
 import { useCallback, useMemo, useState } from "react";
 import { DateTimeField } from "@/components/DateField.jsx";
 import { Icon } from "@/components/Icon.jsx";
@@ -126,7 +125,7 @@ export default function OwnerCalendar() {
       <DayPanel car={car} day={dayDate} info={dayInfo}/>
     </div> : null}
     {data && car ? <SlotManager key={car.id} car={car} onChanged={reload}/> : null}
-    {data && !cars.length ? <div className="rounded-2xl border border-card-border bg-white p-6 text-sm text-muted-gray">Bạn chưa có xe nào. <Link href={ownerRoutes.vehicleNew} className="font-bold text-brand-accent">Đăng xe đầu tiên</Link> để mở lịch cho thuê.</div> : null}
+    {data && !cars.length ? <div className="rounded-2xl border border-card-border bg-white p-6 text-sm text-muted-gray">Bạn chưa có xe nào. <Link to={ownerRoutes.vehicleNew} className="font-bold text-brand-accent">Đăng xe đầu tiên</Link> để mở lịch cho thuê.</div> : null}
   </div>;
 }
 const slotStatusLabel = { OPEN: "Đang mở", CLOSED: "Tạm đóng", CANCELLED: "Đã hủy" };
@@ -215,12 +214,12 @@ function DayPanel({ car, day, info }) {
       <p className="font-mono text-xs font-bold text-brand-accent">{info.order.orderCode}</p>
       <p className="text-sm text-charcoal">Đơn đã giữ ngày này. Không khóa lịch hoặc đổi giá cho đến khi chuyến kết thúc.</p>
       <PayoutMath order={info.order}/>
-      <Link href={ownerRoutes.trips} className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent">Xem chuyến <Icon name="arrow_forward" className="text-[16px]"/></Link>
+      <Link to={ownerRoutes.trips} className="inline-flex items-center gap-1 text-sm font-bold text-brand-accent">Xem chuyến <Icon name="arrow_forward" className="text-[16px]"/></Link>
     </div> : null}
     {info?.kind === "open" ? <div className="mt-4 flex flex-col gap-2 text-sm">
       <p className="font-semibold text-status-success-ink">Đang mở nhận khách</p>
       <p>Giá niêm yết: <Money amount={info.slot.pricePerDay}/> / ngày</p>
-      <Link href={ownerRoutes.vehicleEdit(car.id)} className="font-bold text-brand-accent">Đổi giá ở hồ sơ xe</Link>
+      <Link to={ownerRoutes.vehicleEdit(car.id)} className="font-bold text-brand-accent">Đổi giá ở hồ sơ xe</Link>
     </div> : null}
     {info?.kind === "locked" ? <p className="mt-4 text-sm text-muted-gray">Ngày này nằm trong khung lịch đã đóng.</p> : null}
     {info?.kind === "empty" ? <p className="mt-4 text-sm text-muted-gray">Chưa mở lịch cho ngày này.</p> : null}

@@ -1,6 +1,5 @@
-"use client";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { Link } from "react-router";
+import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
@@ -146,7 +145,7 @@ function ChoiceSelect({ value, options, onPick, onType, placeholder, inputMode, 
   </>;
 }
 export default function OwnerVehicleNew() {
-    const router = useRouter();
+    const navigate = useNavigate();
     const { user } = useAuth();
     const create = useAsyncAction(submitCar);
     const [step, setStep] = useState(1);
@@ -278,7 +277,7 @@ export default function OwnerVehicleNew() {
         if (!car)
             return;
         localStorage.removeItem(DRAFT_KEY);
-        router.push(ownerRoutes.vehicles);
+        navigate(ownerRoutes.vehicles);
     }
     const subtitle = `${form.brand} ${form.model} • ${form.licensePlate || "Chưa có biển số"}`;
     return <div className="flex min-w-0 flex-col gap-5">
@@ -288,7 +287,7 @@ export default function OwnerVehicleNew() {
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-charcoal sm:text-[28px]">Đăng ký xe cho thuê mới</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-gray">Bước {step}/4: {steps[step - 1].blurb}</p>
       </div>
-      {step === 1 ? <Link href={ownerRoutes.vehicles} className="inline-flex items-center gap-1.5 self-start rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">
+      {step === 1 ? <Link to={ownerRoutes.vehicles} className="inline-flex items-center gap-1.5 self-start rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">
         <Icon name="arrow_back" className="text-[18px]"/> Quay lại Xe của tôi
       </Link> : <button type="button" onClick={() => setStep(value => value - 1)} className="inline-flex items-center gap-1.5 self-start rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">
         <Icon name="arrow_back" className="text-[18px]"/> Quay lại Bước {step - 1}
@@ -326,7 +325,7 @@ export default function OwnerVehicleNew() {
     {create.error ? <p className="text-sm text-on-error-container">{create.error.message}</p> : null}
 
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <Link href={ownerRoutes.vehicles} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Hủy bỏ đăng ký</Link>
+      <Link to={ownerRoutes.vehicles} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Hủy bỏ đăng ký</Link>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={saveDraft} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Lưu bản nháp</button>
         {step < 4 ? <button type="button" disabled={!ready[step - 1]} onClick={() => { setStep(step + 1); setReached(value => Math.max(value, step + 1)); }} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">

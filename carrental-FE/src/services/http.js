@@ -1,13 +1,13 @@
 import { clearSession, readSession } from "@/storage/sessionStorage.js";
 
 /**
- * Mặc định gọi cùng origin `/api/...`; Next.js rewrite (next.config.mjs) chuyển tiếp sang backend.
- * Đặt `NEXT_PUBLIC_API_URL` nếu muốn gọi thẳng backend (khi đó backend phải mở CORS cho header X-User-Id).
+ * Mặc định gọi cùng origin `/api/...`; Vite / nginx proxy chuyển tiếp sang backend.
+ * Đặt `VITE_API_URL` nếu muốn gọi thẳng backend (khi đó backend phải mở CORS cho header X-User-Id).
  */
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
-/** Chỉ dùng dữ liệu mẫu khi bật rõ ràng `NEXT_PUBLIC_USE_MOCK_API=true`. */
-export const USE_MOCK_API = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
+/** Chỉ dùng dữ liệu mẫu khi bật rõ ràng `VITE_USE_MOCK_API=true`. */
+export const USE_MOCK_API = import.meta.env.VITE_USE_MOCK_API === "true";
 
 export class ApiError extends Error {
     status;

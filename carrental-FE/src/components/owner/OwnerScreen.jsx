@@ -1,13 +1,13 @@
-import Link from "next/link";
+import { Link } from "react-router";
 import { calculatePayout, formatPercent, formatVnd } from "@/utils/owner/finance.js";
 import { ownerRoutes } from "@/utils/owner/routes.js";
 import { Money } from "@/components/owner/Money.jsx";
 export function OwnerCrumb({ current, parent }) {
     return <nav aria-label="Đường dẫn" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-muted-gray">
-    <Link href={ownerRoutes.dashboard} className="transition-colors hover:text-charcoal">Cho thuê xe</Link>
+    <Link to={ownerRoutes.dashboard} className="transition-colors hover:text-charcoal">Cho thuê xe</Link>
     <span>/</span>
     {parent ? <>
-      <Link href={parent.href} className="transition-colors hover:text-charcoal">{parent.label}</Link>
+      <Link to={parent.href} className="transition-colors hover:text-charcoal">{parent.label}</Link>
       <span>/</span>
     </> : null}
     <span className="font-semibold text-charcoal">{current}</span>

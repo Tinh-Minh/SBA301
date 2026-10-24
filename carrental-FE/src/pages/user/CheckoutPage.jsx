@@ -1,6 +1,5 @@
-"use client";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Link } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
@@ -20,8 +19,8 @@ export default function Checkout() {
 }
 
 function Confirm() {
-    const params = useSearchParams();
-    const router = useRouter();
+    const [params] = useSearchParams();
+    const navigate = useNavigate();
     const slotId = params.get("slotId");
     const start = params.get("start");
     const end = params.get("end");
@@ -42,11 +41,11 @@ function Confirm() {
     const detail = useAsyncResource(load, `${slotId}|${start}|${end}|${type}|${voucherQuery}`);
     const create = useAsyncAction(async () => {
         const order = await rentalService.create({ carSlotId: slotId, rentalType: type, startTime: new Date(start), endTime: new Date(end), voucherCode: voucherQuery, note });
-        router.push(`/orders/${order.id}?created=1`);
+        navigate(`/orders/${order.id}?created=1`);
     });
     return <div className="flex flex-col gap-5">
     <div>
-      <Link href={slotId ? `/cars/${detail.data?.car.id ?? ""}?slotId=${slotId}` : "/explore"} className="text-sm font-bold text-[#FC6C26]">← Quay lại xe</Link>
+      <Link to={slotId ? `/cars/${detail.data?.car.id ?? ""}?slotId=${slotId}` : "/explore"} className="text-sm font-bold text-[#FC6C26]">← Quay lại xe</Link>
       <h1 className="mt-2 text-2xl font-bold text-[#292929]">Xác nhận yêu cầu thuê xe</h1>
       <p className="mt-1 text-sm text-[#666666]">Đơn ở trạng thái chờ chủ xe xác nhận trong 24 giờ. Tiền thuê thanh toán sau khi được duyệt.</p>
     </div>
