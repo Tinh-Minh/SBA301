@@ -4,7 +4,7 @@ import { Money } from "@/components/owner/Money.jsx";
 import { useOwnerDashboard } from "@/hooks/owner/useOwnerDashboard.js";
 import { carSubtitle, formatActivityTime, formatRentalPeriod, maskBankAccount } from "@/utils/owner/format.js";
 import { formatVnd } from "@/utils/owner/finance.js";
-import { ownerRoutes } from "@/utils/owner/routes.js";
+import { ownerRoutes } from "@/routes/owner.routes.js";
 import { kycStatusMeta } from "@/utils/owner/status.js";
 const activityTone = {
     warning: "bg-status-amber-bg border-amber-200 text-status-amber-dark",

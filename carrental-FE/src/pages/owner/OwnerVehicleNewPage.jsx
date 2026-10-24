@@ -6,7 +6,7 @@ import { Money } from "@/components/owner/Money.jsx";
 import { OwnerCrumb } from "@/components/owner/OwnerScreen.jsx";
 import { useAsyncAction } from "@/hooks/useAsyncResource.js";
 import { calculatePlatformFee, formatVnd } from "@/utils/owner/finance.js";
-import { ownerRoutes } from "@/utils/owner/routes.js";
+import { ownerRoutes } from "@/routes/owner.routes.js";
 import { carService } from "@/services/car.service";
 import { useAuth } from "@/components/AuthProvider.jsx";
 const DRAFT_KEY = "cardb-vehicle-draft";

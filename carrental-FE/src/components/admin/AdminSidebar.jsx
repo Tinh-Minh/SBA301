@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
-import { adminNavigation, adminRoutes } from "@/utils/admin/routes.js";
+import { adminNavigation, adminRoutes } from "@/routes/admin.routes.js";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { getAdminBadges } from "@/services/admin.service";
 import { Icon } from "@/components/Icon.jsx";

@@ -4,7 +4,7 @@ import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/c
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { useAsyncAction, useAsyncResource } from "@/hooks/useAsyncResource.js";
 import { formatRentalPeriod } from "@/utils/owner/format.js";
-import { ownerRoutes } from "@/utils/owner/routes.js";
+import { ownerRoutes } from "@/routes/owner.routes.js";
 import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner/rules.js";
 import { handoverTypeMeta, orderStatusMeta } from "@/utils/owner/status.js";
 import { handoverService } from "@/services/handover.service";

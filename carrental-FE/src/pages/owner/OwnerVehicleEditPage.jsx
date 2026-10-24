@@ -6,7 +6,7 @@ import { OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerSc
 import { useOwnerCar } from "@/hooks/owner/useOwnerCars.js";
 import { calculatePlatformFee, formatVnd } from "@/utils/owner/finance.js";
 import { carSubtitle } from "@/utils/owner/format.js";
-import { ownerRoutes } from "@/utils/owner/routes.js";
+import { ownerRoutes } from "@/routes/owner.routes.js";
 const steps = [
     { id: 1, title: "Thông tin & giấy tờ", hint: "Hồ sơ pháp lý của xe" },
     { id: 2, title: "Thông số", hint: "Loại xe, chỗ ngồi, nhiên liệu" },

@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import { calculatePayout, formatPercent, formatVnd } from "@/utils/owner/finance.js";
-import { ownerRoutes } from "@/utils/owner/routes.js";
+import { ownerRoutes } from "@/routes/owner.routes.js";
 import { Money } from "@/components/owner/Money.jsx";
 export function OwnerCrumb({ current, parent }) {
     return <nav aria-label="Đường dẫn" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-muted-gray">

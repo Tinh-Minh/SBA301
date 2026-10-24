@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { useLocation } from "react-router";
 import { useEffect, useState } from "react";
-import { ownerNavigation, ownerRoutes } from "@/utils/owner/routes.js";
+import { ownerNavigation, ownerRoutes } from "@/routes/owner.routes.js";
 import { useAuth } from "@/components/AuthProvider.jsx";
 import { request, toPage, USE_MOCK_API } from "@/services/http.js";
 import { ownerDb } from "@/services/mock/owner-db.js";

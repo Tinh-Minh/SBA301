@@ -3,7 +3,7 @@ import { AdminPageHeader, AdminState, StatusPill } from "@/components/admin/Admi
 import { Money } from "@/components/owner/Money.jsx";
 import { useAsyncResource } from "@/hooks/useAsyncResource.js";
 import { formatTrVnd } from "@/utils/owner/finance.js";
-import { adminRoutes } from "@/utils/admin/routes.js";
+import { adminRoutes } from "@/routes/admin.routes.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { kycStatusLabels, orderStatusLabels } from "@/utils/labels.js";
 import { getAdminOverview } from "@/services/admin.service";

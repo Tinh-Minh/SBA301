@@ -6,7 +6,7 @@ import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/ow
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { useOwnerCars } from "@/hooks/owner/useOwnerCars.js";
 import { carSubtitle, isApprovedCar } from "@/utils/owner/format.js";
-import { ownerRoutes } from "@/utils/owner/routes.js";
+import { ownerRoutes } from "@/routes/owner.routes.js";
 import { carStatusMeta } from "@/utils/owner/status.js";
 const filters = [
     { id: "all", label: "Tất cả" },
