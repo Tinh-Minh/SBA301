@@ -1,5 +1,3 @@
-import "@/shared/layouts/profile.css";
-
 import { Link } from "react-router";
 import { Icon } from "@/shared/components/Icon.jsx";
 import { ProfileSidebar } from "@/shared/components/ProfileSidebar.jsx";
