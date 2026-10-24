@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Icon } from "@/shared/components/Icon.jsx";
 import { ProfileSidebar } from "@/shared/components/ProfileSidebar.jsx";
 import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
-import "@/shared/styles/profile.css";
+import "@/shared/layouts/profile.css";
 const labels = {
     account: "Hồ sơ cá nhân",
     verification: "Hồ sơ định danh eKYC",
