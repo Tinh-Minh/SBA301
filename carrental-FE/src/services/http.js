@@ -59,9 +59,9 @@ function unwrap(body) {
     return body;
 }
 
-function decodeResponse(response) {
+async function decodeResponse(response) {
     if (response.status === 204) return undefined;
-    const body = response.data;
+    const body = response.data instanceof Blob ? await response.data.text() : response.data;
     if (response.headers["content-type"]?.includes("json")) {
         if (typeof body !== "string") return body;
         try { return JSON.parse(body); } catch { return undefined; }
@@ -87,16 +87,17 @@ httpClient.interceptors.request.use(config => {
     return config;
 });
 
-httpClient.interceptors.response.use(response => {
-    response.data = unwrap(decodeResponse(response));
+httpClient.interceptors.response.use(async response => {
+    if (response.config.responseType === "blob") return response;
+    response.data = unwrap(await decodeResponse(response));
     return response;
-}, error => {
+}, async error => {
     if (axios.isCancel(error)) return Promise.reject(error);
     const response = error.response;
     if (!response) return Promise.reject(new ApiError(0,
         "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy ở cổng 8080 chưa."));
     const { status } = response;
-    const payload = decodeResponse(response);
+    const payload = await decodeResponse(response);
     if (status === 401 && error.config.sessionToken && error.config.sessionToken === readSession()?.accessToken)
         clearSession();
     if (status >= 500 && !payload?.message) return Promise.reject(new ApiError(status,
@@ -106,7 +107,8 @@ httpClient.interceptors.response.use(response => {
 
 /** Shared backend request contract; Axios owns transport and interceptors. */
 export async function request(path, init = {}) {
-    const { json, query, auth = true, headers = {}, body, credentials, ...config } = init;
+    const { json, query, auth = true, headers: extraHeaders = {}, body, credentials, ...config } = init;
+    const headers = { ...extraHeaders };
     const data = json !== undefined ? json : body;
     if (json !== undefined || typeof data === "string")
         headers["Content-Type"] ??= "application/json";

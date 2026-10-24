@@ -1,5 +1,5 @@
 import { toLocalDate } from "@/utils/datetime.js";
-import { currentUserId, readSession } from "@/storage/sessionStorage.js";
+import { currentUserId } from "@/storage/sessionStorage.js";
 import { ApiError, request, toPage } from "./http";
 
 /** Thanh toán: /api/transactions */
@@ -66,12 +66,7 @@ export const userDocumentService = {
         return request("/api/user-documents", { method: "POST", body: form });
     },
     async image(id, side) {
-        const session = readSession();
-        const response = await fetch(`/api/user-documents/${id}/files/${side}`, {
-            headers: session ? { Authorization: `Bearer ${session.accessToken}`, "X-User-Id": String(session.account.id) } : {},
-        });
-        if (!response.ok)
-            throw new Error("Không tải được ảnh giấy tờ.");
-        return URL.createObjectURL(await response.blob());
+        const blob = await request(`/api/user-documents/${id}/files/${side}`, { responseType: "blob" });
+        return URL.createObjectURL(blob);
     },
 };

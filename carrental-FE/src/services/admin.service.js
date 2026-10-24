@@ -1,6 +1,6 @@
 import { toLocalIso } from "@/utils/datetime.js";
 import { toNumber } from "@/utils/labels.js";
-import { currentUserId, readSession } from "@/storage/sessionStorage.js";
+import { currentUserId } from "@/storage/sessionStorage.js";
 import { fetchAllPages, request, toPage } from "./http";
 import { normalizeCar, normalizeOrder } from "./adapters";
 import { listCustomers, getCustomer, getCustomerKyc, updateCustomerStatus } from "./customer.service";
@@ -28,15 +28,10 @@ export const adminUserService = {
         method: "PATCH",
         json: { verifyStatus, rejectReason: verifyStatus === "REJECTED" ? (rejectReason || null) : null },
     }),
-    /** URL ảnh giấy tờ (cần JWT nên tải qua fetch rồi tạo blob URL). */
+    /** URL ảnh giấy tờ (cần JWT nên tải qua Axios rồi tạo blob URL). */
     async documentImage(id, side) {
-        const session = readSession();
-        const response = await fetch(`/api/user-documents/${id}/files/${side}`, {
-            headers: session ? { Authorization: `Bearer ${session.accessToken}`, "X-User-Id": String(session.account.id) } : {},
-        });
-        if (!response.ok)
-            throw new Error("Không tải được ảnh giấy tờ.");
-        return URL.createObjectURL(await response.blob());
+        const blob = await request(`/api/user-documents/${id}/files/${side}`, { responseType: "blob" });
+        return URL.createObjectURL(blob);
     },
 };
 
