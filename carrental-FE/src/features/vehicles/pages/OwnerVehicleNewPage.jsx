@@ -10,7 +10,7 @@ import { Icon } from "@/shared/components/Icon.jsx";
 import { OwnerCrumb } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { calculatePlatformFee, formatVnd } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 import { carService } from "@/shared/hooks/useVehicles.js";
 import { useAuth } from "@/shared/hooks/useAuth.js";
 import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, amenities, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/features/vehicles/components/Field.jsx";
@@ -157,7 +157,7 @@ export default function OwnerVehicleNew() {
     }} className="flex min-w-0 flex-col gap-5">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <OwnerCrumb current={steps[step - 1].title} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }}/>
+        <OwnerCrumb homeHref={ownerRoutes.dashboard} current={steps[step - 1].title} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }}/>
         <h1 className="mt-2 text-2xl font-bold tracking-tight text-charcoal sm:text-[28px]">Đăng ký xe cho thuê mới</h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-gray">Bước {step}/4: {steps[step - 1].blurb}</p>
       </div>

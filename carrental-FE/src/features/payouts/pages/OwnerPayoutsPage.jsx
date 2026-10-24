@@ -1,3 +1,4 @@
+import { ownerRoutes } from "@/app/routes/paths.js";
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { Icon } from "@/shared/components/Icon.jsx";
@@ -32,7 +33,7 @@ export default function OwnerPayouts() {
     const bank = data?.defaultBankAccount;
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <OwnerCrumb current="Doanh thu & Chi trả"/>
+      <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Doanh thu & Chi trả"/>
       <OwnerHeading title="Doanh thu & Chi trả" description="Báo cáo tiền thuê, khoản escrow đang giữ và các đợt đã chuyển về tài khoản." actions={<button type="button" onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">
           <Icon name="print" className="text-[18px]"/>
           Xuất báo cáo

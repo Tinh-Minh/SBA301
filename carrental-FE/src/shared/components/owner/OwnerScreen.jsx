@@ -1,10 +1,9 @@
 import { Link } from "react-router";
 import { calculatePayout, formatPercent, formatVnd } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
 import { Money } from "@/shared/components/owner/Money.jsx";
-export function OwnerCrumb({ current, parent }) {
+export function OwnerCrumb({ current, parent, homeHref }) {
     return <nav aria-label="Đường dẫn" className="flex flex-wrap items-center gap-1.5 text-xs font-medium text-muted-gray">
-    <Link to={ownerRoutes.dashboard} className="transition-colors hover:text-charcoal">Cho thuê xe</Link>
+    <Link to={homeHref} className="transition-colors hover:text-charcoal">Cho thuê xe</Link>
     <span>/</span>
     {parent ? <>
       <Link to={parent.href} className="transition-colors hover:text-charcoal">{parent.label}</Link>

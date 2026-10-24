@@ -41,3 +41,26 @@ export const pageTitles = {
     "sample-contract": "Hợp đồng mẫu",
     "forgot-password": "Khôi phục mật khẩu"
 };
+
+export const ownerRoutes = {
+    dashboard: "/owner/dashboard",
+    vehicles: "/owner/vehicles",
+    vehicleNew: "/owner/vehicles/new",
+    vehicleEdit: (id) => `/owner/vehicles/edit/${id}`,
+    calendar: "/owner/calendar",
+    requests: "/owner/requests",
+    trips: "/owner/trips",
+    payouts: "/owner/payouts",
+};
+
+export const adminRoutes = {
+    dashboard: "/admin/dashboard",
+    users: "/admin/users",
+    vehicles: "/admin/vehicles",
+    vouchers: "/admin/vouchers",
+    orders: "/admin/orders",
+    payouts: "/admin/payouts",
+    disputes: "/admin/disputes",
+};
+
+

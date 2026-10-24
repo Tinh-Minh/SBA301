@@ -1,8 +1,4 @@
-import { Link, useLocation } from "react-router";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { adminNavigation, adminRoutes } from "@/app/routes/admin.routes.js";
-import { useAuth } from "@/shared/hooks/useAuth.js";
-import { getAdminBadges } from "@/shared/hooks/useAdmin.js";
+import { Link } from "react-router";
 import { Icon } from "@/shared/components/Icon.jsx";
 
 const badgeClass = {
@@ -11,10 +7,7 @@ const badgeClass = {
     info: "bg-blue-50 text-blue-800",
 };
 
-export function AdminSidebar() {
-    const path = useLocation().pathname;
-    const { user } = useAuth();
-    const { data: badges = {} } = useApiQuery(["admin", "badges"], getAdminBadges);
+export function AdminSidebar({ user, path, navigation, homeHref, badges }) {
     return <div className="flex flex-col gap-4">
     <div className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
       <p className="text-[11px] font-bold uppercase tracking-wider text-[#666666]">CarDB Admin</p>
@@ -22,8 +15,8 @@ export function AdminSidebar() {
       <p className="mt-1 whitespace-nowrap text-xs text-[#666666]">Quản trị viên • #{user?.id ?? "—"}</p>
     </div>
     <nav aria-label="Quản trị hệ thống" className="flex flex-col gap-1 rounded-2xl border border-[#E9E9E7] bg-white p-2 shadow-sm">
-      {adminNavigation.map(item => {
-            const selected = item.href === adminRoutes.dashboard ? path === item.href : path.startsWith(item.href);
+      {navigation.map(item => {
+            const selected = item.href === homeHref ? path === item.href : path.startsWith(item.href);
             const count = item.badgeKey ? badges[item.badgeKey] : 0;
             return <Link key={item.href} to={item.href} aria-current={selected ? "page" : undefined} className={`flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-sm transition-all ${selected ? "bg-[#FC6C26] font-semibold text-white shadow-sm" : "font-medium text-[#292929] hover:bg-[#F7F7F5]"}`}>
           <span className="flex min-w-0 items-center gap-2.5">

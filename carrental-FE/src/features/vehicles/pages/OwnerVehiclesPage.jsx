@@ -6,7 +6,7 @@ import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/compon
 import { StatusBadge } from "@/shared/components/owner/StatusBadge.jsx";
 import { useOwnerCars } from "@/shared/hooks/useVehicles.js";
 import { carStatusMeta, carSubtitle, isApprovedCar } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 
 const filters = [
     { id: "all", label: "Tất cả" },
@@ -50,7 +50,7 @@ export default function OwnerVehicles() {
     };
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <OwnerCrumb current="Xe của tôi"/>
+      <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Xe của tôi"/>
       <OwnerHeading title="Xe của tôi" description={`${counts.all} phương tiện. Quản lý niêm yết, trạng thái và bảng giá cho thuê.`} actions={<Link to={ownerRoutes.vehicleNew} className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-hover">
           <Icon name="add" className="text-[18px]"/>
           Đăng xe mới

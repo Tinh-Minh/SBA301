@@ -1,13 +1,7 @@
-import { Link, useLocation } from "react-router";
-import { ownerNavigation, ownerRoutes } from "@/app/routes/owner.routes.js";
-import { useAuth } from "@/shared/hooks/useAuth.js";
-import { useOwnerCounts } from "@/shared/hooks/useVehicles.js";
+import { Link } from "react-router";
 import { Icon } from "@/shared/components/Icon.jsx";
 
-export function OwnerSidebar() {
-    const path = useLocation().pathname;
-    const { user } = useAuth();
-    const counts = useOwnerCounts();
+export function OwnerSidebar({ user, path, navigation, homeHref, counts }) {
     const badgeLabels = {
         cars: () => (counts.cars === null ? null : `${counts.cars} xe`),
         pending: () => (counts.pending ? `${counts.pending} mới` : null),
@@ -26,8 +20,8 @@ export function OwnerSidebar() {
     </div>
 
     <nav aria-label="Quản lý chủ xe" className="flex flex-col gap-1 rounded-2xl border border-card-border bg-white p-2 shadow-sm">
-      {ownerNavigation.map(item => {
-            const selected = item.href === ownerRoutes.dashboard ? path === item.href : path.startsWith(item.href);
+      {navigation.map(item => {
+            const selected = item.href === homeHref ? path === item.href : path.startsWith(item.href);
             const badgeKey = "badgeKey" in item ? item.badgeKey : undefined;
             const badge = badgeKey ? badgeLabels[badgeKey]?.() : null;
             return <Link key={item.href} to={item.href} aria-current={selected ? "page" : undefined} className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm transition-all ${selected ? "bg-brand-accent font-semibold text-white shadow-sm" : "font-medium text-charcoal hover:bg-section-bg"}`}>

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 import { useHandoverActions } from "@/shared/hooks/useHandovers.js";
 import { orderService } from "@/shared/hooks/useBookings.js";
 import { Summary, TripCard, filters, tripGroup } from "@/features/bookings/components/OwnerTripsComponents.jsx";
@@ -16,7 +16,7 @@ export default function OwnerTrips() {
     const deposits = ongoing.reduce((sum, item) => sum + item.order.depositAmount, 0);
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <OwnerCrumb current="Quản lý chuyến xe" parent={{ href: ownerRoutes.dashboard, label: "Bảng điều khiển" }}/>
+      <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Quản lý chuyến xe" parent={{ href: ownerRoutes.dashboard, label: "Bảng điều khiển" }}/>
       <OwnerHeading title="Quản lý chuyến xe" description="Theo dõi giao nhận, biên bản C10-A trước chuyến và C10-B khi trả xe."/>
     </div>
     <div className="grid gap-3 sm:grid-cols-3">

@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Icon } from "@/shared/components/Icon.jsx";
 import { carSubtitle, formatActivityTime, formatRentalPeriod, formatVnd, kycStatusMeta } from "@/shared/utils/owner.js";
 
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 
 
 const activityTone = {

@@ -3,7 +3,7 @@ import { AdminPageHeader, AdminState, StatusPill } from "@/shared/components/adm
 import { Money } from "@/shared/components/owner/Money.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { formatTrVnd } from "@/shared/utils/owner.js";
-import { adminRoutes } from "@/app/routes/admin.routes.js";
+import { adminRoutes } from "@/app/routes/paths.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { kycStatusLabels, orderStatusLabels } from "@/shared/utils/labels.js";
 import { getAdminOverview } from "@/shared/hooks/useAdmin.js";

@@ -10,7 +10,7 @@ import { Money } from "@/shared/components/owner/Money.jsx";
 import { OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useOwnerCar } from "@/shared/hooks/useVehicles.js";
 import { calculatePlatformFee, carSubtitle, formatVnd } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 
 const steps = [
     { id: 1, title: "Thông tin & giấy tờ", hint: "Hồ sơ pháp lý của xe" },
@@ -47,7 +47,7 @@ export default function OwnerVehicleEdit({ carId }) {
     });
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <OwnerCrumb current={data ? `Chỉnh sửa ${data.brand} ${data.model}` : "Chỉnh sửa xe"} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }}/>
+      <OwnerCrumb homeHref={ownerRoutes.dashboard} current={data ? `Chỉnh sửa ${data.brand} ${data.model}` : "Chỉnh sửa xe"} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }}/>
       <OwnerHeading title="Chỉnh sửa thông tin xe" description={data ? `Cập nhật bảng giá và tiền cọc cho ${data.brand} ${data.model} (${data.licensePlate}).` : "Đang mở hồ sơ xe."} actions={<Link to={ownerRoutes.vehicles} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal hover:border-gray-300">
           <Icon name="arrow_back" className="text-[18px]"/>
           Quay lại Xe của tôi

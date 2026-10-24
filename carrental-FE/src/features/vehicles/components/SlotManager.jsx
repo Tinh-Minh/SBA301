@@ -9,7 +9,7 @@ import { PayoutMath } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDateTime, toInputDateTime } from "@/shared/utils/datetime.js";
 import { formatVnd } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 
 export const weekdayLabels = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 export function startOfDay(date) {

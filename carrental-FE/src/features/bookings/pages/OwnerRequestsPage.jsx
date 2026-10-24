@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 import { orderService } from "@/shared/hooks/useBookings.js";
 import { RequestCard, Summary, filters } from "@/features/bookings/components/Summary.jsx";
 
@@ -25,7 +25,7 @@ export default function OwnerRequests() {
     const pending = rows.filter(item => item.order.status === "PENDING").length;
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <OwnerCrumb current="Yêu cầu đặt xe" parent={{ href: ownerRoutes.dashboard, label: "Bảng điều khiển" }}/>
+      <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Yêu cầu đặt xe" parent={{ href: ownerRoutes.dashboard, label: "Bảng điều khiển" }}/>
       <OwnerHeading title="Yêu cầu đặt xe" description="Xem hồ sơ khách, thời hạn phản hồi 2 giờ và chấp nhận hoặc từ chối yêu cầu giữ chỗ."/>
     </div>
     <div className="grid gap-3 sm:grid-cols-3">

@@ -3,7 +3,7 @@ import { Icon } from "@/shared/components/Icon.jsx";
 import { Money } from "@/shared/components/owner/Money.jsx";
 import { useOwnerDashboard } from "@/shared/hooks/useDashboards.js";
 import { maskBankAccount } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/paths.js";
 import { ActivityRow, PendingRow, QuickAction, StatCard, VehicleCard } from "@/features/dashboards/components/StatCard.jsx";
 
 export default function OwnerDashboard() {
