@@ -1,3 +1,8 @@
+import { Controller, useForm, useWatch } from "react-hook-form";
+import { vehiclePricingSchema } from "@/validation/vehicle.js";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormErrors } from "@/components/FormErrors.jsx";
+import { digitsOnly as digitsOf, formatVndInput as grouped, parseVndInput } from "@/utils/inputParser.js";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
@@ -13,46 +18,32 @@ const steps = [
     { id: 3, title: "Giá thuê & cọc", hint: "Đơn giá ngày và tiền cọc" },
     { id: 4, title: "Hình ảnh niêm yết", hint: "Ảnh đại diện đang dùng" },
 ];
-function digitsOf(value) {
-    return value.replace(/\D/g, "");
-}
-function grouped(value) {
-    const digits = digitsOf(value);
-    return digits ? new Intl.NumberFormat("vi-VN").format(Number(digits)) : "";
-}
-function parseVnd(value) {
-    const amount = Number(digitsOf(value));
-    return Number.isSafeInteger(amount) && amount >= 0 ? amount : null;
-}
 export default function OwnerVehicleEdit({ carId }) {
     const { data, loading, error, save } = useOwnerCar(carId);
     const [step, setStep] = useState(3);
-    const [form, setForm] = useState(null);
+    const { control, reset, handleSubmit, formState: { errors, isValid, isSubmitting } } = useForm({
+        resolver: zodResolver(vehiclePricingSchema), mode: "onChange",
+        defaultValues: { pricePerDay: "", depositAmount: "", kmLimitPerDay: "", extraKmFee: "" },
+    });
+    const form = useWatch({ control });
     const [saved, setSaved] = useState(false);
     useEffect(() => {
         if (!data)
             return;
-        setForm({
+        reset({
             pricePerDay: String(data.pricePerDay),
             depositAmount: String(data.depositAmount),
             kmLimitPerDay: String(data.kmLimitPerDay ?? 350),
             extraKmFee: String(data.extraKmFee ?? 5000),
         });
-    }, [data]);
-    const price = form ? parseVnd(form.pricePerDay) : null;
-    const deposit = form ? parseVnd(form.depositAmount) : null;
-    const kmLimit = form ? parseVnd(form.kmLimitPerDay) : null;
-    const extraKm = form ? parseVnd(form.extraKmFee) : null;
+    }, [data, reset]);
+    const price = form ? parseVndInput(form.pricePerDay) : null;
     const fee = price === null ? 0 : calculatePlatformFee(price, 10);
-    const valid = price !== null && price > 0 && deposit !== null && kmLimit !== null && kmLimit > 0 && extraKm !== null;
-    async function onSave() {
-        if (!valid || price === null || deposit === null || kmLimit === null || extraKm === null)
-            return;
+    const onSave = handleSubmit(async values => {
         setSaved(false);
-        const result = await save.run({ pricePerDay: price, depositAmount: deposit, kmLimitPerDay: kmLimit, extraKmFee: extraKm });
-        if (result)
-            setSaved(true);
-    }
+        const result = await save.run(values);
+        if (result) setSaved(true);
+    });
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
       <OwnerCrumb current={data ? `Chỉnh sửa ${data.brand} ${data.model}` : "Chỉnh sửa xe"} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }}/>
@@ -95,44 +86,45 @@ export default function OwnerVehicleEdit({ carId }) {
           </dl>
         </div> : null}
 
-        {step === 3 ? <div className="flex flex-col gap-5">
+        {step === 3 ? <form noValidate onSubmit={onSave} className="flex flex-col gap-5">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-bold text-charcoal"><Icon name="payments" className="text-[22px] text-brand-accent"/> Giá thuê và tiền cọc</h2>
             <p className="mt-1 text-sm text-muted-gray">Đơn giá theo ngày và tiền cọc chủ xe tự thu khi giao xe. Phí nền tảng tính 10% trên tiền thuê, không tính trên cọc.</p>
           </div>
           <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
             Đơn giá thuê theo ngày (VND)
-            <input inputMode="numeric" value={grouped(form.pricePerDay)} onChange={event => setForm({ ...form, pricePerDay: digitsOf(event.target.value) })} className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>
+            <Controller name="pricePerDay" control={control} render={({ field, fieldState }) => <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
             <span className="text-xs font-normal text-muted-gray">Áp dụng cho khung lịch đang mở. {price ? formatVnd(price) : "Nhập số nguyên."} / ngày</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
             Tiền cọc thế chấp (VND)
-            <input inputMode="numeric" value={grouped(form.depositAmount)} onChange={event => setForm({ ...form, depositAmount: digitsOf(event.target.value) })} className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>
+            <Controller name="depositAmount" control={control} render={({ field, fieldState }) => <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
             <span className="text-xs font-normal text-muted-gray">Chủ xe thu trực tiếp khi ký C10-A. Khoản này không vào escrow.</span>
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
               Giới hạn km / ngày
-              <input inputMode="numeric" value={form.kmLimitPerDay} onChange={event => setForm({ ...form, kmLimitPerDay: event.target.value })} className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>
+              <Controller name="kmLimitPerDay" control={control} render={({ field, fieldState }) => <input {...field} value={field.value} onChange={event => field.onChange(event.target.value)} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
             </label>
             <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
               Phí quá km (VND)
-              <input inputMode="numeric" value={grouped(form.extraKmFee)} onChange={event => setForm({ ...form, extraKmFee: digitsOf(event.target.value) })} className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>
+              <Controller name="extraKmFee" control={control} render={({ field, fieldState }) => <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
             </label>
           </div>
           <p className="rounded-xl bg-bg-light px-4 py-3 text-xs leading-relaxed text-muted-gray">Khách hủy trước 24 giờ được miễn phí theo chuẩn đối tác. Hủy muộn hơn đền bù theo hợp đồng thuê, không làm đổi công thức payout.</p>
+          <FormErrors errors={errors} />
           {save.error ? <p className="text-sm text-on-error-container">{save.error.message}</p> : null}
           {saved ? <p className="text-sm font-semibold text-status-success-ink">Đã lưu bảng giá.</p> : null}
           <div className="flex flex-wrap justify-between gap-2">
             <button type="button" onClick={() => setStep(2)} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-4 py-2.5 text-sm font-bold text-charcoal">
               <Icon name="arrow_back" className="text-[16px]"/> Bước 2
             </button>
-            <button type="button" disabled={!valid || save.running} onClick={() => void onSave()} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
+            <button type="submit" disabled={!isValid || save.running || isSubmitting} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
               Lưu bảng giá
               <Icon name="arrow_forward" className="text-[16px]"/>
             </button>
           </div>
-        </div> : null}
+        </form> : null}
 
         {step === 4 ? <div className="flex flex-col gap-3">
           <h2 className="text-lg font-bold text-charcoal">Hình ảnh niêm yết</h2>

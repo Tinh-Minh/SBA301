@@ -1,3 +1,9 @@
+import { useForm, useWatch } from "react-hook-form";
+import { vehicleCreateSchema, vehicleStepFields, vehicleStepSchemas } from "@/validation/vehicle.js";
+import { httpUrlInput, validateInput } from "@/utils/validateInput.js";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormErrors } from "@/components/FormErrors.jsx";
+import { digitsOnly as digitsOf, formatVndInput as grouped, parseVndInput } from "@/utils/inputParser.js";
 import { Link } from "react-router";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
@@ -111,17 +117,6 @@ const initial = {
     cancellation: cancelPolicies[0],
 };
 const fieldClass = "w-full rounded-xl border border-card-border bg-white px-3 py-2.5 text-sm font-medium text-charcoal outline-none focus:border-brand-accent";
-function digitsOf(value) {
-    return value.replace(/\D/g, "");
-}
-function grouped(value) {
-    const digits = digitsOf(value);
-    return digits ? new Intl.NumberFormat("vi-VN").format(Number(digits)) : "";
-}
-function amount(value) {
-    const parsed = Number(digitsOf(value));
-    return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
-}
 function Field({ label, children }) {
     return <label className="flex flex-col gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-gray">
     {label}
@@ -150,14 +145,22 @@ export default function OwnerVehicleNew() {
     const create = useAsyncAction(submitCar);
     const [step, setStep] = useState(1);
     const [reached, setReached] = useState(1);
-    const [form, setForm] = useState(initial);
-    const [cavet, setCavet] = useState("");
-    const [inspection, setInspection] = useState("");
-    const [photos, setPhotos] = useState({});
+    const { control, register, setValue, getValues, reset, trigger, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+        resolver: zodResolver(vehicleCreateSchema),
+        defaultValues: { ...initial, registrationUrl: "", inspectionUrl: "", photos: {}, agreed: false },
+    });
+    const form = useWatch({ control });
+    const { registrationUrl: cavet, inspectionUrl: inspection, photos, agreed } = form;
+    const set = patch => Object.entries(patch).forEach(([name, value]) => setValue(name, value, { shouldDirty: true, shouldValidate: true }));
+    const setCavet = value => set({ registrationUrl: value });
+    const setInspection = value => set({ inspectionUrl: value });
+    const setAgreed = value => set({ agreed: value });
+    const setPhotos = updater => set({ photos: updater(getValues("photos")) });
+    useEffect(() => {
+        Object.keys(initial).concat("registrationUrl", "inspectionUrl", "photos", "agreed").forEach(name => register(name));
+    }, [register]);
     const [zoom, setZoom] = useState(null);
-    const [agreed, setAgreed] = useState(false);
     const [draftNote, setDraftNote] = useState("");
-    const set = (patch) => setForm(current => ({ ...current, ...patch }));
     useEffect(() => {
         const raw = localStorage.getItem(DRAFT_KEY);
         if (!raw)
@@ -165,9 +168,9 @@ export default function OwnerVehicleNew() {
         try {
             const saved = JSON.parse(raw);
             if (saved.form)
-                setForm(current => ({ ...current, ...saved.form, amenities: saved.form?.amenities ?? current.amenities }));
+                reset({ ...getValues(), ...saved.form, amenities: saved.form?.amenities ?? initial.amenities });
             if (saved.photos)
-                setPhotos(saved.photos);
+                set({ photos: saved.photos });
             if (typeof saved.cavet === "string")
                 setCavet(saved.cavet);
             if (typeof saved.inspection === "string")
@@ -180,26 +183,20 @@ export default function OwnerVehicleNew() {
         catch { /* bản nháp hỏng thì bỏ qua */ }
     }, []);
     const segment = segments.find(item => item.id === form.segment) ?? segments[0];
-    const dayPrice = amount(form.pricePerDay);
-    const weekend = amount(form.weekendPrice);
-    const deposit = amount(form.depositAmount);
-    const kmLimit = amount(form.kmLimitPerDay);
-    const extraKm = amount(form.extraKmFee);
+    const dayPrice = parseVndInput(form.pricePerDay);
+    const weekend = parseVndInput(form.weekendPrice);
+    const deposit = parseVndInput(form.depositAmount);
     const fee = dayPrice ? calculatePlatformFee(dayPrice, 10) : 0;
     const photoCount = Object.keys(photos).length;
-    const year = Number(form.manufactureYear);
-    const yearReady = Number.isInteger(year) && year >= 1990 && year <= 2100;
-    const seatCount = Number(form.seats);
-    const seatsReady = Number.isInteger(seatCount) && seatCount >= 1 && seatCount <= 60;
-    const identityReady = Boolean(form.brand.trim() && form.model.trim() && form.city.trim() && yearReady && form.licensePlate.trim().length >= 4 && form.pickupAddress.trim() && (form.segment !== OTHER || form.carType));
-    const papersReady = [cavet, inspection].every(url => !url.trim() || isUrl(url));
-    const priceReady = dayPrice !== null && dayPrice > 0 && weekend !== null && weekend > 0 && deposit !== null && kmLimit !== null && kmLimit > 0 && extraKm !== null;
-    const ready = [identityReady, seatsReady, priceReady, agreed];
-    const gaps = [
-        form.licensePlate.trim().length < 4 ? "Biển số cần ít nhất 4 ký tự." : "",
-        !form.pickupAddress.trim() ? "Chưa nhập địa chỉ bãi xe." : "",
-        !papersReady ? "Link giấy tờ phải bắt đầu bằng http:// hoặc https://." : "",
-    ].filter(Boolean);
+    const stepResults = vehicleStepSchemas.map(schema => validateInput(schema, form));
+    const ready = stepResults.map(result => result.success);
+    const gaps = stepResults[0].success ? [] : stepResults[0].error.issues.map(issue => issue.message);
+    async function advance() {
+        if (await trigger(vehicleStepFields[step - 1])) {
+            setStep(step + 1);
+            setReached(value => Math.max(value, step + 1));
+        }
+    }
     function chooseSegment(id) {
         if (id === OTHER) {
             set({ segment: OTHER, carType: form.carType || "OTHER" });
@@ -241,9 +238,7 @@ export default function OwnerVehicleNew() {
             await carService.addDocument(car.id, { docType, fileUrl: fileUrl.trim() });
         return car;
     }
-    async function submit() {
-        if (!identityReady || !papersReady || !priceReady || !agreed || dayPrice === null || deposit === null || kmLimit === null || extraKm === null)
-            return;
+    async function submit(values) {
         const ordered = photoSlots.map(slot => photos[slot.id]?.url).filter(url => url && isUrl(url));
         const details = [
             form.powerNote.trim() ? `${form.fuelType === "ELECTRIC" ? "Pin/công suất" : "Động cơ"}: ${form.powerNote.trim()}` : "",
@@ -257,9 +252,9 @@ export default function OwnerVehicleNew() {
             licensePlate: form.licensePlate.trim(),
             brand: form.brand.trim(),
             model: form.model.trim(),
-            manufactureYear: year,
+            manufactureYear: values.manufactureYear,
             carType: form.segment === OTHER ? form.carType : segment.carType,
-            seats: seatCount,
+            seats: values.seats,
             transmission: form.transmission,
             fuelType: form.fuelType,
             city: form.city.trim(),
@@ -267,11 +262,11 @@ export default function OwnerVehicleNew() {
             pickupAddress: form.pickupAddress.trim(),
             description: details,
             features: JSON.stringify(form.amenities),
-            pricePerDay: dayPrice,
-            pricePerHour: Math.max(1, Math.round(dayPrice / 10)),
-            depositAmount: deposit,
-            kmLimitPerDay: kmLimit,
-            extraKmFee: extraKm,
+            pricePerDay: values.pricePerDay,
+            pricePerHour: Math.max(1, Math.round(values.pricePerDay / 10)),
+            depositAmount: values.depositAmount,
+            kmLimitPerDay: values.kmLimitPerDay,
+            extraKmFee: values.extraKmFee,
             imageUrls: ordered,
         });
         if (!car)
@@ -280,7 +275,10 @@ export default function OwnerVehicleNew() {
         navigate(ownerRoutes.vehicles);
     }
     const subtitle = `${form.brand} ${form.model} • ${form.licensePlate || "Chưa có biển số"}`;
-    return <div className="flex min-w-0 flex-col gap-5">
+    return <form data-native noValidate aria-busy={isSubmitting} onSubmit={event => {
+        if (step < 4) { event.preventDefault(); void advance(); }
+        else void handleSubmit(submit)(event);
+    }} className="flex min-w-0 flex-col gap-5">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <OwnerCrumb current={steps[step - 1].title} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }}/>
@@ -322,15 +320,16 @@ export default function OwnerVehicleNew() {
 
     {step === 1 && gaps.length ? <p className="text-sm text-muted-gray">{gaps.join(" ")}</p> : null}
     {draftNote ? <p className="text-sm font-semibold text-status-success-ink">{draftNote}</p> : null}
+    <FormErrors errors={errors} />
     {create.error ? <p className="text-sm text-on-error-container">{create.error.message}</p> : null}
 
     <div className="flex flex-wrap items-center justify-between gap-2">
       <Link to={ownerRoutes.vehicles} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Hủy bỏ đăng ký</Link>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={saveDraft} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Lưu bản nháp</button>
-        {step < 4 ? <button type="button" disabled={!ready[step - 1]} onClick={() => { setStep(step + 1); setReached(value => Math.max(value, step + 1)); }} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
+        {step < 4 ? <button type="button" disabled={!ready[step - 1]} onClick={() => void advance()} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
           {steps[step - 1].next} <Icon name="arrow_forward" className="text-[16px]"/>
-        </button> : <button type="button" disabled={!identityReady || !papersReady || !priceReady || !agreed || create.running} onClick={() => void submit()} className="rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
+        </button> : <button type="submit" disabled={!ready.every(Boolean) || create.running || isSubmitting} className="rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
           Gửi BQL CarDB thẩm định
         </button>}
       </div>
@@ -339,7 +338,7 @@ export default function OwnerVehicleNew() {
     {zoom ? <button type="button" aria-label="Đóng ảnh" onClick={() => setZoom(null)} className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal/70 p-6">
       <img src={zoom} alt="Ảnh xe phóng to" className="max-h-[80vh] max-w-full rounded-2xl"/>
     </button> : null}
-  </div>;
+  </form>;
 }
 function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment, onCity, onCavet, onInspection }) {
     const models = modelsByBrand[form.brand] ?? [];
@@ -539,5 +538,5 @@ function StepFour({ form, photos, photoCount, dayPrice, deposit, agreed, onAgree
   </div>;
 }
 function isUrl(value) {
-    return /^https?:\/\/\S+$/i.test(value.trim()) && value.trim().length <= 500;
+    return httpUrlInput.safeParse(value).success;
 }
