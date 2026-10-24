@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SBA301 Supabase" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.carrental.CarRentalApplication" />
+    <module name="carrental-be" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/carrental-BE" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

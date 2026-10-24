@@ -1,0 +1,45 @@
+# Chạy cả hai bằng một lệnh, tại thư mục này:
+#   docker compose up --build
+#
+# Database lấy từ carrental-BE/.env (Supabase). File đó không được copy vào image.
+# Khóa JWT và thư mục giấy tờ trên máy được gắn vào container.
+
+services:
+  backend:
+    build:
+      context: ./carrental-BE
+    env_file:
+      - ./carrental-BE/.env
+    environment:
+      JWT_PRIVATE_KEY_LOCATION: file:/keys/private_key.pem
+      JWT_PUBLIC_KEY_LOCATION: file:/keys/public_key.pem
+      APP_DOCUMENT_STORAGE_ROOT: /data/private-documents
+    ports:
+      - "8080:8080"
+    volumes:
+      - type: bind
+        source: ${SBA301_KEYS_DIR:-C:/Users/ACER/AppData/Local/SBA301_RentCar/keys}
+        target: /keys
+        read_only: true
+      - type: bind
+        source: ${SBA301_DOCUMENTS_DIR:-C:/Users/ACER/AppData/Local/SBA301_RentCar/private-documents}
+        target: /data/private-documents
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./carrental-FE
+      args:
+        BACKEND_URL: http://backend:8080
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy

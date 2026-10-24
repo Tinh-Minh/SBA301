@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function NotFound() { return <main className="flex min-h-[70vh] flex-col items-center justify-center px-4 pt-20 text-center"><p className="text-7xl font-bold text-primary-fixed-dim">404</p><h1 className="mt-5 text-3xl font-bold text-primary">Chưa tìm thấy trang này</h1><p className="mt-3 text-text-muted">Quay về trang chủ để tiếp tục hành trình cùng CarDB.</p><Link href="/" className="mt-6 rounded-full bg-primary px-7 py-3 font-semibold text-white">Về trang chủ</Link></main>; }
