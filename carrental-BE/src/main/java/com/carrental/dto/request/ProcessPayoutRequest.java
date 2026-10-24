@@ -16,6 +16,8 @@ public class ProcessPayoutRequest {
 
     private String note;
 
+    private Long bankAccountId;
+
     public void applyTo(Payout payout) {
         PayoutStatus current = payout.getStatus();
         PayoutStatus next = PayoutStatus.valueOf(this.status.toUpperCase());

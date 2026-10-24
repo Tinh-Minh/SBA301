@@ -50,9 +50,14 @@ public class PayoutServiceImpl implements PayoutService {
             payout.setRecipient(recipient);
 
             if (request.getBankAccountId() != null) {
-                BankAccount bankAccount = bankAccountRepository.findById(request.getBankAccountId())
-                        .orElse(null);
+                BankAccount bankAccount = bankAccountRepository.findByIdAndCustomer_Id(request.getBankAccountId(), recipient.getId())
+                        .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Tài khoản ngân hàng không thuộc về người nhận"));
                 payout.setBankAccount(bankAccount);
+            } else {
+                BankAccount defaultAccount = bankAccountRepository.findByCustomer_IdAndIsDefaultTrue(recipient.getId())
+                        .or(() -> bankAccountRepository.findAllByCustomer_IdOrderByCreatedAtDesc(recipient.getId()).stream().findFirst())
+                        .orElse(null);
+                payout.setBankAccount(defaultAccount);
             }
 
             Payout saved = payoutRepository.save(payout);
@@ -74,6 +79,24 @@ public class PayoutServiceImpl implements PayoutService {
         try {
             orderAccess.requireAdmin();
             Payout payout = findPayoutOrThrow(payoutId);
+
+            if (request.getBankAccountId() != null) {
+                BankAccount bankAccount = bankAccountRepository.findByIdAndCustomer_Id(request.getBankAccountId(), payout.getRecipient().getId())
+                        .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Tài khoản ngân hàng không thuộc về người nhận"));
+                payout.setBankAccount(bankAccount);
+            } else if (payout.getBankAccount() == null && payout.getRecipient() != null) {
+                BankAccount defaultAccount = bankAccountRepository.findByCustomer_IdAndIsDefaultTrue(payout.getRecipient().getId())
+                        .or(() -> bankAccountRepository.findAllByCustomer_IdOrderByCreatedAtDesc(payout.getRecipient().getId()).stream().findFirst())
+                        .orElse(null);
+                payout.setBankAccount(defaultAccount);
+            }
+
+            PayoutStatus nextStatus = PayoutStatus.valueOf(request.getStatus().toUpperCase());
+            if (nextStatus == PayoutStatus.PAID && payout.getBankAccount() == null) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Chủ xe chưa có tài khoản ngân hàng để nhận chi trả. Vui lòng yêu cầu chủ xe liên kết tài khoản ngân hàng trước.");
+            }
+
             request.applyTo(payout);
 
             Payout saved = payoutRepository.save(payout);
