@@ -1,22 +1,15 @@
 import { Link } from "react-router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
 import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
 import { LivePage, LiveState, Pill } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { formatMoney, orderStatusLabels, orderStatusTone, paymentStatusLabels } from "@/shared/utils/labels.js";
-import { rentalService } from "@/services/order.service";
-
-import { groups, Filter } from "@/features/bookings/components/Filter.jsx";
+import { useRentals } from "@/shared/hooks/useBookings.js";
+import { Filter } from "@/features/bookings/components/Filter.jsx";
 
 export default function MyRentals({ mode = "all" }) {
-    const load = useCallback(async () => {
-        const orders = await rentalService.listMine();
-        const allowed = groups[mode];
-        return allowed ? orders.filter(order => allowed.has(order.status)) : orders;
-    }, [mode]);
-    const list = useApiQuery(["bookings", "rentals", mode], load);
+    const list = useRentals(mode);
     const [status, setStatus] = useState("");
     const rows = (list.data ?? []).filter(order => !status || order.status === status);
     const body = <div className="flex flex-col gap-4">
@@ -51,4 +44,3 @@ export default function MyRentals({ mode = "all" }) {
     {body}
   </ProfileLayout>;
 }
-

@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { DateField } from "@/shared/components/DateField.jsx";
-import { userDocumentService } from "@/services/customer-extra.service";
-
+import { userDocumentService } from "@/shared/hooks/useAccount.js";
 
 export const tone = { PENDING: "bg-[#FEF3C7] text-[#B45309]", APPROVED: "bg-[#D1FAE5] text-[#047857]", REJECTED: "bg-[#FEE2E2] text-[#B91C1C]" };
 const empty = { docType: "CITIZEN_ID", docNumber: "", fullNameOnDoc: "", dateOfBirthOnDoc: "", issuePlace: "", issueDate: "", expiresAt: "", licenseClass: "" };

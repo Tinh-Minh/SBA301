@@ -1,16 +1,14 @@
-import { useCallback } from "react";
+import { useDocuments } from "@/shared/hooks/useAccount.js";
+
 import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
 import { LiveState, Pill } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { docTypeLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
-import { userDocumentService } from "@/services/customer-extra.service";
-
-import { tone, SubmitForm } from "@/features/account/components/SubmitForm.jsx";
+import { SubmitForm, tone } from "@/features/account/components/SubmitForm.jsx";
 
 export default function VerificationLive() {
-    const load = useCallback(() => userDocumentService.listMine(), []);
-    const list = useApiQuery(["account", "documents"], load);
+    const list = useDocuments();
     return <ProfileLayout live active="verification" title="Xác minh giấy tờ" description="Nộp CCCD hoặc giấy phép lái xe. CarDB duyệt ảnh và cập nhật trạng thái KYC.">
     <LiveState loading={list.loading && !list.data} error={list.error} label="giấy tờ" onRetry={list.reload}/>
     <div className="flex flex-col gap-3">
@@ -27,4 +25,3 @@ export default function VerificationLive() {
     <SubmitForm onDone={list.reload}/>
   </ProfileLayout>;
 }
-

@@ -1,17 +1,14 @@
 import { useMemo, useState } from "react";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { ownerRoutes } from "@/app/routes/owner.routes.js";
-
-import { handoverService } from "@/services/handover.service";
-import { orderService } from "@/services/order.service";
-import { filters, tripGroup, Summary, TripCard } from "@/features/bookings/components/OwnerTripsComponents.jsx";
+import { useHandoverActions } from "@/shared/hooks/useHandovers.js";
+import { orderService } from "@/shared/hooks/useBookings.js";
+import { Summary, TripCard, filters, tripGroup } from "@/features/bookings/components/OwnerTripsComponents.jsx";
 
 export default function OwnerTrips() {
     const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());
-    const createHandover = useApiMutation((orderId, input) => handoverService.create(orderId, input), resource.reload);
-    const confirmHandover = useApiMutation(handoverService.confirm, resource.reload);
+    const { createHandover, confirmHandover } = useHandoverActions(resource.reload);
     const [filter, setFilter] = useState("all");
     const rows = (resource.data ?? []).filter(item => item.order.status === "CONFIRMED" || item.order.status === "ONGOING" || item.order.status === "COMPLETED");
     const visible = useMemo(() => rows.filter(item => filter === "all" || tripGroup(item.order.status) === filter), [rows, filter]);

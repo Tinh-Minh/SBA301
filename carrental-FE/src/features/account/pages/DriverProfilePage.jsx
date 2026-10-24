@@ -1,21 +1,16 @@
-import { useCallback } from "react";
+import { driverService, useDriverProfile } from "@/shared/hooks/useAccount.js";
+
 import { Link } from "react-router";
 import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
 import { LiveState, Primary } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDate } from "@/shared/utils/datetime.js";
 import { kycStatusLabels } from "@/shared/utils/labels.js";
-import { driverService } from "@/services/customer-extra.service";
-
-import { driverStatus, reasons, Item } from "@/features/account/components/Item.jsx";
+import { Item, driverStatus, reasons } from "@/features/account/components/Item.jsx";
 
 export default function DriverLive() {
-    const load = useCallback(async () => {
-        const [driver, eligibility] = await Promise.all([driverService.me(), driverService.eligibility().catch(() => null)]);
-        return { driver, eligibility };
-    }, []);
-    const detail = useApiQuery(["account", "driver"], load);
+    const detail = useDriverProfile();
     const register = useApiMutation(driverService.register, detail.reload);
     const data = detail.data;
     return <ProfileLayout live active="driver" title="Hồ sơ tài xế" description="Đăng ký hồ sơ tài xế sau khi đã xác minh danh tính và giấy phép lái xe.">
@@ -38,4 +33,3 @@ export default function DriverLive() {
     </section> : null}
   </ProfileLayout>;
 }
-

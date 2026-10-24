@@ -3,9 +3,8 @@ import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/compon
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { ownerRoutes } from "@/app/routes/owner.routes.js";
-
-import { orderService } from "@/services/order.service";
-import { filters, Summary, RequestCard } from "@/features/bookings/components/Summary.jsx";
+import { orderService } from "@/shared/hooks/useBookings.js";
+import { RequestCard, Summary, filters } from "@/features/bookings/components/Summary.jsx";
 
 export default function OwnerRequests() {
     const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());

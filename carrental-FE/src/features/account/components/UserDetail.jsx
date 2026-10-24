@@ -4,8 +4,7 @@ import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDate, formatDateTime } from "@/shared/utils/datetime.js";
 import { docTypeLabels, kycStatusLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
-import { adminUserService } from "@/services/admin.service";
-
+import { adminUserService } from "@/shared/hooks/useAdmin.js";
 
 export const tabs = [
     { id: "all", label: "Tất cả" },

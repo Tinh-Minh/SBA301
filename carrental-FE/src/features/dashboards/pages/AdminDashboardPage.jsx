@@ -6,9 +6,8 @@ import { formatTrVnd } from "@/shared/utils/owner.js";
 import { adminRoutes } from "@/app/routes/admin.routes.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { kycStatusLabels, orderStatusLabels } from "@/shared/utils/labels.js";
-import { getAdminOverview } from "@/services/admin.service";
-
-import { orderTone, Stat } from "@/features/dashboards/components/Stat.jsx";
+import { getAdminOverview } from "@/shared/hooks/useAdmin.js";
+import { Stat, orderTone } from "@/features/dashboards/components/Stat.jsx";
 
 export default function AdminDashboard() {
     const { data, loading, error, reload } = useApiQuery(["admin", "dashboard"], getAdminOverview);
@@ -68,4 +67,3 @@ export default function AdminDashboard() {
     </> : null}
   </div>;
 }
-

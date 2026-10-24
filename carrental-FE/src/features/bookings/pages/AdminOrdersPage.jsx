@@ -3,9 +3,8 @@ import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/shared/c
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { formatMoney, orderStatusLabels, paymentStatusLabels } from "@/shared/utils/labels.js";
-import { adminOrderService } from "@/services/admin.service";
-
-import { tabs, orderTone, payTone, OrderDialog } from "@/features/bookings/components/OrderDialog.jsx";
+import { adminOrderService } from "@/shared/hooks/useAdmin.js";
+import { OrderDialog, orderTone, payTone, tabs } from "@/features/bookings/components/OrderDialog.jsx";
 
 export default function AdminOrders() {
     const [status, setStatus] = useState("");
@@ -38,4 +37,3 @@ export default function AdminOrders() {
     {openId ? <OrderDialog order={rows.find(order => order.id === openId)} onClose={() => setOpenId(null)}/> : null}
   </div>;
 }
-

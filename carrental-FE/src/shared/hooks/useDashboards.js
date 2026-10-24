@@ -1,13 +1,14 @@
-import { isApprovedCar, formatVnd, sumAmounts, isOrderExpired } from "@/shared/utils/owner.js";
-
+import { endpoints } from "@/shared/api/endpoints.js";
+import { formatVnd, isApprovedCar, isOrderExpired, sumAmounts } from "@/shared/utils/owner.js";
 import { readSession } from "@/shared/storage/session.js";
-import { fetchAllPages } from "./http";
-import { normalizePayout } from "./adapters";
-import { bankAccountService } from "./bank-account.service";
-import { carService } from "./car.service";
-import { toOwnerViews } from "./order.service";
-import { toPayoutRows } from "./payout.service";
-import { slotService } from "./slot.service";
+import { fetchAllPages } from "@/shared/api/client.js";
+import { normalizePayout } from "@/shared/utils/apiResponse.js";
+import { bankAccountService } from "@/shared/hooks/useAccount.js";
+import { carService } from "@/shared/hooks/useVehicles.js";
+import { toOwnerViews } from "@/shared/hooks/useBookings.js";
+import { toPayoutRows } from "@/shared/hooks/usePayouts.js";
+import { slotService } from "@/shared/hooks/useAvailability.js";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 
 function buildActivities(views) {
     const items = [];
@@ -28,8 +29,8 @@ export const dashboardService = {
         const session = readSession();
         const [cars, orders, payouts, defaultBankAccount] = await Promise.all([
             carService.listMine(),
-            fetchAllPages("/api/orders/my-cars", { sortBy: "createdAt", direction: "desc" }),
-            session ? fetchAllPages("/api/payouts", { recipientId: session.account.id, sort: "id,desc" }).then(list => list.map(normalizePayout)).catch(() => []) : [],
+            fetchAllPages(endpoints.orders.myCars, { sortBy: "createdAt", direction: "desc" }),
+            session ? fetchAllPages(endpoints.payouts.list, { recipientId: session.account.id, sort: "id,desc" }).then(list => list.map(normalizePayout)).catch(() => []) : [],
             bankAccountService.getDefault().catch(() => null),
         ]);
         const views = await toOwnerViews(orders);
@@ -60,3 +61,7 @@ export const dashboardService = {
         };
     },
 };
+
+export function useOwnerDashboard() {
+    return useApiQuery(["owner", "dashboard"], dashboardService.getSummary);
+}

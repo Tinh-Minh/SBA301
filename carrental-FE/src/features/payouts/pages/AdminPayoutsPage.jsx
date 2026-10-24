@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { AdminPageHeader, Tabs } from "@/shared/components/admin/AdminUi.jsx";
-
-import { tabs, Payouts, Transactions } from "@/features/payouts/components/Payouts.jsx";
+import { Payouts, Transactions, tabs } from "@/features/payouts/components/Payouts.jsx";
 
 export default function AdminPayouts() {
     const [tab, setTab] = useState("payouts");
@@ -11,4 +10,3 @@ export default function AdminPayouts() {
     {tab === "payouts" ? <Payouts/> : <Transactions/>}
   </div>;
 }
-

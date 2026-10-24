@@ -1,22 +1,8 @@
-import { Link } from "react-router";
-import { useLocation } from "react-router";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { Link, useLocation } from "react-router";
 import { ownerNavigation, ownerRoutes } from "@/app/routes/owner.routes.js";
 import { useAuth } from "@/shared/hooks/useAuth.js";
-import { request, toPage } from "@/services/http.js";
+import { useOwnerCounts } from "@/shared/hooks/useVehicles.js";
 import { Icon } from "@/shared/components/Icon.jsx";
-
-/** Đếm số xe (GET /api/cars/my-cars) và yêu cầu chờ duyệt (GET /api/orders/my-cars?status=PENDING). */
-function useOwnerCounts() {
-    const { data } = useApiQuery(["owner", "counts"], async () => {
-        const [cars, pending] = await Promise.all([
-            request("/api/cars/my-cars", { query: { page: 0, size: 1 } }).then(toPage).catch(() => null),
-            request("/api/orders/my-cars", { query: { status: "PENDING", page: 0, size: 1 } }).then(toPage).catch(() => null),
-        ]);
-        return { cars: cars?.totalElements ?? null, pending: pending?.totalElements ?? null };
-    });
-    return data ?? { cars: null, pending: null };
-}
 
 export function OwnerSidebar() {
     const path = useLocation().pathname;

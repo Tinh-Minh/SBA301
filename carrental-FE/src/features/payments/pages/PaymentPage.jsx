@@ -1,8 +1,6 @@
-import { Link } from "react-router";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
 import { LivePage } from "@/shared/components/LiveUi.jsx";
-
 import { Pay } from "@/features/payments/components/Pay.jsx";
 
 export default function PaymentLive() {
@@ -13,4 +11,3 @@ export default function PaymentLive() {
     </RequireAuth>
   </LivePage>;
 }
-

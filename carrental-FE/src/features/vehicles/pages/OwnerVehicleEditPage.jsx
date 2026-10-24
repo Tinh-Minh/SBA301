@@ -1,12 +1,3 @@
-
-
-const steps = [
-    { id: 1, title: "Thông tin & giấy tờ", hint: "Hồ sơ pháp lý của xe" },
-    { id: 2, title: "Thông số", hint: "Loại xe, chỗ ngồi, nhiên liệu" },
-    { id: 3, title: "Giá thuê & cọc", hint: "Đơn giá ngày và tiền cọc" },
-    { id: 4, title: "Hình ảnh niêm yết", hint: "Ảnh đại diện đang dùng" },
-];
-
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { vehiclePricingSchema } from "@/shared/schemas/vehicle.js";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,10 +8,16 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/shared/components/Icon.jsx";
 import { Money } from "@/shared/components/owner/Money.jsx";
 import { OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
-import { useOwnerCar } from "@/shared/hooks/useOwnerCars.js";
-import { calculatePlatformFee, formatVnd, carSubtitle } from "@/shared/utils/owner.js";
-
+import { useOwnerCar } from "@/shared/hooks/useVehicles.js";
+import { calculatePlatformFee, carSubtitle, formatVnd } from "@/shared/utils/owner.js";
 import { ownerRoutes } from "@/app/routes/owner.routes.js";
+
+const steps = [
+    { id: 1, title: "Thông tin & giấy tờ", hint: "Hồ sơ pháp lý của xe" },
+    { id: 2, title: "Thông số", hint: "Loại xe, chỗ ngồi, nhiên liệu" },
+    { id: 3, title: "Giá thuê & cọc", hint: "Đơn giá ngày và tiền cọc" },
+    { id: 4, title: "Hình ảnh niêm yết", hint: "Ảnh đại diện đang dùng" },
+];
 
 export default function OwnerVehicleEdit({ carId }) {
     const { data, loading, error, save } = useOwnerCar(carId);

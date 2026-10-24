@@ -1,21 +1,13 @@
-import { Link } from "react-router";
-import { useNavigate } from "react-router";
-import { useCallback, useState } from "react";
+import { reviewService, useOrderReview } from "@/shared/hooks/useReviews.js";
+import { Link, useNavigate } from "react-router";
+import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { currentUserId } from "@/shared/storage/session.js";
-import { rentalService } from "@/services/order.service";
-import { reviewService } from "@/services/customer-extra.service";
 
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 
 export function Form({ orderId }) {
     const navigate = useNavigate();
-    const load = useCallback(async () => {
-        const [order, reviews] = await Promise.all([rentalService.getById(orderId), reviewService.listByOrder(orderId)]);
-        return { order, mine: reviews.find(review => review.reviewerId === currentUserId()) ?? null };
-    }, [orderId]);
-    const detail = useApiQuery(["bookings", "review", orderId], load);
+    const detail = useOrderReview(orderId);
     const [rating, setRating] = useState(5);
     const [comment, setComment] = useState("");
     const send = useApiMutation(async () => {

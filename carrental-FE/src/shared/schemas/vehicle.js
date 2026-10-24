@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { requiredText, optionalHttpUrlInput, httpUrlInput, integerInput, vndInput } from "@/shared/utils/validateInput.js";
+import { httpUrlInput, integerInput, optionalHttpUrlInput, requiredText, vndInput } from "@/shared/utils/validateInput.js";
 
 export const vehiclePricingSchema = z.object({
     pricePerDay: vndInput({ positive: true }),

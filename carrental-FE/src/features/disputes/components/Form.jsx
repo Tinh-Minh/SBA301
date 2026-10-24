@@ -1,24 +1,14 @@
-import { Link } from "react-router";
-import { useNavigate } from "react-router";
-import { useCallback, useState } from "react";
+import { disputeService, useOrderDisputes } from "@/shared/hooks/useAdmin.js";
+import { Link, useNavigate } from "react-router";
+import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { disputeStatusLabels } from "@/shared/utils/labels.js";
-import { rentalService } from "@/services/order.service";
-import { disputeService } from "@/services/admin.service";
-
 
 export function Form({ orderId }) {
     const navigate = useNavigate();
-    const load = useCallback(async () => {
-        const [order, disputes] = await Promise.all([
-            rentalService.getById(orderId),
-            disputeService.list({ orderId, size: 20 }).then(page => page.content).catch(() => []),
-        ]);
-        return { order, disputes };
-    }, [orderId]);
-    const detail = useApiQuery(["bookings", "dispute", orderId], load);
+    const detail = useOrderDisputes(orderId);
     const [reason, setReason] = useState("");
     const [description, setDescription] = useState("");
     const [fileUrl, setFileUrl] = useState("");

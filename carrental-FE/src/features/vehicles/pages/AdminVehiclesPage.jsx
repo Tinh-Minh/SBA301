@@ -2,9 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/shared/components/admin/AdminUi.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { carImage, carTypeLabels, formatMoney } from "@/shared/utils/labels.js";
-import { adminCarService } from "@/services/admin.service";
-
-import { tabs, statusTone, statusLabel, CarDetail } from "@/features/vehicles/components/CarDetail.jsx";
+import { adminCarService } from "@/shared/hooks/useAdmin.js";
+import { CarDetail, statusLabel, statusTone, tabs } from "@/features/vehicles/components/CarDetail.jsx";
 
 export default function AdminVehicles() {
     const [status, setStatus] = useState("PENDING_APPROVAL");
@@ -40,4 +39,3 @@ export default function AdminVehicles() {
     </div>
   </div>;
 }
-

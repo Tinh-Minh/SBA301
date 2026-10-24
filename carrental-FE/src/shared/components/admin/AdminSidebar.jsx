@@ -1,9 +1,8 @@
-import { Link } from "react-router";
-import { useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { adminNavigation, adminRoutes } from "@/app/routes/admin.routes.js";
 import { useAuth } from "@/shared/hooks/useAuth.js";
-import { getAdminBadges } from "@/services/admin.service.js";
+import { getAdminBadges } from "@/shared/hooks/useAdmin.js";
 import { Icon } from "@/shared/components/Icon.jsx";
 
 const badgeClass = {

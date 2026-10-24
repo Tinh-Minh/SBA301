@@ -4,17 +4,16 @@ import { validateInput } from "@/shared/utils/validateInput.js";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormErrors } from "@/shared/components/FormErrors.jsx";
 import { parseVndInput } from "@/shared/utils/inputParser.js";
-import { Link } from "react-router";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { Icon } from "@/shared/components/Icon.jsx";
 import { OwnerCrumb } from "@/shared/components/owner/OwnerScreen.jsx";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { calculatePlatformFee, formatVnd } from "@/shared/utils/owner.js";
 import { ownerRoutes } from "@/app/routes/owner.routes.js";
-import { carService } from "@/services/car.service";
+import { carService } from "@/shared/hooks/useVehicles.js";
 import { useAuth } from "@/shared/hooks/useAuth.js";
-import { DRAFT_KEY, steps, modelsByBrand, segments, areas, amenities, photoSlots, OTHER, initial, StepOne, StepTwo, StepThree, StepFour, isUrl } from "@/features/vehicles/components/Field.jsx";
+import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, amenities, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/features/vehicles/components/Field.jsx";
 
 export default function OwnerVehicleNew() {
     const navigate = useNavigate();

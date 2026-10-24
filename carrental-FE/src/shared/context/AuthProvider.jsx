@@ -1,7 +1,28 @@
+import { endpoints } from "@/shared/api/endpoints.js";
+import { request } from "@/shared/api/client.js";
+import { clearSession, readSession, saveSession, subscribeSession } from "@/shared/storage/session.js";
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { readSession, subscribeSession } from "@/shared/storage/session.js";
-import * as authService from "@/services/auth.service.js";
+
+/** POST /api/auth/login — backend chỉ nhận email + mật khẩu. */
+export async function authenticate({ email, password }) {
+    const token = await request(endpoints.auth.login, { method: "POST", auth: false, json: { email: email.trim(), password } });
+    return saveSession(token);
+}
+
+/** POST /api/auth/register → trả về hồ sơ khách hàng vừa tạo. */
+export function registerAccount({ fullName, email, phone, password }) {
+    return request(endpoints.auth.register, {
+        method: "POST",
+        auth: false,
+        json: { fullName: fullName.trim(), email: email.trim(), phone: phone.trim().replace(/\s+/g, ""), password },
+    });
+}
+
+
+export function endSession() {
+    clearSession();
+}
 
 export const AuthContext = createContext({
     ready: false,
@@ -33,13 +54,13 @@ export function AuthProvider({ children }) {
         return subscribeSession(sync);
     }, [queryClient]);
     const login = useCallback(async (credentials) => {
-        const next = await authService.login(credentials);
+        const next = await authenticate(credentials);
         setSession(next);
         return next;
     }, []);
-    const register = useCallback((payload) => authService.register(payload), []);
+    const register = useCallback((payload) => registerAccount(payload), []);
     const logout = useCallback(() => {
-        authService.logout();
+        endSession();
         setSession(null);
     }, []);
     const value = useMemo(() => {
@@ -48,4 +69,3 @@ export function AuthProvider({ children }) {
     }, [ready, session, login, register, logout]);
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-

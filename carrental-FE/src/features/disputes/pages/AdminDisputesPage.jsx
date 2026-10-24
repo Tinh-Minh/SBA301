@@ -3,9 +3,8 @@ import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/shared/c
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { disputeStatusLabels } from "@/shared/utils/labels.js";
-import { disputeService } from "@/services/admin.service";
-
-import { tone, tabs, DisputeDetail } from "@/features/disputes/components/DisputeDetail.jsx";
+import { disputeService } from "@/shared/hooks/useAdmin.js";
+import { DisputeDetail, tabs, tone } from "@/features/disputes/components/DisputeDetail.jsx";
 
 export default function AdminDisputes() {
     const [status, setStatus] = useState("OPEN");
@@ -35,4 +34,3 @@ export default function AdminDisputes() {
     </div> : null}
   </div>;
 }
-

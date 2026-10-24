@@ -1,8 +1,6 @@
-import { Link } from "react-router";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
 import { LivePage } from "@/shared/components/LiveUi.jsx";
-
 import { Form } from "@/features/reviews/components/Form.jsx";
 
 export default function ReviewLive() {
@@ -13,4 +11,3 @@ export default function ReviewLive() {
     </RequireAuth>
   </LivePage>;
 }
-

@@ -6,9 +6,8 @@ import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { formatMoney, paymentMethodLabels, transactionStatusLabels, transactionTypeLabels } from "@/shared/utils/labels.js";
 import { calculatePayout } from "@/shared/utils/owner.js";
-import { request, toPage } from "@/services/http.js";
-import { adminOrderService, adminPayoutService } from "@/services/admin.service";
-
+import { request, toPage } from "@/shared/api/client.js";
+import { adminOrderService, adminPayoutService } from "@/shared/hooks/useAdmin.js";
 
 export const tabs = [{ id: "payouts", label: "Chi trả chủ xe" }, { id: "transactions", label: "Giao dịch thanh toán" }];
 const payoutTone = { PENDING: "warning", PROCESSING: "info", PAID: "success", FAILED: "danger" };

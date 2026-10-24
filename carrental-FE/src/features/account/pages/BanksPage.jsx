@@ -1,15 +1,13 @@
-import { useCallback } from "react";
+import { bankAccountService, useBankAccounts } from "@/shared/hooks/useAccount.js";
+
 import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
 import { LiveState } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { bankAccountService } from "@/services/bank-account.service";
 
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { AddForm } from "@/features/account/components/AddForm.jsx";
 
 export default function BanksLive() {
-    const load = useCallback(() => bankAccountService.list(), []);
-    const list = useApiQuery(["account", "banks"], load);
+    const list = useBankAccounts();
     const setDefault = useApiMutation(bankAccountService.setDefault, list.reload);
     const remove = useApiMutation(bankAccountService.remove, list.reload);
     return <ProfileLayout live active="banks" title="Tài khoản ngân hàng" description="Tài khoản nhận tiền thuê. Số tài khoản hiển thị dạng đã che sau khi lưu.">
@@ -32,4 +30,3 @@ export default function BanksLive() {
     <AddForm onDone={list.reload}/>
   </ProfileLayout>;
 }
-

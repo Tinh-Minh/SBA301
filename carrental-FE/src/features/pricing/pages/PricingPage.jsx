@@ -1,4 +1,8 @@
-
+import { PricingConsultation } from "@/features/pricing/components/PricingConsultation.jsx";
+import { Link } from "react-router";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { PricingExplorer } from "@/features/pricing/components/PricingExplorer.jsx";
+import { formatPrice, pricingSegments } from "@/shared/utils/pricing.js";
 
 const fees = [
     { icon: "person", title: "Tài xế riêng", price: "350.000 đ/ngày", detail: "Khung phục vụ tham khảo 10 giờ/ngày. Lưu trú và ngoài giờ được thống nhất riêng trước chuyến đi." },
@@ -6,12 +10,6 @@ const fees = [
     { icon: "schedule", title: "Trả xe quá giờ", price: "80.000–120.000 đ/giờ", detail: "Thời gian ân hạn và cách quy đổi sang ngày thuê được ghi rõ trong hợp đồng của từng xe." },
     { icon: "local_shipping", title: "Giao nhận tận nơi", price: "Từ 15.000 đ/km", detail: "Tham khảo miễn phí trong bán kính 5 km. Giao sân bay 150.000 đ/lượt, xác nhận theo điểm nhận xe." },
 ];
-
-import { PricingConsultation } from "@/features/pricing/components/PricingConsultation.jsx";
-import { Link } from "react-router";
-import { Icon } from "@/shared/components/Icon.jsx";
-import { PricingExplorer } from "@/features/pricing/components/PricingExplorer.jsx";
-import { formatPrice, pricingSegments } from "@/shared/utils/pricing.js";
 
 export default function Pricing() {
     return <div className="cardb-screen screen-pricing bg-section-bg text-text-primary"><main className="pt-20">

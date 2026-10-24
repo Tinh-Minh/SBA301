@@ -1,13 +1,13 @@
+import { slotService, useCarSlots } from "@/shared/hooks/useAvailability.js";
 import { Link } from "react-router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { DateTimeField } from "@/shared/components/DateField.jsx";
 import { Icon } from "@/shared/components/Icon.jsx";
 import { Money } from "@/shared/components/owner/Money.jsx";
 import { PayoutMath } from "@/shared/components/owner/OwnerScreen.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDateTime, toInputDateTime } from "@/shared/utils/datetime.js";
-import { slotService } from "@/services/slot.service";
 import { formatVnd } from "@/shared/utils/owner.js";
 import { ownerRoutes } from "@/app/routes/owner.routes.js";
 
@@ -47,8 +47,7 @@ function defaultSlotRange() {
 }
 /** Quản lý khung giờ cho thuê: GET /api/slots/car/{id}, POST /api/slots, PATCH /api/slots/{id}/close|reopen|cancel. */
 export function SlotManager({ car, onChanged }) {
-    const load = useCallback(() => slotService.listByCar(car.id), [car.id]);
-    const slots = useApiQuery(["vehicles", "slots", car.id], load);
+    const slots = useCarSlots(car.id);
     const [form, setForm] = useState(() => ({ ...defaultSlotRange(), rentalOption: "BOTH", minRentalHours: "4", customPricePerHour: "", customPricePerDay: "" }));
     const refresh = () => { slots.reload(); onChanged?.(); };
     const create = useApiMutation(() => {

@@ -1,19 +1,13 @@
+import { transactionService, usePaymentDetail } from "@/shared/hooks/usePayments.js";
 import { Link } from "react-router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatMoney, paymentMethodLabels, paymentStatusLabels } from "@/shared/utils/labels.js";
-import { rentalService } from "@/services/order.service";
-import { transactionService } from "@/services/customer-extra.service";
-
 
 export function Pay({ orderId }) {
-    const load = useCallback(async () => {
-        const [order, transactions] = await Promise.all([rentalService.getById(orderId), transactionService.listByOrder(orderId)]);
-        return { order, transactions };
-    }, [orderId]);
-    const detail = useApiQuery(["payments", "order", orderId], load);
+    const detail = usePaymentDetail(orderId);
     const [method, setMethod] = useState("VNPAY");
     const [pending, setPending] = useState(null);
     const pay = useApiMutation(async () => {

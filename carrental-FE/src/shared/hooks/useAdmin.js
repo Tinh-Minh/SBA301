@@ -1,11 +1,14 @@
+import { useCallback } from "react";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { adminOrderService, rentalService } from "@/shared/hooks/useBookings.js";
+import { endpoints } from "@/shared/api/endpoints.js";
 import { toLocalIso } from "@/shared/utils/datetime.js";
 import { toNumber } from "@/shared/utils/labels.js";
 import { currentUserId } from "@/shared/storage/session.js";
-import { fetchAllPages, request, toPage } from "./http";
-import { normalizeCar, normalizeOrder } from "./adapters";
-import { listCustomers, getCustomer, getCustomerKyc, updateCustomerStatus } from "./customer.service";
-import { adminOrderService } from "./order.service";
-import { adminPayoutService } from "./payout.service";
+import { fetchAllPages, request, toPage } from "@/shared/api/client.js";
+import { normalizeCar, normalizeOrder } from "@/shared/utils/apiResponse.js";
+import { getCustomer, getCustomerKyc, listCustomers, updateCustomerStatus } from "@/shared/hooks/useAccount.js";
+import { adminPayoutService } from "@/shared/hooks/usePayouts.js";
 
 const pageOf = async (path, query, map = (item) => item) => {
     const result = toPage(await request(path, { query }));
@@ -21,29 +24,29 @@ export const adminUserService = {
     setStatus: updateCustomerStatus,
     /** GET /api/user-documents?scope=all&customerId&verifyStatus */
     listDocuments: ({ customerId, verifyStatus, docType, page = 0, size = 50 } = {}) =>
-        pageOf("/api/user-documents", { scope: "all", customerId, verifyStatus, docType, page, size, sort: "createdAt,desc" }),
-    getDocument: (id) => request(`/api/user-documents/${id}`),
+        pageOf(endpoints.userDocuments.list, { scope: "all", customerId, verifyStatus, docType, page, size, sort: "createdAt,desc" }),
+    getDocument: (id) => request(endpoints.userDocuments.byId(id)),
     /** PATCH /api/user-documents/{id}/review { verifyStatus: APPROVED|REJECTED, rejectReason } */
-    reviewDocument: (id, verifyStatus, rejectReason) => request(`/api/user-documents/${id}/review`, {
+    reviewDocument: (id, verifyStatus, rejectReason) => request(endpoints.userDocuments.byIdReview(id), {
         method: "PATCH",
         json: { verifyStatus, rejectReason: verifyStatus === "REJECTED" ? (rejectReason || null) : null },
     }),
     /** URL ảnh giấy tờ (cần JWT nên tải qua Axios rồi tạo blob URL). */
     async documentImage(id, side) {
-        const blob = await request(`/api/user-documents/${id}/files/${side}`, { responseType: "blob" });
+        const blob = await request(endpoints.userDocuments.byIdFilesById(id, side), { responseType: "blob" });
         return URL.createObjectURL(blob);
     },
 };
 
 /** Thẩm định xe (ADMIN): /api/admin/cars */
 export const adminCarService = {
-    list: ({ status, page = 0, size = 20 } = {}) => pageOf("/api/admin/cars", { status, page, size, sortBy: "createdAt", direction: "DESC" }, normalizeCar),
-    getDetail: async (id) => normalizeCar(await request(`/api/cars/${id}`)),
-    documents: (id) => request(`/api/cars/${id}/documents`).then(list => (Array.isArray(list) ? list : [])),
-    approve: async (id) => normalizeCar(await request(`/api/admin/cars/${id}/approve`, { method: "POST" })),
-    reject: async (id, reason) => normalizeCar(await request(`/api/admin/cars/${id}/reject`, { method: "POST", json: { reason } })),
+    list: ({ status, page = 0, size = 20 } = {}) => pageOf(endpoints.adminCars.list, { status, page, size, sortBy: "createdAt", direction: "DESC" }, normalizeCar),
+    getDetail: async (id) => normalizeCar(await request(endpoints.cars.byId(id))),
+    documents: (id) => request(endpoints.cars.byIdDocuments(id)).then(list => (Array.isArray(list) ? list : [])),
+    approve: async (id) => normalizeCar(await request(endpoints.adminCars.byIdApprove(id), { method: "POST" })),
+    reject: async (id, reason) => normalizeCar(await request(endpoints.adminCars.byIdReject(id), { method: "POST", json: { reason } })),
     /** PATCH /api/admin/cars/{id}/documents/{docId}/verify { verifyStatus, rejectReason } */
-    verifyDocument: (carId, docId, verifyStatus, rejectReason) => request(`/api/admin/cars/${carId}/documents/${docId}/verify`, {
+    verifyDocument: (carId, docId, verifyStatus, rejectReason) => request(endpoints.adminCars.byIdDocumentsByIdVerify(carId, docId), {
         method: "PATCH",
         json: { verifyStatus, rejectReason: rejectReason || null },
     }),
@@ -58,9 +61,9 @@ const normalizeVoucher = (voucher) => ({
 
 /** Voucher (ADMIN): /api/vouchers */
 export const adminVoucherService = {
-    list: ({ code, status, window, page = 0, size = 50 } = {}) => pageOf("/api/vouchers", { code, status, window, page, size, sort: "createdAt,desc" }, normalizeVoucher),
+    list: ({ code, status, window, page = 0, size = 50 } = {}) => pageOf(endpoints.vouchers.list, { code, status, window, page, size, sort: "createdAt,desc" }, normalizeVoucher),
     /** POST /api/vouchers — backend từ chối trường lạ, số tiền phải là number. */
-    create: async ({ code, description, discountType, discountValue, maxDiscount, minOrderAmount, startAt, endAt, usageLimit, perUserLimit }) => normalizeVoucher(await request("/api/vouchers", {
+    create: async ({ code, description, discountType, discountValue, maxDiscount, minOrderAmount, startAt, endAt, usageLimit, perUserLimit }) => normalizeVoucher(await request(endpoints.vouchers.list, {
         method: "POST",
         json: {
             code: code.trim().toUpperCase(),
@@ -76,27 +79,27 @@ export const adminVoucherService = {
         },
     })),
     /** PUT /api/vouchers/{id} { description, usageLimit } */
-    update: async (id, { description, usageLimit }) => normalizeVoucher(await request(`/api/vouchers/${id}`, {
+    update: async (id, { description, usageLimit }) => normalizeVoucher(await request(endpoints.vouchers.byId(id), {
         method: "PUT",
         json: { description: description?.trim() || null, usageLimit: usageLimit === "" || usageLimit === null || usageLimit === undefined ? null : Math.trunc(Number(usageLimit)) },
     })),
     /** PATCH /api/vouchers/{id}/status { status: ACTIVE|INACTIVE } */
-    setStatus: async (id, status) => normalizeVoucher(await request(`/api/vouchers/${id}/status`, { method: "PATCH", json: { status } })),
+    setStatus: async (id, status) => normalizeVoucher(await request(endpoints.vouchers.byIdStatus(id), { method: "PATCH", json: { status } })),
 };
 
 /** Khiếu nại: /api/disputes */
 export const disputeService = {
-    list: ({ status, orderId, raisedById, page = 0, size = 50 } = {}) => pageOf("/api/disputes", { status, orderId, raisedById, page, size, sort: "id,desc" }),
-    get: (id) => request(`/api/disputes/${id}`),
+    list: ({ status, orderId, raisedById, page = 0, size = 50 } = {}) => pageOf(endpoints.disputes.list, { status, orderId, raisedById, page, size, sort: "id,desc" }),
+    get: (id) => request(endpoints.disputes.byId(id)),
     /** POST /api/disputes */
-    create: ({ orderId, reason, description, evidences = [] }) => request("/api/disputes", {
+    create: ({ orderId, reason, description, evidences = [] }) => request(endpoints.disputes.list, {
         method: "POST",
         json: { orderId: Number(orderId), raisedById: currentUserId(), reason, description: description || null, evidences },
     }),
     /** POST /api/disputes/{id}/evidences */
-    addEvidence: (id, { fileUrl, fileType, description }) => request(`/api/disputes/${id}/evidences`, { method: "POST", json: { uploadedById: currentUserId(), fileUrl, fileType, description: description || null } }),
+    addEvidence: (id, { fileUrl, fileType, description }) => request(endpoints.disputes.byIdEvidences(id), { method: "POST", json: { uploadedById: currentUserId(), fileUrl, fileType, description: description || null } }),
     /** PUT /api/disputes/{id}/resolve { status: IN_REVIEW|RESOLVED|REJECTED, resolutionNote, resolvedById } */
-    resolve: (id, status, resolutionNote) => request(`/api/disputes/${id}/resolve`, {
+    resolve: (id, status, resolutionNote) => request(endpoints.disputes.byIdResolve(id), {
         method: "PUT",
         json: { status, resolutionNote: resolutionNote || null, resolvedById: currentUserId() },
     }),
@@ -109,7 +112,7 @@ export async function getAdminOverview() {
     const safe = (promise, fallback) => promise.catch(() => fallback);
     const emptyPage = { content: [], totalElements: 0 };
     const [orders, customers, pendingKyc, pendingCars, pendingDocs, openDisputes, pendingPayouts] = await Promise.all([
-        safe(fetchAllPages("/api/orders", { sortBy: "createdAt", direction: "desc" }).then(list => list.map(normalizeOrder)), []),
+        safe(fetchAllPages(endpoints.orders.list, { sortBy: "createdAt", direction: "desc" }).then(list => list.map(normalizeOrder)), []),
         safe(listCustomers({ size: 1 }), emptyPage),
         safe(listCustomers({ kycStatus: "PENDING", size: 5 }), emptyPage),
         safe(adminCarService.list({ status: "PENDING_APPROVAL", size: 5 }), emptyPage),
@@ -155,4 +158,28 @@ export async function getAdminBadges() {
         count(adminPayoutService.list({ status: "PENDING", size: 1 })),
     ]);
     return { kyc, cars, disputes, payouts };
+}
+
+export function useOrderDisputes(orderId) {
+    const load = useCallback(async () => {
+        const [order, disputes] = await Promise.all([
+            rentalService.getById(orderId),
+            disputeService.list({ orderId, size: 20 }).then(page => page.content).catch(() => []),
+        ]);
+        return { order, disputes };
+    }, [orderId]);
+    const detail = useApiQuery(["bookings", "dispute", orderId], load);
+    return detail;
+}
+
+export function useAdminOrderDetail(orderId) {
+    const load = useCallback(async () => {
+        const [logs, transactions] = await Promise.all([
+            request(endpoints.orders.byIdLogs(orderId)).catch(() => []),
+            request(endpoints.transactions.list, { query: { orderId: orderId, size: 50 } }).then(toPage).then(page => page.content).catch(() => []),
+        ]);
+        return { logs: Array.isArray(logs) ? logs : [], transactions };
+    }, [orderId]);
+    const detail = useApiQuery(["admin", "order-detail", orderId], load);
+    return detail;
 }

@@ -1,21 +1,18 @@
-
-
-const filters = [
-    { id: "all", label: "Tất cả" },
-    { id: "held", label: "Đang giữ escrow" },
-    { id: "paid", label: "Đã chi trả" },
-];
-
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { Icon } from "@/shared/components/Icon.jsx";
 import { Money } from "@/shared/components/owner/Money.jsx";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/shared/components/owner/StatusBadge.jsx";
-import { useOwnerPayouts } from "@/shared/hooks/useOwnerPayouts.js";
+import { useOwnerPayouts } from "@/shared/hooks/usePayouts.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
-import { maskBankAccount, formatTrVnd, payoutStatusMeta } from "@/shared/utils/owner.js";
+import { formatTrVnd, maskBankAccount, payoutStatusMeta } from "@/shared/utils/owner.js";
 
+const filters = [
+    { id: "all", label: "Tất cả" },
+    { id: "held", label: "Đang giữ escrow" },
+    { id: "paid", label: "Đã chi trả" },
+];
 
 export default function OwnerPayouts() {
     const { data, loading, error } = useOwnerPayouts();

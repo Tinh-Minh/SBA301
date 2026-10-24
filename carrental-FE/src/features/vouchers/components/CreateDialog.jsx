@@ -3,8 +3,7 @@ import { AdminDialog, PrimaryButton, adminInput } from "@/shared/components/admi
 import { DateTimeField } from "@/shared/components/DateField.jsx";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { toInputDateTime } from "@/shared/utils/datetime.js";
-import { adminVoucherService } from "@/services/admin.service";
-
+import { adminVoucherService } from "@/shared/hooks/useAdmin.js";
 
 export const tabs = [
     { id: "", label: "Tất cả" },

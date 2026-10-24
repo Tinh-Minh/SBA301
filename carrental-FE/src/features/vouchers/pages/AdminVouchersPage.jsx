@@ -4,9 +4,8 @@ import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { formatMoney } from "@/shared/utils/labels.js";
-import { adminVoucherService } from "@/services/admin.service";
-
-import { tabs, windowLabel, CreateDialog, EditDialog } from "@/features/vouchers/components/CreateDialog.jsx";
+import { adminVoucherService } from "@/shared/hooks/useAdmin.js";
+import { CreateDialog, EditDialog, tabs, windowLabel } from "@/features/vouchers/components/CreateDialog.jsx";
 
 export default function AdminVouchers() {
     const [windowState, setWindowState] = useState("");
@@ -46,4 +45,3 @@ export default function AdminVouchers() {
     {editing ? <EditDialog voucher={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); list.reload(); }}/> : null}
   </div>;
 }
-

@@ -2,9 +2,8 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs, adminInput } from "@/shared/components/admin/AdminUi.jsx";
 import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { kycStatusLabels } from "@/shared/utils/labels.js";
-import { adminUserService } from "@/services/admin.service";
-
-import { tabs, kycTone, UserDetail } from "@/features/account/components/UserDetail.jsx";
+import { adminUserService } from "@/shared/hooks/useAdmin.js";
+import { UserDetail, kycTone, tabs } from "@/features/account/components/UserDetail.jsx";
 
 export default function AdminUsers() {
     const [tab, setTab] = useState("all");
@@ -67,4 +66,3 @@ export default function AdminUsers() {
     </div>
   </div>;
 }
-

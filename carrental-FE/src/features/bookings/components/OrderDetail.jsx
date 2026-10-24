@@ -1,15 +1,14 @@
+import { rentalService, useBookingDetail } from "@/shared/hooks/useBookings.js";
 import { Link } from "react-router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
 import { LivePage, LiveState, Pill, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+
 import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/shared/utils/owner.js";
 import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/shared/utils/labels.js";
-import { handoverService } from "@/services/handover.service";
-import { rentalService } from "@/services/order.service";
-
+import { useHandoverActions } from "@/shared/hooks/useHandovers.js";
 
 export function OrderDetail({ orderId, justCreated = false }) {
     return <LivePage width="max-w-3xl">
@@ -20,19 +19,10 @@ export function OrderDetail({ orderId, justCreated = false }) {
 }
 
 function Detail({ orderId, justCreated }) {
-    const load = useCallback(async () => {
-        const [order, handovers, logs] = await Promise.all([
-            rentalService.getById(orderId),
-            rentalService.handovers(orderId).catch(() => []),
-            rentalService.logs(orderId).catch(() => []),
-        ]);
-        return { order, handovers, logs: Array.isArray(logs) ? logs : [] };
-    }, [orderId]);
-    const detail = useApiQuery(["bookings", "detail", orderId], load);
+    const detail = useBookingDetail(orderId);
     const reload = detail.reload;
     const cancel = useApiMutation((reason) => rentalService.cancel(orderId, reason), reload);
-    const createHandover = useApiMutation((input) => handoverService.create(orderId, input), reload);
-    const confirmHandover = useApiMutation(handoverService.confirm, reload);
+    const { createHandover, confirmHandover } = useHandoverActions(reload, orderId);
     if (!detail.data)
         return <LiveState loading={detail.loading} error={detail.error} label="đơn thuê" onRetry={reload}/>;
     const { order, handovers, logs } = detail.data;

@@ -1,12 +1,17 @@
-import { lazy, Suspense } from "react";
-import { createBrowserRouter, RouterProvider, Navigate, useLocation, useParams } from "react-router";
 import MainLayout from "@/shared/layouts/CustomerLayout.jsx";
+
 import AdminLayout from "@/shared/layouts/AdminLayout.jsx";
+
 import OwnerLayout from "@/shared/layouts/OwnerLayout.jsx";
+
 import NotFoundPage from "@/features/information/pages/NotFoundPage.jsx";
+
+import { Suspense, lazy } from "react";
+import { Navigate, RouterProvider, createBrowserRouter, useLocation, useParams } from "react-router";
 import { InformationPage } from "@/features/information/components/InformationPage.jsx";
 import { pageTitles } from "@/app/routes/routes.constants.js";
 import { routeAliases } from "@/app/routes/route-aliases.js";
+
 const BanksPage = lazy(() => import("@/features/account/pages/BanksPage.jsx"));
 const DriverProfilePage = lazy(() => import("@/features/account/pages/DriverProfilePage.jsx"));
 const MyRentalsPage = lazy(() => import("@/features/bookings/pages/MyRentalsPage.jsx"));

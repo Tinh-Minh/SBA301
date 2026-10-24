@@ -1,15 +1,17 @@
+import { endpoints } from "@/shared/api/endpoints.js";
 import { sumAmounts } from "@/shared/utils/owner.js";
 import { currentUserId } from "@/shared/storage/session.js";
-import { fetchAllPages, request, toPage } from "./http";
-import { carFromOrder, normalizeOrder, normalizePayout } from "./adapters";
-import { bankAccountService } from "./bank-account.service";
-import { loadCarsById } from "./order.service";
+import { fetchAllPages, request, toPage } from "@/shared/api/client.js";
+import { carFromOrder, normalizeOrder, normalizePayout } from "@/shared/utils/apiResponse.js";
+import { bankAccountService } from "@/shared/hooks/useAccount.js";
+import { loadCarsById } from "@/shared/hooks/useBookings.js";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 
 /** Ghép payout với đơn thuê và xe để hiển thị sao kê. */
 export async function toPayoutRows(payouts) {
     const orders = new Map(await Promise.all([...new Set(payouts.map(item => item.orderId))].map(async id => {
         try {
-            return [id, normalizeOrder(await request(`/api/orders/${id}`))];
+            return [id, normalizeOrder(await request(endpoints.orders.byId(id)))];
         }
         catch {
             return [id, null];
@@ -26,7 +28,7 @@ export const payoutService = {
     /** Sao kê chủ xe: GET /api/payouts?recipientId={tôi} + tài khoản mặc định. */
     async getStatement() {
         const [payouts, defaultBankAccount] = await Promise.all([
-            fetchAllPages("/api/payouts", { recipientId: currentUserId(), sort: "id,desc" }).then(list => list.map(normalizePayout)),
+            fetchAllPages(endpoints.payouts.list, { recipientId: currentUserId(), sort: "id,desc" }).then(list => list.map(normalizePayout)),
             bankAccountService.getDefault().catch(() => null),
         ]);
         const rows = await toPayoutRows(payouts);
@@ -45,15 +47,19 @@ export const payoutService = {
 /** Quản trị payout. */
 export const adminPayoutService = {
     async list({ status, recipientId, orderId, page = 0, size = 20 } = {}) {
-        const result = toPage(await request("/api/payouts", { query: { status, recipientId, orderId, page, size, sort: "id,desc" } }));
+        const result = toPage(await request(endpoints.payouts.list, { query: { status, recipientId, orderId, page, size, sort: "id,desc" } }));
         return { ...result, content: result.content.map(normalizePayout) };
     },
-    listAll: async (query = {}) => (await fetchAllPages("/api/payouts", { ...query, sort: "id,desc" })).map(normalizePayout),
+    listAll: async (query = {}) => (await fetchAllPages(endpoints.payouts.list, { ...query, sort: "id,desc" })).map(normalizePayout),
     /** POST /api/payouts — tạo khoản chi trả cho chủ xe từ đơn đã hoàn thành. */
-    create: async ({ orderId, recipientId, bankAccountId, grossAmount, platformFee, netAmount, note }) => normalizePayout(await request("/api/payouts", {
+    create: async ({ orderId, recipientId, bankAccountId, grossAmount, platformFee, netAmount, note }) => normalizePayout(await request(endpoints.payouts.list, {
         method: "POST",
         json: { orderId, recipientId, bankAccountId: bankAccountId ?? null, grossAmount, platformFee, netAmount, note: note || null },
     })),
     /** PUT /api/payouts/{id}/process { status, note } */
-    process: async (id, status, note) => normalizePayout(await request(`/api/payouts/${id}/process`, { method: "PUT", json: { status, note: note || null } })),
+    process: async (id, status, note) => normalizePayout(await request(endpoints.payouts.byIdProcess(id), { method: "PUT", json: { status, note: note || null } })),
 };
+
+export function useOwnerPayouts() {
+    return useApiQuery(["owner", "payouts"], payoutService.getStatement);
+}

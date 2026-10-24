@@ -1,24 +1,14 @@
-import { useCallback } from "react";
+import { useAdminOrderDetail } from "@/shared/hooks/useAdmin.js";
 import { AdminDialog, AdminState } from "@/shared/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { formatMoney, orderStatusLabels, paymentMethodLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/shared/utils/labels.js";
-import { request, toPage } from "@/services/http.js";
-
 
 export const tabs = [{ id: "", label: "Tất cả" }, ...["PENDING", "CONFIRMED", "ONGOING", "COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"].map(id => ({ id, label: orderStatusLabels[id] }))];
 export const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger", REJECTED: "danger", EXPIRED: "neutral" };
 export const payTone = { UNPAID: "warning", PAID: "success", REFUNDED: "info" };
 
 export function OrderDialog({ order, onClose }) {
-    const load = useCallback(async () => {
-        const [logs, transactions] = await Promise.all([
-            request(`/api/orders/${order.id}/logs`).catch(() => []),
-            request("/api/transactions", { query: { orderId: order.id, size: 50 } }).then(toPage).then(page => page.content).catch(() => []),
-        ]);
-        return { logs: Array.isArray(logs) ? logs : [], transactions };
-    }, [order.id]);
-    const detail = useApiQuery(["admin", "order-detail", order.id], load);
+    const detail = useAdminOrderDetail(order.id);
     return <AdminDialog title={`Đơn ${order.orderCode}`} onClose={onClose}>
     <div className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto text-sm">
       <dl className="grid grid-cols-2 gap-2">

@@ -1,7 +1,10 @@
-import { fetchAllPages } from "./http";
-import { normalizeOrder } from "./adapters";
-import { carService } from "./car.service";
-import { slotService } from "./slot.service";
+import { endpoints } from "@/shared/api/endpoints.js";
+import { fetchAllPages } from "@/shared/api/client.js";
+import { normalizeOrder } from "@/shared/utils/apiResponse.js";
+import { carService } from "@/shared/hooks/useVehicles.js";
+import { slotService } from "@/shared/hooks/useAvailability.js";
+import { useCallback } from "react";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
 
 const overlaps = (item, from, to) => Date.parse(item.startTime) < to.getTime() && Date.parse(item.endTime) > from.getTime();
 const bookedStatuses = new Set(["CONFIRMED", "ONGOING", "COMPLETED"]);
@@ -12,7 +15,7 @@ export const calendarService = {
         const cars = await carService.listMine();
         const [slotLists, orders] = await Promise.all([
             Promise.all(cars.map(car => slotService.listByCar(car.id).catch(() => []))),
-            fetchAllPages("/api/orders/my-cars", { sortBy: "startTime", direction: "asc" }),
+            fetchAllPages(endpoints.orders.myCars, { sortBy: "startTime", direction: "asc" }),
         ]);
         return {
             cars,
@@ -21,3 +24,9 @@ export const calendarService = {
         };
     },
 };
+
+/** `month` tính từ 0 như `Date#getMonth()`. */
+export function useOwnerCalendar(year, month) {
+    const load = useCallback(() => calendarService.getRange(new Date(year, month, 1), new Date(year, month + 1, 1)), [year, month]);
+    return useApiQuery(["owner", "calendar", year, month], load);
+}
