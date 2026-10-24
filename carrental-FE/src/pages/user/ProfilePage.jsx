@@ -1,12 +1,12 @@
 import { useCallback, useRef, useState } from "react";
-import { DateField } from "@/components/DateField.jsx";
-import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
-import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDate, toLocalDate } from "@/utils/datetime.js";
-import { kycStatusLabels } from "@/utils/labels.js";
-import { updateSessionAccount } from "@/storage/sessionStorage.js";
+import { DateField } from "@/shared/components/DateField.jsx";
+import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
+import { LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDate, toLocalDate } from "@/shared/utils/datetime.js";
+import { kycStatusLabels } from "@/shared/utils/labels.js";
+import { updateSessionAccount } from "@/shared/storage/session.js";
 import { changePassword } from "@/services/auth.service";
 import { getMyKyc, getMyProfile, updateMyProfile } from "@/services/customer.service";
 

@@ -1,6 +1,6 @@
 import { Link } from "react-router";
-import { InteractiveGrid } from "@/components/InteractiveGrid.jsx";
-import { HeroCarScene } from "@/components/HeroCarScene.jsx";
+import { InteractiveGrid } from "@/shared/components/InteractiveGrid.jsx";
+import { HeroCarScene } from "@/shared/components/HeroCarScene.jsx";
 export default function Home() {
     return (<div className="cardb-screen screen-home bg-page-bg font-sans text-text-primary antialiased selection:bg-brand-accent selection:text-white  flex flex-col justify-between">
 

@@ -1,16 +1,16 @@
 import { Link } from "react-router";
 import { useCallback, useMemo, useState } from "react";
-import { DateTimeField } from "@/components/DateField.jsx";
-import { Icon } from "@/components/Icon.jsx";
-import { Money } from "@/components/owner/Money.jsx";
-import { OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/OwnerScreen.jsx";
-import { useOwnerCalendar } from "@/hooks/owner/useOwnerCalendar.js";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDateTime, toInputDateTime } from "@/utils/datetime.js";
+import { DateTimeField } from "@/shared/components/DateField.jsx";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { Money } from "@/shared/components/owner/Money.jsx";
+import { OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/shared/components/owner/OwnerScreen.jsx";
+import { useOwnerCalendar } from "@/shared/hooks/useOwnerCalendar.js";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDateTime, toInputDateTime } from "@/shared/utils/datetime.js";
 import { slotService } from "@/services/slot.service";
-import { formatVnd } from "@/utils/owner.js";
-import { ownerRoutes } from "@/routes/owner.routes.js";
+import { formatVnd } from "@/shared/utils/owner.js";
+import { ownerRoutes } from "@/app/routes/owner.routes.js";
 const weekdayLabels = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 function startOfDay(date) {
     return new Date(date.getFullYear(), date.getMonth(), date.getDate());

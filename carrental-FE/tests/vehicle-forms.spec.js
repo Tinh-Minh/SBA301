@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { parseVndInput } from "../src/utils/inputParser.js";
-import { vehiclePricingSchema, vehicleCreateSchema } from "../src/validation/vehicle.js";
+import { parseVndInput } from "../src/shared/utils/inputParser.js";
+import { vehiclePricingSchema, vehicleCreateSchema } from "../src/shared/schemas/vehicle.js";
 
 const car = {
   id: 42, ownerId: 1, brand: "VinFast", model: "VF 9", licensePlate: "51K-12345",

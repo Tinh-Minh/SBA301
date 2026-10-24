@@ -1,17 +1,17 @@
 import { Controller, useForm, useWatch } from "react-hook-form";
-import { vehiclePricingSchema } from "@/validation/vehicle.js";
+import { vehiclePricingSchema } from "@/shared/schemas/vehicle.js";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormErrors } from "@/components/FormErrors.jsx";
-import { digitsOnly as digitsOf, formatVndInput as grouped, parseVndInput } from "@/utils/inputParser.js";
+import { FormErrors } from "@/shared/components/FormErrors.jsx";
+import { digitsOnly as digitsOf, formatVndInput as grouped, parseVndInput } from "@/shared/utils/inputParser.js";
 import { Link } from "react-router";
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/Icon.jsx";
-import { Money } from "@/components/owner/Money.jsx";
-import { OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
-import { useOwnerCar } from "@/hooks/owner/useOwnerCars.js";
-import { calculatePlatformFee, formatVnd, carSubtitle } from "@/utils/owner.js";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { Money } from "@/shared/components/owner/Money.jsx";
+import { OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
+import { useOwnerCar } from "@/shared/hooks/useOwnerCars.js";
+import { calculatePlatformFee, formatVnd, carSubtitle } from "@/shared/utils/owner.js";
 
-import { ownerRoutes } from "@/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/owner.routes.js";
 const steps = [
     { id: 1, title: "Thông tin & giấy tờ", hint: "Hồ sơ pháp lý của xe" },
     { id: 2, title: "Thông số", hint: "Loại xe, chỗ ngồi, nhiên liệu" },

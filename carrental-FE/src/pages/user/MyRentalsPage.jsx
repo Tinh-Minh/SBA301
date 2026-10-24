@@ -1,11 +1,11 @@
 import { Link } from "react-router";
 import { useCallback, useState } from "react";
-import { RequireAuth } from "@/components/RequireAuth.jsx";
-import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
-import { LivePage, LiveState, Pill } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { formatDateTime } from "@/utils/datetime.js";
-import { formatMoney, orderStatusLabels, orderStatusTone, paymentStatusLabels } from "@/utils/labels.js";
+import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
+import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
+import { LivePage, LiveState, Pill } from "@/shared/components/LiveUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { formatDateTime } from "@/shared/utils/datetime.js";
+import { formatMoney, orderStatusLabels, orderStatusTone, paymentStatusLabels } from "@/shared/utils/labels.js";
 import { rentalService } from "@/services/order.service";
 
 const groups = {

@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { AdminDialog, AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { formatDateTime } from "@/utils/datetime.js";
-import { formatMoney, orderStatusLabels, paymentMethodLabels, paymentStatusLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
+import { AdminDialog, AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/shared/components/admin/AdminUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { formatDateTime } from "@/shared/utils/datetime.js";
+import { formatMoney, orderStatusLabels, paymentMethodLabels, paymentStatusLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/shared/utils/labels.js";
 import { request, toPage } from "@/services/http.js";
 import { adminOrderService } from "@/services/admin.service";
 

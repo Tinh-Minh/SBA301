@@ -1,10 +1,10 @@
 import { Link } from "react-router";
-import { Icon } from "@/components/Icon.jsx";
-import { Money } from "@/components/owner/Money.jsx";
-import { useOwnerDashboard } from "@/hooks/owner/useOwnerDashboard.js";
-import { carSubtitle, formatActivityTime, formatRentalPeriod, maskBankAccount, formatVnd, kycStatusMeta } from "@/utils/owner.js";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { Money } from "@/shared/components/owner/Money.jsx";
+import { useOwnerDashboard } from "@/shared/hooks/useOwnerDashboard.js";
+import { carSubtitle, formatActivityTime, formatRentalPeriod, maskBankAccount, formatVnd, kycStatusMeta } from "@/shared/utils/owner.js";
 
-import { ownerRoutes } from "@/routes/owner.routes.js";
+import { ownerRoutes } from "@/app/routes/owner.routes.js";
 
 const activityTone = {
     warning: "bg-status-amber-bg border-amber-200 text-status-amber-dark",

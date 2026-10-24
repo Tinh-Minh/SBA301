@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import { Link } from "react-router";
-import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
-import { LiveState, Primary } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDate } from "@/utils/datetime.js";
-import { kycStatusLabels } from "@/utils/labels.js";
+import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
+import { LiveState, Primary } from "@/shared/components/LiveUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDate } from "@/shared/utils/datetime.js";
+import { kycStatusLabels } from "@/shared/utils/labels.js";
 import { driverService } from "@/services/customer-extra.service";
 
 const driverStatus = { PENDING: "Chờ duyệt", ACTIVE: "Đang hoạt động", SUSPENDED: "Tạm ngưng" };

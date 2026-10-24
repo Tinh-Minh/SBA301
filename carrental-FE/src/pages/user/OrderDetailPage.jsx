@@ -1,13 +1,13 @@
 import { Link } from "react-router";
 import { useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
-import { RequireAuth } from "@/components/RequireAuth.jsx";
-import { LivePage, LiveState, Pill, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDateTime } from "@/utils/datetime.js";
-import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner.js";
-import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/utils/labels.js";
+import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
+import { LivePage, LiveState, Pill, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDateTime } from "@/shared/utils/datetime.js";
+import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/shared/utils/owner.js";
+import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/shared/utils/labels.js";
 import { handoverService } from "@/services/handover.service";
 import { rentalService } from "@/services/order.service";
 

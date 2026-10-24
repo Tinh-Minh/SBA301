@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDate } from "@/utils/datetime.js";
-import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels, verifyStatusLabels } from "@/utils/labels.js";
+import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs } from "@/shared/components/admin/AdminUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDate } from "@/shared/utils/datetime.js";
+import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
 import { adminCarService } from "@/services/admin.service";
 
 const tabs = [

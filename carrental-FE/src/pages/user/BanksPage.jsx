@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
-import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
+import { LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
 import { bankAccountService } from "@/services/bank-account.service";
 
 export default function BanksLive() {

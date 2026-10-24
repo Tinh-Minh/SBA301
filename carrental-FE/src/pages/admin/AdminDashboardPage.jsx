@@ -1,11 +1,11 @@
 import { Link } from "react-router";
-import { AdminPageHeader, AdminState, StatusPill } from "@/components/admin/AdminUi.jsx";
-import { Money } from "@/components/owner/Money.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { formatTrVnd } from "@/utils/owner.js";
-import { adminRoutes } from "@/routes/admin.routes.js";
-import { formatDateTime } from "@/utils/datetime.js";
-import { kycStatusLabels, orderStatusLabels } from "@/utils/labels.js";
+import { AdminPageHeader, AdminState, StatusPill } from "@/shared/components/admin/AdminUi.jsx";
+import { Money } from "@/shared/components/owner/Money.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { formatTrVnd } from "@/shared/utils/owner.js";
+import { adminRoutes } from "@/app/routes/admin.routes.js";
+import { formatDateTime } from "@/shared/utils/datetime.js";
+import { kycStatusLabels, orderStatusLabels } from "@/shared/utils/labels.js";
 import { getAdminOverview } from "@/services/admin.service";
 
 const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger", REJECTED: "danger", EXPIRED: "neutral" };

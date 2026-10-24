@@ -1,4 +1,4 @@
-import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
+import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
 import { Link } from "react-router";
 export default function BanksAlternative() {
     return (<div className="cardb-screen screen-banksalternative bg-background font-body-md text-body-md text-on-surface antialiased"><ProfileLayout active="banks" title="Tài khoản ngân hàng" description="Quản lý tài khoản ngân hàng để nhận các khoản chi trả từ hoạt động cho thuê xe an toàn, bảo mật và đúng định danh." actions={<><button className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full bg-primary-container text-on-primary font-label-md text-label-md font-semibold tracking-wide hover:bg-primary transition-all duration-200 active:scale-95 shadow-md shrink-0" type="button" aria-label="Thêm tài khoản ngân hàng" data-route="/account/bank/add">

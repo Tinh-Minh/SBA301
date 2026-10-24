@@ -1,5 +1,5 @@
-import { sumAmounts } from "@/utils/owner.js";
-import { currentUserId } from "@/storage/sessionStorage.js";
+import { sumAmounts } from "@/shared/utils/owner.js";
+import { currentUserId } from "@/shared/storage/session.js";
 import { fetchAllPages, request, toPage } from "./http";
 import { carFromOrder, normalizeOrder, normalizePayout } from "./adapters";
 import { bankAccountService } from "./bank-account.service";

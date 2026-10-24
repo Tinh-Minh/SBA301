@@ -1,11 +1,11 @@
 import { useCallback, useState } from "react";
-import { ProfileLayout } from "@/layouts/ProfileLayout.jsx";
-import { LiveState, Pill, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { DateField } from "@/components/DateField.jsx";
-import { formatDateTime } from "@/utils/datetime.js";
-import { docTypeLabels, verifyStatusLabels } from "@/utils/labels.js";
+import { ProfileLayout } from "@/shared/layouts/ProfileLayout.jsx";
+import { LiveState, Pill, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { DateField } from "@/shared/components/DateField.jsx";
+import { formatDateTime } from "@/shared/utils/datetime.js";
+import { docTypeLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
 import { userDocumentService } from "@/services/customer-extra.service";
 
 const tone = { PENDING: "bg-[#FEF3C7] text-[#B45309]", APPROVED: "bg-[#D1FAE5] text-[#047857]", REJECTED: "bg-[#FEE2E2] text-[#B91C1C]" };

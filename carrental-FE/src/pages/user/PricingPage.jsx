@@ -1,14 +1,14 @@
 import { Link } from "react-router";
-import { Icon } from "@/components/Icon.jsx";
-import { PricingExplorer } from "@/components/PricingExplorer.jsx";
-import { formatPrice, pricingSegments } from "@/utils/pricing.js";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { PricingExplorer } from "@/shared/components/PricingExplorer.jsx";
+import { formatPrice, pricingSegments } from "@/shared/utils/pricing.js";
 const fees = [
     { icon: "person", title: "Tài xế riêng", price: "350.000 đ/ngày", detail: "Khung phục vụ tham khảo 10 giờ/ngày. Lưu trú và ngoài giờ được thống nhất riêng trước chuyến đi." },
     { icon: "speed", title: "Vượt số kilomet", price: "3.000–5.000 đ/km", detail: "Áp dụng cho quãng đường vượt hạn mức của từng xe. Đối chiếu số ODO khi nhận và trả xe." },
     { icon: "schedule", title: "Trả xe quá giờ", price: "80.000–120.000 đ/giờ", detail: "Thời gian ân hạn và cách quy đổi sang ngày thuê được ghi rõ trong hợp đồng của từng xe." },
     { icon: "local_shipping", title: "Giao nhận tận nơi", price: "Từ 15.000 đ/km", detail: "Tham khảo miễn phí trong bán kính 5 km. Giao sân bay 150.000 đ/lượt, xác nhận theo điểm nhận xe." },
 ];
-import { PricingConsultation } from "@/components/PricingConsultation.jsx";
+import { PricingConsultation } from "@/shared/components/PricingConsultation.jsx";
 export default function Pricing() {
     return <div className="cardb-screen screen-pricing bg-section-bg text-text-primary"><main className="pt-20">
     <PricingExplorer intro={<div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end"><div className="max-w-2xl"><p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-accent"><span className="size-2 rounded-full bg-brand-accent"/>Biểu phí niêm yết minh bạch</p><h1 className="text-3xl font-bold tracking-tight md:text-5xl md:leading-tight">Chi phí thuê xe & bảng giá</h1><p className="mt-3 text-base leading-relaxed text-text-secondary">Chính sách giá rõ ràng, từng khoản được tách riêng. Tiết kiệm hơn khi thuê theo tuần hoặc theo tháng.</p></div><div className="flex flex-wrap items-center gap-2 md:shrink-0"><button type="button" data-action="receipt" className="ui-action inline-flex items-center gap-2 rounded-full bg-card-bg px-4 py-2 text-xs font-semibold shadow-sm hover:shadow-md"><Icon name="print" className="text-[18px] text-brand-accent"/>In / Lưu PDF</button><a href="#enterpriseConsult" className="ui-action inline-flex items-center gap-2 rounded-full bg-text-primary px-4 py-2 text-xs font-semibold text-on-primary hover:bg-brand-accent"><Icon name="badge" className="text-[18px]"/>Tư vấn doanh nghiệp</a></div></div>} benefits={<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{[

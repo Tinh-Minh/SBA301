@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
-import { AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDateTime } from "@/utils/datetime.js";
-import { disputeStatusLabels } from "@/utils/labels.js";
+import { AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs } from "@/shared/components/admin/AdminUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDateTime } from "@/shared/utils/datetime.js";
+import { disputeStatusLabels } from "@/shared/utils/labels.js";
 import { disputeService } from "@/services/admin.service";
 
 const tone = { OPEN: "warning", IN_REVIEW: "info", RESOLVED: "success", REJECTED: "danger" };

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/components/AuthProvider.jsx";
-import { FormErrors } from "@/components/FormErrors.jsx";
-import { registrationSchema } from "@/validation/auth.js";
+import { useAuth } from "@/shared/hooks/useAuth.js";
+import { FormErrors } from "@/shared/components/FormErrors.jsx";
+import { registrationSchema } from "@/shared/schemas/auth.js";
 import { Link, useNavigate } from "react-router";
-import { PasswordStrength } from "@/components/PasswordStrength.jsx";
+import { PasswordStrength } from "@/shared/components/PasswordStrength.jsx";
 export default function Register() {
     const navigate = useNavigate();
     const [passwordVisible, setPasswordVisible] = useState(false);

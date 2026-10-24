@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDate, formatDateTime } from "@/utils/datetime.js";
-import { docTypeLabels, kycStatusLabels, verifyStatusLabels } from "@/utils/labels.js";
+import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/shared/components/admin/AdminUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDate, formatDateTime } from "@/shared/utils/datetime.js";
+import { docTypeLabels, kycStatusLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
 import { adminUserService } from "@/services/admin.service";
 
 const tabs = [

@@ -1,12 +1,12 @@
 import { useMemo, useState } from "react";
-import { Icon } from "@/components/Icon.jsx";
-import { CountdownBadge } from "@/components/owner/CountdownBadge.jsx";
-import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/components/owner/OwnerScreen.jsx";
-import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatRentalPeriod, canRespondToOrder, kycStatusMeta, orderStatusMeta } from "@/utils/owner.js";
-import { ownerRoutes } from "@/routes/owner.routes.js";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { CountdownBadge } from "@/shared/components/owner/CountdownBadge.jsx";
+import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState, PayoutMath } from "@/shared/components/owner/OwnerScreen.jsx";
+import { StatusBadge } from "@/shared/components/owner/StatusBadge.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatRentalPeriod, canRespondToOrder, kycStatusMeta, orderStatusMeta } from "@/shared/utils/owner.js";
+import { ownerRoutes } from "@/app/routes/owner.routes.js";
 
 import { orderService } from "@/services/order.service";
 const filters = [

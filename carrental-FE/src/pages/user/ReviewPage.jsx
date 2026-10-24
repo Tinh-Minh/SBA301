@@ -1,11 +1,11 @@
 import { Link } from "react-router";
 import { useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
-import { RequireAuth } from "@/components/RequireAuth.jsx";
-import { LivePage, LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { currentUserId } from "@/storage/sessionStorage.js";
+import { RequireAuth } from "@/shared/components/RequireAuth.jsx";
+import { LivePage, LiveState, Primary, fieldClass } from "@/shared/components/LiveUi.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { currentUserId } from "@/shared/storage/session.js";
 import { rentalService } from "@/services/order.service";
 import { reviewService } from "@/services/customer-extra.service";
 

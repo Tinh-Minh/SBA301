@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
-import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/components/admin/AdminUi.jsx";
-import { DateTimeField } from "@/components/DateField.jsx";
-import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { formatDateTime, toInputDateTime } from "@/utils/datetime.js";
-import { formatMoney } from "@/utils/labels.js";
+import { AdminDialog, AdminPageHeader, AdminState, Pager, PrimaryButton, StatusPill, Tabs, adminInput } from "@/shared/components/admin/AdminUi.jsx";
+import { DateTimeField } from "@/shared/components/DateField.jsx";
+import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { formatDateTime, toInputDateTime } from "@/shared/utils/datetime.js";
+import { formatMoney } from "@/shared/utils/labels.js";
 import { adminVoucherService } from "@/services/admin.service";
 
 const tabs = [

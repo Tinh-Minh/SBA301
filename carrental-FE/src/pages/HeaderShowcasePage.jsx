@@ -1,5 +1,5 @@
-import { Header } from "@/components/Header.jsx";
-import { ReferenceFooter } from "@/components/ReferenceFooter.jsx";
+import { Header } from "@/shared/components/Header.jsx";
+import { ReferenceFooter } from "@/shared/components/ReferenceFooter.jsx";
 export default function HeaderShowcase() {
     return <main className="px-6 pt-28 pb-12 md:px-10"><div className="mx-auto max-w-6xl space-y-12">
     <div className="border-b border-border-light pb-5"><h1 className="text-2xl font-bold text-text-primary md:text-3xl">Các trạng thái điều hướng CarDB</h1><p className="mt-2 text-sm text-text-secondary">Thành phần dùng chung cho khách vãng lai, khách đã đăng nhập và chân trang hệ thống.</p></div>

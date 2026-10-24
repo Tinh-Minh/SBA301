@@ -1,12 +1,12 @@
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
-import { Icon } from "@/components/Icon.jsx";
-import { Money } from "@/components/owner/Money.jsx";
-import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
-import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { useOwnerCars } from "@/hooks/owner/useOwnerCars.js";
-import { carSubtitle, isApprovedCar, carStatusMeta } from "@/utils/owner.js";
-import { ownerRoutes } from "@/routes/owner.routes.js";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { Money } from "@/shared/components/owner/Money.jsx";
+import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/shared/components/owner/OwnerScreen.jsx";
+import { StatusBadge } from "@/shared/components/owner/StatusBadge.jsx";
+import { useOwnerCars } from "@/shared/hooks/useOwnerCars.js";
+import { carSubtitle, isApprovedCar, carStatusMeta } from "@/shared/utils/owner.js";
+import { ownerRoutes } from "@/app/routes/owner.routes.js";
 
 const filters = [
     { id: "all", label: "Tất cả" },

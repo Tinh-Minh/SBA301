@@ -1,20 +1,20 @@
 import { useForm, useWatch } from "react-hook-form";
-import { vehicleCreateSchema, vehicleStepFields, vehicleStepSchemas } from "@/validation/vehicle.js";
-import { httpUrlInput, validateInput } from "@/utils/validateInput.js";
+import { vehicleCreateSchema, vehicleStepFields, vehicleStepSchemas } from "@/shared/schemas/vehicle.js";
+import { httpUrlInput, validateInput } from "@/shared/utils/validateInput.js";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormErrors } from "@/components/FormErrors.jsx";
-import { digitsOnly as digitsOf, formatVndInput as grouped, parseVndInput } from "@/utils/inputParser.js";
+import { FormErrors } from "@/shared/components/FormErrors.jsx";
+import { digitsOnly as digitsOf, formatVndInput as grouped, parseVndInput } from "@/shared/utils/inputParser.js";
 import { Link } from "react-router";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/Icon.jsx";
-import { Money } from "@/components/owner/Money.jsx";
-import { OwnerCrumb } from "@/components/owner/OwnerScreen.jsx";
-import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { calculatePlatformFee, formatVnd } from "@/utils/owner.js";
-import { ownerRoutes } from "@/routes/owner.routes.js";
+import { Icon } from "@/shared/components/Icon.jsx";
+import { Money } from "@/shared/components/owner/Money.jsx";
+import { OwnerCrumb } from "@/shared/components/owner/OwnerScreen.jsx";
+import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { calculatePlatformFee, formatVnd } from "@/shared/utils/owner.js";
+import { ownerRoutes } from "@/app/routes/owner.routes.js";
 import { carService } from "@/services/car.service";
-import { useAuth } from "@/components/AuthProvider.jsx";
+import { useAuth } from "@/shared/hooks/useAuth.js";
 const DRAFT_KEY = "cardb-vehicle-draft";
 const steps = [
     { id: 1, title: "Thông tin & Giấy tờ", next: "Tiếp tục: Thông số & Tiện nghi (Bước 2)", blurb: "Cung cấp thông tin đăng ký, biển số và chứng từ pháp lý của phương tiện." },

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/components/AuthProvider.jsx";
-import { FormErrors } from "@/components/FormErrors.jsx";
-import { loginSchema } from "@/validation/auth.js";
+import { useAuth } from "@/shared/hooks/useAuth.js";
+import { FormErrors } from "@/shared/components/FormErrors.jsx";
+import { loginSchema } from "@/shared/schemas/auth.js";
 import { Link, useNavigate, useSearchParams } from "react-router";
 export default function Login() {
     const navigate = useNavigate();
