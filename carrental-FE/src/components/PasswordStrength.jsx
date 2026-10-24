@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 
 const LEVELS = [
     { label: "Yếu", color: "#DC2626" },
@@ -24,17 +23,8 @@ function scorePassword(value) {
     return 3;
 }
 
-export function PasswordStrength({ inputId = "reg-password" }) {
-    const [score, setScore] = useState(0);
-    useEffect(() => {
-        const input = document.getElementById(inputId);
-        if (!input)
-            return undefined;
-        const update = () => setScore(scorePassword(input.value));
-        update();
-        input.addEventListener("input", update);
-        return () => input.removeEventListener("input", update);
-    }, [inputId]);
+export function PasswordStrength({ value = "" }) {
+    const score = scorePassword(value);
     const level = score > 0 ? LEVELS[score - 1] : null;
     return <div className="pt-0.5 space-y-1" aria-live="polite">
     <div className="flex items-center gap-1.5">

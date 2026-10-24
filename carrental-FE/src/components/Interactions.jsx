@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useAuth } from "@/components/AuthProvider.jsx";
 import { HoldButton } from "@/components/HoldButton.jsx";
 import { Icon } from "@/components/Icon.jsx";
 const money = (value) => Math.round(value).toLocaleString("vi-VN") + " đ";
@@ -17,7 +16,6 @@ function Modal({ title, close, children }) {
 export function Interactions({ children }) {
     const navigate = useNavigate();
     const path = useLocation().pathname;
-    const { login, register } = useAuth();
     const root = useRef(null);
     const toastTimer = useRef(null);
     const [toast, setToast] = useState("");
@@ -416,69 +414,11 @@ export function Interactions({ children }) {
             notify("Đã cập nhật lựa chọn.");
         }
     }
-    const value = (id) => document.getElementById(id)?.value ?? "";
-    async function submitLogin(form) {
-        const email = value("login-account").trim();
-        const password = value("login-password");
-        if (!/^\S+@\S+\.\S+$/.test(email)) {
-            notify("Vui lòng nhập email đã đăng ký (hệ thống đăng nhập bằng email).");
-            return;
-        }
-        if (!password) {
-            notify("Vui lòng nhập mật khẩu.");
-            return;
-        }
-        form.setAttribute("aria-busy", "true");
-        try {
-            const session = await login({ email, password });
-            notify(`Xin chào ${session.account.fullName}!`);
-            const next = new URLSearchParams(window.location.search).get("next");
-            navigate(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/explore");
-        }
-        catch (error) {
-            notify(error.status === 401 ? "Email hoặc mật khẩu không đúng." : error.message);
-        }
-        finally {
-            form.removeAttribute("aria-busy");
-        }
-    }
-    async function submitRegister(form) {
-        const payload = { fullName: value("reg-fullname"), email: value("reg-email"), phone: value("reg-phone"), password: value("reg-password") };
-        if (!payload.fullName.trim() || !payload.email.trim() || !payload.phone.trim() || !payload.password) {
-            notify("Vui lòng nhập đầy đủ họ tên, email, số điện thoại và mật khẩu.");
-            return;
-        }
-        if (payload.password !== value("reg-confirm-password")) {
-            notify("Mật khẩu xác nhận chưa khớp.");
-            return;
-        }
-        form.setAttribute("aria-busy", "true");
-        try {
-            await register(payload);
-            await login({ email: payload.email, password: payload.password });
-            notify("Tạo tài khoản thành công. Chào mừng bạn đến với CarDB!");
-            navigate("/account");
-        }
-        catch (error) {
-            notify(error.message);
-        }
-        finally {
-            form.removeAttribute("aria-busy");
-        }
-    }
     function submit(event) {
         if (event.target.closest?.("[data-native]"))
             return;
         event.preventDefault();
         const form = event.target;
-        if (path === "/login") {
-            void submitLogin(form);
-            return;
-        }
-        if (path === "/register") {
-            void submitRegister(form);
-            return;
-        }
         if (path.includes("/bank/")) {
             try {
                 localStorage.setItem("cardb:bank:v1", JSON.stringify({ name: form.querySelector('#bank-name')?.value, number: form.querySelector('#account-number')?.value }));
