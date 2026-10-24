@@ -1,3 +1,4 @@
+import axios from "axios";
 import { clearSession, readSession } from "@/storage/sessionStorage.js";
 
 /**
@@ -31,8 +32,7 @@ function buildQuery(query) {
         else
             params.append(key, String(value));
     }
-    const text = params.toString();
-    return text ? `?${text}` : "";
+    return params.toString();
 }
 
 const statusMessages = {
@@ -59,59 +59,62 @@ function unwrap(body) {
     return body;
 }
 
-/**
- * Gọi backend. `init.json` sẽ được serialize thành JSON; `init.query` thành query string.
- * Tự gắn `Authorization: Bearer` và `X-User-Id` từ phiên đăng nhập.
- */
-export async function request(path, init = {}) {
-    const { json, query, auth = true, headers: extraHeaders, ...rest } = init;
-    const headers = { Accept: "application/json", ...extraHeaders };
-    let body = rest.body;
-    if (json !== undefined) {
-        body = JSON.stringify(json);
-        headers["Content-Type"] = "application/json";
+function decodeResponse(response) {
+    if (response.status === 204) return undefined;
+    const body = response.data;
+    if (response.headers["content-type"]?.includes("json")) {
+        if (typeof body !== "string") return body;
+        try { return JSON.parse(body); } catch { return undefined; }
     }
-    else if (typeof body === "string" && !headers["Content-Type"]) {
-        headers["Content-Type"] = "application/json";
-    }
-    const session = auth ? readSession() : null;
+    return body ? { message: String(body).length > 300 ? undefined : String(body) } : undefined;
+}
+
+export const httpClient = axios.create({
+    baseURL: API_BASE_URL || undefined,
+    headers: { Accept: "application/json" },
+    paramsSerializer: { serialize: buildQuery },
+    responseType: "text",
+    transformResponse: [body => body],
+});
+
+httpClient.interceptors.request.use(config => {
+    const session = config.requiresAuth === false ? null : readSession();
     if (session) {
-        headers.Authorization = `${session.tokenType || "Bearer"} ${session.accessToken}`;
-        headers["X-User-Id"] = String(session.account.id);
+        config.headers.set("Authorization", `${session.tokenType || "Bearer"} ${session.accessToken}`);
+        config.headers.set("X-User-Id", String(session.account.id));
+        config.sessionToken = session.accessToken;
     }
-    let response;
-    try {
-        response = await fetch(`${API_BASE_URL}${path}${buildQuery(query)}`, { ...rest, body, headers });
-    }
-    catch {
-        throw new ApiError(0, "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy ở cổng 8080 chưa.");
-    }
-    const contentType = response.headers.get("content-type") || "";
-    let payload;
-    if (response.status !== 204) {
-        if (contentType.includes("json")) {
-            try {
-                payload = await response.json();
-            }
-            catch {
-                payload = undefined;
-            }
-        }
-        else {
-            const text = await response.text();
-            payload = text ? { message: text.length > 300 ? undefined : text } : undefined;
-        }
-    }
-    if (!response.ok) {
-        if (response.status === 401 && session)
-            clearSession();
-        if (response.status >= 500 && !payload?.message)
-            throw new ApiError(response.status, response.status === 502 || response.status === 503 || response.status === 504
-                ? "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy chưa."
-                : statusMessages[500]);
-        throw errorFromBody(response.status, payload);
-    }
-    return unwrap(payload);
+    return config;
+});
+
+httpClient.interceptors.response.use(response => {
+    response.data = unwrap(decodeResponse(response));
+    return response;
+}, error => {
+    if (axios.isCancel(error)) return Promise.reject(error);
+    const response = error.response;
+    if (!response) return Promise.reject(new ApiError(0,
+        "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy ở cổng 8080 chưa."));
+    const { status } = response;
+    const payload = decodeResponse(response);
+    if (status === 401 && error.config.sessionToken && error.config.sessionToken === readSession()?.accessToken)
+        clearSession();
+    if (status >= 500 && !payload?.message) return Promise.reject(new ApiError(status,
+        [502, 503, 504].includes(status) ? "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy chưa." : statusMessages[500]));
+    return Promise.reject(errorFromBody(status, payload));
+});
+
+/** Shared backend request contract; Axios owns transport and interceptors. */
+export async function request(path, init = {}) {
+    const { json, query, auth = true, headers = {}, body, credentials, ...config } = init;
+    const data = json !== undefined ? json : body;
+    if (json !== undefined || typeof data === "string")
+        headers["Content-Type"] ??= "application/json";
+    const response = await httpClient.request({
+        ...config, url: path, params: query, data, headers, requiresAuth: auth,
+        ...(credentials ? { withCredentials: credentials === "include" } : {}),
+    });
+    return response.data;
 }
 
 export const jsonBody = (value) => JSON.stringify(value);
