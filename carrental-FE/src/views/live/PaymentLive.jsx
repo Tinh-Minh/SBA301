@@ -11,12 +11,134 @@ import { rentalService } from "@/services/order.service";
 import { transactionService } from "@/services/customer-extra.service";
 
 export default function PaymentLive() {
-    const orderId = useSearchParams().get("orderId");
-    return <LivePage width="max-w-xl">
-    <RequireAuth title="Đăng nhập để thanh toán">
-      {orderId ? <Pay orderId={orderId}/> : <OrderSelector />}
-    </RequireAuth>
-  </LivePage>;
+    const searchParams = useSearchParams();
+    const orderId = searchParams.get("orderId");
+    const isVnPayReturn = searchParams.has("vnp_ResponseCode") || searchParams.has("vnp_TxnRef");
+
+    return (
+        <LivePage width="max-w-xl">
+            <RequireAuth title="Đăng nhập để thanh toán">
+                {isVnPayReturn ? (
+                    <VNPayReturn searchParams={searchParams} />
+                ) : orderId ? (
+                    <Pay orderId={orderId} />
+                ) : (
+                    <OrderSelector />
+                )}
+            </RequireAuth>
+        </LivePage>
+    );
+}
+
+function VNPayReturn({ searchParams }) {
+    const processReturn = useCallback(async () => {
+        const params = Object.fromEntries(searchParams.entries());
+        return await transactionService.vnpayReturn(params);
+    }, [searchParams]);
+
+    const result = useAsyncResource(processReturn);
+
+    if (result.loading) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-8 text-center shadow-sm">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#FC6C26] border-t-transparent"></div>
+                <h2 className="text-lg font-bold text-[#292929]">Đang xác nhận kết quả thanh toán từ VNPay...</h2>
+                <p className="text-sm text-[#666666]">Vui lòng đợi trong giây lát, hệ thống đang cập nhật trạng thái đơn hàng của bạn.</p>
+            </div>
+        );
+    }
+
+    if (result.error) {
+        return (
+            <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-8 text-center shadow-sm">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF2F2] text-[#DC2626]">
+                    <span className="material-symbols-outlined text-[32px]">error</span>
+                </div>
+                <h2 className="text-lg font-bold text-[#292929]">Không thể xác nhận giao dịch</h2>
+                <p className="text-sm text-[#DC2626]">{result.error.message}</p>
+                <div className="mt-2 flex gap-3">
+                    <button
+                        type="button"
+                        onClick={result.reload}
+                        className="rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e05b19] transition-colors"
+                    >
+                        Thử lại
+                    </button>
+                    <Link
+                        href="/my-trips"
+                        className="rounded-xl border border-[#E9E9E7] bg-white px-5 py-2.5 text-sm font-bold text-[#292929] hover:bg-[#F7F7F5] transition-colors"
+                    >
+                        Về chuyến xe của tôi
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    const tx = result.data;
+    const isSuccess = tx?.status === "SUCCESS";
+
+    return (
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-8 text-center shadow-sm">
+            <div
+                className={`flex h-16 w-16 items-center justify-center rounded-full ${
+                    isSuccess ? "bg-[#ECFDF5] text-[#059669]" : "bg-[#FEF2F2] text-[#DC2626]"
+                }`}
+            >
+                <span className="material-symbols-outlined text-[32px]">
+                    {isSuccess ? "check_circle" : "cancel"}
+                </span>
+            </div>
+            <h2 className="text-xl font-bold text-[#292929]">
+                {isSuccess ? "Thanh toán thành công!" : "Thanh toán không thành công"}
+            </h2>
+            <p className="text-sm text-[#666666]">
+                {isSuccess
+                    ? "Giao dịch qua cổng VNPay Sandbox đã được xác nhận. Đơn thuê xe của bạn đã chuyển sang trạng thái ĐÃ THANH TOÁN."
+                    : "Giao dịch thanh toán đã bị hủy hoặc chưa hoàn tất."}
+            </p>
+
+            <div className="w-full rounded-xl bg-[#F7F7F5] p-4 text-left text-sm flex flex-col gap-2">
+                <div className="flex justify-between">
+                    <span className="text-[#666666]">Mã giao dịch:</span>
+                    <span className="font-mono font-bold text-[#292929]">#{tx?.id}</span>
+                </div>
+                {tx?.orderCode && (
+                    <div className="flex justify-between">
+                        <span className="text-[#666666]">Mã đơn hàng:</span>
+                        <span className="font-mono font-bold text-[#FC6C26]">{tx.orderCode}</span>
+                    </div>
+                )}
+                <div className="flex justify-between">
+                    <span className="text-[#666666]">Số tiền:</span>
+                    <span className="font-bold text-[#292929]">{formatMoney(tx?.amount)}</span>
+                </div>
+                <div className="flex justify-between">
+                    <span className="text-[#666666]">Trạng thái:</span>
+                    <span className={`font-bold ${isSuccess ? "text-[#059669]" : "text-[#DC2626]"}`}>
+                        {isSuccess ? "THÀNH CÔNG (PAID)" : "THẤT BẠI"}
+                    </span>
+                </div>
+            </div>
+
+            <div className="mt-2 flex flex-wrap justify-center gap-3">
+                {tx?.orderId && (
+                    <Link
+                        href={`/orders/${tx.orderId}`}
+                        className="rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e05b19] transition-colors shadow-sm"
+                    >
+                        Xem chi tiết đơn hàng
+                    </Link>
+                )}
+                <Link
+                    href="/my-trips"
+                    className="rounded-xl border border-[#E9E9E7] bg-white px-5 py-2.5 text-sm font-bold text-[#292929] hover:bg-[#F7F7F5] transition-colors"
+                >
+                    Chuyến xe của tôi
+                </Link>
+            </div>
+        </div>
+    );
 }
 
 function OrderSelector() {
@@ -118,15 +240,21 @@ function Pay({ orderId }) {
     const detail = useAsyncResource(load, orderId);
     const [method, setMethod] = useState("VNPAY");
     const [pending, setPending] = useState(null);
+
+    const activePending = pending || (detail.data?.transactions ?? []).find(t => t.status === "PENDING");
+
     const pay = useAsyncAction(async () => {
         const tx = await transactionService.createPayment({ orderId, amount: Number(detail.data.order.totalAmount), method });
         setPending(tx);
-        if (tx.paymentUrl)
-            window.open(tx.paymentUrl, "_blank", "noopener");
+        if (tx.paymentUrl) {
+            window.location.href = tx.paymentUrl;
+        }
         return tx;
     });
     const simulate = useAsyncAction(async (success) => {
-        await transactionService.simulate(pending.id, success);
+        const targetId = activePending?.id;
+        if (!targetId) return;
+        await transactionService.simulate(targetId, success);
         setPending(null);
         detail.reload();
     });
@@ -150,20 +278,27 @@ function Pay({ orderId }) {
         Đơn này đã bị hủy {order.cancelReason ? `(${order.cancelReason})` : ""}. Không thể thanh toán.
       </p>
     ) : null}
-    {paid ? <p className="rounded-xl bg-[#ECFDF5] p-3 text-sm text-[#047857]">Đơn này đã thanh toán.</p> : <>
+    {paid ? <p className="rounded-xl bg-[#ECFDF5] p-3 text-sm text-[#047857]">Đơn này đã thanh toán thành công.</p> : <>
       <label className="text-xs font-semibold text-[#666666]">Phương thức
         <select value={method} onChange={event => setMethod(event.target.value)} className={`${fieldClass} mt-1`}>{Object.entries(paymentMethodLabels).map(([id, label]) => <option key={id} value={id}>{label}</option>)}</select>
       </label>
       {pay.error ? <p className="text-sm text-[#B91C1C]">{pay.error.message}</p> : null}
-      <Primary disabled={pay.running || order.status === "PENDING" || order.status === "CANCELLED"} onClick={() => void pay.run()}>{pay.running ? "Đang tạo giao dịch…" : "Thanh toán qua cổng"}</Primary>
+      <Primary disabled={pay.running || order.status === "PENDING" || order.status === "CANCELLED"} onClick={() => void pay.run()}>{pay.running ? "Đang tạo giao dịch…" : "Thanh toán qua cổng VNPay"}</Primary>
       {order.status === "PENDING" ? <p className="text-xs text-[#666666]">Chờ chủ xe xác nhận đơn trước khi thanh toán.</p> : null}
-      {pending ? <div className="rounded-xl border border-[#E9E9E7] p-3 text-sm">
-        <p>Giao dịch #{pending.id} đang chờ. Nếu cổng VNPay sandbox chưa cấu hình, dùng giả lập bên dưới.</p>
-        {pending.paymentUrl ? <a href={pending.paymentUrl} target="_blank" rel="noreferrer" className="mt-2 inline-flex font-bold text-[#FC6C26]">Mở lại trang VNPay</a> : null}
-        {simulate.error ? <p className="mt-2 text-[#B91C1C]">{simulate.error.message}</p> : null}
-        <div className="mt-3 flex gap-2">
-          <button type="button" disabled={simulate.running} onClick={() => void simulate.run(true)} className="rounded-lg bg-[#047857] px-3 py-1.5 text-xs font-bold text-white">Giả lập thành công</button>
-          <button type="button" disabled={simulate.running} onClick={() => void simulate.run(false)} className="rounded-lg border border-[#EF4444] px-3 py-1.5 text-xs font-bold text-[#EF4444]">Giả lập thất bại</button>
+      {activePending ? <div className="rounded-xl border border-[#FED7AA] bg-[#FFF7ED] p-4 text-sm flex flex-col gap-2">
+        <div className="flex items-center gap-2 text-[#9A3412] font-semibold">
+          <span className="material-symbols-outlined text-[18px] text-[#EA580C]">hourglass_top</span>
+          <span>Giao dịch #{activePending.id} đang chờ ({formatMoney(activePending.amount)})</span>
+        </div>
+        <p className="text-xs text-[#666666]">
+          Nếu bạn đã hoàn tất thanh toán trên VNPay Sandbox ở tab khác, bấm <strong>"Kiểm tra lại"</strong> hoặc dùng nút <strong>"Xác nhận đã thanh toán (Sandbox)"</strong> để cập nhật ngay trạng thái đơn.
+        </p>
+        {activePending.paymentUrl ? <a href={activePending.paymentUrl} className="mt-1 inline-flex text-xs font-bold text-[#FC6C26] hover:underline">Mở lại trang thanh toán VNPay</a> : null}
+        {simulate.error ? <p className="mt-1 text-xs text-[#B91C1C]">{simulate.error.message}</p> : null}
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" disabled={detail.loading} onClick={() => void detail.reload()} className="rounded-lg border border-[#E9E9E7] bg-white px-3 py-1.5 text-xs font-bold text-[#292929] hover:bg-[#F7F7F5]">🔄 Kiểm tra lại</button>
+          <button type="button" disabled={simulate.running} onClick={() => void simulate.run(true)} className="rounded-lg bg-[#047857] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#059669]">✓ Xác nhận đã thanh toán (Sandbox)</button>
+          <button type="button" disabled={simulate.running} onClick={() => void simulate.run(false)} className="rounded-lg border border-[#EF4444] px-3 py-1.5 text-xs font-bold text-[#EF4444] hover:bg-[#FEF2F2]">✕ Đánh dấu thất bại</button>
         </div>
       </div> : null}
     </>}
