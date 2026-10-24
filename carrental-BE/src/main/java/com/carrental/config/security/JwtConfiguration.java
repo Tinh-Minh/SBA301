@@ -1,22 +1,20 @@
 package com.carrental.config.security;
 
-import com.nimbusds.jose.jwk.JWKSet;
-import com.nimbusds.jose.jwk.RSAKey;
-import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import com.nimbusds.jose.proc.SecurityContext;
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
+import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2TokenValidator;
 import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -35,29 +33,19 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 public class JwtConfiguration {
 
     @Bean
-    JwtKeyMaterial jwtKeyMaterial(JwtProperties properties, ResourceLoader resourceLoader) {
-        return JwtKeyLoader.load(
-                properties.privateKeyLocation(),
-                properties.publicKeyLocation(),
-                properties.privateKeyBase64(),
-                properties.publicKeyBase64(),
-                resourceLoader);
+    SecretKey jwtSecretKey(JwtProperties properties) {
+        return new SecretKeySpec(properties.secretKey().getBytes(StandardCharsets.UTF_8), "HmacSHA256");
     }
 
     @Bean
-    JwtEncoder jwtEncoder(JwtKeyMaterial keyMaterial) {
-        RSAKey jwk = new RSAKey.Builder(keyMaterial.publicKey())
-                .privateKey(keyMaterial.privateKey())
-                .keyID("carrental-rs256")
-                .build();
-        var source = new ImmutableJWKSet<SecurityContext>(new JWKSet(jwk));
-        return new NimbusJwtEncoder(source);
+    JwtEncoder jwtEncoder(SecretKey jwtSecretKey) {
+        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecretKey));
     }
 
     @Bean
-    JwtDecoder jwtDecoder(JwtKeyMaterial keyMaterial, JwtProperties properties, Clock clock) {
-        NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(keyMaterial.publicKey())
-                .signatureAlgorithm(SignatureAlgorithm.RS256)
+    JwtDecoder jwtDecoder(SecretKey jwtSecretKey, JwtProperties properties, Clock clock) {
+        NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey)
+                .macAlgorithm(MacAlgorithm.HS256)
                 .build();
         JwtTimestampValidator timestampValidator = new JwtTimestampValidator(properties.clockSkew());
         timestampValidator.setClock(clock);
