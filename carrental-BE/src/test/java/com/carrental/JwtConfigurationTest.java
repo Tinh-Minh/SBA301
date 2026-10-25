@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.carrental.config.ClockConfig;
 import com.carrental.config.security.JwtConfiguration;
 import com.carrental.dto.response.TokenResponse;
+import com.carrental.enums.Role;
 import java.util.Arrays;
 import java.time.Clock;
 import java.time.Instant;
@@ -23,7 +24,11 @@ class JwtConfigurationTest {
 
     @Test
     void tokenResponseNeverRendersTheBearerSecretInLogs() {
-        TokenResponse response = new TokenResponse("SENSITIVE_BEARER_SENTINEL", "Bearer", 300, null);
+        TokenResponse response = new TokenResponse(
+                "SENSITIVE_BEARER_SENTINEL",
+                "Bearer",
+                300,
+                new TokenResponse.AccountSummary(1L, "Test Customer", Role.CUSTOMER));
         assertThat(response.toString()).contains("accessToken=<redacted>").doesNotContain(response.accessToken());
     }
 
