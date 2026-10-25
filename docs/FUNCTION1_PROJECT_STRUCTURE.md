@@ -128,7 +128,10 @@ carrental-BE/
     │   │   │   ├── ActionLogRepository.java         # dùng chung
     │   │   │   ├── BankAccountRepository.java
     │   │   │   ├── CustomerRepository.java
+    │   │   │   ├── CustomerStatusLock.java          # khóa nghiệp vụ theo customer
+    │   │   │   ├── DriverEligibilityProjection.java
     │   │   │   ├── DriverRepository.java
+    │   │   │   ├── KycEvidenceProjection.java
     │   │   │   ├── UserDocumentRepository.java
     │   │   │   └── VoucherRepository.java
     │   │   ├── security/
@@ -139,18 +142,24 @@ carrental-BE/
     │   │   │   └── SecurityErrorResponses.java
     │   │   ├── service/
     │   │   │   ├── ActionLogService.java             # interface log dùng chung
-    │   │   │   ├── AdminBootstrapService.java
     │   │   │   ├── AuthService.java
+    │   │   │   ├── BankAccountChangeLogger.java
     │   │   │   ├── BankAccountService.java
     │   │   │   ├── CustomerService.java
+    │   │   │   ├── CustomerStatusChangeLogger.java
+    │   │   │   ├── DocumentReviewLogger.java
+    │   │   │   ├── DriverChangeLogger.java
+    │   │   │   ├── DriverEligibilityPolicy.java
     │   │   │   ├── DriverEligibilityService.java
     │   │   │   ├── DriverService.java
+    │   │   │   ├── KycPolicy.java
     │   │   │   ├── KycService.java
     │   │   │   ├── UserDocumentService.java
+    │   │   │   ├── VoucherChangeLogger.java
     │   │   │   └── VoucherService.java
     │   │   ├── service/impl/
     │   │   │   ├── ActionLogServiceImpl.java          # log dùng chung
-    │   │   │   ├── AdminBootstrapServiceImpl.java
+    │   │   │   ├── AdminBootstrapService.java
     │   │   │   ├── AuthServiceImpl.java
     │   │   │   ├── BankAccountServiceImpl.java
     │   │   │   ├── CustomerServiceImpl.java
@@ -160,8 +169,16 @@ carrental-BE/
     │   │   │   ├── UserDocumentServiceImpl.java
     │   │   │   └── VoucherServiceImpl.java
     │   │   ├── storage/
+    │   │   │   ├── CanonicalDocumentImage.java
+    │   │   │   ├── DocumentImageFormat.java
+    │   │   │   ├── DocumentImageInspector.java
+    │   │   │   ├── ImageStructureValidator.java
     │   │   │   ├── LocalPrivateDocumentStorage.java
-    │   │   │   └── PrivateDocumentStorage.java
+    │   │   │   ├── PrivateDocumentFile.java
+    │   │   │   ├── PrivateDocumentReceipt.java
+    │   │   │   ├── PrivateDocumentStorage.java
+    │   │   │   ├── StorageRootPolicy.java
+    │   │   │   └── UploadedDocumentImage.java
     │   │   ├── validation/
     │   │   │   ├── PasswordPolicyValidator.java
     │   │   │   └── ValidPassword.java
@@ -315,11 +332,12 @@ Các service gọi `ActionLogService`; `ActionLogServiceImpl`, `ActionLogReposit
 | Service interface | Auth, Customer, KYC, UserDocument, Driver, DriverEligibility, BankAccount, Voucher | Hợp đồng các use case F1. |
 | Service implementation | Các `*ServiceImpl` tương ứng | Quyền, quy tắc nghiệp vụ, transaction và repository orchestration. |
 | Mapper | 5 mapper trong `mapper/` | Request/Entity/response mapping, allowlist response, masking bank fields. |
-| Repository | 5 repository F1 | Spring Data JPA truy xuất 5 bảng; khóa chỉ đặt ở các đường ghi có invariants đồng thời. |
+| Repository | 6 repository (5 bảng F1 và `ActionLog` dùng chung), `CustomerStatusLock`, `DriverEligibilityProjection`, `KycEvidenceProjection` | Spring Data JPA truy xuất dữ liệu; lock và projection phục vụ các đường ghi/đọc nghiệp vụ cụ thể. |
 | Security | `SecurityConfiguration`, `JwtConfiguration`, `JwtProperties`, `CurrentAccount*`, authentication handlers | Bearer JWT HS256; secret lấy qua `app.security.jwt.secret-key` từ `JWT_SECRET`, TTL qua `app.security.jwt.access-token-ttl`; login đọc Customer từ repository và kiểm tra BCrypt trực tiếp, role/status/current principal vẫn lấy từ DB, cùng CORS và lỗi xác thực. |
-| Storage | `PrivateDocumentStorage`, `LocalPrivateDocumentStorage` | Lưu/mở/xóa ảnh giấy tờ private; record/enum nhỏ được khai báo bên trong interface. |
+| Storage | `PrivateDocumentStorage`, `LocalPrivateDocumentStorage`, `StorageRootPolicy`, `DocumentImageInspector`, `ImageStructureValidator`, `CanonicalDocumentImage`, `DocumentImageFormat`, `PrivateDocumentFile`, `PrivateDocumentReceipt`, `UploadedDocumentImage` | Lưu/mở/xóa ảnh giấy tờ private; kiểm tra cấu hình root và ảnh, giữ metadata/receipt cho vòng đời file. |
 | Validation/web | `ValidPassword`, `PasswordPolicyValidator`, `RequestTraceFilter`, `UserDocumentMultipartReader` | Chính sách mật khẩu, trace header, kiểm tra và đọc multipart. |
 | Exception/config | `AppException`, `ErrorCode`, `GlobalExceptionHandler`, config/property classes | Lỗi API, giới hạn request, clock, cấu hình JSON/security/document. |
+| Policy và logger F1 | `DriverEligibilityPolicy`, `KycPolicy`, `BankAccountChangeLogger`, `CustomerStatusChangeLogger`, `DocumentReviewLogger`, `DriverChangeLogger`, `VoucherChangeLogger` | Tách quy tắc eligibility/KYC và ghi log nghiệp vụ của Function 1; các service F1 hiện đang gọi trực tiếp. |
 | Logging dùng chung | `ActionLogService`, `ActionLogServiceImpl`, `ActionLogRepository`, `ActionLog` | Ghi audit event các use case F1 và các function khác. |
 
 ## 7. Test liên quan
