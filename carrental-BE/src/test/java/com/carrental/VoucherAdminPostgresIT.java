@@ -451,7 +451,7 @@ class VoucherAdminPostgresIT {
         String firstBody = body(code, 10, 0, "2026-10-14T10:00:00", "2026-10-14T11:00:00", "");
         assertSuccess(post("/api/vouchers", token, firstBody), 201);
 
-        doReturn(false).when(vouchers).existsByCode(code);
+        doReturn(false).when(vouchers).existsByCodeIgnoreCase(code);
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             HttpResponse<String> duplicate = post("/api/vouchers", token, firstBody);
             assertError(duplicate, 409, "VOUCHER_CODE_ALREADY_EXISTS");
@@ -481,6 +481,19 @@ class VoucherAdminPostgresIT {
             jdbc.execute("drop index if exists p09_test_description_unique");
             reset(vouchers);
         }
+    }
+
+    @Test
+    void duplicateVoucherCodeCheckIgnoresLetterCase() throws Exception {
+        Account admin = account("p09-case-insensitive-admin", Role.ADMIN, CustomerStatus.ACTIVE);
+        String token = login(admin);
+        String code = "CaseCheck_" + suffix();
+        assertSuccess(post("/api/vouchers", token,
+                body(code, 10, 0, "2026-10-14T10:00:00", "2026-10-14T11:00:00", "")), 201);
+
+        assertError(post("/api/vouchers", token,
+                body(code.toUpperCase(java.util.Locale.ROOT), 10, 0, "2026-10-14T10:00:00",
+                        "2026-10-14T11:00:00", "")), 409, "VOUCHER_CODE_ALREADY_EXISTS");
     }
 
     @Test

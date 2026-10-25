@@ -49,7 +49,9 @@ public class VoucherServiceImpl implements VoucherService {
         requireActiveAdmin(actor);
         validateCreate(request);
         Voucher voucher = VoucherMapper.toNewEntity(request);
-        if (vouchers.existsByCode(voucher.getCode())) throw new AppException(ErrorCode.VOUCHER_CODE_ALREADY_EXISTS);
+        if (vouchers.existsByCodeIgnoreCase(voucher.getCode())) {
+            throw new AppException(ErrorCode.VOUCHER_CODE_ALREADY_EXISTS);
+        }
         vouchers.saveAndFlush(voucher);
         actionLogService.voucherStatusChanged("voucher-create", actor.customerId(), voucher.getId(), null, voucher.getStatus());
         return VoucherMapper.toResponse(voucher, LocalDateTime.now(clock));

@@ -18,6 +18,8 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long>, JpaSpec
 
     boolean existsByCode(String code);
 
+    boolean existsByCodeIgnoreCase(String code);
+
     @Modifying(flushAutomatically = true)
     @Query("update Voucher v set v.usedCount = v.usedCount + 1 "
             + "where v.id = :id and (v.usageLimit is null or v.usedCount < v.usageLimit)")
