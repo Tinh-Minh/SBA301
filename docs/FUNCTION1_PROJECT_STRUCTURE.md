@@ -132,7 +132,6 @@ carrental-BE/
     │   │   │   ├── UserDocumentRepository.java
     │   │   │   └── VoucherRepository.java
     │   │   ├── security/
-    │   │   │   ├── AccountUserDetails.java
     │   │   │   ├── ApiAccessDeniedHandler.java
     │   │   │   ├── ApiAuthenticationEntryPoint.java
     │   │   │   ├── CurrentAccount.java
@@ -155,7 +154,6 @@ carrental-BE/
     │   │   │   ├── AuthServiceImpl.java
     │   │   │   ├── BankAccountServiceImpl.java
     │   │   │   ├── CustomerServiceImpl.java
-    │   │   │   ├── CustomerUserDetailsServiceImpl.java
     │   │   │   ├── DriverEligibilityServiceImpl.java
     │   │   │   ├── DriverServiceImpl.java
     │   │   │   ├── KycServiceImpl.java
@@ -318,7 +316,7 @@ Các service gọi `ActionLogService`; `ActionLogServiceImpl`, `ActionLogReposit
 | Service implementation | Các `*ServiceImpl` tương ứng | Quyền, quy tắc nghiệp vụ, transaction và repository orchestration. |
 | Mapper | 5 mapper trong `mapper/` | Request/Entity/response mapping, allowlist response, masking bank fields. |
 | Repository | 5 repository F1 | Spring Data JPA truy xuất 5 bảng; khóa chỉ đặt ở các đường ghi có invariants đồng thời. |
-| Security | `SecurityConfiguration`, `JwtConfiguration`, `JwtProperties`, `CurrentAccount*`, authentication handlers, `CustomerUserDetailsServiceImpl` | Bearer JWT HS256; secret lấy qua `app.security.jwt.secret-key`, TTL qua `app.security.jwt.access-token-ttl`; password encoder, role/status/current principal, CORS và lỗi xác thực. |
+| Security | `SecurityConfiguration`, `JwtConfiguration`, `JwtProperties`, `CurrentAccount*`, authentication handlers | Bearer JWT HS256; secret lấy qua `app.security.jwt.secret-key` từ `JWT_SECRET`, TTL qua `app.security.jwt.access-token-ttl`; login đọc Customer từ repository và kiểm tra BCrypt trực tiếp, role/status/current principal vẫn lấy từ DB, cùng CORS và lỗi xác thực. |
 | Storage | `PrivateDocumentStorage`, `LocalPrivateDocumentStorage` | Lưu/mở/xóa ảnh giấy tờ private; record/enum nhỏ được khai báo bên trong interface. |
 | Validation/web | `ValidPassword`, `PasswordPolicyValidator`, `RequestTraceFilter`, `UserDocumentMultipartReader` | Chính sách mật khẩu, trace header, kiểm tra và đọc multipart. |
 | Exception/config | `AppException`, `ErrorCode`, `GlobalExceptionHandler`, config/property classes | Lỗi API, giới hạn request, clock, cấu hình JSON/security/document. |
@@ -328,7 +326,7 @@ Các service gọi `ActionLogService`; `ActionLogServiceImpl`, `ActionLogReposit
 
 Các test nằm trong `carrental-BE/src/test/java/com/carrental/`:
 
-- API/auth/security: `AuthSecurityPostgresIT`, `AuthSecurityTestFixtures`, `JwtConfigurationTest`.
+- API/auth/security: `AuthSecurityPostgresIT`, `AuthSecurityTestFixtures`, `AuthServiceImplTest`, `BCryptPasswordEncoderTest`, `JwtConfigurationTest`.
 - Customer/status: `CustomerManagementPostgresIT`, `CustomerPropertiesTest`.
 - Driver/KYC: `DriverProfilePostgresIT`, `DriverConcurrencyPostgresIT`, `service/impl/DriverEligibilityServiceTest`, `service/impl/KycServiceTest`.
 - Giấy tờ/storage: `UserDocumentPostgresIT`, `UserDocumentReviewPostgresIT`, `UserDocumentTransactionTest`, `PrivateDocumentStorageTest`.
