@@ -23,8 +23,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -89,8 +87,7 @@ class AuthSecurityPostgresIT {
         properties.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         properties.add("app.security.jwt.access-token-ttl", () -> "PT5M");
         properties.add("app.security.jwt.clock-skew", () -> "PT30S");
-        properties.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        properties.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
+        properties.add("app.security.jwt.secret-key", () -> TestJwtKeys.HS256_SECRET);
         properties.add("app.security.cors.allowed-origins", () -> ALLOWED_ORIGIN);
     }
 
@@ -259,7 +256,7 @@ class AuthSecurityPostgresIT {
     }
 
     @Test
-    void loginPreservesPasswordWhitespaceAndEmitsRequiredShortLivedRS256Claims() throws Exception {
+    void loginPreservesPasswordWhitespaceAndEmitsRequiredShortLivedHS256Claims() throws Exception {
         String email = email("login");
         String phone = phone("l");
         assertThat(post("/api/auth/register", registerJson("Login Customer", email, phone, PASSWORD)).statusCode())
@@ -282,7 +279,7 @@ class AuthSecurityPostgresIT {
 
         SignedJWT decoded = SignedJWT.parse(token);
         JWTClaimsSet claims = decoded.getJWTClaimsSet();
-        assertThat(decoded.getHeader().getAlgorithm()).isEqualTo(JWSAlgorithm.RS256);
+        assertThat(decoded.getHeader().getAlgorithm()).isEqualTo(JWSAlgorithm.HS256);
         assertThat(claims.getSubject()).isEqualTo(id.toString());
         assertThat(claims.getIssuer()).isEqualTo(TestJwtKeys.ISSUER);
         assertThat(claims.getAudience()).containsExactly(TestJwtKeys.AUDIENCE);
@@ -378,61 +375,59 @@ class AuthSecurityPostgresIT {
         Long id = registerAndGetId(email("jwt-matrix"), phone("j"), PASSWORD);
         Instant now = clock.instant().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         List<String> invalidTokens = new ArrayList<>();
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, "wrong-audience",
-                now.minusSeconds(1), now.plusSeconds(60), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now.minusSeconds(120), now.minusSeconds(90), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), now.plusSeconds(120)), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now.plusSeconds(120), now.plusSeconds(60), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims("0", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims("9223372036854775808123", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims("not-a-number", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(Map.of(), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, "wrong-audience",
+                now.minusSeconds(1), now.plusSeconds(60), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now.minusSeconds(120), now.minusSeconds(90), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), now.plusSeconds(120))));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now.plusSeconds(120), now.plusSeconds(60), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims("0", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims("9223372036854775808123", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims("not-a-number", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(Map.of()));
 
         Map<String, Object> noIssuedAt = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noIssuedAt.remove("iat");
-        invalidTokens.add(signedToken(noIssuedAt, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noIssuedAt));
         Map<String, Object> noExpiration = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noExpiration.remove("exp");
-        invalidTokens.add(signedToken(noExpiration, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noExpiration));
         Map<String, Object> noSubject = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noSubject.remove("sub");
-        invalidTokens.add(signedToken(noSubject, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noSubject));
         Map<String, Object> noIssuer = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noIssuer.remove("iss");
-        invalidTokens.add(signedToken(noIssuer, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noIssuer));
         Map<String, Object> noAudience = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noAudience.remove("aud");
-        invalidTokens.add(signedToken(noAudience, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), "https://wrong.example.test", TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), "SENTINEL_NOT_A_URL", TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), "", TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noAudience));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), "https://wrong.example.test", TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), "SENTINEL_NOT_A_URL", TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), "", TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
         Map<String, Object> nonStringIssuer = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         nonStringIssuer.put("iss", 12345);
-        invalidTokens.add(signedToken(nonStringIssuer, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS512, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(nonStringIssuer));
+        invalidTokens.add(signedRs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
         invalidTokens.add(new PlainJWT(new JWTClaimsSet.Builder().subject(id.toString()).build()).serialize());
-
-        var otherGenerator = KeyPairGenerator.getInstance("RSA");
-        otherGenerator.initialize(2048);
-        var otherPair = otherGenerator.generateKeyPair();
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, (RSAPrivateKey) otherPair.getPrivate()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(
+                claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                        now, now.plusSeconds(120), null),
+                "wrong-function1-test-secret-key-for-hs256"));
 
         HttpResponse<String> valid = post("/api/auth/login", loginJson(email("jwt-matrix"), PASSWORD));
         String validToken = json(valid).path("data").path("accessToken").asText();
@@ -473,7 +468,7 @@ class AuthSecurityPostgresIT {
         Map<String, Object> forgedRoleClaims = claims(customerId.toString(), TestJwtKeys.ISSUER,
                 TestJwtKeys.AUDIENCE, clock.instant().minusSeconds(1), clock.instant().plusSeconds(180), null);
         forgedRoleClaims.put("role", "ADMIN");
-        String forgedRole = signedToken(forgedRoleClaims, JWSAlgorithm.RS256, TestJwtKeys.privateKey());
+        String forgedRole = TestJwtKeys.signHs256Token(forgedRoleClaims);
         assertError(get("/__test/security/admin", forgedRole, Map.of()), 403, "ACCESS_DENIED");
         assertError(get("/__test/security/admin", customerToken, Map.of()), 403, "ACCESS_DENIED");
 
@@ -749,11 +744,12 @@ class AuthSecurityPostgresIT {
         return claims;
     }
 
-    private String signedToken(Map<String, Object> claims, JWSAlgorithm algorithm, RSAPrivateKey signingKey) throws Exception {
+    private String signedRs256Token(Map<String, Object> claims) throws Exception {
         JWTClaimsSet.Builder claimSet = new JWTClaimsSet.Builder();
         claims.forEach(claimSet::claim);
-        SignedJWT signed = new SignedJWT(new JWSHeader.Builder(algorithm).type(JOSEObjectType.JWT).build(), claimSet.build());
-        signed.sign(new RSASSASigner(signingKey));
+        SignedJWT signed = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build(), claimSet.build());
+        signed.sign(new RSASSASigner(TestJwtKeys.privateKey()));
         return signed.serialize();
     }
 }

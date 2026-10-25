@@ -34,8 +34,6 @@ carrental-BE/
     │   │   │       ├── BootstrapAdminProperties.java
     │   │   │       ├── CorsProperties.java
     │   │   │       ├── JwtConfiguration.java
-    │   │   │       ├── JwtKeyLoader.java
-    │   │   │       ├── JwtKeyMaterial.java
     │   │   │       ├── JwtProperties.java
     │   │   │       ├── PasswordPolicyProperties.java
     │   │   │       └── SecurityConfiguration.java

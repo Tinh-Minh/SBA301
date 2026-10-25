@@ -76,11 +76,6 @@ class Function1ExecutableJarSmokeIT {
             Files.createDirectories(workingDirectory);
             Files.createDirectories(privateRoot);
             assertExternalTempPath(tempBase, workingDirectory, repo, jar);
-            Path privateKey = configDirectory.resolve("private-key-external.pem");
-            Path publicKey = configDirectory.resolve("public-key-external.pem");
-            Files.copy(Path.of(URI.create(TestJwtKeys.privateKeyLocation())), privateKey);
-            Files.copy(Path.of(URI.create(TestJwtKeys.publicKeyLocation())), publicKey);
-
             Properties config = new Properties();
             config.setProperty("spring.application.name", "carrental-p10-standard-jar-smoke");
             config.setProperty("spring.datasource.url", POSTGRES.getJdbcUrl());
@@ -94,8 +89,7 @@ class Function1ExecutableJarSmokeIT {
             config.setProperty("app.security.jwt.audience", TestJwtKeys.AUDIENCE);
             config.setProperty("app.security.jwt.access-token-ttl", "PT10M");
             config.setProperty("app.security.jwt.clock-skew", "PT30S");
-            config.setProperty("app.security.jwt.private-key-location", privateKey.toUri().toString());
-            config.setProperty("app.security.jwt.public-key-location", publicKey.toUri().toString());
+            config.setProperty("app.security.jwt.secret-key", TestJwtKeys.HS256_SECRET);
             config.setProperty("app.security.cors.allowed-origins", "");
             config.setProperty("app.security.bootstrap-admin.enabled", "false");
             config.setProperty("app.document.storage.enabled", "true");
