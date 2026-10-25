@@ -368,7 +368,7 @@ class AuthSecurityPostgresIT {
             String capturedLogs = logs.snapshot().stream()
                     .map(AuthSecurityPostgresIT::renderLogEvent)
                     .collect(Collectors.joining("\n"));
-            assertThat(capturedLogs).contains("Database dependency unavailable")
+            assertThat(capturedLogs).contains("Database unavailable")
                     .doesNotContain(email, PASSWORD, "SENTINEL_LOGIN_DATABASE_FAILURE");
         }
     }
