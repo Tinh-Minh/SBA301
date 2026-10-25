@@ -150,8 +150,7 @@ class VoucherAdminPostgresIT {
 
         HttpResponse<String> caseVariant = post("/api/vouchers", adminToken, body("a%_case", 5, 0,
                 "2026-10-14T09:00:00", "2026-10-14T10:00:00", ""));
-        assertSuccess(caseVariant, 201);
-        assertThat(json(caseVariant).path("data").path("windowState").asText()).isEqualTo("ENDED");
+        assertError(caseVariant, 409, "VOUCHER_CODE_ALREADY_EXISTS");
         assertSuccess(post("/api/vouchers", adminToken, body("Axx_Case", 5, 0,
                 "2026-10-14T09:00:00", "2026-10-14T11:00:00", "")), 201);
         HttpResponse<String> exact = get("/api/vouchers?code=A%25_Case", adminToken);
