@@ -14,6 +14,7 @@ import com.carrental.security.CurrentAccount;
 import com.carrental.service.VoucherService;
 import com.carrental.web.RequestTraceFilter;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +46,7 @@ public class VoucherController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<VoucherResponse>> create(@AuthenticationPrincipal CurrentAccount actor,
-            HttpServletRequest servletRequest, @RequestBody CreateVoucherRequest request) {
+            HttpServletRequest servletRequest, @Valid @RequestBody CreateVoucherRequest request) {
         rejectQuery(servletRequest);
         VoucherResponse created = service.create(actor, request);
         return ResponseEntity.created(UriComponentsBuilder.fromPath("/api/vouchers/{id}")
@@ -70,7 +71,7 @@ public class VoucherController {
 
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<VoucherResponse>> update(@AuthenticationPrincipal CurrentAccount actor,
-            @PathVariable long id, HttpServletRequest servletRequest, @RequestBody UpdateVoucherAdminRequest request) {
+            @PathVariable long id, HttpServletRequest servletRequest, @Valid @RequestBody UpdateVoucherAdminRequest request) {
         rejectQuery(servletRequest);
         requirePositiveId(id);
         return success(service.update(actor, id, request));
@@ -78,7 +79,7 @@ public class VoucherController {
 
     @PatchMapping(path = "/{id}/status", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<VoucherResponse>> changeStatus(@AuthenticationPrincipal CurrentAccount actor,
-            @PathVariable long id, HttpServletRequest servletRequest, @RequestBody ChangeVoucherStatusRequest request) {
+            @PathVariable long id, HttpServletRequest servletRequest, @Valid @RequestBody ChangeVoucherStatusRequest request) {
         rejectQuery(servletRequest);
         requirePositiveId(id);
         return success(service.changeStatus(actor, id, request));

@@ -16,7 +16,7 @@ import com.carrental.repository.ExtraFeeRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.TransactionRepository;
 import com.carrental.service.ExtraFeeService;
-import com.carrental.service.OrderAccess;
+import com.carrental.security.OrderAccess;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

@@ -1,11 +1,43 @@
 package com.carrental.mapper;
 
+import com.carrental.dto.request.document.UserDocumentSubmissionRequest;
 import com.carrental.dto.response.UserDocumentDetailResponse;
+import com.carrental.dto.response.UserDocumentReviewResponse;
 import com.carrental.dto.response.UserDocumentSummaryResponse;
+import com.carrental.entity.Customer;
 import com.carrental.entity.UserDocument;
+import com.carrental.enums.KycStatus;
+import com.carrental.enums.VerificationStatus;
+import java.time.LocalDate;
 
 public final class UserDocumentMapper {
     private UserDocumentMapper() { }
+
+    public static UserDocument toNewEntity(Customer owner, UserDocumentSubmissionRequest request,
+            String frontImageUrl, String backImageUrl) {
+        UserDocument document = new UserDocument();
+        document.setCustomer(owner);
+        document.setDocType(request.docType());
+        document.setDocNumber(request.docNumber());
+        document.setFullNameOnDoc(request.fullNameOnDoc());
+        document.setDateOfBirthOnDoc(request.dateOfBirthOnDoc());
+        document.setIssuePlace(request.issuePlace());
+        document.setIssueDate(request.issueDate());
+        document.setExpiresAt(request.expiresAt());
+        document.setLicenseClass(request.licenseClass());
+        document.setFrontImageUrl(frontImageUrl);
+        document.setBackImageUrl(backImageUrl);
+        document.setVerifyStatus(VerificationStatus.PENDING);
+        document.setRejectReason(null);
+        document.setVerifiedBy(null);
+        document.setVerifiedAt(null);
+        return document;
+    }
+
+    public static UserDocumentReviewResponse toReviewResponse(UserDocument document, KycStatus currentKyc,
+            LocalDate evaluatedOn) {
+        return new UserDocumentReviewResponse(toDetail(document), currentKyc, evaluatedOn);
+    }
 
     public static UserDocumentDetailResponse toDetail(UserDocument document) {
         return new UserDocumentDetailResponse(document.getId(), document.getCustomer().getId(), document.getDocType(),

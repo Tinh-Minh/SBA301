@@ -8,7 +8,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.sql.Connection;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -407,39 +406,38 @@ class Function1PostgresIT {
 
         UserDocument oneDoc = saveDocument(one, "SCOPE1-" + SUFFIX);
         UserDocument twoDoc = saveDocument(two, "SCOPE2-" + SUFFIX);
-        var page = documents.findByCustomer_Id(one.getId(), org.springframework.data.domain.PageRequest.of(0, 10));
+        var page = documents.findAll((root, query, cb) -> cb.equal(root.get("customer").get("id"), one.getId()), org.springframework.data.domain.PageRequest.of(0, 10));
         assertThat(page.getContent()).extracting(UserDocument::getId).containsExactly(oneDoc.getId());
         assertThat(page.getTotalElements()).isEqualTo(1);
-        assertThat(documents.findByIdAndCustomer_Id(twoDoc.getId(), one.getId())).isEmpty();
-        assertThat(documents.findByVerifyStatus(VerificationStatus.PENDING,
+        assertThat(documents.findByIdAndCustomerId(twoDoc.getId(), one.getId())).isEmpty();
+        assertThat(documents.findAll((root, query, cb) -> cb.equal(root.get("verifyStatus"), VerificationStatus.PENDING),
                 org.springframework.data.domain.PageRequest.of(0, 50)).getContent())
                 .extracting(UserDocument::getId).contains(oneDoc.getId(), twoDoc.getId());
         UserDocument approved = saveDocument(one, "APPROVED-SCOPE-" + SUFFIX);
         approved.setVerifyStatus(VerificationStatus.APPROVED);
         approved = documents.save(approved);
-        assertThat(documents.findFirstByDocTypeAndDocNumberAndVerifyStatus(DocumentType.CITIZEN_ID,
-                approved.getDocNumber(), VerificationStatus.APPROVED).map(UserDocument::getId))
-                .contains(approved.getId());
+        assertThat(documents.existsByDocTypeAndDocNumberAndVerifyStatus(DocumentType.CITIZEN_ID,
+                approved.getDocNumber(), VerificationStatus.APPROVED)).isTrue();
 
         Driver oneDriver = saveDriver(one);
         saveDriver(two);
-        assertThat(drivers.findByCustomer_Id(one.getId()).map(Driver::getId)).contains(oneDriver.getId());
-        assertThat(drivers.findByIdAndCustomer_Id(oneDriver.getId(), two.getId())).isEmpty();
+        assertThat(drivers.findByCustomerId(one.getId()).map(Driver::getId)).contains(oneDriver.getId());
+        assertThat(drivers.findByIdAndCustomerId(oneDriver.getId(), two.getId())).isEmpty();
         BankAccount oneBank = saveBank(one, "SCOPE BANK", "000111", true);
         saveBank(two, "SCOPE BANK", "000222", true);
-        assertThat(bankAccounts.findByIdAndCustomer_Id(oneBank.getId(), two.getId())).isEmpty();
-        assertThat(bankAccounts.findAllByCustomer_IdOrderByCreatedAtDesc(one.getId()))
+        assertThat(bankAccounts.findByIdAndCustomerId(oneBank.getId(), two.getId())).isEmpty();
+        assertThat(bankAccounts.findAllByCustomerId(one.getId(), org.springframework.data.domain.PageRequest.of(0, 10, org.springframework.data.domain.Sort.by("createdAt").descending())).getContent())
                 .extracting(BankAccount::getId).containsExactly(oneBank.getId());
-        assertThat(bankAccounts.findByCustomer_IdAndIsDefaultTrue(one.getId()).map(BankAccount::getId))
+        assertThat(bankAccounts.findByCustomerIdAndIsDefaultTrue(one.getId()).map(BankAccount::getId))
                 .contains(oneBank.getId());
 
         Voucher voucher = vouchers.save(voucher("SCOPE-" + SUFFIX));
-        assertThat(vouchers.findByCode(voucher.getCode()).map(Voucher::getId)).contains(voucher.getId());
+        assertThat(vouchers.findByCodeIgnoreCase(voucher.getCode()).map(Voucher::getId)).contains(voucher.getId());
         assertThat(vouchers.existsByCode(voucher.getCode())).isTrue();
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(status -> {
-            assertThat(customers.findByIdForUpdate(one.getId()).map(Customer::getId)).contains(one.getId());
-            assertThat(vouchers.findByIdForUpdate(voucher.getId()).map(Voucher::getId)).contains(voucher.getId());
+            assertThat(customers.findWithLockById(one.getId()).map(Customer::getId)).contains(one.getId());
+            assertThat(vouchers.findWithLockById(voucher.getId()).map(Voucher::getId)).contains(voucher.getId());
         });
     }
 

@@ -17,10 +17,9 @@ import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.mapper.CustomerMapper;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.repository.CustomerStatusLock;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.CustomerService;
-import com.carrental.service.CustomerStatusChangeLogger;
+import com.carrental.service.ActionLogService;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -44,17 +43,15 @@ public class CustomerServiceImpl implements CustomerService {
 
     private final CustomerRepository customers;
     private final EntityManager entityManager;
-    private final CustomerStatusLock statusLock;
-    private final CustomerStatusChangeLogger statusChangeLogger;
+    private final ActionLogService actionLogService;
     private final CustomerProperties properties;
     private final Clock clock;
 
-    public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager, CustomerStatusLock statusLock,
-            CustomerStatusChangeLogger statusChangeLogger, CustomerProperties properties, Clock clock) {
+    public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
+            ActionLogService actionLogService, CustomerProperties properties, Clock clock) {
         this.customers = customers;
         this.entityManager = entityManager;
-        this.statusLock = statusLock;
-        this.statusChangeLogger = statusChangeLogger;
+        this.actionLogService = actionLogService;
         this.properties = properties;
         this.clock = clock;
     }
@@ -74,60 +71,30 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerProfileResponse updateMe(CurrentAccount account, UpdateProfileRequest request) {
         if (request == null || !request.hasAnyAllowedField()) throw new AppException(ErrorCode.INVALID_REQUEST);
 
-        Customer customer = customers.findByIdForUpdate(account.customerId())
+        Customer customer = customers.findWithLockById(account.customerId())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
         if (customer.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
 
-        boolean changed = false;
-        if (request.fullNameWasProvided()) {
-            String fullName = normalizedFullName(request.getFullName());
-            if (!fullName.equals(customer.getFullName())) {
-                customer.setFullName(fullName);
-                changed = true;
-            }
+        String fullName = request.fullNameWasProvided() ? normalizedFullName(request.getFullName()) : null;
+        LocalDate dateOfBirth = request.dateOfBirthWasProvided() ? dateOfBirth(request.getDateOfBirth()) : null;
+        String address = request.addressWasProvided() ? normalizedAddress(request.getAddress()) : null;
+        String email = request.emailWasProvided() ? normalizedEmail(request.getEmail()) : null;
+        String phone = request.phoneWasProvided() ? normalizedPhone(request.getPhone()) : null;
+        String avatarUrl = request.avatarUrlWasProvided() ? normalizedAvatar(request.getAvatarUrl()) : null;
+
+        if (request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail())) {
+            customers.findByEmailIgnoreCase(email)
+                    .filter(other -> !other.getId().equals(customer.getId()))
+                    .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
         }
-        if (request.dateOfBirthWasProvided()) {
-            LocalDate dateOfBirth = dateOfBirth(request.getDateOfBirth());
-            if (!java.util.Objects.equals(dateOfBirth, customer.getDateOfBirth())) {
-                customer.setDateOfBirth(dateOfBirth);
-                changed = true;
-            }
+        if (request.phoneWasProvided() && !phone.equals(customer.getPhone())) {
+            customers.findByPhone(phone)
+                    .filter(other -> !other.getId().equals(customer.getId()))
+                    .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
         }
-        if (request.addressWasProvided()) {
-            String address = normalizedAddress(request.getAddress());
-            if (!java.util.Objects.equals(address, customer.getAddress())) {
-                customer.setAddress(address);
-                changed = true;
-            }
-        }
-        if (request.emailWasProvided()) {
-            String email = normalizedEmail(request.getEmail());
-            if (!email.equalsIgnoreCase(customer.getEmail())) {
-                customers.findByEmailIgnoreCase(email)
-                        .filter(other -> !other.getId().equals(customer.getId()))
-                        .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
-                customer.setEmail(email);
-                customer.setEmailVerified(false);
-                changed = true;
-            }
-        }
-        if (request.phoneWasProvided()) {
-            String phone = normalizedPhone(request.getPhone());
-            if (!phone.equals(customer.getPhone())) {
-                customers.findByPhone(phone)
-                        .filter(other -> !other.getId().equals(customer.getId()))
-                        .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
-                customer.setPhone(phone);
-                changed = true;
-            }
-        }
-        if (request.avatarUrlWasProvided()) {
-            String avatarUrl = normalizedAvatar(request.getAvatarUrl());
-            if (!java.util.Objects.equals(avatarUrl, customer.getAvatarUrl())) {
-                customer.setAvatarUrl(avatarUrl);
-                changed = true;
-            }
-        }
+
+        boolean changed = CustomerMapper.applyProfileUpdate(customer, request,
+                new CustomerMapper.ProfileUpdateValues(fullName, dateOfBirth, address, email, phone, avatarUrl));
         if (changed) {
             customers.flush();
             // The database trigger is authoritative for updated_at; reload it after the write.
@@ -159,18 +126,21 @@ public class CustomerServiceImpl implements CustomerService {
     public CustomerAdminResponse changeCustomerStatus(
             CurrentAccount actor, long targetId, ChangeCustomerStatusRequest request) {
         String reason = validateStatusRequest(request);
-        statusLock.acquire();
-
-        // Re-read and lock the actor after serialization; the JWT converter's earlier DB result is only a snapshot.
-        Customer actorRow = customers.findByIdForUpdate(actor.customerId())
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+        Customer actorRow;
+        Customer target;
+        if (customers.existsByIdAndRole(targetId, Role.ADMIN)) {
+            // Serialize only admin-account changes, so concurrent requests cannot remove the last active admin.
+            List<Customer> admins = customers.findWithLockByRoleOrderByIdAsc(Role.ADMIN);
+            actorRow = admins.stream().filter(c -> c.getId().equals(actor.customerId())).findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.ACCESS_DENIED));
+            target = admins.stream().filter(c -> c.getId().equals(targetId)).findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        } else {
+            actorRow = customers.findById(actor.customerId()).orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+            target = customers.findWithLockById(targetId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        }
         if (actorRow.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
         if (actorRow.getRole() != Role.ADMIN) throw new AppException(ErrorCode.ACCESS_DENIED);
-
-        Customer target = actorRow.getId().equals(targetId)
-                ? actorRow
-                : customers.findByIdForUpdate(targetId)
-                        .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
 
         CustomerStatus oldStatus = target.getStatus();
         CustomerStatus requestedStatus = request.getStatus();
@@ -195,7 +165,8 @@ public class CustomerServiceImpl implements CustomerService {
 
         if (target.getStatus() != oldStatus) {
             customers.flush();
-            statusChangeLogger.record(actorRow.getId(), target.getId(), oldStatus, target.getStatus(), reason != null);
+            actionLogService.customerStatusChanged(actorRow.getId(), target.getId(), oldStatus,
+                    target.getStatus(), reason != null);
         }
         return CustomerMapper.toAdmin(target);
     }

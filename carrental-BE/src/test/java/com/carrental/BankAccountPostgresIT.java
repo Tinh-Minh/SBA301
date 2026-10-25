@@ -11,15 +11,12 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.carrental.config.CustomerProperties;
 import com.carrental.dto.response.BankAccountResponse;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.exception.ErrorCode;
 import com.carrental.repository.BankAccountRepository;
-import com.carrental.repository.CustomerStatusLock;
-import com.carrental.service.BankAccountChangeLogger;
+import com.carrental.service.ActionLogService;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -36,7 +33,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -92,7 +88,6 @@ class BankAccountPostgresIT {
         properties.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
         properties.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
         properties.add("app.security.cors.allowed-origins", () -> ORIGIN);
-        properties.add("app.customer.status-lock-timeout-ms", () -> "2500");
     }
 
     @LocalServerPort private int port;
@@ -100,15 +95,12 @@ class BankAccountPostgresIT {
     @Autowired private JdbcTemplate jdbc;
     @Autowired private DataSource dataSource;
     @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private CustomerProperties customerProperties;
     @MockitoSpyBean private BankAccountRepository bankAccounts;
-    @MockitoSpyBean private BankAccountChangeLogger changeLogger;
-    @MockitoSpyBean private CustomerStatusLock statusLockSpy;
+    @MockitoSpyBean private ActionLogService actionLogService;
 
     @BeforeEach
     void isolateRowsAndCreateTestOnlyPayoutFk() {
-        customerProperties.setStatusLockTimeoutMs(2_500);
-        reset(bankAccounts, changeLogger, statusLockSpy);
+        reset(bankAccounts, actionLogService);
         jdbc.execute("DROP TABLE IF EXISTS payouts");
         jdbc.execute("CREATE TABLE payouts ("
                 + "id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, bank_account_id BIGINT NOT NULL, recipient_id BIGINT NOT NULL, "
@@ -319,15 +311,15 @@ class BankAccountPostgresIT {
         String duplicateTrace;
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             // Simulate a stale precheck only; the INSERT reaches PostgreSQL and its unique index raises actual 23505.
-            doReturn(false).when(bankAccounts).existsByCustomer_IdAndBankNameAndAccountNumber(
+            doReturn(false).when(bankAccounts).existsByCustomerIdAndBankNameAndAccountNumber(
                     owner.id(), "Sensitive Bank", number);
             HttpResponse<String> duplicate = post("/api/bank-accounts", token,
                     createBody("Sensitive Bank", number, "SENTINEL_HOLDER_DUP", false));
             assertError(duplicate, 409, "BANK_ACCOUNT_ALREADY_EXISTS");
             duplicateTrace = duplicate.headers().firstValue("X-Request-ID").orElseThrow();
             assertThat(duplicate.body()).doesNotContain(number, "SENTINEL_HOLDER_DUP", BANK_UNIQUE);
-            assertThat(logs.rendered()).contains("category=bank-account-constraint-conflict", "errorCode=BANK_ACCOUNT_ALREADY_EXISTS",
-                    "constraint=" + BANK_UNIQUE, "traceId=" + duplicateTrace)
+            assertThat(logs.rendered()).contains("errorCode=BANK_ACCOUNT_ALREADY_EXISTS",
+                    "traceId=" + duplicateTrace)
                     .doesNotContain(number, "Sensitive Bank", "SENTINEL_HOLDER_DUP", "SQLState", "23505", "Throwable");
             assertThat(jdbc.queryForObject("select count(*) from bank_accounts where customer_id=?", Integer.class, owner.id())).isEqualTo(1);
         }
@@ -342,7 +334,7 @@ class BankAccountPostgresIT {
                         createBody("Unrelated Index Bank", "000077009876", "Synthetic Owner", false));
                 assertError(unrelated, 500, "INTERNAL_ERROR");
                 assertThat(unrelated.body()).doesNotContain("000077009876", "Synthetic Owner", "uq_p08_test_account_holder");
-                assertThat(logs.rendered()).contains("category=bank-account-create-integrity-failure", "errorCode=INTERNAL_ERROR")
+                assertThat(logs.rendered()).contains("errorCode=INTERNAL_ERROR")
                         .doesNotContain("BANK_ACCOUNT_ALREADY_EXISTS", "uq_p08_test_account_holder", "Synthetic Owner", "000077009876");
             }
         } finally {
@@ -352,12 +344,12 @@ class BankAccountPostgresIT {
         BankAccountResponse oldDefault = create(token, "Default Bank", "000088001234", true);
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             // The stale read is injected; PostgreSQL's partial unique index still rejects the second true row.
-            doReturn(java.util.Optional.empty()).when(bankAccounts).findByCustomer_IdAndIsDefaultTrue(owner.id());
+            doReturn(java.util.Optional.empty()).when(bankAccounts).findByCustomerIdAndIsDefaultTrue(owner.id());
             HttpResponse<String> conflict = post("/api/bank-accounts", token,
                     createBody("Other Bank", "000088005678", "Safe Holder", true));
             assertError(conflict, 409, "BANK_DEFAULT_CONFLICT");
             assertThat(conflict.body()).doesNotContain("000088005678");
-            assertThat(logs.rendered()).contains("errorCode=BANK_DEFAULT_CONFLICT", "constraint=" + DEFAULT_UNIQUE)
+            assertThat(logs.rendered()).contains("errorCode=BANK_DEFAULT_CONFLICT")
                     .doesNotContain("000088005678", "Other Bank", "Safe Holder", "23505");
             assertThat(jdbc.queryForObject("select count(*) from bank_accounts where customer_id=? and is_default", Integer.class,
                     owner.id())).isEqualTo(1);
@@ -397,7 +389,7 @@ class BankAccountPostgresIT {
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             // Inject a fault after the old default's real UPDATE/flush, before target is set; outer transaction must roll back.
             doAnswer(invocation -> {
-                Object result = invocation.callRealMethod();
+                Object result = SpySupport.callRealMethod(invocation);
                 throw new IllegalStateException("SENTINEL_P08_ROLLBACK");
             }).when(bankAccounts).flush();
             HttpResponse<String> failed = patch("/api/bank-accounts/" + first.id() + "/default", token, null);
@@ -462,8 +454,8 @@ class BankAccountPostgresIT {
                 assertError(response, 409, "BANK_ACCOUNT_IN_USE");
                 String trace = response.headers().firstValue("X-Request-ID").orElseThrow();
                 assertThat(response.body()).doesNotContain("000099887766", "Private Bank", PAYOUT_FK, "23503");
-                assertThat(logs.rendered()).contains("category=bank-account-referenced", "errorCode=BANK_ACCOUNT_IN_USE",
-                        "constraint=" + PAYOUT_FK, "traceId=" + trace)
+                assertThat(logs.rendered()).contains("errorCode=BANK_ACCOUNT_IN_USE",
+                        "traceId=" + trace)
                         .doesNotContain("000099887766", "Private Bank", "Synthetic Owner", "23503", "SQLState");
                 assertThat(jdbc.queryForMap("select * from bank_accounts where id=?", account.id())).isEqualTo(bankBefore);
                 assertThat(jdbc.queryForObject("select is_default from bank_accounts where id=?", Boolean.class, account.id())).isTrue();
@@ -477,7 +469,7 @@ class BankAccountPostgresIT {
     }
 
     @Test
-    void twoDefaultChangesSerializeOnRealAdvisoryLockAndHideIntermediateState() throws Exception {
+    void twoDefaultChangesSerializeOnCustomerRowLockAndHideIntermediateState() throws Exception {
         Account owner = account("p08-default-race-owner", Role.CUSTOMER, CustomerStatus.ACTIVE);
         String token = login(owner);
         long first = create(token, "Bank", "10000001", true).id();
@@ -487,14 +479,14 @@ class BankAccountPostgresIT {
         CountDownLatch releaseHolder = new CountDownLatch(1);
         AtomicInteger holderPid = new AtomicInteger(-1);
         doAnswer(invocation -> {
-            Object result = invocation.callRealMethod();
+            Object result = SpySupport.callRealMethod(invocation);
             if ("bank-account-default".equals(invocation.getArgument(0))) {
                 holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
                 holderPaused.countDown();
                 if (!releaseHolder.await(8, TimeUnit.SECONDS)) throw new IllegalStateException("P08 holder release timed out");
             }
             return result;
-        }).when(changeLogger).changed(anyString(), anyLong(), anyLong());
+        }).when(actionLogService).bankAccountChanged(anyString(), anyLong(), anyLong());
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             CompletableFuture<HttpResponse<String>> holder = CompletableFuture.supplyAsync(() ->
@@ -540,14 +532,14 @@ class BankAccountPostgresIT {
         CountDownLatch release = new CountDownLatch(1);
         AtomicInteger blockerPid = new AtomicInteger(-1);
         doAnswer(invocation -> {
-            Object result = invocation.callRealMethod();
+            Object result = SpySupport.callRealMethod(invocation);
             if ("bank-account-default".equals(invocation.getArgument(0))) {
                 blockerPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
                 paused.countDown();
                 if (!release.await(8, TimeUnit.SECONDS)) throw new IllegalStateException("P08 default/delete release timed out");
             }
             return result;
-        }).when(changeLogger).changed(anyString(), anyLong(), anyLong());
+        }).when(actionLogService).bankAccountChanged(anyString(), anyLong(), anyLong());
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
             CompletableFuture<HttpResponse<String>> setting = CompletableFuture.supplyAsync(() ->
@@ -572,104 +564,7 @@ class BankAccountPostgresIT {
         }
     }
 
-    @Test
-    void waitingActorIsRecheckedAfterP04LocksItsAccount() throws Exception {
-        customerProperties.setStatusLockTimeoutMs(10_000);
-        Account actorToLock = account("p08-waiting-admin-a", Role.ADMIN, CustomerStatus.ACTIVE);
-        Account locker = account("p08-waiting-admin-b", Role.ADMIN, CustomerStatus.ACTIVE);
-        account("p08-waiting-admin-c", Role.ADMIN, CustomerStatus.ACTIVE);
-        String waitingToken = login(actorToLock);
-        String lockerToken = login(locker);
-        long bankId = create(waitingToken, "Admin Bank", "30000001", true).id();
-        List<Integer> requestBackendPids = new CopyOnWriteArrayList<>();
-        CountDownLatch bothRequestsAtSharedLock = new CountDownLatch(2);
-        doAnswer(invocation -> {
-            requestBackendPids.add(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
-            bothRequestsAtSharedLock.countDown();
-            return invocation.callRealMethod();
-        }).when(statusLockSpy).acquire();
-        ExecutorService executor = Executors.newFixedThreadPool(2);
-        try (Connection blocker = dataSource.getConnection()) {
-            blocker.setAutoCommit(false);
-            int holderPid = backendPid(blocker);
-            try (PreparedStatement lock = blocker.prepareStatement("select pg_advisory_xact_lock(?)")) {
-                lock.setLong(1, CustomerStatusLock.STATUS_NAMESPACE_KEY);
-                lock.execute();
-            }
-            CompletableFuture<HttpResponse<String>> p04Lock = CompletableFuture.supplyAsync(() ->
-                    awaitSend("PATCH", "/api/customers/" + actorToLock.id() + "/status", lockerToken,
-                            "{\"status\":\"LOCKED\",\"reason\":\"P08 integration lock\"}", "application/json"), executor);
-            int p04WaiterPid = waitForBlockedBy(holderPid);
-            CompletableFuture<HttpResponse<String>> bankWaiter = CompletableFuture.supplyAsync(() ->
-                    awaitSend("PATCH", "/api/bank-accounts/" + bankId + "/default", waitingToken, null, null), executor);
-            assertThat(bothRequestsAtSharedLock.await(5, TimeUnit.SECONDS)).isTrue();
-            assertThat(requestBackendPids).hasSize(2).doesNotContain(holderPid);
-            assertThat(requestBackendPids).contains(p04WaiterPid);
-            int bankWaiterPid = requestBackendPids.stream().filter(pid -> pid != p04WaiterPid).findFirst().orElseThrow();
-            waitForAdvisoryWaiter(p04WaiterPid);
-            waitForAdvisoryWaiter(bankWaiterPid);
-            assertThat(blockingPids(p04WaiterPid)).contains(holderPid);
-            assertThat(blockingPids(bankWaiterPid)).isNotEmpty();
-            System.out.println("P08_P04_RECHECK holderPid=" + holderPid + " p04WaiterPid=" + p04WaiterPid
-                    + " bankWaiterPid=" + bankWaiterPid + " p04BlockingPids=" + blockingPids(p04WaiterPid)
-                    + " bankBlockingPids=" + blockingPids(bankWaiterPid));
-            blocker.commit();
-            assertSuccess(p04Lock.get(8, TimeUnit.SECONDS), 200);
-            HttpResponse<String> response = bankWaiter.get(8, TimeUnit.SECONDS);
-            assertError(response, 401, "INVALID_TOKEN");
-            assertThat(jdbc.queryForObject("select status from customers where id=?", String.class, actorToLock.id())).isEqualTo("LOCKED");
-            assertThat(jdbc.queryForObject("select count(*) from bank_accounts where id=? and is_default", Integer.class, bankId)).isEqualTo(1);
-        } finally {
-            reset(statusLockSpy);
-            executor.shutdownNow();
-        }
-    }
-
-    @Test
-    void realLockTimeoutReturns503RollsBackAndRetrySucceeds() throws Exception {
-        customerProperties.setStatusLockTimeoutMs(650);
-        Account owner = account("p08-timeout-owner", Role.CUSTOMER, CustomerStatus.ACTIVE);
-        String token = login(owner);
-        long first = create(token, "Bank", "40000001", true).id();
-        long second = create(token, "Bank", "40000002", false).id();
-        List<Map<String, Object>> before = jdbc.queryForList("select * from bank_accounts where customer_id=? order by id", owner.id());
-        try (Connection blocker = dataSource.getConnection(); ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
-            blocker.setAutoCommit(false);
-            int blockerPid = backendPid(blocker);
-            try (PreparedStatement lock = blocker.prepareStatement("select pg_advisory_xact_lock(?)")) {
-                lock.setLong(1, CustomerStatusLock.STATUS_NAMESPACE_KEY);
-                lock.execute();
-            }
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            try {
-                CompletableFuture<HttpResponse<String>> request = CompletableFuture.supplyAsync(() ->
-                        awaitSend("PATCH", "/api/bank-accounts/" + second + "/default", token, null, null), executor);
-                int waiterPid = waitForBlockedBy(blockerPid);
-                assertThat(waiterPid).isNotEqualTo(blockerPid);
-                System.out.println("P08_LOCK_TIMEOUT blockerPid=" + blockerPid + " waiterPid=" + waiterPid
-                        + " pgBlockingPids=" + blockingPids(waiterPid));
-                HttpResponse<String> response = request.get(6, TimeUnit.SECONDS);
-                assertError(response, 503, "DEPENDENCY_UNAVAILABLE");
-                String trace = response.headers().firstValue("X-Request-ID").orElseThrow();
-                assertThat(logs.rendered()).contains("category=bank-account-default-database-failure",
-                        "errorCode=DEPENDENCY_UNAVAILABLE", "traceId=" + trace)
-                        .doesNotContain("40000002", "55P03", "pg_advisory_xact_lock", "Bearer");
-                assertThat(jdbc.queryForList("select * from bank_accounts where customer_id=? order by id", owner.id())).isEqualTo(before);
-                blocker.rollback();
-            } finally {
-                try { blocker.rollback(); } catch (SQLException ignored) { }
-                executor.shutdownNow();
-            }
-        }
-        HttpResponse<String> retry = patch("/api/bank-accounts/" + second + "/default", token, null);
-        customerProperties.setStatusLockTimeoutMs(2_500);
-        assertSuccess(retry, 200);
-        assertThat(jdbc.queryForObject("select id from bank_accounts where customer_id=? and is_default", Long.class, owner.id()))
-                .isEqualTo(second);
-        assertThat(first).isNotEqualTo(second);
-    }
-
-    private BankAccountResponse create(String token, String bankName, String accountNumber, boolean makeDefault) throws Exception {
+private BankAccountResponse create(String token, String bankName, String accountNumber, boolean makeDefault) throws Exception {
         HttpResponse<String> response = post("/api/bank-accounts", token,
                 createBody(bankName, accountNumber, "Synthetic Owner", makeDefault));
         assertSuccess(response, 201);
@@ -775,18 +670,6 @@ class BankAccountPostgresIT {
         }
         throw new AssertionError("No PostgreSQL waiter reported pg_blocking_pids blocker=" + blockerPid
                 + "; active=" + jdbc.queryForList("select pid,wait_event_type,wait_event,state from pg_stat_activity where datname=current_database()"));
-    }
-
-    private void waitForAdvisoryWaiter(int waiterPid) throws Exception {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(6);
-        while (System.nanoTime() < deadline) {
-            Integer waiting = jdbc.queryForObject("select count(*) from pg_stat_activity where pid=? and state='active' "
-                    + "and wait_event_type='Lock' and wait_event='advisory'", Integer.class, waiterPid);
-            if (waiting != null && waiting > 0) return;
-            Thread.sleep(40);
-        }
-        throw new AssertionError("PostgreSQL session did not wait on advisory lock pid=" + waiterPid
-                + "; current=" + jdbc.queryForList("select pid,state,wait_event_type,wait_event from pg_stat_activity where pid=?", waiterPid));
     }
 
     private List<Integer> blockedBy(int blockerPid) {

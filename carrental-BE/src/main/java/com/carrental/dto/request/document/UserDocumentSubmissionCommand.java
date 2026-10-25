@@ -1,6 +1,6 @@
 package com.carrental.dto.request.document;
 
-import com.carrental.storage.UploadedDocumentImage;
+import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 
 public record UserDocumentSubmissionCommand(
         UserDocumentSubmissionRequest metadata,

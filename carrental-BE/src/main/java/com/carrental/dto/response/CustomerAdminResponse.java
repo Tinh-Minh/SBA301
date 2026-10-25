@@ -19,4 +19,5 @@ public record CustomerAdminResponse(
         LocalDateTime updatedAt,
         LocalDate dateOfBirth,
         String address) {
+
 }

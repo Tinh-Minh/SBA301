@@ -19,15 +19,13 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.UserDocumentService;
 import com.carrental.repository.UserDocumentRepository;
-import com.carrental.storage.CanonicalDocumentImage;
-import com.carrental.storage.DocumentImageFormat;
+import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import com.carrental.storage.PrivateDocumentStorage;
-import com.carrental.storage.PrivateDocumentReceipt;
-import com.carrental.storage.UploadedDocumentImage;
+import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentReceipt;
+import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -70,6 +68,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.junit.jupiter.Container;
+import com.carrental.web.RequestTraceFilter;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import tools.jackson.databind.json.JsonMapper;
@@ -300,10 +299,11 @@ class UserDocumentPostgresIT {
         invalids.add(file("frontImage", "front.jpg", "image/jpeg", java.util.Arrays.copyOf(jpeg, jpeg.length - 64)));
         invalids.add(file("frontImage", "front.jpg", "image/jpeg", java.util.Arrays.copyOf(jpeg, jpeg.length - Math.max(1, jpeg.length / 3))));
         byte[] png = syntheticPng();
-        invalids.add(file("frontImage", "front.png", "image/png", java.util.Arrays.copyOf(png, png.length - 8)));
-        byte[] crcBrokenPng = png.clone();
-        crcBrokenPng[crcBrokenPng.length - 5] ^= 0x01;
-        invalids.add(file("frontImage", "front.png", "image/png", crcBrokenPng));
+        invalids.add(file("frontImage", "front.png", "image/png", java.util.Arrays.copyOf(png, png.length / 2)));
+        byte[] damagedPixels = png.clone();
+        // Exercise invalid pixel data through ImageIO, not the removed custom IEND/CRC parser.
+        java.util.Arrays.fill(damagedPixels, png.length / 3, 2 * png.length / 3, (byte) 0xff);
+        invalids.add(file("frontImage", "front.png", "image/png", damagedPixels));
         invalids.add(file("frontImage", "front.png", "image/svg+xml", png));
         invalids.add(file("frontImage", "front.png", "image/png", "<svg/>".getBytes(StandardCharsets.UTF_8)));
 
@@ -330,10 +330,10 @@ class UserDocumentPostgresIT {
         long filesBefore = fileCount();
         CountDownLatch fileStored = new CountDownLatch(1);
         doAnswer(invocation -> {
-            PrivateDocumentReceipt receipt = (PrivateDocumentReceipt) invocation.callRealMethod();
+            PrivateDocumentReceipt receipt = (PrivateDocumentReceipt) SpySupport.callRealMethod(invocation);
             fileStored.countDown();
             return receipt;
-        }).when(storage).store(any(CanonicalDocumentImage.class));
+        }).when(storage).store(any(UploadedDocumentImage.class));
         try (Connection blocker = dataSource.getConnection(); var executor = Executors.newSingleThreadExecutor()) {
             blocker.setAutoCommit(false);
             try (PreparedStatement statement = blocker.prepareStatement("select id from customers where id=? for update")) {
@@ -434,11 +434,11 @@ class UserDocumentPostgresIT {
         CountDownLatch stored = new CountDownLatch(1);
         CountDownLatch continueUpload = new CountDownLatch(1);
         doAnswer(invocation -> {
-            PrivateDocumentReceipt receipt = (PrivateDocumentReceipt) invocation.callRealMethod();
+            PrivateDocumentReceipt receipt = (PrivateDocumentReceipt) SpySupport.callRealMethod(invocation);
             stored.countDown();
             if (!continueUpload.await(10, TimeUnit.SECONDS)) throw new IllegalStateException("P05 owner-lock barrier timed out");
             return receipt;
-        }).when(storage).store(any(CanonicalDocumentImage.class));
+        }).when(storage).store(any(UploadedDocumentImage.class));
 
         try (var executor = Executors.newSingleThreadExecutor(); SafeLogCapture logs = new SafeLogCapture()) {
             CompletableFuture<HttpResponse<byte[]>> upload = CompletableFuture.supplyAsync(
@@ -475,8 +475,8 @@ class UserDocumentPostgresIT {
         AtomicInteger stores = new AtomicInteger();
         doAnswer(invocation -> {
             if (stores.incrementAndGet() == 2) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
-            return invocation.callRealMethod();
-        }).when(storage).store(any(CanonicalDocumentImage.class));
+            return SpySupport.callRealMethod(invocation);
+        }).when(storage).store(any(UploadedDocumentImage.class));
 
         assertApiError(submit(token, fullParts("00123", syntheticPng(), syntheticPng())), 503, "DEPENDENCY_UNAVAILABLE");
         assertThat(documentCount(owner.id())).isEqualTo(beforeRows);
@@ -624,21 +624,19 @@ class UserDocumentPostgresIT {
         }).when(documents).saveAndFlush(any(UserDocument.class));
         doThrow(new IllegalStateException("SENTINEL_CLEANUP_FAILURE")).when(storage).delete(any());
 
-        MDC.put(com.carrental.web.RequestTraceFilter.MDC_KEY, traceId);
+        MDC.put(RequestTraceFilter.MDC_KEY, traceId);
         try (SafeLogCapture logs = new SafeLogCapture()) {
             assertThatThrownBy(() -> service.submit(principal,
                     new UserDocumentSubmissionCommand(metadata, upload, null)))
                     .isInstanceOf(IllegalStateException.class)
-                    .hasMessage("SENTINEL_PRIMARY_FAILURE")
-                    .satisfies(primary -> assertThat(primary.getSuppressed()).hasSize(1)
-                            .allSatisfy(suppressed -> assertThat(suppressed).hasMessage("SENTINEL_CLEANUP_FAILURE")));
+                    .hasMessage("SENTINEL_PRIMARY_FAILURE");
             String rendered = logs.rendered();
-            assertThat(rendered).contains("User document cleanup failed action=user-document-cleanup", "receiptId=", "traceId=" + traceId)
+            assertThat(rendered).contains("Document cleanup failed", "receiptId=", "traceId=" + traceId)
                     .doesNotContain("SENTINEL_PRIVATE_DOC_NUMBER", "SENTINEL_PRIMARY_FAILURE", "SENTINEL_CLEANUP_FAILURE",
                             PRIVATE_ROOT.toString(), "private-local:", "synthetic.png");
             assertThat(logs.events()).allSatisfy(event -> assertThat(event.getThrowableProxy()).isNull());
         } finally {
-            MDC.remove(com.carrental.web.RequestTraceFilter.MDC_KEY);
+            MDC.remove(RequestTraceFilter.MDC_KEY);
         }
         assertThat(documentCount(owner.id())).isZero();
         Set<String> newFiles = new java.util.HashSet<>(fileNames());

@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.carrental.config.ClockConfig;
 import com.carrental.config.security.JwtConfiguration;
+import com.carrental.dto.response.TokenResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPairGenerator;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;
@@ -15,6 +15,12 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 class JwtConfigurationTest {
+
+    @Test
+    void tokenResponseNeverRendersTheBearerSecretInLogs() {
+        TokenResponse response = new TokenResponse("SENSITIVE_BEARER_SENTINEL", "Bearer", 300, null);
+        assertThat(response.toString()).contains("accessToken=<redacted>").doesNotContain(response.accessToken());
+    }
 
     @Test
     void missingSigningKeyConfigurationFailsClosedAndDoesNotCreateAKey(@TempDir Path directory) {

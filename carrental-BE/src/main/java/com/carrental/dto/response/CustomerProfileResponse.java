@@ -20,4 +20,5 @@ public record CustomerProfileResponse(
         CustomerStatus status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
+
 }

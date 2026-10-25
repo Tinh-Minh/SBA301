@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import com.carrental.config.security.BootstrapAdminProperties;
 import com.carrental.entity.Customer;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.service.impl.AdminBootstrapService;
+import com.carrental.service.AdminBootstrapService;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -228,8 +228,8 @@ class AuthSecurityPostgresIT {
             String emailTrace = emailConflict.headers().firstValue("X-Request-ID").orElseThrow();
             String phoneTrace = phoneConflict.headers().firstValue("X-Request-ID").orElseThrow();
             assertThat(capturedLogs)
-                    .contains("Registration conflict traceId=" + emailTrace + " constraint=uq_customers_email_lower")
-                    .contains("Registration conflict traceId=" + phoneTrace + " constraint=customers_phone_key")
+                    .contains("Request rejected traceId=" + emailTrace + " errorCode=ACCOUNT_ALREADY_EXISTS")
+                    .contains("Request rejected traceId=" + phoneTrace + " errorCode=ACCOUNT_ALREADY_EXISTS")
                     .doesNotContain(emailMarker, phoneMarker, passwordMarker, hashMarker, bearerToken);
             candidateHashes.forEach(hash -> assertThat(capturedLogs).doesNotContain(hash));
         }
@@ -610,6 +610,58 @@ class AuthSecurityPostgresIT {
         return jdbc.queryForObject("insert into customers(full_name,email,phone,password_hash,role,status,kyc_status,email_verified) "
                         + "values (?,?,?,?,'CUSTOMER','ACTIVE','NONE',false) returning id",
                 Long.class, fullName, email, phone, passwordHash);
+    }
+
+    @Test
+    void changePasswordRequiresCurrentPasswordAndKeepsTheStoredHashOnRejectedRequests() throws Exception {
+        String email = email("change-password");
+        Long id = registerAndGetId(email, phone("cp"), PASSWORD);
+        String token = loginToken(email, PASSWORD);
+        Map<String, String> headers = Map.of("Authorization", "Bearer " + token);
+        String originalHash = jdbc.queryForObject("select password_hash from customers where id=?", String.class, id);
+        String newPassword = "replacement fake password";
+        String validBody = objectMapper.writeValueAsString(Map.of("currentPassword", PASSWORD, "newPassword", newPassword));
+        assertThat(post("/api/auth/change-password", validBody).statusCode()).isEqualTo(401);
+        assertError(post("/api/auth/change-password", objectMapper.writeValueAsString(
+                Map.of("currentPassword", "wrong password", "newPassword", newPassword)), headers), 401, "AUTHENTICATION_FAILED");
+        HttpResponse<String> weakPassword = post("/api/auth/change-password", objectMapper.writeValueAsString(
+                Map.of("currentPassword", PASSWORD, "newPassword", "tiny")), headers);
+        assertThat(weakPassword.statusCode()).isEqualTo(400);
+        assertThat(json(weakPassword).path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        assertThat(json(weakPassword).path("errors").get(0).path("field").asText()).isEqualTo("newPassword");
+        assertTrace(weakPassword, json(weakPassword));
+        assertThat(jdbc.queryForObject("select password_hash from customers where id=?", String.class, id)).isEqualTo(originalHash);
+        try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
+            HttpResponse<String> changed = post("/api/auth/change-password", validBody, headers);
+            assertThat(changed.statusCode()).isEqualTo(200);
+            assertThat(json(changed).path("data").isNull()).isTrue();
+            assertTrace(changed, json(changed));
+            assertThat(changed.headers().firstValue("Cache-Control")).contains("no-store");
+            String hash = jdbc.queryForObject("select password_hash from customers where id=?", String.class, id);
+            assertThat(hash).isNotEqualTo(originalHash);
+            assertThat(passwordEncoder.matches(newPassword, hash)).isTrue();
+            assertThat(changed.body()).doesNotContain(newPassword, hash, token);
+            assertThat(logs.snapshot().stream().map(AuthSecurityPostgresIT::renderLogEvent).collect(Collectors.joining()))
+                    .doesNotContain(newPassword, hash, token);
+        }
+        assertError(post("/api/auth/login", loginJson(email, PASSWORD)), 401, "AUTHENTICATION_FAILED");
+        assertThat(loginToken(email, newPassword)).isNotBlank();
+    }
+
+    @Test
+    void registrationDoesNotMislabelAnUnrelatedUniqueConstraintAsAnExistingAccount() throws Exception {
+        String name = "F1UniqueNameSentinel";
+        jdbc.execute("create unique index uq_f1_test_registration_name on customers(full_name) where full_name='F1UniqueNameSentinel'");
+        try {
+            assertThat(post("/api/auth/register", registerJson(name, email("unrelated-first"), phone("u1"), PASSWORD))
+                    .statusCode()).isEqualTo(201);
+            HttpResponse<String> response = post("/api/auth/register", registerJson(name, email("unrelated-second"), phone("u2"), PASSWORD));
+            assertError(response, 500, "INTERNAL_ERROR");
+            assertThat(response.body()).doesNotContain(name, "uq_f1_test_registration_name", "ACCOUNT_ALREADY_EXISTS");
+            assertThat(jdbc.queryForObject("select count(*) from customers where full_name=?", Integer.class, name)).isEqualTo(1);
+        } finally {
+            jdbc.execute("drop index if exists uq_f1_test_registration_name");
+        }
     }
 
     private String loginToken(String email, String password) throws Exception {

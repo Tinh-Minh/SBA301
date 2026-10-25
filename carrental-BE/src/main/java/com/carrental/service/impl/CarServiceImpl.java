@@ -13,7 +13,7 @@ import com.carrental.exception.AppException;
 import com.carrental.repository.CarDocumentRepository;
 import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
-import com.carrental.service.AccessGuard;
+import com.carrental.security.AccessGuard;
 import com.carrental.service.CarService;
 import com.carrental.util.DbErrors;
 import com.carrental.util.TimeUtil;

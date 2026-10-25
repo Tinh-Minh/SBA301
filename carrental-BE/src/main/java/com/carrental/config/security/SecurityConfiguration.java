@@ -4,8 +4,8 @@ import com.carrental.repository.CustomerRepository;
 import com.carrental.security.ApiAccessDeniedHandler;
 import com.carrental.security.ApiAuthenticationEntryPoint;
 import com.carrental.security.CurrentAccountJwtAuthenticationConverter;
-import com.carrental.security.CustomerUserDetailsService;
 import com.carrental.security.SecurityErrorResponses;
+import com.carrental.service.impl.CustomerUserDetailsServiceImpl;
 import com.carrental.web.RequestTraceFilter;
 import java.net.URI;
 import java.util.List;
@@ -41,7 +41,7 @@ public class SecurityConfiguration {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(CustomerUserDetailsService userDetailsService,
+    AuthenticationManager authenticationManager(CustomerUserDetailsServiceImpl userDetailsService,
             PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);

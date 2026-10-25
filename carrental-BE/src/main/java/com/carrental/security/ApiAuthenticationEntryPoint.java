@@ -3,6 +3,7 @@ package com.carrental.security;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import com.carrental.web.RequestTraceFilter;
 import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +25,7 @@ public final class ApiAuthenticationEntryPoint implements AuthenticationEntryPoi
                 || (authException instanceof org.springframework.security.oauth2.core.OAuth2AuthenticationException oauth2
                 && "dependency_unavailable".equals(oauth2.getError().getErrorCode()))) {
             log.error("Security account lookup failed traceId={} exceptionType={}",
-                    com.carrental.web.RequestTraceFilter.currentTraceId(), authException.getClass().getSimpleName());
+                    RequestTraceFilter.currentTraceId(), authException.getClass().getSimpleName());
         }
         responses.authenticationFailure(request, response, authException);
     }

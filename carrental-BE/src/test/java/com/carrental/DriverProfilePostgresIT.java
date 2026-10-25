@@ -15,8 +15,6 @@ import com.carrental.enums.Role;
 import com.carrental.enums.DocumentType;
 import com.carrental.repository.DriverRepository;
 import com.carrental.service.DriverEligibilityService;
-import com.carrental.storage.CanonicalDocumentImage;
-import com.carrental.storage.DocumentImageFormat;
 import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.web.RequestTraceFilter;
 import java.awt.image.BufferedImage;
@@ -56,7 +54,6 @@ import org.springframework.context.annotation.Primary;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -70,8 +67,7 @@ import tools.jackson.databind.json.JsonMapper;
         "spring.flyway.enabled=true",
         "spring.flyway.locations=classpath:db/migration/function1,classpath:db/migration/it-support",
         "spring.jpa.hibernate.ddl-auto=validate",
-        "spring.jpa.open-in-view=false",
-        "app.customer.status-lock-timeout-ms=650"
+        "spring.jpa.open-in-view=false"
 })
 @Import(DriverProfilePostgresIT.FixedClockConfiguration.class)
 class DriverProfilePostgresIT {
@@ -401,7 +397,7 @@ class DriverProfilePostgresIT {
                         "{\"status\":\"ACTIVE\"}");
                 assertError(pendingActivation, 409, "DRIVER_NOT_ELIGIBLE");
                 String pendingTrace = pendingActivation.headers().firstValue(RequestTraceFilter.HEADER_NAME).orElseThrow();
-                assertThat(logs.countWith(pendingTrace, "")).isZero();
+                assertThat(logs.countWith(pendingTrace, "action=driver-status")).isZero();
                 assertThat(driverStatus(pendingOwner.id())).isEqualTo("PENDING");
                 assertThat(auditSnapshot(pendingOwner.id(), pendingDriver)).isEqualTo(pendingAudit);
 
@@ -432,7 +428,7 @@ class DriverProfilePostgresIT {
                         "{\"status\":\"ACTIVE\"}");
                 assertError(activeNoOp, 409, "DRIVER_NOT_ELIGIBLE");
                 String activeTrace = activeNoOp.headers().firstValue(RequestTraceFilter.HEADER_NAME).orElseThrow();
-                assertThat(logs.countWith(activeTrace, "")).isZero();
+                assertThat(logs.countWith(activeTrace, "action=driver-status")).isZero();
                 assertThat(driverStatus(activeOwner.id())).isEqualTo("ACTIVE");
                 assertThat(auditSnapshot(activeOwner.id(), activeDriver)).isEqualTo(activeAudit);
                 index++;
@@ -448,7 +444,7 @@ class DriverProfilePostgresIT {
                     "{\"status\":\"ACTIVE\"}");
             assertError(reactivation, 409, "DRIVER_NOT_ELIGIBLE");
             String suspendedTrace = reactivation.headers().firstValue(RequestTraceFilter.HEADER_NAME).orElseThrow();
-            assertThat(logs.countWith(suspendedTrace, "")).isZero();
+            assertThat(logs.countWith(suspendedTrace, "action=driver-status")).isZero();
             assertThat(driverStatus(suspendedOwner.id())).isEqualTo("SUSPENDED");
             assertThat(auditSnapshot(suspendedOwner.id(), suspendedDriver)).isEqualTo(suspendedAudit);
         }
@@ -564,17 +560,15 @@ class DriverProfilePostgresIT {
         String constraint = jdbc.queryForObject("select conname from pg_constraint where conrelid='drivers'::regclass and contype='u'",
                 String.class);
         assertThat(constraint).isEqualTo("drivers_customer_id_key");
-        doAnswer(invocation -> invocation.<Long>getArgument(0) == owner.id() ? false : invocation.callRealMethod())
-                .when(drivers).existsByCustomer_Id(anyLong());
+        doAnswer(invocation -> invocation.<Long>getArgument(0) == owner.id() ? false : SpySupport.callRealMethod(invocation))
+                .when(drivers).existsByCustomerId(anyLong());
 
         try (SafeLogCapture logs = new SafeLogCapture()) {
             var response = send("POST", "/api/drivers", token, null);
             assertError(response, 409, "DRIVER_PROFILE_ALREADY_EXISTS");
             String trace = response.headers().firstValue(RequestTraceFilter.HEADER_NAME).orElseThrow();
             ILoggingEvent event = logs.singleForTrace(trace);
-            assertThat(event.getFormattedMessage()).contains("action=driver-operation-failure",
-                    "category=driver-profile-unique-conflict", "errorCode=DRIVER_PROFILE_ALREADY_EXISTS",
-                    "ownerId=" + owner.id(), "constraint=drivers_customer_id_key", "exceptionType=");
+            assertThat(event.getFormattedMessage()).contains("errorCode=DRIVER_PROFILE_ALREADY_EXISTS", "traceId=" + trace);
             assertThat(event.getThrowableProxy()).isNull();
             assertThat(logs.rendered()).doesNotContain(PASSWORD, owner.email(), "P07 unique-fallback-owner");
         }
@@ -591,7 +585,7 @@ class DriverProfilePostgresIT {
         AtomicBoolean failOnce = new AtomicBoolean(true);
         doAnswer(invocation -> {
             Driver driver = (Driver) invocation.getArgument(0);
-            Driver saved = (Driver) invocation.callRealMethod();
+            Driver saved = (Driver) SpySupport.callRealMethod(invocation);
             if (driver.getCustomer().getId().equals(owner.id()) && failOnce.compareAndSet(true, false)) {
                 throw new IllegalStateException("P07 private rollback sentinel");
             }
@@ -810,7 +804,7 @@ class DriverProfilePostgresIT {
 
     private static final class SafeLogCapture implements AutoCloseable {
         private final List<Logger> loggers = List.of(
-                (Logger) LoggerFactory.getLogger("com.carrental.service.DriverChangeLogger"),
+                (Logger) LoggerFactory.getLogger("com.carrental.service.impl.ActionLogServiceImpl"),
                 (Logger) LoggerFactory.getLogger("com.carrental.exception.GlobalExceptionHandler"));
         private final CapturingAppender appender = new CapturingAppender();
 

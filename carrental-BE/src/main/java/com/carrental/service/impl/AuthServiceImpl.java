@@ -1,8 +1,8 @@
 package com.carrental.service.impl;
 
 import com.carrental.config.security.JwtProperties;
-import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.AuthInputNormalizer;
+import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.LoginRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
 import com.carrental.dto.response.CustomerProfileResponse;
@@ -10,27 +10,23 @@ import com.carrental.dto.response.TokenResponse;
 import com.carrental.mapper.CustomerMapper;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
-import com.carrental.enums.KycStatus;
-import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.AccountUserDetails;
+import com.carrental.service.AuthService;
 import com.carrental.security.CurrentAccount;
-import java.nio.charset.StandardCharsets;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.hibernate.exception.ConstraintViolationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
@@ -43,9 +39,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class AuthServiceImpl implements com.carrental.service.AuthService {
+public class AuthServiceImpl implements AuthService {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     private static final List<String> UNIQUE_CONSTRAINTS = List.of("uq_customers_email_lower", "customers_phone_key");
 
     private final CustomerRepository customers;
@@ -69,36 +64,14 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
     @Override
     @Transactional
     public CustomerProfileResponse register(RegisterRequest request) {
-        String email = AuthInputNormalizer.email(request.getEmail());
-        String fullName = AuthInputNormalizer.trimmed(request.getFullName());
-        String phone = AuthInputNormalizer.trimmed(request.getPhone());
-        if (customers.existsByEmailIgnoreCase(email) || customers.existsByPhone(phone)) {
+        Customer customer = CustomerMapper.toNewEntity(request, passwordEncoder.encode(request.getPassword()));
+        if (customers.existsByEmailIgnoreCase(customer.getEmail()) || customers.existsByPhone(customer.getPhone())) {
             throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS);
         }
-
-        Customer customer = new Customer();
-        customer.setFullName(fullName);
-        customer.setEmail(email);
-        customer.setPhone(phone);
-        customer.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        customer.setRole(Role.CUSTOMER);
-        customer.setStatus(CustomerStatus.ACTIVE);
-        customer.setKycStatus(KycStatus.NONE);
-        customer.setEmailVerified(false);
         try {
-            Customer saved = customers.saveAndFlush(customer);
-            return CustomerMapper.toProfile(saved);
+            return CustomerMapper.toProfile(customers.saveAndFlush(customer));
         } catch (DataIntegrityViolationException exception) {
-            String constraint = recognizedUniqueConstraint(exception);
-            if (constraint != null) {
-                log.info("Registration conflict traceId={} constraint={}", com.carrental.web.RequestTraceFilter.currentTraceId(), constraint);
-                throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, exception);
-            }
-            if (isCustomersPrimaryKeyCollision(exception)) {
-                log.error("Registration blocked because the customers id sequence is behind existing rows traceId={}",
-                        com.carrental.web.RequestTraceFilter.currentTraceId());
-                throw new AppException(ErrorCode.INTERNAL_ERROR);
-            }
+            if (isAccountUniqueViolation(exception)) throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, exception);
             throw exception;
         }
     }
@@ -110,8 +83,7 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
-                    org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated(
-                            email, request.getPassword()));
+                    UsernamePasswordAuthenticationToken.unauthenticated(email, request.getPassword()));
         } catch (BadCredentialsException | LockedException | DisabledException | UsernameNotFoundException exception) {
             throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         }
@@ -119,6 +91,10 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
         if (!(authentication.getPrincipal() instanceof AccountUserDetails account)) {
             throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         }
+        return issueToken(account);
+    }
+
+    private TokenResponse issueToken(AccountUserDetails account) {
         Instant issuedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
         Instant expiresAt = issuedAt.plus(jwtProperties.accessTokenTtl());
         JwtClaimsSet claims = JwtClaimsSet.builder()
@@ -138,39 +114,20 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
     @Transactional
     public void changePassword(CurrentAccount account, ChangePasswordRequest request) {
         if (account == null) throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
-        Customer customer = customers.findByIdForUpdate(account.customerId())
+        Customer customer = customers.findWithLockById(account.customerId())
                 .orElseThrow(() -> new AppException(ErrorCode.AUTHENTICATION_FAILED));
         if (customer.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         if (!passwordEncoder.matches(request.getCurrentPassword(), customer.getPasswordHash())) {
             throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         }
         customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        customers.flush();
     }
 
-    private String recognizedUniqueConstraint(DataIntegrityViolationException exception) {
+    private boolean isAccountUniqueViolation(Throwable exception) {
         for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (cause instanceof ConstraintViolationException constraintViolation) {
-                String name = constraintViolation.getConstraintName();
-                SQLException sqlException = constraintViolation.getSQLException();
-                if ("23505".equals(sqlException == null ? null : sqlException.getSQLState())
-                        && UNIQUE_CONSTRAINTS.contains(name)) {
-                    return name;
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean isCustomersPrimaryKeyCollision(DataIntegrityViolationException exception) {
-        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (cause instanceof ConstraintViolationException constraintViolation) {
-                SQLException sqlException = constraintViolation.getSQLException();
-                if ("23505".equals(sqlException == null ? null : sqlException.getSQLState())
-                        && "customers_pkey".equals(constraintViolation.getConstraintName())) {
-                    return true;
-                }
-            }
+            if (cause instanceof ConstraintViolationException violation && violation.getSQLException() != null
+                    && "23505".equals(violation.getSQLException().getSQLState())
+                    && UNIQUE_CONSTRAINTS.contains(violation.getConstraintName())) return true;
         }
         return false;
     }

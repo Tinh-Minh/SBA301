@@ -3,57 +3,56 @@ package com.carrental.storage;
 import com.carrental.config.DocumentProperties;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Locale;
 import java.util.UUID;
-import java.util.regex.Matcher;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.imageio.ImageIO;
 import org.springframework.stereotype.Component;
 
-/** Local filesystem adapter for a configured, non-public directory outside the application tree. */
+/** Stores private images under server-generated names; downloads remain permission-checked by the service. */
 @Component
 public final class LocalPrivateDocumentStorage implements PrivateDocumentStorage {
-
-    private static final Logger log = LoggerFactory.getLogger(LocalPrivateDocumentStorage.class);
     private static final Pattern LOCATOR = Pattern.compile("private-local:([0-9a-fA-F-]{36})\\.(jpg|png)");
     private final DocumentProperties properties;
     private final Path root;
 
     public LocalPrivateDocumentStorage(DocumentProperties properties) {
         this.properties = properties;
-        this.root = properties.getStorage().isEnabled() ? validateRoot(properties.getStorage().getRoot()) : null;
+        this.root = properties.getStorage().isEnabled() ? storageRoot(properties.getStorage().getRoot()) : null;
     }
 
-    @Override public boolean isEnabled() { return properties.getStorage().isEnabled(); }
+    @Override
+    public boolean isEnabled() { return properties.getStorage().isEnabled(); }
 
     @Override
-    public PrivateDocumentReceipt store(CanonicalDocumentImage image) {
+    public PrivateDocumentReceipt store(UploadedDocumentImage image) {
         requireEnabled();
+        if (image == null || image.filename() == null
+                || !image.filename().matches("[A-Za-z0-9][A-Za-z0-9 _-]{0,99}\\.(?i:jpg|jpeg|png)")) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
+        }
+        DocumentImageFormat format = validateImage(image.bytes());
+        String extension = image.filename().substring(image.filename().lastIndexOf('.') + 1).toLowerCase(Locale.ROOT);
+        boolean matchingName = format == DocumentImageFormat.PNG ? extension.equals("png")
+                : extension.equals("jpg") || extension.equals("jpeg");
+        if (!matchingName || !format.mediaType().equalsIgnoreCase(image.mediaType())) {
+            throw new AppException(ErrorCode.UNSUPPORTED_MEDIA_TYPE);
+        }
         UUID id = UUID.randomUUID();
-        Path destination = safePath(id.toString() + "." + image.format().extension());
-        boolean[] created = {false};
+        String locator = "private-local:" + id + "." + format.extension();
+        Path file = safePath(locator);
         try {
-            try (OutputStream output = Files.newOutputStream(destination, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE)) {
-                created[0] = true;
-                output.write(image.bytes());
-            }
-            return new PrivateDocumentReceipt("private-local:" + destination.getFileName(), id);
-        } catch (IOException | SecurityException exception) {
-            if (created[0]) {
-                try { Files.deleteIfExists(destination); }
-                catch (IOException | SecurityException cleanupFailure) {
-                    exception.addSuppressed(cleanupFailure);
-                    log.error("Private document write cleanup failed action=document-storage-write traceId={} receiptId={} exceptionType={}",
-                            com.carrental.web.RequestTraceFilter.currentTraceId(), id, cleanupFailure.getClass().getSimpleName());
-                }
-            }
+            Files.write(file, image.bytes(), StandardOpenOption.CREATE_NEW);
+            return new PrivateDocumentReceipt(locator, id);
+        } catch (IOException exception) {
+            try { Files.deleteIfExists(file); } catch (IOException cleanupFailure) { exception.addSuppressed(cleanupFailure); }
             throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, "Không thể lưu tệp riêng tư", exception);
         }
     }
@@ -61,79 +60,87 @@ public final class LocalPrivateDocumentStorage implements PrivateDocumentStorage
     @Override
     public PrivateDocumentFile open(String locator) {
         requireEnabled();
-        Matcher matcher = locator == null ? null : LOCATOR.matcher(locator);
-        if (matcher == null || !matcher.matches()) throw internalStorageFailure(null);
+        Path file = safePath(locator);
+        if (!Files.exists(file, LinkOption.NOFOLLOW_LINKS)) throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
         try {
-            if (!UUID.fromString(matcher.group(1)).toString().equalsIgnoreCase(matcher.group(1))) throw internalStorageFailure(null);
-        } catch (IllegalArgumentException exception) {
-            throw internalStorageFailure(null);
-        }
-        Path path = safePath(matcher.group(1) + "." + matcher.group(2).toLowerCase(Locale.ROOT));
-        try {
-            if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
-                throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
+            if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS)
+                    || Files.size(file) > properties.getUpload().getMaxFileSize().toBytes()) {
+                throw new AppException(ErrorCode.INTERNAL_ERROR);
             }
-            rejectUnexpectedPath(path);
-            long size = Files.size(path);
-            if (size <= 0 || size > properties.getUpload().getMaxFileSize().toBytes()) {
-                throw internalStorageFailure(null);
-            }
-            byte[] bytes = Files.readAllBytes(path);
-            if (bytes.length != size) throw internalStorageFailure(null);
-            DocumentImageFormat format = "png".equalsIgnoreCase(matcher.group(2))
-                    ? DocumentImageFormat.PNG : DocumentImageFormat.JPEG;
+            byte[] bytes = Files.readAllBytes(file);
+            DocumentImageFormat format;
+            try { format = validateImage(bytes); }
+            catch (AppException invalidImage) { throw new AppException(ErrorCode.INTERNAL_ERROR, "Ảnh đã lưu không hợp lệ", invalidImage); }
+            if (!file.toString().endsWith("." + format.extension())) throw new AppException(ErrorCode.INTERNAL_ERROR);
             return new PrivateDocumentFile(bytes, format);
-        } catch (AppException exception) {
-            throw exception;
-        } catch (IOException | SecurityException exception) {
-            throw internalStorageFailure(exception);
+        } catch (IOException exception) {
+            throw new AppException(ErrorCode.INTERNAL_ERROR, "Không thể đọc tệp riêng tư", exception);
         }
     }
 
     @Override
     public void delete(PrivateDocumentReceipt receipt) {
         requireEnabled();
-        if (receipt == null || receipt.receiptId() == null || receipt.locator() == null) return;
-        Matcher matcher = LOCATOR.matcher(receipt.locator());
-        if (!matcher.matches() || !receipt.receiptId().toString().equalsIgnoreCase(matcher.group(1))) {
-            throw internalStorageFailure(null);
+        if (receipt == null) return;
+        Path file = safePath(receipt.locator());
+        if (receipt.receiptId() == null || !file.getFileName().toString().startsWith(receipt.receiptId() + ".")) {
+            throw new AppException(ErrorCode.INTERNAL_ERROR);
         }
-        Path path = safePath(matcher.group(1) + "." + matcher.group(2).toLowerCase(Locale.ROOT));
-        try {
-            if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
-                rejectUnexpectedPath(path);
-                Files.delete(path);
-            }
-        } catch (IOException | SecurityException exception) {
-            throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, "Không thể dọn tệp riêng tư", exception);
+        try { Files.deleteIfExists(file); }
+        catch (IOException exception) { throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, "Không thể dọn tệp riêng tư", exception); }
+    }
+
+    private DocumentImageFormat validateImage(byte[] bytes) {
+        if (bytes == null || bytes.length == 0) throw new AppException(ErrorCode.VALIDATION_ERROR);
+        if (bytes.length > properties.getUpload().getMaxFileSize().toBytes()) throw new AppException(ErrorCode.PAYLOAD_TOO_LARGE);
+        try (var input = ImageIO.createImageInputStream(new ByteArrayInputStream(bytes))) {
+            var readers = ImageIO.getImageReaders(input);
+            if (!readers.hasNext()) throw new AppException(ErrorCode.UNSUPPORTED_MEDIA_TYPE);
+            var reader = readers.next();
+            try {
+                reader.setInput(input, true, true);
+                String name = reader.getFormatName().toLowerCase(Locale.ROOT);
+                DocumentImageFormat format = switch (name) {
+                    case "png" -> DocumentImageFormat.PNG;
+                    case "jpeg", "jpg" -> DocumentImageFormat.JPEG;
+                    default -> throw new AppException(ErrorCode.UNSUPPORTED_MEDIA_TYPE);
+                };
+                int width = reader.getWidth(0), height = reader.getHeight(0);
+                if (width <= 0 || height <= 0 || width > properties.getUpload().getMaxImageDimension()
+                        || height > properties.getUpload().getMaxImageDimension()
+                        || (long) width * height > properties.getUpload().getMaxImagePixels()) {
+                    throw new AppException(ErrorCode.PAYLOAD_TOO_LARGE);
+                }
+                AtomicBoolean warning = new AtomicBoolean();
+                reader.addIIOReadWarningListener((source, message) -> warning.set(true));
+                if (reader.read(0) == null || warning.get()) throw new AppException(ErrorCode.VALIDATION_ERROR);
+                return format;
+            } finally { reader.dispose(); }
+        } catch (IOException exception) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR);
         }
     }
 
-    private Path safePath(String fileName) {
-        Path path = root.resolve(fileName).normalize();
-        if (!path.startsWith(root) || !root.equals(path.getParent())) throw internalStorageFailure(null);
-        return path;
+    private Path storageRoot(String configured) {
+        if (configured == null || configured.isBlank()) throw new IllegalStateException("Private storage root is required");
+        Path path = Path.of(configured).normalize();
+        if (!path.isAbsolute() || Files.isSymbolicLink(path)
+                || path.startsWith(Path.of("").toAbsolutePath().normalize())) {
+            throw new IllegalStateException("Private storage must be an absolute directory outside the application working directory");
+        }
+        try { return Files.createDirectories(path).toRealPath(); }
+        catch (IOException exception) { throw new IllegalStateException("Private storage is unavailable", exception); }
     }
 
-    private void rejectUnexpectedPath(Path path) throws IOException {
-        if (Files.isSymbolicLink(path) || !Files.isRegularFile(path, LinkOption.NOFOLLOW_LINKS)) {
-            throw internalStorageFailure(null);
-        }
-        Path real = path.toRealPath(LinkOption.NOFOLLOW_LINKS);
-        if (!real.startsWith(root) || !root.equals(real.getParent())) throw internalStorageFailure(null);
+    private Path safePath(String locator) {
+        var matcher = LOCATOR.matcher(locator == null ? "" : locator);
+        if (!matcher.matches()) throw new AppException(ErrorCode.INTERNAL_ERROR);
+        Path file = root.resolve(matcher.group(1) + "." + matcher.group(2)).normalize();
+        if (!file.getParent().equals(root) || Files.isSymbolicLink(file)) throw new AppException(ErrorCode.INTERNAL_ERROR);
+        return file;
     }
 
     private void requireEnabled() {
         if (!isEnabled() || root == null) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
-    }
-
-    private Path validateRoot(String configured) {
-        return StorageRootPolicy.validateRoot(configured,
-                StorageRootPolicy.applicationCodeLocation(LocalPrivateDocumentStorage.class));
-    }
-
-    private AppException internalStorageFailure(Throwable cause) {
-        return cause == null ? new AppException(ErrorCode.INTERNAL_ERROR)
-                : new AppException(ErrorCode.INTERNAL_ERROR, "Không thể đọc tệp riêng tư", cause);
     }
 }

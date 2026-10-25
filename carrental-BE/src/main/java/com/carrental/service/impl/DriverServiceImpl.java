@@ -18,25 +18,16 @@ import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.mapper.DriverMapper;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.repository.CustomerStatusLock;
 import com.carrental.repository.DriverRepository;
 import com.carrental.security.CurrentAccount;
-import com.carrental.service.DriverChangeLogger;
-import com.carrental.service.DriverEligibilityPolicy;
+import com.carrental.service.ActionLogService;
 import com.carrental.service.DriverEligibilityService;
 import com.carrental.service.DriverService;
-import java.sql.SQLException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Objects;
-import java.util.function.Function;
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -46,27 +37,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class DriverServiceImpl implements DriverService {
 
-    private static final String CUSTOMER_UNIQUE_CONSTRAINT = "drivers_customer_id_key";
-
     private final DriverRepository drivers;
     private final CustomerRepository customers;
-    private final CustomerStatusLock statusLock;
     private final DriverEligibilityService eligibility;
-    private final DriverEligibilityPolicy eligibilityPolicy;
-    private final DriverChangeLogger changeLogger;
+    private final ActionLogService actionLogService;
     private final CustomerProperties properties;
     private final Clock clock;
 
     public DriverServiceImpl(DriverRepository drivers, CustomerRepository customers,
-            CustomerStatusLock statusLock, DriverEligibilityService eligibility,
-            DriverEligibilityPolicy eligibilityPolicy, DriverChangeLogger changeLogger,
+            DriverEligibilityService eligibility, ActionLogService actionLogService,
             CustomerProperties properties, Clock clock) {
         this.drivers = drivers;
         this.customers = customers;
-        this.statusLock = statusLock;
         this.eligibility = eligibility;
-        this.eligibilityPolicy = eligibilityPolicy;
-        this.changeLogger = changeLogger;
+        this.actionLogService = actionLogService;
         this.properties = properties;
         this.clock = clock;
     }
@@ -75,40 +59,11 @@ public class DriverServiceImpl implements DriverService {
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @Transactional
     public DriverResponse createForMe(CurrentAccount account) {
-        requirePrincipal(account);
-        if (account.role() != Role.CUSTOMER && account.role() != Role.ADMIN) {
-            throw new AppException(ErrorCode.ACCESS_DENIED);
-        }
-        try {
-            // Same global→customer ordering as P04 status and P06 review commands.
-            statusLock.acquire();
-            Customer owner = customers.findByIdForUpdate(account.customerId())
-                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
-            requireMatchingActiveAccount(owner, account);
-            if (drivers.existsByCustomer_Id(owner.getId())) {
-                throw new AppException(ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS);
-            }
-            Driver driver = new Driver();
-            driver.setCustomer(owner);
-            driver.setStatus(DriverStatus.PENDING);
-            Driver saved = drivers.saveAndFlush(driver);
-            changeLogger.created(owner.getId(), owner.getId(), saved.getId());
-            return DriverMapper.toResponse(saved);
-        } catch (DataIntegrityViolationException exception) {
-            if (hasExactDriverCustomerUniqueViolation(exception)) {
-                changeLogger.failure("driver-profile-unique-conflict", ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS,
-                        account.customerId(), account.customerId(), null,
-                        exception.getClass().getSimpleName(), CUSTOMER_UNIQUE_CONSTRAINT);
-                throw new AppException(ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS, exception);
-            }
-            changeLogger.failure("driver-create-integrity-failure", ErrorCode.INTERNAL_ERROR,
-                    account.customerId(), account.customerId(), null, exception.getClass().getSimpleName(), null);
-            throw exception;
-        } catch (DataAccessException exception) {
-            logDatabaseFailure("driver-create-database-failure", account.customerId(), account.customerId(), null,
-                    exception);
-            throw exception;
-        }
+        Customer owner = requireActiveAccount(account);
+        if (drivers.existsByCustomerId(owner.getId())) throw new AppException(ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS);
+        Driver saved = drivers.saveAndFlush(DriverMapper.toNewEntity(owner));
+        actionLogService.driverCreated(owner.getId(), owner.getId(), saved.getId());
+        return DriverMapper.toResponse(saved);
     }
 
     @Override
@@ -116,7 +71,7 @@ public class DriverServiceImpl implements DriverService {
     @Transactional(readOnly = true)
     public DriverResponse getMe(CurrentAccount account) {
         Customer actor = requireActiveAccount(account);
-        Driver driver = drivers.findByCustomer_Id(actor.getId())
+        Driver driver = drivers.findByCustomerId(actor.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         return DriverMapper.toResponse(driver);
     }
@@ -129,7 +84,7 @@ public class DriverServiceImpl implements DriverService {
         Customer actor = requireActiveAccount(account);
         Driver driver = actor.getRole() == Role.ADMIN
                 ? drivers.findById(driverId).orElseThrow(() -> notFound())
-                : drivers.findByIdAndCustomer_Id(driverId, actor.getId()).orElseThrow(() -> notFound());
+                : drivers.findByIdAndCustomerId(driverId, actor.getId()).orElseThrow(() -> notFound());
         return DriverMapper.toResponse(driver);
     }
 
@@ -155,67 +110,46 @@ public class DriverServiceImpl implements DriverService {
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public DriverResponse changeStatus(CurrentAccount actor, long driverId, ChangeDriverStatusRequest request) {
-        requirePositiveId(driverId);
-        StatusCommand command = validateStatusCommand(request);
         requirePrincipal(actor);
         if (actor.role() != Role.ADMIN) throw new AppException(ErrorCode.ACCESS_DENIED);
-
-        Long discoveredOwnerId = null;
-        try {
-            statusLock.acquire();
-            Customer actorRow = customers.findByIdForUpdate(actor.customerId())
-                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
-            if (actorRow.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
-            if (actorRow.getRole() != Role.ADMIN) throw new AppException(ErrorCode.ACCESS_DENIED);
-
-            discoveredOwnerId = drivers.findCustomerIdByDriverId(driverId).orElseThrow(() -> notFound());
-            Customer owner = discoveredOwnerId == actorRow.getId()
-                    ? actorRow
-                    : customers.findByIdForUpdate(discoveredOwnerId).orElseThrow(() -> notFound());
-            Driver driver = drivers.findByIdForUpdate(driverId).orElseThrow(() -> notFound());
-            if (driver.getCustomer().getId() == null || !driver.getCustomer().getId().equals(discoveredOwnerId)) {
-                throw notFound();
+        requirePositiveId(driverId);
+        StatusCommand command = validateStatusCommand(request);
+        Driver driver = drivers.findWithLockById(driverId).orElseThrow(this::notFound);
+        // Coordinate eligibility with document reviews and changes to the owner's account status.
+        Customer owner = customers.findWithLockById(driver.getCustomer().getId()).orElseThrow(this::notFound);
+        Customer actorRow = requireActiveAccount(actor);
+        if (actorRow.getRole() != Role.ADMIN) throw new AppException(ErrorCode.ACCESS_DENIED);
+        if (actorRow.getId().equals(owner.getId())) throw new AppException(ErrorCode.DRIVER_SELF_STATUS_CHANGE_FORBIDDEN);
+        LocalDate evaluatedOn = LocalDate.now(clock);
+        DriverStatus previous = driver.getStatus();
+        switch (previous) {
+            case PENDING -> {
+                if (command.status() != DriverStatus.ACTIVE) throw invalidTransition();
+                requireActivationEligible(owner, evaluatedOn);
+                driver.setStatus(DriverStatus.ACTIVE);
             }
-            // U-15 applies before the transition switch, including same-state requests.
-            if (actorRow.getId().equals(owner.getId())) {
-                throw new AppException(ErrorCode.DRIVER_SELF_STATUS_CHANGE_FORBIDDEN);
+            case ACTIVE -> {
+                if (command.status() == DriverStatus.ACTIVE) {
+                    requireActivationEligible(owner, evaluatedOn);
+                } else {
+                    driver.setStatus(DriverStatus.SUSPENDED);
+                }
             }
-
-            LocalDate evaluatedOn = LocalDate.now(clock);
-            DriverStatus previous = driver.getStatus();
-            switch (previous) {
-                case PENDING -> {
-                    if (command.status() != DriverStatus.ACTIVE) throw invalidTransition();
+            case SUSPENDED -> {
+                if (command.status() == DriverStatus.ACTIVE) {
                     requireActivationEligible(owner, evaluatedOn);
                     driver.setStatus(DriverStatus.ACTIVE);
                 }
-                case ACTIVE -> {
-                    if (command.status() == DriverStatus.ACTIVE) {
-                        requireActivationEligible(owner, evaluatedOn);
-                    } else {
-                        driver.setStatus(DriverStatus.SUSPENDED);
-                    }
-                }
-                case SUSPENDED -> {
-                    if (command.status() == DriverStatus.ACTIVE) {
-                        requireActivationEligible(owner, evaluatedOn);
-                        driver.setStatus(DriverStatus.ACTIVE);
-                    }
-                    // SUSPENDED→SUSPENDED is a no-op with no audit/success event.
-                }
+                // SUSPENDED→SUSPENDED is a no-op with no audit/success event.
             }
-
-            if (driver.getStatus() != previous) {
-                drivers.flush();
-                changeLogger.changed(actorRow.getId(), owner.getId(), driver.getId(), previous,
-                        driver.getStatus(), command.reasonProvided());
-            }
-            return DriverMapper.toResponse(driver);
-        } catch (DataAccessException exception) {
-            logDatabaseFailure("driver-status-database-failure", actor.customerId(), discoveredOwnerId,
-                    driverId, exception);
-            throw exception;
         }
+
+        if (driver.getStatus() != previous) {
+            drivers.flush();
+            actionLogService.driverChanged(actorRow.getId(), owner.getId(), driver.getId(), previous,
+                    driver.getStatus(), command.reasonProvided());
+        }
+        return DriverMapper.toResponse(driver);
     }
 
     @Override
@@ -234,15 +168,22 @@ public class DriverServiceImpl implements DriverService {
         Customer actor = requireActiveAccount(account);
         Driver driver = actor.getRole() == Role.ADMIN
                 ? drivers.findById(driverId).orElseThrow(() -> notFound())
-                : drivers.findByIdAndCustomer_Id(driverId, actor.getId()).orElseThrow(() -> notFound());
+                : drivers.findByIdAndCustomerId(driverId, actor.getId()).orElseThrow(() -> notFound());
         return eligibility.evaluateForCustomer(driver.getCustomer().getId());
     }
 
     private void requireActivationEligible(Customer owner, LocalDate evaluatedOn) {
         DriverEligibilityResponse current = eligibility.evaluateForCustomer(owner.getId(), evaluatedOn);
-        DriverEligibilityReasonCode failure = eligibilityPolicy.activationFailure(
-                current.accountStatus(), current.kycStatus(), current.hasValidDriverLicense());
-        if (failure != null) throw new AppException(ErrorCode.DRIVER_NOT_ELIGIBLE);
+        if (activationFailure(current.accountStatus(), current.kycStatus(), current.hasValidDriverLicense()) != null)
+            throw new AppException(ErrorCode.DRIVER_NOT_ELIGIBLE);
+    }
+
+    static DriverEligibilityReasonCode activationFailure(CustomerStatus accountStatus, KycStatus currentKyc,
+            boolean hasValidDriverLicense) {
+        if (accountStatus != CustomerStatus.ACTIVE) return DriverEligibilityReasonCode.ACCOUNT_NOT_ACTIVE;
+        if (currentKyc != KycStatus.VERIFIED) return DriverEligibilityReasonCode.IDENTITY_NOT_VERIFIED;
+        if (!hasValidDriverLicense) return DriverEligibilityReasonCode.VALID_DRIVER_LICENSE_REQUIRED;
+        return null;
     }
 
     private StatusCommand validateStatusCommand(ChangeDriverStatusRequest request) {
@@ -300,36 +241,6 @@ public class DriverServiceImpl implements DriverService {
 
     private AppException notFound() {
         return new AppException(ErrorCode.RESOURCE_NOT_FOUND);
-    }
-
-    private void logDatabaseFailure(String category, long actorId, Long ownerId, Long driverId,
-            DataAccessException exception) {
-        ErrorCode code = exception instanceof PessimisticLockingFailureException
-                || exception instanceof DataAccessResourceFailureException
-                ? ErrorCode.DEPENDENCY_UNAVAILABLE : ErrorCode.INTERNAL_ERROR;
-        changeLogger.failure(category, code, actorId, ownerId, driverId,
-                exception.getClass().getSimpleName(), null);
-    }
-
-    private boolean hasExactDriverCustomerUniqueViolation(Throwable failure) {
-        boolean exactConstraint = false;
-        boolean uniqueViolation = false;
-        for (Throwable current = failure; current != null; current = current.getCause()) {
-            if (current instanceof ConstraintViolationException violation) {
-                exactConstraint |= CUSTOMER_UNIQUE_CONSTRAINT.equals(violation.getConstraintName());
-                SQLException sql = violation.getSQLException();
-                uniqueViolation |= hasUniqueSqlState(sql);
-            }
-            if (current instanceof SQLException sql) uniqueViolation |= hasUniqueSqlState(sql);
-        }
-        return exactConstraint && uniqueViolation;
-    }
-
-    private boolean hasUniqueSqlState(SQLException sql) {
-        for (SQLException current = sql; current != null; current = current.getNextException()) {
-            if ("23505".equals(current.getSQLState())) return true;
-        }
-        return false;
     }
 
     private record StatusCommand(DriverStatus status, boolean reasonProvided) { }
