@@ -14,24 +14,18 @@ import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.security.AccountUserDetails;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -45,20 +39,19 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
     private static final List<String> UNIQUE_CONSTRAINTS = List.of("uq_customers_email_lower", "customers_phone_key");
+    private static final Pattern BCRYPT_HASH = Pattern.compile(
+            "^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
 
     private final CustomerRepository customers;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
     private final JwtProperties jwtProperties;
     private final Clock clock;
 
     public AuthServiceImpl(CustomerRepository customers, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager, JwtEncoder jwtEncoder,
-            JwtProperties jwtProperties, Clock clock) {
+            JwtEncoder jwtEncoder, JwtProperties jwtProperties, Clock clock) {
         this.customers = customers;
         this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
         this.jwtEncoder = jwtEncoder;
         this.jwtProperties = jwtProperties;
         this.clock = clock;
@@ -100,31 +93,32 @@ public class AuthServiceImpl implements com.carrental.service.AuthService {
     @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest request) {
         String email = AuthInputNormalizer.email(request.getEmail());
-        Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    org.springframework.security.authentication.UsernamePasswordAuthenticationToken.unauthenticated(
-                            email, request.getPassword()));
-        } catch (BadCredentialsException | LockedException | DisabledException | UsernameNotFoundException exception) {
+        Customer customer = customers.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AppException(ErrorCode.AUTHENTICATION_FAILED));
+        String passwordHash = customer.getPasswordHash();
+        if (customer.getStatus() != CustomerStatus.ACTIVE
+                || passwordHash == null
+                || !BCRYPT_HASH.matcher(passwordHash).matches()
+                || !passwordEncoder.matches(request.getPassword(), passwordHash)) {
             throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         }
+        return issueToken(customer);
+    }
 
-        if (!(authentication.getPrincipal() instanceof AccountUserDetails account)) {
-            throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
-        }
+    private TokenResponse issueToken(Customer customer) {
         Instant issuedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
         Instant expiresAt = issuedAt.plus(jwtProperties.accessTokenTtl());
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(jwtProperties.issuer())
                 .audience(List.of(jwtProperties.audience()))
-                .subject(account.customerId().toString())
+                .subject(customer.getId().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .build();
-        JwsHeader headers = JwsHeader.with(SignatureAlgorithm.RS256).keyId("carrental-rs256").build();
+        JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
         return new TokenResponse(token, "Bearer", jwtProperties.accessTokenTtl().toSeconds(),
-                new TokenResponse.AccountSummary(account.customerId(), account.fullName(), account.role()));
+                new TokenResponse.AccountSummary(customer.getId(), customer.getFullName(), customer.getRole()));
     }
 
     private String recognizedUniqueConstraint(DataIntegrityViolationException exception) {
