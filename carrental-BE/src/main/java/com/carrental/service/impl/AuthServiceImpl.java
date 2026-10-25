@@ -29,7 +29,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -104,7 +104,7 @@ public class AuthServiceImpl implements AuthService {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .build();
-        JwsHeader headers = JwsHeader.with(SignatureAlgorithm.RS256).keyId("carrental-rs256").build();
+        JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
         return new TokenResponse(token, "Bearer", jwtProperties.accessTokenTtl().toSeconds(),
                 new TokenResponse.AccountSummary(account.customerId(), account.fullName(), account.role()));

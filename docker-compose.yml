@@ -18,11 +18,11 @@ services:
       - "8080:8080"
     volumes:
       - type: bind
-        source: ${SBA301_KEYS_DIR:-C:/Users/ACER/AppData/Local/SBA301_RentCar/keys}
+        source: ${SBA301_KEYS_DIR:-C:/Users/letan/AppData/Local/SBA301_RentCar/keys}
         target: /keys
         read_only: true
       - type: bind
-        source: ${SBA301_DOCUMENTS_DIR:-C:/Users/ACER/AppData/Local/SBA301_RentCar/private-documents}
+        source: ${SBA301_DOCUMENTS_DIR:-C:/Users/letan/AppData/Local/SBA301_RentCar/private-documents}
         target: /data/private-documents
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
