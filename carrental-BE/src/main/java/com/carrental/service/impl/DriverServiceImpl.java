@@ -16,7 +16,6 @@ import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
-import com.carrental.mapper.DriverMapper;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.CustomerStatusLock;
 import com.carrental.repository.DriverRepository;
@@ -93,7 +92,7 @@ public class DriverServiceImpl implements DriverService {
             driver.setStatus(DriverStatus.PENDING);
             Driver saved = drivers.saveAndFlush(driver);
             changeLogger.created(owner.getId(), owner.getId(), saved.getId());
-            return DriverMapper.toResponse(saved);
+            return DriverResponse.from(saved);
         } catch (DataIntegrityViolationException exception) {
             if (hasExactDriverCustomerUniqueViolation(exception)) {
                 changeLogger.failure("driver-profile-unique-conflict", ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS,
@@ -118,7 +117,7 @@ public class DriverServiceImpl implements DriverService {
         Customer actor = requireActiveAccount(account);
         Driver driver = drivers.findByCustomer_Id(actor.getId())
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        return DriverMapper.toResponse(driver);
+        return DriverResponse.from(driver);
     }
 
     @Override
@@ -130,7 +129,7 @@ public class DriverServiceImpl implements DriverService {
         Driver driver = actor.getRole() == Role.ADMIN
                 ? drivers.findById(driverId).orElseThrow(() -> notFound())
                 : drivers.findByIdAndCustomer_Id(driverId, actor.getId()).orElseThrow(() -> notFound());
-        return DriverMapper.toResponse(driver);
+        return DriverResponse.from(driver);
     }
 
     @Override
@@ -147,7 +146,7 @@ public class DriverServiceImpl implements DriverService {
             return builder.and(predicates.toArray(jakarta.persistence.criteria.Predicate[]::new));
         };
         Page<Driver> page = drivers.findAll(specification, query.pageable());
-        return new PageResponse<>(page.getContent().stream().map(DriverMapper::toResponse).toList(),
+        return new PageResponse<>(page.getContent().stream().map(DriverResponse::from).toList(),
                 page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
 
@@ -210,7 +209,7 @@ public class DriverServiceImpl implements DriverService {
                 changeLogger.changed(actorRow.getId(), owner.getId(), driver.getId(), previous,
                         driver.getStatus(), command.reasonProvided());
             }
-            return DriverMapper.toResponse(driver);
+            return DriverResponse.from(driver);
         } catch (DataAccessException exception) {
             logDatabaseFailure("driver-status-database-failure", actor.customerId(), discoveredOwnerId,
                     driverId, exception);

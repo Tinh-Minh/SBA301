@@ -121,7 +121,6 @@ carrental-BE/
     │   │   ├── mapper/
     │   │   │   ├── BankAccountMapper.java
     │   │   │   ├── CustomerMapper.java
-    │   │   │   ├── DriverMapper.java
     │   │   │   ├── UserDocumentMapper.java
     │   │   │   └── VoucherMapper.java
     │   │   ├── repository/
@@ -331,7 +330,7 @@ Các service gọi `ActionLogService`; `ActionLogServiceImpl`, `ActionLogReposit
 | Controller | 6 controller F1 ở cây file | Nhận HTTP, principal/request, gọi service và trả response. |
 | Service interface | Auth, Customer, KYC, UserDocument, Driver, DriverEligibility, BankAccount, Voucher | Hợp đồng các use case F1. |
 | Service implementation | Các `*ServiceImpl` tương ứng | Quyền, quy tắc nghiệp vụ, transaction và repository orchestration. |
-| Mapper | 5 mapper trong `mapper/` | Request/Entity/response mapping, allowlist response, masking bank fields. |
+| Mapper | 4 mapper trong `mapper/` | Request/Entity/response mapping, allowlist response, masking bank fields; mapping driver đơn giản nằm trong `DriverResponse.from`. |
 | Repository | 6 repository (5 bảng F1 và `ActionLog` dùng chung), `CustomerStatusLock`, `DriverEligibilityProjection`, `KycEvidenceProjection` | Spring Data JPA truy xuất dữ liệu; lock và projection phục vụ các đường ghi/đọc nghiệp vụ cụ thể. |
 | Security | `SecurityConfiguration`, `JwtConfiguration`, `JwtProperties`, `CurrentAccount*`, authentication handlers | Bearer JWT HS256; secret lấy qua `app.security.jwt.secret-key` từ `JWT_SECRET`, TTL qua `app.security.jwt.access-token-ttl`; login đọc Customer từ repository và kiểm tra BCrypt trực tiếp, role/status/current principal vẫn lấy từ DB, cùng CORS và lỗi xác thực. |
 | Storage | `PrivateDocumentStorage`, `LocalPrivateDocumentStorage`, `StorageRootPolicy`, `DocumentImageInspector`, `ImageStructureValidator`, `CanonicalDocumentImage`, `DocumentImageFormat`, `PrivateDocumentFile`, `PrivateDocumentReceipt`, `UploadedDocumentImage` | Lưu/mở/xóa ảnh giấy tờ private; kiểm tra cấu hình root và ảnh, giữ metadata/receipt cho vòng đời file. |
