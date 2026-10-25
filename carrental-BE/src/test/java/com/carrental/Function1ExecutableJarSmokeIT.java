@@ -144,7 +144,7 @@ class Function1ExecutableJarSmokeIT {
                 insert.setString(1, "P10 Jar Synthetic Admin");
                 insert.setString(2, adminEmail);
                 insert.setString(3, adminPhone);
-                insert.setString(4, "{bcrypt}" + new BCryptPasswordEncoder(10).encode(PASSWORD));
+                insert.setString(4, new BCryptPasswordEncoder(10).encode(PASSWORD));
                 assertThat(insert.executeUpdate()).isEqualTo(1);
             }
             String adminToken = login(base, adminEmail);

@@ -127,7 +127,7 @@ class AuthSecurityPostgresIT {
         Map<String, Object> row = jdbc.queryForMap("select password_hash, role, status, kyc_status, email_verified, "
                 + "created_at, updated_at from customers where email=?", email);
         String hash = (String) row.get("password_hash");
-        assertThat(hash).startsWith("{bcrypt}$2");
+        assertThat(hash).matches("^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
         assertThat(passwordEncoder.matches(markerPassword, hash)).isTrue();
         assertThat(hash).isNotEqualTo(markerPassword);
         assertThat(row).containsEntry("role", "CUSTOMER").containsEntry("status", "ACTIVE")
@@ -215,7 +215,8 @@ class AuthSecurityPostgresIT {
                     .containsExactlyInAnyOrder(emailMarker, phoneCandidateEmail);
             List<String> candidateHashes = saves.getAllValues().stream()
                     .map(Customer::getPasswordHash).toList();
-            assertThat(candidateHashes).allMatch(hash -> hash.startsWith("{bcrypt}$2"));
+            assertThat(candidateHashes).allMatch(hash ->
+                    hash.matches("^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$"));
 
             String capturedLogs = logs.snapshot().stream()
                     .map(AuthSecurityPostgresIT::renderLogEvent)
@@ -314,8 +315,8 @@ class AuthSecurityPostgresIT {
     void malformedOrUnsupportedStoredPasswordHashesReturnGenericUnauthorizedWithoutLoggingHash() throws Exception {
         String passwordMarker = "R3_PASSWORD_SENTINEL_" + SUFFIX;
         Map<String, String> invalidHashes = new LinkedHashMap<>();
-        invalidHashes.put(email("bcrypt-cost-high"), "{bcrypt}$2a$99$" + "A".repeat(53));
-        invalidHashes.put(email("bcrypt-cost-low"), "{bcrypt}$2a$03$" + "B".repeat(53));
+        invalidHashes.put(email("bcrypt-cost-high"), "$2a$99$" + "A".repeat(53));
+        invalidHashes.put(email("bcrypt-cost-low"), "$2a$03$" + "B".repeat(53));
         invalidHashes.put(email("unsupported-prefix"), "{unsupported}HASH_PREFIX_SENTINEL_" + SUFFIX);
         invalidHashes.put(email("plaintext-hash"), "PLAINTEXT_HASH_SENTINEL_" + SUFFIX);
 

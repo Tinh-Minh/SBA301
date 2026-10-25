@@ -147,7 +147,8 @@ class CustomerManagementPostgresIT {
         assertThat(row).containsEntry("role", "CUSTOMER").containsEntry("status", "ACTIVE")
                 .containsEntry("kyc_status", "VERIFIED").containsEntry("email_verified", true)
                 .containsEntry("email", owner.email()).containsEntry("phone", owner.phone());
-        assertThat((String) row.get("password_hash")).startsWith("{bcrypt}$2");
+        assertThat((String) row.get("password_hash"))
+                .matches("^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
     }
 
     @Test
