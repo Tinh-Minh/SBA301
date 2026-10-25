@@ -58,4 +58,4 @@ Bootstrap admin is disabled by default. When explicitly enabled, runtime must re
 
 ## Scope boundary
 
-No refresh/revocation table, logout, password reset/change, OTP, email verification, role CRUD, migration/schema change, document/KYC/driver/bank/voucher workflow, or P05 endpoint was added. P03's PostgreSQL auth/security suite and P04's customer management suite use real HTTP, isolated Testcontainers PostgreSQL 15.13, the unchanged Flyway baseline and temporary RSA keys. P01/P02/P03 regression suites remain in the full verify.
+No refresh/revocation table, logout, password reset/change, OTP, email verification, role CRUD, migration/schema change, document/KYC/driver/bank/voucher workflow, or P05 endpoint was added. P03's PostgreSQL auth/security suite and P04's customer management suite use real HTTP, isolated Testcontainers PostgreSQL 15.13, the unchanged Flyway baseline and test-only HS256 JWT fixtures. P01/P02/P03 regression suites remain in the full verify.

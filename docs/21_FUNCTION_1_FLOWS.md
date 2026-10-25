@@ -12,7 +12,7 @@ flowchart LR
   Repo --> DB[(Supabase PostgreSQL - 5 bảng F1)]
   Service --> Files[Private document storage ngoài repo]
   Env[.env - profile supabase] --> Web
-  Keys[Private/public RSA PEM ngoài repo] --> Web
+  Secret[JWT_SECRET HS256, tối thiểu 32 byte UTF-8] --> Web
 ```
 
 Supabase ở đây là database. Không dùng Supabase Auth, không cần anon/service-role API key cho JDBC, chưa chuyển ảnh sang Supabase Storage. Khi chạy test, DB được thay bằng PostgreSQL Testcontainer; Docker không nằm trên đường chạy ứng dụng với Supabase.
@@ -55,7 +55,7 @@ flowchart TD
   A[Email và password] --> B[Tìm customers theo email]
   B --> C{Account ACTIVE và BCrypt khớp?}
   C -->|Không| D[401 lỗi credentials chung]
-  C -->|Có| E[Ký JWT RS256 bằng private key]
+  C -->|Có| E[Ký JWT HS256 bằng JWT_SECRET]
   E --> F[200 accessToken, TTL, account summary]
   F --> G[Client gửi Authorization Bearer]
   G --> H[Verify signature, iss, aud, thời hạn]

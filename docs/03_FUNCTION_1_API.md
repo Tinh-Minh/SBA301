@@ -77,7 +77,7 @@ Success dùng `success=true`, `code=OK` (hoặc mã thành công được thốn
 
 ### Trạng thái thực thi P03
 
-Register/login và GET /api/customers/me đã có implementation trong P03. Auth request chỉ nhận đúng field đã liệt kê; property lạ (kể cả `role`, `status`, `kycStatus`, `emailVerified`, `id` và audit fields) trả 400 `INVALID_REQUEST`. Email được trim + lowercase trước validation/tìm kiếm/lưu; fullName và phone trim, password giữ nguyên khoảng trắng. JWT RS256 có issuer, audience, `sub`, `iat`, `exp`; authority/status luôn lấy từ DB.
+Register/login và GET /api/customers/me đã có implementation trong P03. Auth request chỉ nhận đúng field đã liệt kê; property lạ (kể cả `role`, `status`, `kycStatus`, `emailVerified`, `id` và audit fields) trả 400 `INVALID_REQUEST`. Email được trim + lowercase trước validation/tìm kiếm/lưu; fullName và phone trim, password giữ nguyên khoảng trắng. JWT HS256 có issuer, audience, `sub`, `iat`, `exp`; authority/status luôn lấy từ DB.
 
 `AUTHENTICATION_FAILED` dùng cho login thất bại và protected request thiếu bearer; unsupported/malformed password hash trả cùng lỗi chung như sai password. Lỗi authentication data source/provider là `DEPENDENCY_UNAVAILABLE` 503, không bị đổi thành credentials sai. `INVALID_TOKEN` dùng cho bearer sai/hết hạn hoặc account không còn hoạt động; `ACCESS_DENIED` dùng khi principal đã xác thực nhưng thiếu quyền; `ACCOUNT_ALREADY_EXISTS` dùng cho email/phone trùng. Issuer JWT được so sánh exact như StringOrURI, không ép qua URL getter. CORS origin bị từ chối là lỗi transport của framework: môi trường kiểm tra trả 403 `Invalid CORS request`, không có `Access-Control-Allow-Origin`; đây không phải 403 phân quyền account.
 

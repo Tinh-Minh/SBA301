@@ -2,14 +2,13 @@
 
 > **Cập nhật 2026-10-15:** runtime chính đã chuyển sang Supabase + native `.env`, không cần Docker/local PostgreSQL. Làm theo [SUPABASE_SETUP.md](SUPABASE_SETUP.md). Phần bên dưới chủ yếu giữ mô tả lịch sử/test fixtures; không dùng hướng dẫn bật Flyway để khởi tạo Supabase. Flyway giờ chỉ test scope, không nằm trong executable JAR. Current scope/flows tại [audit](20_FUNCTION_1_SCOPE_SCHEMA_AUDIT.md) và [sơ đồ](21_FUNCTION_1_FLOWS.md).
 
-P01 provides the Spring MVC foundation, P02 adds Function 1 persistence, P03 implements register/login and RS256 bearer security, P04 adds profile/admin management, P05 adds private user-document submission/access, P06 adds document review/current KYC, P07 adds driver profile/current eligibility, P08 adds owner-scoped bank accounts, and P09 adds ADMIN voucher definition management. The application runtime needs a PostgreSQL database whose schema matches the unchanged Function 1 migration and external JWT key files. P05–P09 add no schema objects. Private storage is disabled by default.
+P01 provides the Spring MVC foundation, P02 adds Function 1 persistence, P03 implements register/login and HS256 bearer security using `JWT_SECRET`, P04 adds profile/admin management, P05 adds private user-document submission/access, P06 adds document review/current KYC, P07 adds driver profile/current eligibility, P08 adds owner-scoped bank accounts, and P09 adds ADMIN voucher definition management. The application runtime needs a PostgreSQL database whose schema matches the unchanged Function 1 migration and a JWT secret from the environment. P05–P09 add no schema objects. Private storage is disabled by default.
 
 ## Requirements
 
 - Windows PowerShell, JDK 21, and the Maven Wrapper (Maven 3.9.11).
 - Docker Desktop for PostgreSQL integration tests. The tests use a disposable Testcontainers database and do not connect to a configured local or shared database.
-- For an application run, a local PostgreSQL database configured with `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`, plus JWT issuer/audience and external RS256 key file locations.
-- OpenSSL (or an equivalent key provisioning tool) only if you need to create a new development RSA keypair.
+- For an application run, a PostgreSQL database configured with `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`, plus JWT issuer/audience and `JWT_SECRET` with at least 32 UTF-8 bytes.
 
 If needed, set `JAVA_HOME` for the current PowerShell process:
 
@@ -25,9 +24,9 @@ Set-Location 'C:\Users\FPTSHOP\Desktop\SBA301_RentCar'
 .\scripts\verify-local-config-packaging.ps1
 ```
 
-The first command runs P01 HTTP regression and configuration tests, then PostgreSQL 15.13 Testcontainers tests through Maven Failsafe. The Failsafe tests create isolated databases, run the Function 1 Flyway baseline, start a real HTTP server with temporary RSA test keys, and remove their containers after the test process. Docker must be available. Reports are under `target/surefire-reports` and `target/failsafe-reports`.
+The first command runs P01 HTTP regression and configuration tests, then PostgreSQL 15.13 Testcontainers tests through Maven Failsafe. The Failsafe tests create isolated databases, run the Function 1 Flyway baseline, start a real HTTP server with test-only JWT fixtures, and remove their containers after the test process. Docker must be available. Reports are under `target/surefire-reports` and `target/failsafe-reports`.
 
-P04 adds real-HTTP/PostgreSQL checks for profile presence/null rules, query-bound admin pagination, customer status serialization and policy, and concurrency with temporary RSA keys. The isolated baseline remains the leader's Function 1 schema; it is not applied to a shared database.
+P04 adds real-HTTP/PostgreSQL checks for profile presence/null rules, query-bound admin pagination, customer status serialization and policy, and concurrency with temporary JWT test fixtures. The isolated baseline remains the leader's Function 1 schema; it is not applied to a shared database.
 
 P05 adds `UserDocumentPostgresIT` with a separate PostgreSQL 15.13 Testcontainers database, bearer HTTP multipart requests, synthetic JPEG/PNG data and a temporary private root outside the repository. P05-FIX-01 adds truncation/CRC/warning and stored-file checks, appended-data canonicalization, output-cap evidence, an actual PostgreSQL row-lock timeout/retry, outcome-boundary fault injection, concurrent receipt isolation and upload-vs-admin-lock barriers. The integration test gives Tomcat a larger form-post limit than the app multipart limit and unlimited swallow only in this fixture so the app's traced 413 contract can be observed; production caps remain 5 MiB/file and 11 MiB/request. Do not use real identity documents as fixtures. Storage configuration tests use temp directories; a Windows ACL is not modified by tests.
 
@@ -51,7 +50,7 @@ The packaging probe builds in a temporary copy and checks that `application-loca
 
 ## Local application database
 
-The application uses `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`. Runtime defaults are `spring.jpa.hibernate.ddl-auto=validate`, `spring.jpa.open-in-view=false`, `spring.jpa.show-sql=false`, Hibernate JDBC error/warning logging disabled, `spring.sql.init.mode=never`, and Flyway disabled. Raw JDBC exception details can include submitted email/phone, so application conflict logs retain trace and allowlisted constraint only. Ordinary startup validates a database that already has the expected schema; it does not create or alter tables. JWT issuer, audience, TTL, skew, and matching RSA keys are required at startup. Issuer is an exact JWT StringOrURI identifier and is not restricted to an HTTP URL. There is no generated-key fallback.
+The application uses `DB_URL`, `DB_USERNAME`, and `DB_PASSWORD`. Runtime defaults are `spring.jpa.hibernate.ddl-auto=validate`, `spring.jpa.open-in-view=false`, `spring.jpa.show-sql=false`, Hibernate JDBC error/warning logging disabled, `spring.sql.init.mode=never`, and Flyway disabled. Raw JDBC exception details can include submitted email/phone, so application conflict logs retain trace and allowlisted constraint only. Ordinary startup validates a database that already has the expected schema; it does not create or alter tables. JWT issuer, audience, TTL, skew, and `JWT_SECRET` are required at startup. HS256 requires a secret of at least 32 UTF-8 bytes. Issuer is an exact JWT StringOrURI identifier and is not restricted to an HTTP URL.
 
 For a **new, disposable, local-only database**, Flyway can be explicitly enabled to apply `classpath:db/migration/function1`. Do not use that baseline on a shared database or one that already has application tables; coordinate shared migration history and ordering with the database leader.
 
@@ -72,17 +71,7 @@ if (-not (Test-Path 'config/application-local.properties')) {
 }
 ```
 
-For a disposable development keypair, from the repository root:
-
-```powershell
-New-Item -ItemType Directory -Path 'config/keys' -Force | Out-Null
-openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out 'config/keys/private_key.pem'
-openssl pkey -in 'config/keys/private_key.pem' -pubout -out 'config/keys/public_key.pem'
-$env:JWT_PRIVATE_KEY_LOCATION = ([System.Uri](Resolve-Path 'config/keys/private_key.pem').Path).AbsoluteUri
-$env:JWT_PUBLIC_KEY_LOCATION = ([System.Uri](Resolve-Path 'config/keys/public_key.pem').Path).AbsoluteUri
-```
-
-The private file must be PKCS#8 PEM; the public file must be SubjectPublicKeyInfo PEM. The application checks RSA size and that both keys match. Do not put either file under `src/main/resources`. Protect and provision production private keys outside source control; never copy real key contents into this repository or a report.
+For local Supabase startup, run `scripts/setup-supabase.ps1`. It creates a random 48-byte secret in ignored `.env` when `JWT_SECRET` is missing, blank, or still the example placeholder. It preserves an existing nonblank value and never prints the secret. The application reads it through `app.security.jwt.secret-key=${JWT_SECRET}` and rejects values shorter than 32 UTF-8 bytes. Keep `.env` out of commits and logs; rotate any secret that has been exposed.
 
 Set `JWT_ISSUER`, `JWT_AUDIENCE`, and, if needed, `JWT_ACCESS_TOKEN_TTL` / `JWT_CLOCK_SKEW` in the current PowerShell process or a local secret/configuration manager. The example defaults `PT30M` TTL, `PT30S` skew, BCrypt strength `10`, and registration minimum `8` code points as configurable development baselines. Password input is limited to 72 UTF-8 bytes for BCrypt. `CORS_ALLOWED_ORIGINS` is a comma-separated exact-origin allowlist; an empty value denies cross-origin browser calls. These defaults do not represent production decisions.
 

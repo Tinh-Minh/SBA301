@@ -12,9 +12,9 @@ $env:JAVA_HOME = 'C:\Program Files\Java\jdk-21'
 .\scripts\setup-supabase.ps1
 ```
 
-Script đã được chạy trong lượt audit này: `.env` đã có, key dev đã sinh bên ngoài repo và thư mục giấy tờ private đã được tạo. Chạy lại script giữ nguyên key/config có giá trị. Script dùng JDK để tạo RSA, không cần cài OpenSSL, không liên hệ database, không chạy schema, không ghi đè key có sẵn.
+Script tạo hoặc cập nhật `.env` với một `JWT_SECRET` ngẫu nhiên dùng HS256 cùng thư mục giấy tờ private bên ngoài repository. Secret chỉ được ghi vào `.env` local và không được in ra. Script không liên hệ database, không chạy schema và giữ nguyên secret/config có giá trị đã có.
 
-Mặc định key/storage nằm dưới `%LOCALAPPDATA%/SBA301_RentCar`. Đường dẫn thật đã được điền trong `.env`; không cần copy key vào source. `scripts/GenerateJwtKeys.java` chỉ là công cụ dev, không thuộc `src/main` và không vào JAR.
+Storage mặc định nằm dưới `%LOCALAPPDATA%/SBA301_RentCar`. `JWT_SECRET` được Spring đọc qua `app.security.jwt.secret-key=${JWT_SECRET}`; không đưa secret vào source, tài liệu hoặc JAR.
 
 ## 2. Điền ba giá trị database
 
@@ -53,11 +53,11 @@ SQL leader có RLS. Database role trong JDBC phải có quyền phù hợp với
 ## 4. JWT, storage, CORS, ADMIN
 
 - JWT vẫn do Spring backend phát từ bảng `customers`; không chuyển sang Supabase Auth hoặc tạo thêm `auth.users` mapping.
-- RS256 dùng đúng một cặp private/public key. Cấu hình mặc định trỏ tới PEM ngoài repo; local dev cũng có thể nhập phần Base64 bên trong hai PEM vào `JWT_PRIVATE_KEY_BASE64` và `JWT_PUBLIC_KEY_BASE64` trong `.env` (mỗi giá trị một dòng). Khi cả hai giá trị inline có mặt, chúng được ưu tiên hơn đường dẫn file. Giữ cùng cặp qua các lần restart. `.env` đã bị loại khỏi Git; không commit, gửi hoặc log các key. FE/Postman nhận token qua login, không cần private key. Không cần JWT secret/API key của Supabase cho cách nối JDBC này.
+- Backend ký access token bằng HS256 và `JWT_SECRET`. Secret phải có ít nhất 32 byte UTF-8; TTL mặc định là `PT30M`. Chạy `scripts/setup-supabase.ps1` để tạo secret ngẫu nhiên 48 byte khi `.env` chưa có secret dùng được. Giữ secret trong `.env` bị Git ignore hoặc biến môi trường; không commit, gửi hay log secret. FE/Postman chỉ nhận bearer token từ API login. `JWT_SECRET` là secret của ứng dụng, không phải anon key/service-role API key của Supabase.
 - Storage ảnh giấy tờ vẫn local private theo lựa chọn trước đó. Supabase ở đây là **database**, chưa tự đổi storage thành Supabase Storage. Khi deploy nhiều máy, storage cần kế hoạch riêng; không tự thêm provider/cloud trong Function1 này.
 - `APP_DOCUMENT_STORAGE_ENABLED=true`, root đã setup ngoài repo. Không đặt file giấy tờ trong resources/static/public/target.
 - Sửa `CORS_ALLOWED_ORIGINS` đúng origin FE, ví dụ localhost5173. Methods dùng cấu hình chung GET/POST/PUT/PATCH/DELETE/OPTIONS; đã sửa example local bị thiếu PUT/DELETE.
-- `BOOTSTRAP_ADMIN_ENABLED=false` mặc định. Nếu nhóm chưa có ADMIN, thống nhất một identity mới để provision bằng cơ chế bootstrap đã có; chỉ bật có chủ đích, điền bốn biến fullName/email/phone/password, rồi tắt lại sau khi tạo. Không dùng register để tạo ADMIN, không reset/promote/unlock bản ghi có sẵn. Chưa tự tạo ADMIN trên Supabase trong lượt này.
+- `APP_SECURITY_BOOTSTRAP_ADMIN_ENABLED=false` mặc định. Nếu nhóm chưa có ADMIN, thống nhất một identity mới để provision bằng cơ chế bootstrap đã có; chỉ bật có chủ đích, điền bốn biến fullName/email/phone/password, rồi tắt lại sau khi tạo. Không dùng register để tạo ADMIN, không reset/promote/unlock bản ghi có sẵn. Chưa tự tạo ADMIN trên Supabase trong lượt này.
 
 ## 5. Chạy mỗi ngày
 

@@ -94,7 +94,7 @@ Thứ tự xử lý CORS và cơ chế CSRF cần phù hợp mô hình xác th�
 ### P03 đã triển khai trên baseline kỹ thuật
 
 - `POST /api/auth/register` tạo CUSTOMER với role/status/KYC/email verification do server đặt; `POST /api/auth/login` dùng `DaoAuthenticationProvider`; `GET /api/customers/me` đọc ID từ `CurrentAccount`.
-- Access JWT ký RS256 bằng PKCS#8 private key và kiểm tra bằng SPKI public key ở file ngoài JAR. TTL mặc định cấu hình dev là `PT30M`, skew `PT30S`; production issuer, audience, khóa và TTL phải được cấp qua cấu hình môi trường.
+- Access JWT ký và xác minh bằng HS256 với `JWT_SECRET` từ cấu hình môi trường. Secret phải có ít nhất 32 byte UTF-8; TTL mặc định là `PT30M`, skew `PT30S`.
 - Mỗi bearer request đọc customer hiện tại từ PostgreSQL; role/status trong token không cấp quyền. `LOCKED` hoặc account đã xóa bị từ chối ở request kế tiếp.
 - Stateless, không dùng session/cookie auth; CORS bắt đầu với whitelist rỗng, credentials tắt, expose `X-Request-ID`. P03 chưa thêm API nghiệp vụ cho P04 trở đi.
 - Encoder cấu hình dùng Delegating BCrypt (strength dev `10`), password tối thiểu dev `8` code points và tối đa `72` UTF-8 bytes do giới hạn BCrypt.

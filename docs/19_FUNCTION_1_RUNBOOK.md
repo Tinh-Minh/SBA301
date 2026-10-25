@@ -8,7 +8,7 @@ This runbook links to, rather than duplicates, the complete [Local Development G
 
 1. Use Windows PowerShell, JDK 21, `mvnw.cmd`, and Docker Desktop for integration tests. `java -version` and `./mvnw.cmd -version` should resolve to Java 21/Maven Wrapper.
 2. For manual runtime, use only a disposable local PostgreSQL database already provisioned with the unchanged Function 1 schema. Defaults validate schema and leave Flyway disabled. The leader owns shared-database migrations; do not run this local baseline on a shared DB.
-3. Put local settings in ignored `config/application-local.properties` (copy the `.example` file without overwriting an existing file). Put RS256 PKCS#8 private and public key files outside source resources. Set issuer, audience, database username/password, and key locations only in that external local configuration or a local secret manager.
+3. Put local settings in ignored `.env` or process environment. Set `JWT_SECRET` for HS256 (at least 32 UTF-8 bytes), JWT issuer/audience and database URL/username/password there. `scripts/setup-supabase.ps1` creates a random local secret when it is missing or still a placeholder; it preserves a configured secret and does not print it. Never put the secret in source or a report.
 4. Bootstrap ADMIN is disabled by default. A real group administrator must be provisioned by the agreed team process. Do not use register to create ADMIN; do not promote, unlock, reset, or verify admin state through local fixtures.
 5. If synthetic document upload/download is needed, create a private root first outside the repository, JAR, public/static directories and configured source tree; explicitly enable local private storage. Storage is disabled by default. Keep root path, evidence files and local settings out of docs/reports.
 6. Start with the command and profile/config location described in [Local Development](LOCAL_DEVELOPMENT.md), then call `GET /api/health`. It confirms only that the web endpoint responds; schema, database, security keys, and private storage have separate startup/use checks.
@@ -29,7 +29,7 @@ The PostgreSQL suite runs in disposable Testcontainers instances. It does not us
 | Observation | Meaning / response |
 |---|---|
 | `/api/health` is `200`, `data.status=UP` | HTTP app is responding. It does not claim DB, file storage, admin bootstrap, or every dependency is healthy. |
-| Startup fails at JWT key validation | Configure both matching external PEM paths or both Base64 DER values in the ignored local `.env`. Do not paste private key material into a chat/report. |
+| Startup fails at JWT secret validation | Set `JWT_SECRET` in the process environment or ignored `.env`; it must contain at least 32 UTF-8 bytes. Do not paste the secret into a chat/report. |
 | Startup reports schema validation failure | Use a new developer-owned DB with the agreed Function 1 schema, or coordinate with the DB leader. Do not turn on Hibernate DDL auto-update or run shared SQL as a workaround. |
 | Authenticated routes return `401` | Check token signature/issuer/audience/time and current customer status in the disposable DB. LOCKED accounts are denied at the next request. |
 | Admin route returns `403` | Confirm the DB account is an ACTIVE ADMIN. ADMIN self-review and ADMIN self-driver-status changes are forbidden with `403`; customer-status self-lock is a separate `409` conflict. |
