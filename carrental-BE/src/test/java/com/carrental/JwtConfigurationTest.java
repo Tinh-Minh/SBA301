@@ -5,15 +5,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.carrental.config.ClockConfig;
 import com.carrental.config.security.JwtConfiguration;
 import com.carrental.dto.response.TokenResponse;
+import com.carrental.enums.Role;
 import java.util.Arrays;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.jwt.JwsHeader;
 
 class JwtConfigurationTest {
 
     @Test
     void tokenResponseNeverRendersTheBearerSecretInLogs() {
-        TokenResponse response = new TokenResponse("SENSITIVE_BEARER_SENTINEL", "Bearer", 300, null);
+        TokenResponse response = new TokenResponse(
+                "SENSITIVE_BEARER_SENTINEL",
+                "Bearer",
+                300,
+                new TokenResponse.AccountSummary(1L, "Test Customer", Role.CUSTOMER));
         assertThat(response.toString()).contains("accessToken=<redacted>").doesNotContain(response.accessToken());
     }
 
@@ -30,6 +45,14 @@ class JwtConfigurationTest {
     }
 
     @Test
+    void secretKeyValidationCountsUtf8Bytes() {
+        new ApplicationContextRunner()
+                .withUserConfiguration(ClockConfig.class, JwtConfiguration.class)
+                .withPropertyValues(baseProperties("PT5M", "é".repeat(16)))
+                .run(context -> assertThat(context).hasNotFailed());
+    }
+
+    @Test
     void validSecretKeyCreatesEncoderAndDecoder() {
         new ApplicationContextRunner()
                 .withUserConfiguration(ClockConfig.class, JwtConfiguration.class)
@@ -38,6 +61,19 @@ class JwtConfigurationTest {
                     assertThat(context).hasNotFailed();
                     assertThat(context).hasBean("jwtEncoder");
                     assertThat(context).hasBean("jwtDecoder");
+                    Instant issuedAt = context.getBean(Clock.class).instant().truncatedTo(ChronoUnit.SECONDS);
+                    JwtClaimsSet claims = JwtClaimsSet.builder()
+                            .issuer("https://auth.example.test")
+                            .audience(List.of("carrental-api"))
+                            .subject("1")
+                            .issuedAt(issuedAt)
+                            .expiresAt(issuedAt.plusSeconds(300))
+                            .build();
+                    String token = context.getBean(JwtEncoder.class).encode(JwtEncoderParameters.from(
+                            JwsHeader.with(MacAlgorithm.HS256).build(), claims)).getTokenValue();
+                    var decoded = context.getBean(JwtDecoder.class).decode(token);
+                    assertThat(decoded.getHeaders().get("alg")).isEqualTo("HS256");
+                    assertThat(decoded.getSubject()).isEqualTo("1");
                 });
     }
 

@@ -3,6 +3,7 @@ package com.carrental.config.security;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -16,9 +17,9 @@ public record JwtProperties(
         @NotNull Duration clockSkew,
         @NotBlank String secretKey) {
 
-    @AssertTrue(message = "JWT secret key must be at least 32 characters long for HS256")
+    @AssertTrue(message = "JWT secret key must be at least 32 UTF-8 bytes for HS256")
     public boolean isSecretKeyValid() {
-        return secretKey != null && secretKey.trim().length() >= 32;
+        return secretKey != null && secretKey.getBytes(StandardCharsets.UTF_8).length >= 32;
     }
 
     @AssertTrue(message = "JWT access-token TTL must be a positive whole number of seconds")

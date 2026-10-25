@@ -96,8 +96,6 @@ class VoucherAdminPostgresIT {
         properties.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         properties.add("app.security.jwt.access-token-ttl", () -> "PT2H");
         properties.add("app.security.jwt.clock-skew", () -> "PT30S");
-        properties.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        properties.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
         properties.add("app.security.cors.allowed-origins", () -> "http://localhost:5173");
     }
 

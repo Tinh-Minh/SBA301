@@ -13,22 +13,15 @@ import com.carrental.enums.CustomerStatus;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.security.AccountUserDetails;
 import com.carrental.service.AuthService;
 import com.carrental.security.CurrentAccount;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -42,20 +35,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthServiceImpl implements AuthService {
 
     private static final List<String> UNIQUE_CONSTRAINTS = List.of("uq_customers_email_lower", "customers_phone_key");
+    private static final Pattern BCRYPT_HASH = Pattern.compile(
+            "^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
 
     private final CustomerRepository customers;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final JwtEncoder jwtEncoder;
     private final JwtProperties jwtProperties;
     private final Clock clock;
 
     public AuthServiceImpl(CustomerRepository customers, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager, JwtEncoder jwtEncoder,
+            JwtEncoder jwtEncoder,
             JwtProperties jwtProperties, Clock clock) {
         this.customers = customers;
         this.passwordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
         this.jwtEncoder = jwtEncoder;
         this.jwtProperties = jwtProperties;
         this.clock = clock;
@@ -80,34 +73,32 @@ public class AuthServiceImpl implements AuthService {
     @Transactional(readOnly = true)
     public TokenResponse login(LoginRequest request) {
         String email = AuthInputNormalizer.email(request.getEmail());
-        Authentication authentication;
-        try {
-            authentication = authenticationManager.authenticate(
-                    UsernamePasswordAuthenticationToken.unauthenticated(email, request.getPassword()));
-        } catch (BadCredentialsException | LockedException | DisabledException | UsernameNotFoundException exception) {
+        Customer customer = customers.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new AppException(ErrorCode.AUTHENTICATION_FAILED));
+        String passwordHash = customer.getPasswordHash();
+        if (customer.getStatus() != CustomerStatus.ACTIVE
+                || passwordHash == null
+                || !BCRYPT_HASH.matcher(passwordHash).matches()
+                || !passwordEncoder.matches(request.getPassword(), passwordHash)) {
             throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         }
-
-        if (!(authentication.getPrincipal() instanceof AccountUserDetails account)) {
-            throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
-        }
-        return issueToken(account);
+        return issueToken(customer);
     }
 
-    private TokenResponse issueToken(AccountUserDetails account) {
+    private TokenResponse issueToken(Customer customer) {
         Instant issuedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
         Instant expiresAt = issuedAt.plus(jwtProperties.accessTokenTtl());
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(jwtProperties.issuer())
                 .audience(List.of(jwtProperties.audience()))
-                .subject(account.customerId().toString())
+                .subject(customer.getId().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .build();
         JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
         return new TokenResponse(token, "Bearer", jwtProperties.accessTokenTtl().toSeconds(),
-                new TokenResponse.AccountSummary(account.customerId(), account.fullName(), account.role()));
+                new TokenResponse.AccountSummary(customer.getId(), customer.getFullName(), customer.getRole()));
     }
 
     @Override

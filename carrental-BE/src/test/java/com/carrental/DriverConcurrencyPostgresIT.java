@@ -102,8 +102,6 @@ class DriverConcurrencyPostgresIT {
         registry.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         registry.add("app.security.jwt.access-token-ttl", () -> "PT20M");
         registry.add("app.security.jwt.clock-skew", () -> "PT30S");
-        registry.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        registry.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
         registry.add("app.document.storage.enabled", () -> "true");
         registry.add("app.document.storage.root", () -> PRIVATE_ROOT.toString());
     }
