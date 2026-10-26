@@ -4,11 +4,18 @@ import com.carrental.entity.Car;
 import com.carrental.entity.CarSlot;
 import com.carrental.enums.RentalOption;
 import com.carrental.enums.SlotStatus;
-import jakarta.validation.constraints.*;
-import lombok.*;
-
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -42,6 +49,14 @@ public class CarSlotCreateRequest {
     @Digits(integer = 14, fraction = 0, message = "Giá thuê theo ngày không có số lẻ")
     private BigDecimal customPricePerDay;
 
+    public RentalOption resolvedRentalOption() {
+        return this.rentalOption != null ? this.rentalOption : RentalOption.BOTH;
+    }
+
+    public int resolvedMinRentalHours() {
+        return this.minRentalHours != null ? this.minRentalHours : 1;
+    }
+
     public CarSlot toEntity(Car car) {
         BigDecimal finalPricePerHour = this.customPricePerHour != null ? this.customPricePerHour : car.getPricePerHour();
         BigDecimal finalPricePerDay = this.customPricePerDay != null ? this.customPricePerDay : car.getPricePerDay();
@@ -52,8 +67,8 @@ public class CarSlotCreateRequest {
                 .endTime(this.endTime)
                 .pricePerHour(finalPricePerHour)
                 .pricePerDay(finalPricePerDay)
-                .rentalOption(this.rentalOption != null ? this.rentalOption : RentalOption.BOTH)
-                .minRentalHours(this.minRentalHours != null ? this.minRentalHours : 1)
+                .rentalOption(resolvedRentalOption())
+                .minRentalHours(resolvedMinRentalHours())
                 .status(SlotStatus.OPEN)
                 .build();
     }

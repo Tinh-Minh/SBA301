@@ -5,10 +5,21 @@ import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.enums.FuelType;
 import com.carrental.enums.Transmission;
-import jakarta.validation.constraints.*;
-import lombok.*;
-
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import java.util.Locale;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -99,7 +110,7 @@ public class CarCreateRequest {
 
     public Car toEntity() {
         return Car.builder()
-                .licensePlate(this.licensePlate != null ? this.licensePlate.trim().toUpperCase() : null)
+                .licensePlate(this.licensePlate != null ? this.licensePlate.trim().toUpperCase(Locale.ROOT) : null)
                 .brand(this.brand)
                 .model(this.model)
                 .manufactureYear(this.manufactureYear)

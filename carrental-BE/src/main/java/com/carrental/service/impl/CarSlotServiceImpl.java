@@ -9,16 +9,20 @@ import com.carrental.dto.response.PageResponse;
 import com.carrental.entity.Car;
 import com.carrental.entity.CarImage;
 import com.carrental.entity.CarSlot;
+import com.carrental.entity.Customer;
 import com.carrental.enums.CarStatus;
+import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.RentalOption;
 import com.carrental.enums.RentalType;
 import com.carrental.enums.SlotStatus;
 import com.carrental.exception.AppException;
+import com.carrental.exception.ForbiddenException;
+import com.carrental.exception.UnauthorizedException;
 import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.CarSlotRepository;
-import com.carrental.util.AccessGuard;
 import com.carrental.service.CarSlotService;
+import com.carrental.service.CurrentUserService;
 import com.carrental.util.DbErrors;
 import com.carrental.util.PageRequestFactory;
 import com.carrental.util.TimeUtil;
@@ -31,16 +35,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,53 +55,36 @@ public class CarSlotServiceImpl implements CarSlotService {
     private final CarSlotRepository carSlotRepository;
     private final CarRepository carRepository;
     private final CarImageRepository carImageRepository;
-    private final AccessGuard accessGuard;
+    private final CurrentUserService currentUserService;
 
     @Override
     @Transactional
-    public CarSlotResponse createSlot(Long ownerId, CarSlotCreateRequest request) {
-        log.info("Create car slot carId={}, ownerId={}, start={}, end={}",
-                request.getCarId(), ownerId, request.getStartTime(), request.getEndTime());
+    public CarSlotResponse createSlot(CarSlotCreateRequest request) {
+        log.info("Create car slot carId={}, start={}, end={}",
+                request.getCarId(), request.getStartTime(), request.getEndTime());
         try {
-            accessGuard.requireActiveUser(ownerId);
-
-            LocalDateTime now = TimeUtil.nowVn();
-            if (request.getStartTime().isBefore(now)) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Thời gian bắt đầu phải ở tương lai");
-            }
-            if (!request.getEndTime().isAfter(request.getStartTime())) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Thời gian kết thúc phải sau thời gian bắt đầu");
-            }
+            Customer owner = requireActiveUser();
 
             Car car = carRepository.findById(request.getCarId())
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + request.getCarId()));
 
-            accessGuard.requireOwner(car, ownerId);
+            if (!isOwner(car, owner.getId())) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
+            }
 
             if (car.getStatus() != CarStatus.ACTIVE) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Xe phải ở trạng thái ACTIVE mới được mở slot cho thuê");
             }
 
-            long durationMinutes = Duration.between(request.getStartTime(), request.getEndTime()).toMinutes();
-            int minHours = request.getMinRentalHours() != null ? request.getMinRentalHours() : 1;
+            validateSlotWindow(
+                    request.getStartTime(),
+                    request.getEndTime(),
+                    request.resolvedMinRentalHours(),
+                    request.resolvedRentalOption(),
+                    car.getId(),
+                    null
+            );
 
-            if (minHours * 60L > durationMinutes) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Thời gian thuê tối thiểu (" + minHours + " giờ) không được vượt quá độ dài khung giờ slot");
-            }
-
-            RentalOption option = request.getRentalOption() != null ? request.getRentalOption() : RentalOption.BOTH;
-            if (option == RentalOption.DAILY && durationMinutes < 24 * 60) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Slot cho thuê theo ngày (DAILY) phải có độ dài tối thiểu 24 giờ");
-            }
-
-            // Kiểm tra trùng lặp lịch
-            boolean isOverlapping = carSlotRepository.existsByCarIdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
-                    car.getId(), SlotStatus.CANCELLED, request.getEndTime(), request.getStartTime());
-            if (isOverlapping) {
-                throw new AppException(HttpStatus.CONFLICT, "Khung giờ này đã bị trùng với một slot khác của xe");
-            }
-
-            // Chụp giá từ Car
             CarSlot slot = request.toEntity(car);
             CarSlot saved = carSlotRepository.saveAndFlush(slot);
 
@@ -117,12 +103,10 @@ public class CarSlotServiceImpl implements CarSlotService {
 
     @Override
     @Transactional
-    public CarSlotResponse updateSlot(Long ownerId, Long slotId, CarSlotUpdateRequest request) {
-        log.info("Update slot slotId={}, ownerId={}", slotId, ownerId);
+    public CarSlotResponse updateSlot(Long slotId, CarSlotUpdateRequest request) {
+        log.info("Update slot slotId={}", slotId);
         try {
-            accessGuard.requireActiveUser(ownerId);
-            CarSlot slot = findSlotOrThrow(slotId);
-            accessGuard.requireOwner(slot.getCar(), ownerId);
+            CarSlot slot = loadOwnedSlot(slotId);
 
             if (slot.getStatus() == SlotStatus.CANCELLED) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Không thể chỉnh sửa slot đã bị huỷ");
@@ -134,27 +118,11 @@ public class CarSlotServiceImpl implements CarSlotService {
             if (request.getStartTime() != null && newStart.isBefore(TimeUtil.nowVn())) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Thời gian bắt đầu mới phải ở tương lai");
             }
-            if (!newEnd.isAfter(newStart)) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Thời gian kết thúc phải sau thời gian bắt đầu");
-            }
 
-            long durationMinutes = Duration.between(newStart, newEnd).toMinutes();
             int minHours = request.getMinRentalHours() != null ? request.getMinRentalHours() : slot.getMinRentalHours();
-            if (minHours * 60L > durationMinutes) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Số giờ thuê tối thiểu không được lớn hơn tổng thời gian slot");
-            }
-
             RentalOption option = request.getRentalOption() != null ? request.getRentalOption() : slot.getRentalOption();
-            if (option == RentalOption.DAILY && durationMinutes < 24 * 60) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Slot theo ngày phải dài tối thiểu 24 giờ");
-            }
 
-            // Kiểm tra trùng slot khác
-            boolean isOverlapping = carSlotRepository.existsByCarIdAndIdNotAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
-                    slot.getCar().getId(), slot.getId(), SlotStatus.CANCELLED, newEnd, newStart);
-            if (isOverlapping) {
-                throw new AppException(HttpStatus.CONFLICT, "Thời gian chỉnh sửa bị trùng với slot khác của xe");
-            }
+            validateSlotWindow(newStart, newEnd, minHours, option, slot.getCar().getId(), slot.getId());
 
             slot.setStartTime(newStart);
             slot.setEndTime(newEnd);
@@ -169,8 +137,6 @@ public class CarSlotServiceImpl implements CarSlotService {
         } catch (AppException e) {
             log.warn("Cập nhật slot thất bại slotId={}: {}", slotId, e.getMessage());
             throw e;
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw new AppException(HttpStatus.CONFLICT, "Dữ liệu slot vừa được thay đổi bởi thao tác khác, vui lòng tải lại");
         } catch (DataAccessException e) {
             log.warn("Lỗi dữ liệu khi sửa slot slotId={}: {}", slotId, e.getMessage());
             throw DbErrors.toAppException(e, "Không thể cập nhật khung giờ cho thuê");
@@ -182,12 +148,10 @@ public class CarSlotServiceImpl implements CarSlotService {
 
     @Override
     @Transactional
-    public CarSlotResponse closeSlot(Long ownerId, Long slotId) {
-        log.info("Close slot id={}, ownerId={}", slotId, ownerId);
+    public CarSlotResponse closeSlot(Long slotId) {
+        log.info("Close slot id={}", slotId);
         try {
-            accessGuard.requireActiveUser(ownerId);
-            CarSlot slot = findSlotOrThrow(slotId);
-            accessGuard.requireOwner(slot.getCar(), ownerId);
+            CarSlot slot = loadOwnedSlot(slotId);
 
             slot.getStatus().validateTransitionTo(SlotStatus.CLOSED);
             slot.setStatus(SlotStatus.CLOSED);
@@ -196,8 +160,6 @@ public class CarSlotServiceImpl implements CarSlotService {
         } catch (AppException e) {
             log.warn("Đóng slot thất bại slotId={}: {}", slotId, e.getMessage());
             throw e;
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw new AppException(HttpStatus.CONFLICT, "Dữ liệu slot vừa được thay đổi, vui lòng tải lại");
         } catch (DataAccessException e) {
             log.warn("Lỗi dữ liệu khi đóng slot slotId={}: {}", slotId, e.getMessage());
             throw DbErrors.toAppException(e, "Không thể đóng khung giờ cho thuê");
@@ -209,12 +171,10 @@ public class CarSlotServiceImpl implements CarSlotService {
 
     @Override
     @Transactional
-    public CarSlotResponse cancelSlot(Long ownerId, Long slotId) {
-        log.info("Cancel slot id={}, ownerId={}", slotId, ownerId);
+    public CarSlotResponse cancelSlot(Long slotId) {
+        log.info("Cancel slot id={}", slotId);
         try {
-            accessGuard.requireActiveUser(ownerId);
-            CarSlot slot = findSlotOrThrow(slotId);
-            accessGuard.requireOwner(slot.getCar(), ownerId);
+            CarSlot slot = loadOwnedSlot(slotId);
 
             slot.getStatus().validateTransitionTo(SlotStatus.CANCELLED);
             slot.setStatus(SlotStatus.CANCELLED);
@@ -224,8 +184,6 @@ public class CarSlotServiceImpl implements CarSlotService {
         } catch (AppException e) {
             log.warn("Huỷ slot thất bại slotId={}: {}", slotId, e.getMessage());
             throw e;
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw new AppException(HttpStatus.CONFLICT, "Dữ liệu slot vừa được thay đổi, vui lòng tải lại");
         } catch (DataAccessException e) {
             log.warn("Lỗi cơ sở dữ liệu khi huỷ slot slotId={}: {}", slotId, e.getMessage());
             throw DbErrors.toAppException(e, "Không thể huỷ slot");
@@ -237,16 +195,13 @@ public class CarSlotServiceImpl implements CarSlotService {
 
     @Override
     @Transactional
-    public CarSlotResponse reopenSlot(Long ownerId, Long slotId) {
-        log.info("Reopen slot id={}, ownerId={}", slotId, ownerId);
+    public CarSlotResponse reopenSlot(Long slotId) {
+        log.info("Reopen slot id={}", slotId);
         try {
-            accessGuard.requireActiveUser(ownerId);
-            CarSlot slot = findSlotOrThrow(slotId);
-            accessGuard.requireOwner(slot.getCar(), ownerId);
+            CarSlot slot = loadOwnedSlot(slotId);
 
             slot.getStatus().validateTransitionTo(SlotStatus.OPEN);
 
-            // Kiểm tra xe còn ACTIVE và slot chưa kết thúc
             if (slot.getCar().getStatus() != CarStatus.ACTIVE) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Xe phải ở trạng thái ACTIVE mới được mở lại slot");
             }
@@ -254,20 +209,20 @@ public class CarSlotServiceImpl implements CarSlotService {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Không thể mở lại slot đã qua trong quá khứ");
             }
 
-            // Kiểm tra overlap
-            boolean isOverlapping = carSlotRepository.existsByCarIdAndIdNotAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
-                    slot.getCar().getId(), slot.getId(), SlotStatus.CANCELLED, slot.getEndTime(), slot.getStartTime());
-            if (isOverlapping) {
-                throw new AppException(HttpStatus.CONFLICT, "Khung giờ này đã bị trùng với một slot mở khác");
-            }
+            validateSlotWindow(
+                    slot.getStartTime(),
+                    slot.getEndTime(),
+                    slot.getMinRentalHours(),
+                    slot.getRentalOption(),
+                    slot.getCar().getId(),
+                    slot.getId()
+            );
 
             slot.setStatus(SlotStatus.OPEN);
             return CarSlotResponse.from(carSlotRepository.saveAndFlush(slot));
         } catch (AppException e) {
             log.warn("Mở lại slot thất bại slotId={}: {}", slotId, e.getMessage());
             throw e;
-        } catch (ObjectOptimisticLockingFailureException e) {
-            throw new AppException(HttpStatus.CONFLICT, "Dữ liệu slot vừa được thay đổi, vui lòng tải lại");
         } catch (DataAccessException e) {
             log.warn("Lỗi dữ liệu khi mở lại slot slotId={}: {}", slotId, e.getMessage());
             throw DbErrors.toAppException(e, "Không thể mở lại khung giờ cho thuê");
@@ -279,13 +234,16 @@ public class CarSlotServiceImpl implements CarSlotService {
 
     @Override
     @Transactional(readOnly = true)
-    public CarSlotResponse getSlotById(Long slotId, Long requesterId) {
-        log.info("Get slot by id slotId={}, requesterId={}", slotId, requesterId);
+    public CarSlotResponse getSlotById(Long slotId) {
+        log.info("Get slot by id slotId={}", slotId);
         try {
             CarSlot slot = carSlotRepository.findWithCarById(slotId)
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy slot id=" + slotId));
 
-            boolean canViewFull = accessGuard.isOwner(slot.getCar(), requesterId) || accessGuard.isAdmin(requesterId);
+            Optional<Customer> requester = optionalActiveUser();
+            boolean canViewFull = requester
+                    .map(u -> isOwner(slot.getCar(), u.getId()) || currentUserService.isAdmin(u))
+                    .orElse(false);
 
             // Công khai chỉ trả slot OPEN của xe ACTIVE
             if (!canViewFull && (slot.getStatus() != SlotStatus.OPEN || slot.getCar().getStatus() != CarStatus.ACTIVE)) {
@@ -303,13 +261,15 @@ public class CarSlotServiceImpl implements CarSlotService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<CarSlotResponse> getSlotsByCarId(Long ownerId, Long carId, Pageable pageable) {
-        log.info("Get slots by car carId={}, ownerId={}", carId, ownerId);
+    public PageResponse<CarSlotResponse> getSlotsByCarId(Long carId, Pageable pageable) {
+        log.info("Get slots by car carId={}", carId);
         try {
-            accessGuard.requireActiveUser(ownerId);
+            Customer owner = requireActiveUser();
             Car car = carRepository.findById(carId)
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId));
-            accessGuard.requireOwner(car, ownerId);
+            if (!isOwner(car, owner.getId())) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
+            }
 
             Page<CarSlot> page = carSlotRepository.findAllByCarId(carId, pageable);
             return PageResponse.from(page.map(CarSlotResponse::from));
@@ -360,29 +320,72 @@ public class CarSlotServiceImpl implements CarSlotService {
         }
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public CarSlot getOpenSlotForRental(Long slotId) {
-        CarSlot slot = carSlotRepository.findWithCarById(slotId)
+    private CarSlot findSlotOrThrow(Long slotId) {
+        return carSlotRepository.findById(slotId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy slot id=" + slotId));
+    }
 
-        if (slot.getStatus() != SlotStatus.OPEN) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Slot " + slotId + " không còn ở trạng thái mở");
-        }
-        if (slot.getCar().getStatus() != CarStatus.ACTIVE) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Xe của slot không ở trạng thái ACTIVE");
-        }
-        if (slot.getEndTime().isBefore(TimeUtil.nowVn())) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Slot đã kết thúc trong quá khứ");
+    private CarSlot loadOwnedSlot(Long slotId) {
+        Customer owner = requireActiveUser();
+        CarSlot slot = findSlotOrThrow(slotId);
+        if (!isOwner(slot.getCar(), owner.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
         }
         return slot;
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public CarSlot findSlotOrThrow(Long slotId) {
-        return carSlotRepository.findById(slotId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy slot id=" + slotId));
+    private void validateSlotWindow(
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            int minHours,
+            RentalOption option,
+            Long carId,
+            Long excludeSlotId
+    ) {
+        if (!endTime.isAfter(startTime)) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Thời gian kết thúc phải sau thời gian bắt đầu");
+        }
+
+        long durationMinutes = Duration.between(startTime, endTime).toMinutes();
+        if (minHours * 60L > durationMinutes) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Thời gian thuê tối thiểu (" + minHours + " giờ) không được vượt quá độ dài khung giờ slot");
+        }
+
+        if (option == RentalOption.DAILY && durationMinutes < 24 * 60) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Slot cho thuê theo ngày (DAILY) phải có độ dài tối thiểu 24 giờ");
+        }
+
+        if (carSlotRepository.existsOverlapping(carId, startTime, endTime, excludeSlotId)) {
+            throw new AppException(HttpStatus.CONFLICT, "Khung giờ này đã bị trùng với một slot khác của xe");
+        }
+    }
+
+    private boolean isOwner(Car car, Long customerId) {
+        return customerId != null && car != null && car.getOwner() != null && car.getOwner().getId().equals(customerId);
+    }
+
+    private Customer requireActiveUser() {
+        try {
+            Customer user = currentUserService.getCurrentUser();
+            if (user.getStatus() != CustomerStatus.ACTIVE) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Tài khoản đang bị khoá");
+            }
+            return user;
+        } catch (UnauthorizedException e) {
+            throw new AppException(HttpStatus.UNAUTHORIZED, e.getMessage());
+        } catch (ForbiddenException e) {
+            throw new AppException(HttpStatus.FORBIDDEN, e.getMessage());
+        }
+    }
+
+    private Optional<Customer> optionalActiveUser() {
+        try {
+            return currentUserService.optionalCurrentUser();
+        } catch (UnauthorizedException e) {
+            throw new AppException(HttpStatus.UNAUTHORIZED, e.getMessage());
+        } catch (ForbiddenException e) {
+            throw new AppException(HttpStatus.FORBIDDEN, e.getMessage());
+        }
     }
 
     private Specification<CarSlot> buildSlotSearchSpec(CarSlotSearchRequest req) {

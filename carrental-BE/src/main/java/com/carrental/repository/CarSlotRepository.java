@@ -33,4 +33,12 @@ public interface CarSlotRepository extends JpaRepository<CarSlot, Long>, JpaSpec
             LocalDateTime endTime,
             LocalDateTime startTime
     );
+
+    default boolean existsOverlapping(Long carId, LocalDateTime startTime, LocalDateTime endTime, Long excludeSlotId) {
+        return excludeSlotId == null
+                ? existsByCarIdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                        carId, SlotStatus.CANCELLED, endTime, startTime)
+                : existsByCarIdAndIdNotAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                        carId, excludeSlotId, SlotStatus.CANCELLED, endTime, startTime);
+    }
 }
