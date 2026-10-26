@@ -1,16 +1,32 @@
 package com.carrental.controller;
 
-import com.carrental.dto.request.*;
-import com.carrental.dto.response.*;
+import com.carrental.dto.request.CarCreateRequest;
+import com.carrental.dto.request.CarDocumentRequest;
+import com.carrental.dto.request.CarImageRequest;
+import com.carrental.dto.request.CarUpdateRequest;
+import com.carrental.dto.response.ApiResponse;
+import com.carrental.dto.response.CarDocumentResponse;
+import com.carrental.dto.response.CarImageResponse;
+import com.carrental.dto.response.CarResponse;
+import com.carrental.dto.response.CarSummaryResponse;
+import com.carrental.dto.response.PageResponse;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.service.CarService;
-import com.carrental.service.CurrentUserService;
 import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Set;
@@ -21,15 +37,13 @@ import java.util.Set;
 public class CarController {
 
     private final CarService carService;
-    private final CurrentUserService currentUserService;
 
     private static final Set<String> ALLOWED_CAR_SORT_FIELDS = Set.of("createdAt", "pricePerHour", "pricePerDay", "brand", "seats");
 
     // Khách vãng lai xem chi tiết xe (ẩn biển số, giấy tờ; chủ xe/admin xem đầy đủ)
     @GetMapping("/{id}")
     public ApiResponse<CarResponse> getCarById(@PathVariable Long id) {
-        Long requesterId = currentUserService.optionalCurrentUser().map(user -> user.getId()).orElse(null);
-        return ApiResponse.ok(carService.getCarById(id, requesterId));
+        return ApiResponse.ok(carService.getCarById(id));
     }
 
     // Khách vãng lai tìm kiếm xe kèm bộ lọc và phân trang an toàn
@@ -58,7 +72,7 @@ public class CarController {
             @RequestParam(defaultValue = "DESC") String direction
     ) {
         Pageable pageable = PageRequestFactory.of(page, size, sortBy, direction, ALLOWED_CAR_SORT_FIELDS, "createdAt");
-        return ApiResponse.ok(carService.getMyCars(currentUserId(), status, pageable));
+        return ApiResponse.ok(carService.getMyCars(status, pageable));
     }
 
     // Chủ xe đăng ký xe mới
@@ -66,7 +80,7 @@ public class CarController {
     public ApiResponse<CarResponse> createCar(
             @Valid @RequestBody CarCreateRequest request
     ) {
-        return ApiResponse.ok("Đăng ký xe thành công, chờ admin duyệt", carService.createCar(currentUserId(), request));
+        return ApiResponse.ok("Đăng ký xe thành công, chờ admin duyệt", carService.createCar(request));
     }
 
     // Chủ xe cập nhật thông tin xe
@@ -75,7 +89,7 @@ public class CarController {
             @PathVariable Long id,
             @Valid @RequestBody CarUpdateRequest request
     ) {
-        return ApiResponse.ok("Cập nhật thông tin xe thành công", carService.updateCar(currentUserId(), id, request));
+        return ApiResponse.ok("Cập nhật thông tin xe thành công", carService.updateCar(id, request));
     }
 
     // Chủ xe tạm dừng hoặc kích hoạt lại xe (ACTIVE <-> INACTIVE)
@@ -84,7 +98,7 @@ public class CarController {
             @PathVariable Long id,
             @RequestParam CarStatus status
     ) {
-        return ApiResponse.ok("Cập nhật trạng thái xe thành công", carService.updateCarStatusByOwner(currentUserId(), id, status));
+        return ApiResponse.ok("Cập nhật trạng thái xe thành công", carService.updateCarStatusByOwner(id, status));
     }
 
     // Thêm hình ảnh xe
@@ -93,7 +107,7 @@ public class CarController {
             @PathVariable Long id,
             @RequestBody @Valid List<@Valid CarImageRequest> requests
     ) {
-        return ApiResponse.ok("Thêm ảnh xe thành công", carService.addCarImages(currentUserId(), id, requests));
+        return ApiResponse.ok("Thêm ảnh xe thành công", carService.addCarImages(id, requests));
     }
 
     // Xoá hình ảnh xe
@@ -102,7 +116,7 @@ public class CarController {
             @PathVariable Long id,
             @PathVariable Long imageId
     ) {
-        carService.deleteCarImage(currentUserId(), id, imageId);
+        carService.deleteCarImage(id, imageId);
         return ApiResponse.ok("Xoá ảnh xe thành công", null);
     }
 
@@ -112,7 +126,7 @@ public class CarController {
             @PathVariable Long id,
             @PathVariable Long imageId
     ) {
-        return ApiResponse.ok("Đặt ảnh đại diện thành công", carService.setPrimaryCarImage(currentUserId(), id, imageId));
+        return ApiResponse.ok("Đặt ảnh đại diện thành công", carService.setPrimaryCarImage(id, imageId));
     }
 
     // Tải lên giấy tờ xe
@@ -121,7 +135,7 @@ public class CarController {
             @PathVariable Long id,
             @Valid @RequestBody CarDocumentRequest request
     ) {
-        return ApiResponse.ok("Tải lên giấy tờ xe thành công, chờ duyệt", carService.addCarDocument(currentUserId(), id, request));
+        return ApiResponse.ok("Tải lên giấy tờ xe thành công, chờ duyệt", carService.addCarDocument(id, request));
     }
 
     // Xem danh sách giấy tờ xe (chỉ chủ xe hoặc admin)
@@ -129,10 +143,6 @@ public class CarController {
     public ApiResponse<List<CarDocumentResponse>> getCarDocuments(
             @PathVariable Long id
     ) {
-        return ApiResponse.ok(carService.getCarDocuments(currentUserId(), id));
-    }
-
-    private Long currentUserId() {
-        return currentUserService.getCurrentUser().getId();
+        return ApiResponse.ok(carService.getCarDocuments(id));
     }
 }

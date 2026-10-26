@@ -1,5 +1,6 @@
 package com.carrental.dto.response;
 
+import com.carrental.entity.Car;
 import com.carrental.entity.CarSlot;
 import com.carrental.enums.RentalOption;
 import com.carrental.enums.SlotStatus;
@@ -26,12 +27,13 @@ public record CarSlotResponse(
 ) {
     public static CarSlotResponse from(CarSlot slot) {
         if (slot == null) return null;
+        Car car = slot.getCar();
         return new CarSlotResponse(
                 slot.getId(),
-                slot.getCar() != null ? slot.getCar().getId() : null,
-                slot.getCar() != null ? slot.getCar().getLicensePlate() : null,
-                slot.getCar() != null ? slot.getCar().getBrand() : null,
-                slot.getCar() != null ? slot.getCar().getModel() : null,
+                car != null ? car.getId() : null,
+                car != null ? car.getLicensePlate() : null,
+                car != null ? car.getBrand() : null,
+                car != null ? car.getModel() : null,
                 slot.getStartTime(),
                 slot.getEndTime(),
                 slot.getPricePerHour(),

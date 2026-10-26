@@ -29,9 +29,19 @@ public record CarSummaryResponse(
 
     public static CarSummaryResponse from(Car car, String primaryImageUrl) {
         if (car == null) return null;
+        return build(car, car.getLicensePlate(), primaryImageUrl);
+    }
+
+    // Bản công khai cho tìm kiếm xe: ẩn biển số xe
+    public static CarSummaryResponse publicFrom(Car car, String primaryImageUrl) {
+        if (car == null) return null;
+        return build(car, null, primaryImageUrl);
+    }
+
+    private static CarSummaryResponse build(Car car, String licensePlate, String primaryImageUrl) {
         return new CarSummaryResponse(
                 car.getId(),
-                car.getLicensePlate(),
+                licensePlate,
                 car.getBrand(),
                 car.getModel(),
                 car.getCarType(),

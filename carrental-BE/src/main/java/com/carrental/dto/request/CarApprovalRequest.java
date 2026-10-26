@@ -1,8 +1,11 @@
 package com.carrental.dto.request;
 
-import com.carrental.enums.CarStatus;
-import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -11,8 +14,6 @@ import lombok.*;
 @Builder
 public class CarApprovalRequest {
 
-    @NotNull(message = "Trạng thái phê duyệt không được để trống")
-    private CarStatus status; // ACTIVE hoặc REJECTED
-
+    @NotBlank(message = "Lý do từ chối không được để trống")
     private String reason;
 }

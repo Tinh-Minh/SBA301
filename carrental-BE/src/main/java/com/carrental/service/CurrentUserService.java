@@ -1,5 +1,6 @@
 package com.carrental.service;
 
+import com.carrental.entity.Car;
 import com.carrental.entity.Customer;
 import java.util.Optional;
 
@@ -9,10 +10,12 @@ import java.util.Optional;
  */
 public interface CurrentUserService {
 
-    /** @throws com.carrental.exception.UnauthorizedException nếu chưa đăng nhập */
+    /** @throws com.carrental.exception.AppException nếu chưa đăng nhập hoặc tài khoản bị khoá */
     Customer getCurrentUser();
 
     Optional<Customer> optionalCurrentUser();
 
     boolean isAdmin(Customer customer);
+
+    boolean isOwner(Car car, Customer customer);
 }

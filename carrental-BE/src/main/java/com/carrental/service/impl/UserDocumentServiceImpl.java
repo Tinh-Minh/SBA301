@@ -148,8 +148,9 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             throw new AppException(ErrorCode.INVALID_TOKEN);
         }
 
-        long ownerId = documents.findCustomerIdById(documentId)
-                .orElseThrow(RequestChecks::notFound);
+        long ownerId = documents.findById(documentId)
+                .orElseThrow(RequestChecks::notFound)
+                .getCustomer().getId();
         if (actor.customerId() == ownerId) throw new AppException(ErrorCode.DOCUMENT_SELF_REVIEW_FORBIDDEN);
         // Reviews of different documents of one customer share this lock so the KYC update is consistent.
         Customer owner = customers.findWithLockById(ownerId).orElseThrow(RequestChecks::notFound);

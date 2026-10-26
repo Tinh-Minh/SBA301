@@ -2,10 +2,14 @@ package com.carrental.dto.request;
 
 import com.carrental.enums.CarType;
 import com.carrental.enums.RentalType;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Getter
 @Setter
@@ -19,8 +23,12 @@ public class CarSlotSearchRequest {
     private Integer seats;
     private BigDecimal maxPricePerHour;
     private BigDecimal maxPricePerDay;
-    private RentalType rentalType; // HOURLY hoặc DAILY
+    private RentalType rentalType;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime startTime;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     private LocalDateTime endTime;
 
     @Builder.Default

@@ -1,8 +1,15 @@
 package com.carrental.service;
 
-import com.carrental.dto.request.*;
-import com.carrental.dto.response.*;
-import com.carrental.entity.Car;
+import com.carrental.dto.request.CarCreateRequest;
+import com.carrental.dto.request.CarDocumentRequest;
+import com.carrental.dto.request.CarDocumentVerifyRequest;
+import com.carrental.dto.request.CarImageRequest;
+import com.carrental.dto.request.CarUpdateRequest;
+import com.carrental.dto.response.CarDocumentResponse;
+import com.carrental.dto.response.CarImageResponse;
+import com.carrental.dto.response.CarResponse;
+import com.carrental.dto.response.CarSummaryResponse;
+import com.carrental.dto.response.PageResponse;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import org.springframework.data.domain.Pageable;
@@ -11,17 +18,17 @@ import java.util.List;
 
 public interface CarService {
 
-    CarResponse createCar(Long ownerId, CarCreateRequest request);
+    CarResponse createCar(CarCreateRequest request);
 
-    CarResponse updateCar(Long ownerId, Long carId, CarUpdateRequest request);
+    CarResponse updateCar(Long carId, CarUpdateRequest request);
 
-    CarResponse getCarById(Long carId, Long requesterId);
+    CarResponse getCarById(Long carId);
 
-    PageResponse<CarSummaryResponse> getMyCars(Long ownerId, CarStatus status, Pageable pageable);
+    PageResponse<CarSummaryResponse> getMyCars(CarStatus status, Pageable pageable);
 
-    PageResponse<CarSummaryResponse> getCarsByStatus(Long adminId, CarStatus status, Pageable pageable);
+    PageResponse<CarSummaryResponse> getCarsByStatus(CarStatus status, Pageable pageable);
 
-    CarResponse updateCarStatusByOwner(Long ownerId, Long carId, CarStatus status);
+    CarResponse updateCarStatusByOwner(Long carId, CarStatus status);
 
     PageResponse<CarSummaryResponse> searchCars(
             String city,
@@ -31,24 +38,21 @@ public interface CarService {
             Pageable pageable
     );
 
-    CarResponse approveCar(Long adminId, Long carId);
+    CarResponse approveCar(Long carId);
 
-    CarResponse rejectCar(Long adminId, Long carId, String reason);
+    CarResponse rejectCar(Long carId, String reason);
 
     // Car Images
-    List<CarImageResponse> addCarImages(Long ownerId, Long carId, List<CarImageRequest> requests);
+    List<CarImageResponse> addCarImages(Long carId, List<CarImageRequest> requests);
 
-    void deleteCarImage(Long ownerId, Long carId, Long imageId);
+    void deleteCarImage(Long carId, Long imageId);
 
-    CarImageResponse setPrimaryCarImage(Long ownerId, Long carId, Long imageId);
+    CarImageResponse setPrimaryCarImage(Long carId, Long imageId);
 
     // Car Documents
-    CarDocumentResponse addCarDocument(Long ownerId, Long carId, CarDocumentRequest request);
+    CarDocumentResponse addCarDocument(Long carId, CarDocumentRequest request);
 
-    List<CarDocumentResponse> getCarDocuments(Long requesterId, Long carId);
+    List<CarDocumentResponse> getCarDocuments(Long carId);
 
-    CarDocumentResponse verifyCarDocumentByAdmin(Long adminId, Long carId, Long documentId, CarDocumentVerifyRequest request);
-
-    // Method tiện ích cho Người 3
-    Car findCarOrThrow(Long carId);
+    CarDocumentResponse verifyCarDocumentByAdmin(Long carId, Long documentId, CarDocumentVerifyRequest request);
 }

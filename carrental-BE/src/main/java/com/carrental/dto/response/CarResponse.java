@@ -51,7 +51,23 @@ public record CarResponse(
 
     public static CarResponse from(Car car, List<CarImage> images, List<CarDocument> documents) {
         if (car == null) return null;
+        Long driverId = car.getDriver() != null ? car.getDriver().getId() : null;
+        return build(car, driverId, car.getLicensePlate(), images, documents);
+    }
 
+    // Bản công khai cho khách vãng lai: ẩn licensePlate, driverId, documents
+    public static CarResponse publicView(Car car, List<CarImage> images) {
+        if (car == null) return null;
+        return build(car, null, null, images, Collections.emptyList());
+    }
+
+    private static CarResponse build(
+            Car car,
+            Long driverId,
+            String licensePlate,
+            List<CarImage> images,
+            List<CarDocument> documents
+    ) {
         List<CarImageResponse> imgList = images == null ? Collections.emptyList() :
                 images.stream().map(CarImageResponse::from).toList();
 
@@ -62,8 +78,8 @@ public record CarResponse(
                 car.getId(),
                 car.getOwner() != null ? car.getOwner().getId() : null,
                 car.getOwner() != null ? car.getOwner().getFullName() : null,
-                car.getDriver() != null ? car.getDriver().getId() : null,
-                car.getLicensePlate(),
+                driverId,
+                licensePlate,
                 car.getBrand(),
                 car.getModel(),
                 car.getManufactureYear(),
@@ -87,47 +103,6 @@ public record CarResponse(
                 car.getStatus(),
                 imgList,
                 docList,
-                car.getCreatedAt(),
-                car.getUpdatedAt()
-        );
-    }
-
-    // Bản công khai cho khách vãng lai: ẩn licensePlate, driverId, documents (Phần 5.4)
-    public static CarResponse publicView(Car car, List<CarImage> images) {
-        if (car == null) return null;
-
-        List<CarImageResponse> imgList = images == null ? Collections.emptyList() :
-                images.stream().map(CarImageResponse::from).toList();
-
-        return new CarResponse(
-                car.getId(),
-                car.getOwner() != null ? car.getOwner().getId() : null,
-                car.getOwner() != null ? car.getOwner().getFullName() : null,
-                null, // Ẩn driverId
-                null, // Ẩn biển số xe
-                car.getBrand(),
-                car.getModel(),
-                car.getManufactureYear(),
-                car.getCarType(),
-                car.getSeats(),
-                car.getTransmission(),
-                car.getFuelType(),
-                car.getColor(),
-                car.getDescription(),
-                car.getFeatures(),
-                car.getCity(),
-                car.getDistrict(),
-                car.getPickupAddress(),
-                car.getLatitude(),
-                car.getLongitude(),
-                car.getPricePerHour(),
-                car.getPricePerDay(),
-                car.getDepositAmount(),
-                car.getKmLimitPerDay(),
-                car.getExtraKmFee(),
-                car.getStatus(),
-                imgList,
-                Collections.emptyList(), // Ẩn giấy tờ xe
                 car.getCreatedAt(),
                 car.getUpdatedAt()
         );

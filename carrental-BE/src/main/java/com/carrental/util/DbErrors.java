@@ -2,13 +2,13 @@ package com.carrental.util;
 
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
+import java.util.Optional;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-
-import java.util.Optional;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 public final class DbErrors {
     private DbErrors() {}
@@ -38,6 +38,9 @@ public final class DbErrors {
     }
 
     public static AppException toAppException(DataAccessException e, String fallback) {
+        if (e instanceof ObjectOptimisticLockingFailureException) {
+            return new AppException(HttpStatus.CONFLICT, "Dữ liệu vừa được người khác cập nhật, vui lòng tải lại và thử lại");
+        }
         String msg = Optional.ofNullable(NestedExceptionUtils.getMostSpecificCause(e).getMessage()).orElse("");
         if (msg.contains("car_slots_no_overlap")) {
             return new AppException(HttpStatus.CONFLICT, "Xe đã có slot khác trùng khoảng thời gian này");

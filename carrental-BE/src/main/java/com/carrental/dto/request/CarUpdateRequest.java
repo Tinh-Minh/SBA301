@@ -4,10 +4,20 @@ import com.carrental.entity.Car;
 import com.carrental.enums.CarType;
 import com.carrental.enums.FuelType;
 import com.carrental.enums.Transmission;
-import jakarta.validation.constraints.*;
-import lombok.*;
-
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -99,9 +109,7 @@ public class CarUpdateRequest {
         car.setFuelType(this.fuelType);
         car.setColor(this.color);
         car.setDescription(this.description);
-        if (this.features != null) {
-            car.setFeatures(this.features);
-        }
+        car.setFeatures(this.features != null ? this.features : "[]");
         car.setCity(this.city);
         car.setDistrict(this.district);
         car.setPickupAddress(this.pickupAddress);
@@ -109,9 +117,7 @@ public class CarUpdateRequest {
         car.setLongitude(this.longitude);
         car.setPricePerHour(this.pricePerHour);
         car.setPricePerDay(this.pricePerDay);
-        if (this.depositAmount != null) {
-            car.setDepositAmount(this.depositAmount);
-        }
+        car.setDepositAmount(this.depositAmount != null ? this.depositAmount : BigDecimal.ZERO);
         car.setKmLimitPerDay(this.kmLimitPerDay);
         car.setExtraKmFee(this.extraKmFee);
     }

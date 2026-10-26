@@ -17,7 +17,7 @@ import com.carrental.exception.AppException;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.TransactionRepository;
 import com.carrental.repository.TransactionSpecification;
-import com.carrental.service.OrderAccess;
+import com.carrental.util.OrderAccess;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
 import com.carrental.util.TimeUtil;
