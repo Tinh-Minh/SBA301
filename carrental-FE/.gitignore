@@ -24,4 +24,6 @@ dist-ssr
 *.sw?
 .vercel
 .next/
-
+test-results/
+playwright-report/
+*.tsbuildinfo
