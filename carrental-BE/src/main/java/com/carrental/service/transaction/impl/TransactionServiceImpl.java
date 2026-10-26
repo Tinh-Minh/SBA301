@@ -1,4 +1,4 @@
-package com.carrental.service.impl;
+package com.carrental.service.transaction.impl;
 
 import com.carrental.dto.request.CreateDepositRequest;
 import com.carrental.dto.request.CreatePaymentRequest;
@@ -13,18 +13,22 @@ import com.carrental.enums.PaymentMethod;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.TransactionType;
+import com.carrental.event.PaymentCompletedEvent;
 import com.carrental.exception.AppException;
 import com.carrental.repository.RentalOrderRepository;
-import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.transaction.TransactionRepository;
+import com.carrental.repository.transaction.TransactionSpecification;
 import com.carrental.service.OrderAccess;
-import com.carrental.service.TransactionService;
-import com.carrental.service.VNPayService;
+import com.carrental.service.transaction.TransactionService;
+import com.carrental.service.transaction.VNPayService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +48,7 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final RentalOrderRepository rentalOrderRepository;
     private final VNPayService vnPayService;
+    private final ApplicationEventPublisher eventPublisher;
     private final OrderAccess orderAccess;
 
     @Value("${app.payment.simulate-gateway-enabled:false}")
@@ -62,10 +67,20 @@ public class TransactionServiceImpl implements TransactionService {
             if (order.getExpiresAt() != null && LocalDateTime.now().isAfter(order.getExpiresAt())) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã quá thời hạn thanh toán/đặt cọc");
             }
-            BigDecimal amount = request.getAmount() != null ? request.getAmount() : order.getDepositAmount();
-            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền cọc không hợp lệ");
+            // Magic method check: kiểm tra đơn đã có giao dịch đặt cọc thành công chưa
+            if (transactionRepository.existsByOrderIdAndTransactionTypeAndStatus(
+                    order.getId(), TransactionType.DEPOSIT, TransactionStatus.SUCCESS)) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã được đặt cọc thành công trước đó");
             }
+
+            BigDecimal expectedDeposit = order.getDepositAmount();
+            if (expectedDeposit == null || expectedDeposit.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê không yêu cầu tiền đặt cọc");
+            }
+            if (request.getAmount() != null && request.getAmount().compareTo(expectedDeposit) != 0) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền đặt cọc không khớp với quy định của đơn thuê (yêu cầu " + expectedDeposit + " VND)");
+            }
+            BigDecimal amount = expectedDeposit;
 
             request.setAmount(amount);
             Transaction transaction = request.toEntity();
@@ -109,10 +124,20 @@ public class TransactionServiceImpl implements TransactionService {
             if (order.getExpiresAt() != null && LocalDateTime.now().isAfter(order.getExpiresAt())) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã quá thời hạn thanh toán");
             }
-            BigDecimal amount = request.getAmount() != null ? request.getAmount() : order.getTotalAmount();
-            if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán không hợp lệ");
+            // Magic method check: kiểm tra đơn đã có giao dịch thanh toán thành công chưa
+            if (transactionRepository.existsByOrderIdAndTransactionTypeAndStatus(
+                    order.getId(), TransactionType.RENTAL_PAYMENT, TransactionStatus.SUCCESS)) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã được thanh toán thành công trước đó");
             }
+
+            BigDecimal expectedTotal = order.getTotalAmount();
+            if (expectedTotal == null || expectedTotal.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán đơn thuê không hợp lệ");
+            }
+            if (request.getAmount() != null && request.getAmount().compareTo(expectedTotal) != 0) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán không khớp với tổng tiền đơn thuê (yêu cầu " + expectedTotal + " VND)");
+            }
+            BigDecimal amount = expectedTotal;
 
             request.setAmount(amount);
             Transaction transaction = request.toEntity();
@@ -168,17 +193,13 @@ public class TransactionServiceImpl implements TransactionService {
 
             if (next == TransactionStatus.SUCCESS) {
                 transaction.setPaidAt(LocalDateTime.now());
-                RentalOrder order = transaction.getOrder();
-                if (order != null) {
-                    if (transaction.getTransactionType() == TransactionType.RENTAL_PAYMENT) {
-                        order.setPaymentStatus(PaymentStatus.PAID);
-                        order.setUpdatedAt(LocalDateTime.now());
-                        rentalOrderRepository.save(order);
-                    }
-                }
             }
 
             Transaction saved = transactionRepository.save(transaction);
+            if (next == TransactionStatus.SUCCESS) {
+                eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
+            }
+
             log.info("Xử lý cổng thanh toán hoàn tất id={}, status={}", saved.getId(), saved.getStatus());
             return TransactionResponse.from(saved);
         } catch (AppException e) {
@@ -200,11 +221,26 @@ public class TransactionServiceImpl implements TransactionService {
             if (parent.getStatus() != TransactionStatus.SUCCESS) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể hoàn tiền cho giao dịch đã thành công (SUCCESS)");
             }
+            if (parent.getTransactionType() == TransactionType.REFUND) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Không thể hoàn tiền cho giao dịch loại hoàn tiền");
+            }
 
             BigDecimal refundAmount = request.getAmount() != null ? request.getAmount() : parent.getAmount();
             if (refundAmount == null || refundAmount.compareTo(BigDecimal.ZERO) <= 0
                     || refundAmount.compareTo(parent.getAmount()) > 0) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền hoàn không hợp lệ (vượt quá giao dịch gốc)");
+            }
+
+            // Kiểm tra tổng số tiền đã hoàn trước đó để tránh hoàn vượt mức
+            BigDecimal alreadyRefunded = transactionRepository.findByRefundOfId(parent.getId()).stream()
+                    .filter(t -> t.getStatus() == TransactionStatus.SUCCESS)
+                    .map(Transaction::getAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            if (alreadyRefunded.add(refundAmount).compareTo(parent.getAmount()) > 0) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Tổng tiền hoàn (" + alreadyRefunded.add(refundAmount) + " VND) vượt quá số tiền giao dịch gốc ("
+                                + parent.getAmount() + " VND). Đã hoàn trước đó: " + alreadyRefunded + " VND");
             }
 
             Transaction refundTx = new Transaction();
@@ -258,18 +294,8 @@ public class TransactionServiceImpl implements TransactionService {
         } else {
             orderAccess.requireAdmin();
         }
-        Page<Transaction> page;
-        if (orderId != null) {
-            page = transactionRepository.findByOrderId(orderId, pageable);
-        } else if (transactionType != null && !transactionType.isBlank()) {
-            TransactionType type = TransactionType.valueOf(transactionType.toUpperCase());
-            page = transactionRepository.findByTransactionType(type, pageable);
-        } else if (status != null && !status.isBlank()) {
-            TransactionStatus txStatus = TransactionStatus.valueOf(status.toUpperCase());
-            page = transactionRepository.findByStatus(txStatus, pageable);
-        } else {
-            page = transactionRepository.findAll(pageable);
-        }
+        Specification<Transaction> spec = TransactionSpecification.filter(orderId, transactionType, status);
+        Page<Transaction> page = transactionRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(TransactionResponse::from));
     }
 

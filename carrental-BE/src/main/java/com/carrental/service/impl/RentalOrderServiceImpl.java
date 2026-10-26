@@ -20,7 +20,7 @@ import com.carrental.exception.ForbiddenException;
 import com.carrental.exception.ResourceNotFoundException;
 import com.carrental.repository.CarSlotRepository;
 import com.carrental.repository.RentalOrderRepository;
-import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.transaction.TransactionRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;

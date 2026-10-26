@@ -14,7 +14,7 @@ import com.carrental.enums.TransactionType;
 import com.carrental.exception.AppException;
 import com.carrental.repository.ExtraFeeRepository;
 import com.carrental.repository.RentalOrderRepository;
-import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.transaction.TransactionRepository;
 import com.carrental.service.ExtraFeeService;
 import com.carrental.service.OrderAccess;
 import lombok.RequiredArgsConstructor;

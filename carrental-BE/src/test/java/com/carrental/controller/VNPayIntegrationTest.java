@@ -9,7 +9,7 @@ import com.carrental.entity.Transaction;
 import com.carrental.enums.*;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.RentalOrderRepository;
-import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.transaction.TransactionRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

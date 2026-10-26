@@ -1,4 +1,4 @@
-package com.carrental.service;
+package com.carrental.service.transaction;
 
 import com.carrental.dto.request.CreateDepositRequest;
 import com.carrental.dto.request.CreatePaymentRequest;
@@ -6,7 +6,10 @@ import com.carrental.dto.request.MockPaymentProcessRequest;
 import com.carrental.dto.request.RefundRequest;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.TransactionResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
+
+import java.util.Map;
 
 public interface TransactionService {
 
@@ -22,9 +25,9 @@ public interface TransactionService {
 
     PageResponse<TransactionResponse> getPaged(Long orderId, String transactionType, String status, Pageable pageable);
 
-    String getVNPayUrl(Long transactionId, String bankCode, jakarta.servlet.http.HttpServletRequest request);
+    String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
 
-    TransactionResponse processVNPayReturn(java.util.Map<String, String> queryParams);
+    TransactionResponse processVNPayReturn(Map<String, String> queryParams);
 
-    java.util.Map<String, String> processVNPayIpn(java.util.Map<String, String> queryParams);
+    Map<String, String> processVNPayIpn(Map<String, String> queryParams);
 }
