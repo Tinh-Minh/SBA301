@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "c1f83e29-6842-45a8-b63e-108bb945d801",
     "name": "SBA301 - Car Rental Marketplace API",
-    "description": "Collection kiểm thử toàn diện các API của SBA301 Car Rental Marketplace Backend.\nĐược tạo dựa trên mã nguồn thực tế tại các Controller và Schema PostgreSQL v3.\n\nStack: Spring Boot 4.0.8, Java 21, PostgreSQL (Supabase).\nCổng mặc định: http://localhost:8080",
+    "description": "Collection kiểm thử toàn diện các API của SBA301 Car Rental Marketplace Backend.\nĐược tạo dựa trên mã nguồn thực tế tại các Controller và Schema PostgreSQL v3.\n\nStack: Spring Boot 4.0.9, Java 21, PostgreSQL (Supabase).\nCổng mặc định: http://localhost:8080",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "auth": {
