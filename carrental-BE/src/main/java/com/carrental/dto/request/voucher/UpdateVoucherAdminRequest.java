@@ -1,41 +1,23 @@
 package com.carrental.dto.request.voucher;
 
-import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import tools.jackson.databind.JsonNode;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
 
-/** Strict full replacement for the two mutable voucher administration fields. */
+/** PUT requires both properties; explicit null clears their values. */
+@Getter
 public final class UpdateVoucherAdminRequest {
-    private boolean descriptionPresent;
-    private boolean usageLimitPresent;
-    private String description;
-    private Integer usageLimit;
+    @Size(max = 300)
+    private final String description;
+    @Positive
+    private final Integer usageLimit;
 
-    @JsonProperty("description")
-    public void setDescription(JsonNode value) {
-        duplicate(descriptionPresent);
-        descriptionPresent = true;
-        description = CreateVoucherRequest.nullableText(value, "description");
-    }
-
-    @JsonProperty("usageLimit")
-    public void setUsageLimit(JsonNode value) {
-        duplicate(usageLimitPresent);
-        usageLimitPresent = true;
-        usageLimit = CreateVoucherRequest.integer(value, "usageLimit", true);
-    }
-
-    @JsonAnySetter
-    public void rejectUnknownField(String ignoredName, JsonNode ignoredValue) {
-        throw new IllegalArgumentException("Unknown voucher update field");
-    }
-
-    public boolean descriptionWasProvided() { return descriptionPresent; }
-    public boolean usageLimitWasProvided() { return usageLimitPresent; }
-    public String getDescription() { return description; }
-    public Integer getUsageLimit() { return usageLimit; }
-
-    private static void duplicate(boolean alreadyPresent) {
-        if (alreadyPresent) throw new IllegalArgumentException("Repeated voucher update field");
+    @JsonCreator
+    public UpdateVoucherAdminRequest(@JsonProperty(value = "description", required = true) String description,
+            @JsonProperty(value = "usageLimit", required = true) Integer usageLimit) {
+        this.description = description == null ? null : description.strip();
+        this.usageLimit = usageLimit;
     }
 }

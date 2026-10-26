@@ -8,7 +8,7 @@ import com.carrental.dto.response.UserDocumentDetailResponse;
 import com.carrental.dto.response.UserDocumentSummaryResponse;
 import com.carrental.dto.response.UserDocumentReviewResponse;
 import com.carrental.security.CurrentAccount;
-import com.carrental.storage.PrivateDocumentFile;
+import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentFile;
 
 public interface UserDocumentService {
     UserDocumentDetailResponse submit(CurrentAccount account, UserDocumentSubmissionCommand command);

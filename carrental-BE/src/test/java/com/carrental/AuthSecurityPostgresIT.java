@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import com.carrental.config.security.BootstrapAdminProperties;
 import com.carrental.entity.Customer;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.service.impl.AdminBootstrapService;
+import com.carrental.service.AdminBootstrapService;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -23,8 +23,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -91,8 +89,7 @@ class AuthSecurityPostgresIT {
         properties.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         properties.add("app.security.jwt.access-token-ttl", () -> "PT5M");
         properties.add("app.security.jwt.clock-skew", () -> "PT30S");
-        properties.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        properties.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
+        properties.add("app.security.jwt.secret-key", () -> TestJwtKeys.HS256_SECRET);
         properties.add("app.security.cors.allowed-origins", () -> ALLOWED_ORIGIN);
     }
 
@@ -132,7 +129,7 @@ class AuthSecurityPostgresIT {
         Map<String, Object> row = jdbc.queryForMap("select password_hash, role, status, kyc_status, email_verified, "
                 + "created_at, updated_at from customers where email=?", email);
         String hash = (String) row.get("password_hash");
-        assertThat(hash).startsWith("{bcrypt}$2");
+        assertThat(hash).matches("^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
         assertThat(passwordEncoder.matches(markerPassword, hash)).isTrue();
         assertThat(hash).isNotEqualTo(markerPassword);
         assertThat(row).containsEntry("role", "CUSTOMER").containsEntry("status", "ACTIVE")
@@ -220,7 +217,8 @@ class AuthSecurityPostgresIT {
                     .containsExactlyInAnyOrder(emailMarker, phoneCandidateEmail);
             List<String> candidateHashes = saves.getAllValues().stream()
                     .map(Customer::getPasswordHash).toList();
-            assertThat(candidateHashes).allMatch(hash -> hash.startsWith("{bcrypt}$2"));
+            assertThat(candidateHashes).allMatch(hash ->
+                    hash.matches("^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$"));
 
             String capturedLogs = logs.snapshot().stream()
                     .map(AuthSecurityPostgresIT::renderLogEvent)
@@ -228,8 +226,8 @@ class AuthSecurityPostgresIT {
             String emailTrace = emailConflict.headers().firstValue("X-Request-ID").orElseThrow();
             String phoneTrace = phoneConflict.headers().firstValue("X-Request-ID").orElseThrow();
             assertThat(capturedLogs)
-                    .contains("Registration conflict traceId=" + emailTrace + " constraint=uq_customers_email_lower")
-                    .contains("Registration conflict traceId=" + phoneTrace + " constraint=customers_phone_key")
+                    .contains("Request rejected traceId=" + emailTrace + " errorCode=ACCOUNT_ALREADY_EXISTS")
+                    .contains("Request rejected traceId=" + phoneTrace + " errorCode=ACCOUNT_ALREADY_EXISTS")
                     .doesNotContain(emailMarker, phoneMarker, passwordMarker, hashMarker, bearerToken);
             candidateHashes.forEach(hash -> assertThat(capturedLogs).doesNotContain(hash));
         }
@@ -261,7 +259,7 @@ class AuthSecurityPostgresIT {
     }
 
     @Test
-    void loginPreservesPasswordWhitespaceAndEmitsRequiredShortLivedRS256Claims() throws Exception {
+    void loginPreservesPasswordWhitespaceAndEmitsRequiredShortLivedHS256Claims() throws Exception {
         String email = email("login");
         String phone = phone("l");
         assertThat(post("/api/auth/register", registerJson("Login Customer", email, phone, PASSWORD)).statusCode())
@@ -284,7 +282,7 @@ class AuthSecurityPostgresIT {
 
         SignedJWT decoded = SignedJWT.parse(token);
         JWTClaimsSet claims = decoded.getJWTClaimsSet();
-        assertThat(decoded.getHeader().getAlgorithm()).isEqualTo(JWSAlgorithm.RS256);
+        assertThat(decoded.getHeader().getAlgorithm()).isEqualTo(JWSAlgorithm.HS256);
         assertThat(claims.getSubject()).isEqualTo(id.toString());
         assertThat(claims.getIssuer()).isEqualTo(TestJwtKeys.ISSUER);
         assertThat(claims.getAudience()).containsExactly(TestJwtKeys.AUDIENCE);
@@ -319,8 +317,8 @@ class AuthSecurityPostgresIT {
     void malformedOrUnsupportedStoredPasswordHashesReturnGenericUnauthorizedWithoutLoggingHash() throws Exception {
         String passwordMarker = "R3_PASSWORD_SENTINEL_" + SUFFIX;
         Map<String, String> invalidHashes = new LinkedHashMap<>();
-        invalidHashes.put(email("bcrypt-cost-high"), "{bcrypt}$2a$99$" + "A".repeat(53));
-        invalidHashes.put(email("bcrypt-cost-low"), "{bcrypt}$2a$03$" + "B".repeat(53));
+        invalidHashes.put(email("bcrypt-cost-high"), "$2a$99$" + "A".repeat(53));
+        invalidHashes.put(email("bcrypt-cost-low"), "$2a$03$" + "B".repeat(53));
         invalidHashes.put(email("unsupported-prefix"), "{unsupported}HASH_PREFIX_SENTINEL_" + SUFFIX);
         invalidHashes.put(email("plaintext-hash"), "PLAINTEXT_HASH_SENTINEL_" + SUFFIX);
 
@@ -370,7 +368,7 @@ class AuthSecurityPostgresIT {
             String capturedLogs = logs.snapshot().stream()
                     .map(AuthSecurityPostgresIT::renderLogEvent)
                     .collect(Collectors.joining("\n"));
-            assertThat(capturedLogs).contains("Authentication dependency unavailable")
+            assertThat(capturedLogs).contains("Database unavailable")
                     .doesNotContain(email, PASSWORD, "SENTINEL_LOGIN_DATABASE_FAILURE");
         }
     }
@@ -380,61 +378,59 @@ class AuthSecurityPostgresIT {
         Long id = registerAndGetId(email("jwt-matrix"), phone("j"), PASSWORD);
         Instant now = clock.instant().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         List<String> invalidTokens = new ArrayList<>();
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, "wrong-audience",
-                now.minusSeconds(1), now.plusSeconds(60), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now.minusSeconds(120), now.minusSeconds(90), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), now.plusSeconds(120)), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now.plusSeconds(120), now.plusSeconds(60), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims("0", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims("9223372036854775808123", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims("not-a-number", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(Map.of(), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, "wrong-audience",
+                now.minusSeconds(1), now.plusSeconds(60), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now.minusSeconds(120), now.minusSeconds(90), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), now.plusSeconds(120))));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now.plusSeconds(120), now.plusSeconds(60), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims("0", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims("9223372036854775808123", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims("not-a-number", TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(Map.of()));
 
         Map<String, Object> noIssuedAt = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noIssuedAt.remove("iat");
-        invalidTokens.add(signedToken(noIssuedAt, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noIssuedAt));
         Map<String, Object> noExpiration = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noExpiration.remove("exp");
-        invalidTokens.add(signedToken(noExpiration, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noExpiration));
         Map<String, Object> noSubject = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noSubject.remove("sub");
-        invalidTokens.add(signedToken(noSubject, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noSubject));
         Map<String, Object> noIssuer = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noIssuer.remove("iss");
-        invalidTokens.add(signedToken(noIssuer, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noIssuer));
         Map<String, Object> noAudience = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         noAudience.remove("aud");
-        invalidTokens.add(signedToken(noAudience, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), "https://wrong.example.test", TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), "SENTINEL_NOT_A_URL", TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), "", TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(noAudience));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), "https://wrong.example.test", TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), "SENTINEL_NOT_A_URL", TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
+        invalidTokens.add(TestJwtKeys.signHs256Token(claims(id.toString(), "", TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
         Map<String, Object> nonStringIssuer = claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
                 now, now.plusSeconds(120), null);
         nonStringIssuer.put("iss", 12345);
-        invalidTokens.add(signedToken(nonStringIssuer, JWSAlgorithm.RS256, TestJwtKeys.privateKey()));
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS512, TestJwtKeys.privateKey()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(nonStringIssuer));
+        invalidTokens.add(signedRs256Token(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                now, now.plusSeconds(120), null)));
         invalidTokens.add(new PlainJWT(new JWTClaimsSet.Builder().subject(id.toString()).build()).serialize());
-
-        var otherGenerator = KeyPairGenerator.getInstance("RSA");
-        otherGenerator.initialize(2048);
-        var otherPair = otherGenerator.generateKeyPair();
-        invalidTokens.add(signedToken(claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
-                now, now.plusSeconds(120), null), JWSAlgorithm.RS256, (RSAPrivateKey) otherPair.getPrivate()));
+        invalidTokens.add(TestJwtKeys.signHs256Token(
+                claims(id.toString(), TestJwtKeys.ISSUER, TestJwtKeys.AUDIENCE,
+                        now, now.plusSeconds(120), null),
+                "wrong-function1-test-secret-key-for-hs256"));
 
         HttpResponse<String> valid = post("/api/auth/login", loginJson(email("jwt-matrix"), PASSWORD));
         String validToken = json(valid).path("data").path("accessToken").asText();
@@ -475,7 +471,7 @@ class AuthSecurityPostgresIT {
         Map<String, Object> forgedRoleClaims = claims(customerId.toString(), TestJwtKeys.ISSUER,
                 TestJwtKeys.AUDIENCE, clock.instant().minusSeconds(1), clock.instant().plusSeconds(180), null);
         forgedRoleClaims.put("role", "ADMIN");
-        String forgedRole = signedToken(forgedRoleClaims, JWSAlgorithm.RS256, TestJwtKeys.privateKey());
+        String forgedRole = TestJwtKeys.signHs256Token(forgedRoleClaims);
         assertError(get("/__test/security/admin", forgedRole, Map.of()), 403, "ACCESS_DENIED");
         assertError(get("/__test/security/admin", customerToken, Map.of()), 403, "ACCESS_DENIED");
 
@@ -610,6 +606,58 @@ class AuthSecurityPostgresIT {
         return jdbc.queryForObject("insert into customers(full_name,email,phone,password_hash,role,status,kyc_status,email_verified) "
                         + "values (?,?,?,?,'CUSTOMER','ACTIVE','NONE',false) returning id",
                 Long.class, fullName, email, phone, passwordHash);
+    }
+
+    @Test
+    void changePasswordRequiresCurrentPasswordAndKeepsTheStoredHashOnRejectedRequests() throws Exception {
+        String email = email("change-password");
+        Long id = registerAndGetId(email, phone("cp"), PASSWORD);
+        String token = loginToken(email, PASSWORD);
+        Map<String, String> headers = Map.of("Authorization", "Bearer " + token);
+        String originalHash = jdbc.queryForObject("select password_hash from customers where id=?", String.class, id);
+        String newPassword = "replacement fake password";
+        String validBody = objectMapper.writeValueAsString(Map.of("currentPassword", PASSWORD, "newPassword", newPassword));
+        assertThat(post("/api/auth/change-password", validBody).statusCode()).isEqualTo(401);
+        assertError(post("/api/auth/change-password", objectMapper.writeValueAsString(
+                Map.of("currentPassword", "wrong password", "newPassword", newPassword)), headers), 401, "AUTHENTICATION_FAILED");
+        HttpResponse<String> weakPassword = post("/api/auth/change-password", objectMapper.writeValueAsString(
+                Map.of("currentPassword", PASSWORD, "newPassword", "tiny")), headers);
+        assertThat(weakPassword.statusCode()).isEqualTo(400);
+        assertThat(json(weakPassword).path("code").asText()).isEqualTo("VALIDATION_ERROR");
+        assertThat(json(weakPassword).path("errors").get(0).path("field").asText()).isEqualTo("newPassword");
+        assertTrace(weakPassword, json(weakPassword));
+        assertThat(jdbc.queryForObject("select password_hash from customers where id=?", String.class, id)).isEqualTo(originalHash);
+        try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
+            HttpResponse<String> changed = post("/api/auth/change-password", validBody, headers);
+            assertThat(changed.statusCode()).isEqualTo(200);
+            assertThat(json(changed).path("data").isNull()).isTrue();
+            assertTrace(changed, json(changed));
+            assertThat(changed.headers().firstValue("Cache-Control")).contains("no-store");
+            String hash = jdbc.queryForObject("select password_hash from customers where id=?", String.class, id);
+            assertThat(hash).isNotEqualTo(originalHash);
+            assertThat(passwordEncoder.matches(newPassword, hash)).isTrue();
+            assertThat(changed.body()).doesNotContain(newPassword, hash, token);
+            assertThat(logs.snapshot().stream().map(AuthSecurityPostgresIT::renderLogEvent).collect(Collectors.joining()))
+                    .doesNotContain(newPassword, hash, token);
+        }
+        assertError(post("/api/auth/login", loginJson(email, PASSWORD)), 401, "AUTHENTICATION_FAILED");
+        assertThat(loginToken(email, newPassword)).isNotBlank();
+    }
+
+    @Test
+    void registrationDoesNotMislabelAnUnrelatedUniqueConstraintAsAnExistingAccount() throws Exception {
+        String name = "F1UniqueNameSentinel";
+        jdbc.execute("create unique index uq_f1_test_registration_name on customers(full_name) where full_name='F1UniqueNameSentinel'");
+        try {
+            assertThat(post("/api/auth/register", registerJson(name, email("unrelated-first"), phone("u1"), PASSWORD))
+                    .statusCode()).isEqualTo(201);
+            HttpResponse<String> response = post("/api/auth/register", registerJson(name, email("unrelated-second"), phone("u2"), PASSWORD));
+            assertError(response, 500, "INTERNAL_ERROR");
+            assertThat(response.body()).doesNotContain(name, "uq_f1_test_registration_name", "ACCOUNT_ALREADY_EXISTS");
+            assertThat(jdbc.queryForObject("select count(*) from customers where full_name=?", Integer.class, name)).isEqualTo(1);
+        } finally {
+            jdbc.execute("drop index if exists uq_f1_test_registration_name");
+        }
     }
 
     private String loginToken(String email, String password) throws Exception {
@@ -751,11 +799,12 @@ class AuthSecurityPostgresIT {
         return claims;
     }
 
-    private String signedToken(Map<String, Object> claims, JWSAlgorithm algorithm, RSAPrivateKey signingKey) throws Exception {
+    private String signedRs256Token(Map<String, Object> claims) throws Exception {
         JWTClaimsSet.Builder claimSet = new JWTClaimsSet.Builder();
         claims.forEach(claimSet::claim);
-        SignedJWT signed = new SignedJWT(new JWSHeader.Builder(algorithm).type(JOSEObjectType.JWT).build(), claimSet.build());
-        signed.sign(new RSASSASigner(signingKey));
+        SignedJWT signed = new SignedJWT(
+                new JWSHeader.Builder(JWSAlgorithm.RS256).type(JOSEObjectType.JWT).build(), claimSet.build());
+        signed.sign(new RSASSASigner(TestJwtKeys.privateKey()));
         return signed.serialize();
     }
 }

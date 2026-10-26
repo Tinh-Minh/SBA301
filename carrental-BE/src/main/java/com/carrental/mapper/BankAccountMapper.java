@@ -2,9 +2,21 @@ package com.carrental.mapper;
 
 import com.carrental.dto.response.BankAccountResponse;
 import com.carrental.entity.BankAccount;
+import com.carrental.entity.Customer;
 
 public final class BankAccountMapper {
     private BankAccountMapper() { }
+
+    public static BankAccount toNewEntity(Customer owner, String bankName, String accountNumber,
+            String accountHolder, boolean makeDefault) {
+        BankAccount account = new BankAccount();
+        account.setCustomer(owner);
+        account.setBankName(bankName);
+        account.setAccountNumber(accountNumber);
+        account.setAccountHolder(accountHolder);
+        account.setIsDefault(makeDefault);
+        return account;
+    }
 
     public static BankAccountResponse toResponse(BankAccount account) {
         return new BankAccountResponse(account.getId(), account.getCustomer().getId(), account.getBankName(),

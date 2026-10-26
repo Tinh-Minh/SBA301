@@ -20,7 +20,7 @@ import com.carrental.repository.RentalOrderRepository;
 import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.HandoverService;
-import com.carrental.service.OrderStatusRules;
+import com.carrental.policy.OrderStatusRules;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,37 +1,30 @@
 package com.carrental.repository;
 
-import java.util.Optional;
-
-import com.carrental.entity.UserDocument;
-import com.carrental.enums.VerificationStatus;
-import com.carrental.enums.DocumentType;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-/** Queries for customer-scoped and administrator-filtered documents. */
+import java.util.List;
+import java.util.Optional;
+
+import com.carrental.entity.UserDocument;
+import com.carrental.enums.DocumentType;
+import com.carrental.enums.VerificationStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
 public interface UserDocumentRepository extends JpaRepository<UserDocument, Long>, JpaSpecificationExecutor<UserDocument> {
 
-    Optional<UserDocument> findByIdAndCustomer_Id(Long id, Long customerId);
+    Optional<UserDocument> findByIdAndCustomerId(Long id, Long customerId);
 
-    Page<UserDocument> findByCustomer_Id(Long customerId, Pageable pageable);
+    List<UserDocument> findByCustomerId(Long customerId);
 
-    Page<UserDocument> findByVerifyStatus(VerificationStatus verifyStatus, Pageable pageable);
-
-    Optional<UserDocument> findFirstByDocTypeAndDocNumberAndVerifyStatus(
+    boolean existsByDocTypeAndDocNumberAndVerifyStatus(
             DocumentType docType, String docNumber, VerificationStatus verifyStatus);
-
-    /** Scalar owner discovery avoids loading an unlocked document entity before the ordered lock protocol. */
-    @Query("select d.customer.id from UserDocument d where d.id = :id")
-    Optional<Long> findOwnerIdByDocumentId(@Param("id") long id);
-
-    /** Must be used after the owner lock and inside the shared F1 review/status transaction. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select d from UserDocument d where d.id = :id")
-    Optional<UserDocument> findByIdForUpdate(@Param("id") long id);
+    Optional<UserDocument> findWithLockById(Long id);
+
+    @Query("select d.customer.id from UserDocument d where d.id = :id")
+    Optional<Long> findCustomerIdById(@Param("id") Long id);
 }

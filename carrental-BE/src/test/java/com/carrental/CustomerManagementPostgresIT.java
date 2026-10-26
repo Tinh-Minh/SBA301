@@ -1,7 +1,6 @@
 package com.carrental;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doAnswer;
 
 import ch.qos.logback.classic.Logger;
@@ -13,16 +12,12 @@ import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.repository.CustomerStatusLock;
-import com.carrental.service.CustomerStatusChangeLogger;
+import com.carrental.service.ActionLogService;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Instant;
@@ -37,7 +32,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
@@ -48,7 +42,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.support.TransactionTemplate;
 import javax.sql.DataSource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -86,10 +79,7 @@ class CustomerManagementPostgresIT {
         properties.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         properties.add("app.security.jwt.access-token-ttl", () -> "PT5M");
         properties.add("app.security.jwt.clock-skew", () -> "PT30S");
-        properties.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        properties.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
         properties.add("app.security.cors.allowed-origins", () -> ALLOWED_ORIGIN);
-        properties.add("app.customer.status-lock-timeout-ms", () -> "350");
     }
 
     @LocalServerPort private int port;
@@ -100,12 +90,11 @@ class CustomerManagementPostgresIT {
     @Autowired private PasswordEncoder passwordEncoder;
     @MockitoSpyBean private Clock clock;
     @MockitoSpyBean private CustomerRepository customers;
-    @MockitoSpyBean private CustomerStatusLock statusLock;
-    @MockitoSpyBean private CustomerStatusChangeLogger statusChangeLogger;
+    @MockitoSpyBean private ActionLogService actionLogService;
 
     @BeforeEach
     void cleanIsolatedFixtureRows() {
-        Mockito.reset(clock, customers, statusLock, statusChangeLogger);
+        Mockito.reset(clock, customers, actionLogService);
         jdbc.update("delete from customers");
     }
 
@@ -149,7 +138,8 @@ class CustomerManagementPostgresIT {
         assertThat(row).containsEntry("role", "CUSTOMER").containsEntry("status", "ACTIVE")
                 .containsEntry("kyc_status", "VERIFIED").containsEntry("email_verified", true)
                 .containsEntry("email", owner.email()).containsEntry("phone", owner.phone());
-        assertThat((String) row.get("password_hash")).startsWith("{bcrypt}$2");
+        assertThat((String) row.get("password_hash"))
+                .matches("^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
     }
 
     @Test
@@ -519,8 +509,8 @@ class CustomerManagementPostgresIT {
         doAnswer(invocation -> {
             arrived.countDown();
             if (!release.await(8, TimeUnit.SECONDS)) throw new IllegalStateException("status race barrier timed out");
-            return invocation.callRealMethod();
-        }).when(statusLock).acquire();
+            return SpySupport.callRealMethod(invocation);
+        }).when(customers).findWithLockByRoleOrderByIdAsc(Role.ADMIN);
         try (var executor = Executors.newFixedThreadPool(2)) {
             CompletableFuture<HttpResponse<String>> a = CompletableFuture.supplyAsync(() -> awaitPatch(
                     "/api/customers/" + second.id() + "/status", firstToken, "{\"status\":\"LOCKED\",\"reason\":\"race A\"}"), executor);
@@ -547,7 +537,6 @@ class CustomerManagementPostgresIT {
                     .isEqualTo(2);
         } finally {
             release.countDown();
-            Mockito.reset(statusLock);
         }
     }
 
@@ -566,8 +555,8 @@ class CustomerManagementPostgresIT {
         doAnswer(invocation -> {
             arrived.countDown();
             if (!release.await(8, TimeUnit.SECONDS)) throw new IllegalStateException("status race barrier timed out");
-            return invocation.callRealMethod();
-        }).when(statusLock).acquire();
+            return SpySupport.callRealMethod(invocation);
+        }).when(customers).findWithLockById(Mockito.anyLong());
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture(); var executor = Executors.newFixedThreadPool(2)) {
             CompletableFuture<HttpResponse<String>> a = CompletableFuture.supplyAsync(() -> awaitPatch(
                     "/api/customers/" + target.id() + "/status", firstToken,
@@ -584,7 +573,6 @@ class CustomerManagementPostgresIT {
                     && line.contains("targetId=" + target.id())).count()).isEqualTo(1);
         } finally {
             release.countDown();
-            Mockito.reset(statusLock);
         }
     }
 
@@ -627,9 +615,9 @@ class CustomerManagementPostgresIT {
         String token = login(admin);
         Object before = jdbc.queryForObject("select updated_at from customers where id=?", Object.class, target.id());
         doAnswer(invocation -> {
-            invocation.callRealMethod();
+            SpySupport.callRealMethod(invocation);
             throw new IllegalStateException("SENTINEL_FAILURE_AFTER_FLUSH");
-        }).when(statusChangeLogger).record(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+        }).when(actionLogService).customerStatusChanged(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             HttpResponse<String> response = patch("/api/customers/" + target.id() + "/status", token,
                     "{\"status\":\"LOCKED\",\"reason\":\"rollback reason\"}");
@@ -640,97 +628,14 @@ class CustomerManagementPostgresIT {
             assertThat(logs.rendered()).doesNotContain("Customer status changed", "rollback reason", "SENTINEL_FAILURE_AFTER_FLUSH");
         } finally {
             Mockito.reset(customers);
-            Mockito.reset(statusChangeLogger);
+            Mockito.reset(actionLogService);
         }
-        // The transaction-scoped advisory lock is released on rollback.
+        // Row locks are released on rollback.
         assertSuccess(patch("/api/customers/" + target.id() + "/status", token,
                 "{\"status\":\"LOCKED\",\"reason\":\"retry after rollback\"}"), 200);
     }
 
-    @Test
-    void statusLockDependencyFailureReturnsSafe503AndDoesNotMutateAccount() throws Exception {
-        Account admin = account("lock-failure-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE,
-                "Lock Failure Admin", null, null, false);
-        Account target = account("lock-failure-target", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE,
-                "Lock Failure Target", null, null, false);
-        String token = login(admin);
-        org.mockito.Mockito.doThrow(new org.springframework.dao.CannotAcquireLockException("SENTINEL_LOCK_DETAIL"))
-                .when(statusLock).acquire();
-        HttpResponse<String> response = patch("/api/customers/" + target.id() + "/status", token,
-                "{\"status\":\"LOCKED\",\"reason\":\"dependency test\"}");
-        assertError(response, 503, "DEPENDENCY_UNAVAILABLE");
-        assertThat(response.body()).doesNotContain("SENTINEL_LOCK_DETAIL", "dependency test");
-        assertThat(jdbc.queryForObject("select status from customers where id=?", String.class, target.id())).isEqualTo("ACTIVE");
-    }
-
-    @Test
-    void realPostgresAdvisoryLockTimeoutReturns503AndRetrySucceedsAfterBlockerRollback() throws Exception {
-        Account admin = account("real-lock-timeout-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE,
-                "Real Lock Admin", null, null, false);
-        Account target = account("real-lock-timeout-target", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE,
-                "Real Lock Target", null, null, false);
-        String token = login(admin);
-        String reasonMarker = "SENTINEL_REAL_LOCK_REASON";
-        Map<String, Object> targetBefore = jdbc.queryForMap("select * from customers where id=?", target.id());
-        int blockerPid;
-        AtomicInteger contendingBackendPid = new AtomicInteger(-1);
-
-        try (Connection blocker = dataSource.getConnection()) {
-            blocker.setAutoCommit(false);
-            try (PreparedStatement pid = blocker.prepareStatement("select pg_backend_pid()")) {
-                try (var result = pid.executeQuery()) {
-                    assertThat(result.next()).isTrue();
-                    blockerPid = result.getInt(1);
-                }
-            }
-            try (PreparedStatement acquire = blocker.prepareStatement("select pg_advisory_xact_lock(?)")) {
-                acquire.setLong(1, CustomerStatusLock.STATUS_NAMESPACE_KEY);
-                acquire.execute();
-            }
-
-            try {
-                TransactionTemplate transaction = new TransactionTemplate(transactionManager);
-                assertThatThrownBy(() -> transaction.executeWithoutResult(status -> {
-                    contendingBackendPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
-                    statusLock.acquire();
-                }))
-                        .isInstanceOf(org.springframework.dao.CannotAcquireLockException.class)
-                        .satisfies(failure -> {
-                            Throwable cause = failure.getCause();
-                            assertThat(cause).isInstanceOf(SQLException.class);
-                            assertThat(((SQLException) cause).getSQLState()).isEqualTo("55P03");
-                        });
-                assertThat(contendingBackendPid.get()).isNotEqualTo(blockerPid);
-
-                try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
-                    HttpResponse<String> timedOut = patch("/api/customers/" + target.id() + "/status", token,
-                            mapper.writeValueAsString(Map.of("status", "LOCKED", "reason", reasonMarker)));
-                    assertError(timedOut, 503, "DEPENDENCY_UNAVAILABLE");
-                    assertThat(timedOut.body()).doesNotContain(reasonMarker, "55P03", "CannotAcquireLockException");
-                    assertThat(jdbc.queryForMap("select * from customers where id=?", target.id())).isEqualTo(targetBefore);
-                    assertThat(logs.rendered()).contains("Database dependency unavailable traceId=")
-                            .doesNotContain("Customer status changed", reasonMarker, "55P03", "pg_advisory_xact_lock");
-                }
-            } finally {
-                blocker.rollback();
-            }
-        }
-
-        try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
-            HttpResponse<String> retry = patch("/api/customers/" + target.id() + "/status", token,
-                    mapper.writeValueAsString(Map.of("status", "LOCKED", "reason", reasonMarker)));
-            assertSuccess(retry, 200);
-            assertThat(json(retry).path("data").path("status").asText()).isEqualTo("LOCKED");
-            Map<String, Object> afterRetry = jdbc.queryForMap("select * from customers where id=?", target.id());
-            assertThat(afterRetry).containsEntry("status", "LOCKED");
-            assertThat(afterRetry.get("updated_at")).isNotEqualTo(targetBefore.get("updated_at"));
-            String traceId = retry.headers().firstValue("X-Request-ID").orElseThrow();
-            assertThat(logs.rendered()).contains("Customer status changed action=customer-status traceId=" + traceId)
-                    .doesNotContain(reasonMarker);
-        }
-    }
-
-    @Test
+@Test
     void statusLogsContainSafeMetadataButNeverReasonOrCustomerIdentifiers() throws Exception {
         String marker = suffix();
         Account admin = account("safe-log-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE,

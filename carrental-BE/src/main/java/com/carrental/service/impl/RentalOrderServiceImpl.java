@@ -21,7 +21,7 @@ import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;
-import com.carrental.service.OrderStatusRules;
+import com.carrental.policy.OrderStatusRules;
 import com.carrental.service.PricingService;
 import com.carrental.service.RentalOrderService;
 import org.springframework.beans.factory.annotation.Value;

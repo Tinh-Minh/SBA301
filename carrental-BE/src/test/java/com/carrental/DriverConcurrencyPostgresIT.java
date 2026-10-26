@@ -11,13 +11,11 @@ import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DriverStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.repository.CustomerStatusLock;
+import com.carrental.repository.CustomerRepository;
 import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.DocumentType;
-import com.carrental.service.DocumentReviewLogger;
-import com.carrental.service.DriverChangeLogger;
-import com.carrental.storage.CanonicalDocumentImage;
-import com.carrental.storage.DocumentImageFormat;
+import com.carrental.service.ActionLogService;
+import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.web.RequestTraceFilter;
 import java.awt.image.BufferedImage;
@@ -61,7 +59,6 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
@@ -79,7 +76,6 @@ import tools.jackson.databind.json.JsonMapper;
         "spring.flyway.locations=classpath:db/migration/function1,classpath:db/migration/it-support",
         "spring.jpa.hibernate.ddl-auto=validate",
         "spring.jpa.open-in-view=false",
-        "app.customer.status-lock-timeout-ms=1200",
         "spring.datasource.hikari.connection-init-sql=SET lock_timeout TO '5s'"
 })
 @Import(DriverConcurrencyPostgresIT.FixedClockConfiguration.class)
@@ -106,8 +102,6 @@ class DriverConcurrencyPostgresIT {
         registry.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         registry.add("app.security.jwt.access-token-ttl", () -> "PT20M");
         registry.add("app.security.jwt.clock-skew", () -> "PT30S");
-        registry.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        registry.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
         registry.add("app.document.storage.enabled", () -> "true");
         registry.add("app.document.storage.root", () -> PRIVATE_ROOT.toString());
     }
@@ -118,15 +112,14 @@ class DriverConcurrencyPostgresIT {
     @Autowired private JsonMapper mapper;
     @Autowired private PrivateDocumentStorage storage;
     @Autowired private PlatformTransactionManager realTransactionManager;
-    @MockitoSpyBean private DriverChangeLogger driverLogger;
-    @MockitoSpyBean private DocumentReviewLogger reviewLogger;
-    @MockitoSpyBean private CustomerStatusLock statusLock;
+    @MockitoSpyBean private ActionLogService actionLogService;
+    @MockitoSpyBean private CustomerRepository customers;
     @MockitoSpyBean private PlatformTransactionManager transactionManager;
 
     @AfterEach
     void resetHooksAndClock() {
         TEST_CLOCK.set(Instant.parse("2026-10-14T03:00:00Z"));
-        reset(driverLogger, reviewLogger, statusLock, transactionManager);
+        reset(actionLogService, customers, transactionManager);
     }
 
     @AfterAll
@@ -151,7 +144,7 @@ class DriverConcurrencyPostgresIT {
         AtomicBoolean holdOnce = new AtomicBoolean(true);
         AtomicReference<Integer> holderPid = new AtomicReference<>();
         doAnswer(invocation -> {
-            Object result = invocation.callRealMethod();
+            Object result = SpySupport.callRealMethod(invocation);
             Long ownerId = invocation.getArgument(1);
             if (ownerId.equals(owner.id()) && holdOnce.compareAndSet(true, false)) {
                 holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
@@ -159,13 +152,13 @@ class DriverConcurrencyPostgresIT {
                 await(releaseFirst, "first create transaction release");
             }
             return result;
-        }).when(driverLogger).created(anyLong(), anyLong(), anyLong());
+        }).when(actionLogService).driverCreated(anyLong(), anyLong(), anyLong());
 
         try (SafeLogCapture logs = new SafeLogCapture(); ExecutorService executor = Executors.newFixedThreadPool(2)) {
             CompletableFuture<HttpResponse<String>> first = CompletableFuture.supplyAsync(() -> sendUnchecked("POST", "/api/drivers", token, null), executor);
             assertThat(ownerLocked.await(5, TimeUnit.SECONDS)).isTrue();
             CompletableFuture<HttpResponse<String>> second = CompletableFuture.supplyAsync(() -> sendUnchecked("POST", "/api/drivers", token, null), executor);
-            int waiterPid = awaitAdvisoryWaiter(holderPid.get(), second, Duration.ofSeconds(3));
+            int waiterPid = awaitBlockedWaiter(holderPid.get(), second, Duration.ofSeconds(3));
             long waitMillis = awaitBlocking(holderPid.get(), waiterPid, second, Duration.ofSeconds(1));
             assertThat(second.isDone()).isFalse();
             releaseFirst.countDown();
@@ -181,8 +174,6 @@ class DriverConcurrencyPostgresIT {
             assertThat(logs.count(trace(conflict), "action=driver-create")).isZero();
             assertThat(jdbc.queryForObject("select count(*) from drivers where customer_id=?", Integer.class, owner.id())).isEqualTo(1);
             assertThat(jdbc.queryForObject("select kyc_status from customers where id=?", String.class, owner.id())).isEqualTo("NONE");
-            assertThat(jdbc.queryForObject("select count(*) from pg_locks where locktype='advisory' and granted", Integer.class))
-                    .isGreaterThanOrEqualTo(0);
             System.out.println("P07_CREATE_RACE holderPid=" + holderPid.get() + " waiterPid=" + waiterPid
                     + " pgBlockingPidsConfirmed=true waiterBlockedMillis=" + waitMillis + " outcomes=201_and_409 oneRow=true oneSuccessEvent=true");
         } finally {
@@ -207,8 +198,8 @@ class DriverConcurrencyPostgresIT {
                 actorPassedAuthentication.countDown();
                 await(releaseActorToLock, "actor request release before advisory lock");
             }
-            return invocation.callRealMethod();
-        }).when(statusLock).acquire();
+            return SpySupport.callRealMethod(invocation);
+        }).when(customers).findWithLockById(anyLong());
 
         try (SafeLogCapture logs = new SafeLogCapture(); ExecutorService executor = Executors.newFixedThreadPool(2)) {
             CompletableFuture<HttpResponse<String>> staleStatus = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
@@ -243,7 +234,7 @@ class DriverConcurrencyPostgresIT {
         AtomicBoolean holdOnce = new AtomicBoolean(true);
         AtomicReference<Integer> holderPid = new AtomicReference<>();
         doAnswer(invocation -> {
-            Object result = invocation.callRealMethod();
+            Object result = SpySupport.callRealMethod(invocation);
             Long documentId = invocation.getArgument(2);
             if (documentId.equals(licenseId) && holdOnce.compareAndSet(true, false)) {
                 holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
@@ -251,7 +242,7 @@ class DriverConcurrencyPostgresIT {
                 await(releaseReviewCommit, "P06 document review commit release");
             }
             return result;
-        }).when(reviewLogger).record(anyLong(), anyLong(), anyLong(), any(DocumentType.class),
+        }).when(actionLogService).documentReviewRecorded(anyLong(), anyLong(), anyLong(), any(DocumentType.class),
                 any(VerificationStatus.class), any(VerificationStatus.class),
                 any(KycStatus.class), any(KycStatus.class), anyBoolean());
 
@@ -263,7 +254,7 @@ class DriverConcurrencyPostgresIT {
                     .isEqualTo("PENDING");
             CompletableFuture<HttpResponse<String>> activation = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
                     "/api/drivers/" + driverId + "/status", activateToken, "{\"status\":\"ACTIVE\"}"), executor);
-            int waiterPid = awaitAdvisoryWaiter(holderPid.get(), activation, Duration.ofSeconds(3));
+            int waiterPid = awaitBlockedWaiter(holderPid.get(), activation, Duration.ofSeconds(3));
             long blockedMillis = awaitBlocking(holderPid.get(), waiterPid, activation, Duration.ofSeconds(1));
             assertThat(activation.isDone()).isFalse();
             releaseReviewCommit.countDown();
@@ -303,13 +294,13 @@ class DriverConcurrencyPostgresIT {
             assertThat(firstLockFlushed.await(5, TimeUnit.SECONDS)).isTrue();
             CompletableFuture<HttpResponse<String>> activationAfterLock = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
                     "/api/drivers/" + driverId + "/status", activateToken, "{\"status\":\"ACTIVE\"}"), executor);
-            int waiterPid = awaitAdvisoryWaiter(firstHolder.get(), activationAfterLock, Duration.ofSeconds(3));
+            int waiterPid = awaitBlockedWaiter(firstHolder.get(), activationAfterLock, Duration.ofSeconds(3));
             awaitBlocking(firstHolder.get(), waiterPid, activationAfterLock, Duration.ofSeconds(1));
             releaseFirstLock.countDown();
             assertSuccess(lockFirst.get(8, TimeUnit.SECONDS), 200);
             assertError(activationAfterLock.get(8, TimeUnit.SECONDS), 409, "DRIVER_NOT_ELIGIBLE");
             assertThat(driverStatus(driverId)).isEqualTo("PENDING");
-            System.out.println("P07_OWNER_ORDERING lockCommitFirst=true activation409=true stored=PENDING advisoryWait=true");
+            System.out.println("P07_OWNER_ORDERING lockCommitFirst=true activation409=true stored=PENDING rowLockWait=true");
         } finally {
             releaseFirstLock.countDown();
         }
@@ -329,7 +320,7 @@ class DriverConcurrencyPostgresIT {
             CompletableFuture<HttpResponse<String>> lockAfter = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
                     "/api/customers/" + owner.id() + "/status", lockToken,
                     "{\"status\":\"LOCKED\",\"reason\":\"activation commit first\"}"), executor);
-            int waiterPid = awaitAdvisoryWaiter(activationHolder.get(), lockAfter, Duration.ofSeconds(3));
+            int waiterPid = awaitBlockedWaiter(activationHolder.get(), lockAfter, Duration.ofSeconds(3));
             awaitBlocking(activationHolder.get(), waiterPid, lockAfter, Duration.ofSeconds(1));
             releaseActivation.countDown();
             assertSuccess(activationFirst.get(8, TimeUnit.SECONDS), 200);
@@ -340,7 +331,7 @@ class DriverConcurrencyPostgresIT {
             assertSuccess(current, 200);
             assertThat(mapper.readTree(current.body()).path("data").path("eligibleNow").asBoolean()).isFalse();
             assertThat(mapper.readTree(current.body()).path("data").path("ineligibilityReasonCode").asText()).isEqualTo("ACCOUNT_NOT_ACTIVE");
-            System.out.println("P07_OWNER_ORDERING activationCommitFirst=true lockAfter=true stored=ACTIVE currentEligible=false advisoryWait=true");
+            System.out.println("P07_OWNER_ORDERING activationCommitFirst=true lockAfter=true stored=ACTIVE currentEligible=false rowLockWait=true");
         } finally {
             releaseActivation.countDown();
         }
@@ -361,7 +352,7 @@ class DriverConcurrencyPostgresIT {
         AtomicBoolean holdOnce = new AtomicBoolean(true);
         AtomicReference<Integer> holderPid = new AtomicReference<>();
         doAnswer(invocation -> {
-            Object result = invocation.callRealMethod();
+            Object result = SpySupport.callRealMethod(invocation);
             Long id = invocation.getArgument(2);
             if (id == driverId && holdOnce.compareAndSet(true, false)) {
                 holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
@@ -369,7 +360,7 @@ class DriverConcurrencyPostgresIT {
                 await(releaseActivation, "first driver status release");
             }
             return result;
-        }).when(driverLogger).changed(anyLong(), anyLong(), anyLong(), any(DriverStatus.class),
+        }).when(actionLogService).driverChanged(anyLong(), anyLong(), anyLong(), any(DriverStatus.class),
                 any(DriverStatus.class), anyBoolean());
 
         try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
@@ -379,7 +370,7 @@ class DriverConcurrencyPostgresIT {
             CompletableFuture<HttpResponse<String>> suspension = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
                     "/api/drivers/" + driverId + "/status", suspendToken,
                     "{\"status\":\"SUSPENDED\",\"reason\":\"ordered test\"}"), executor);
-            int waiterPid = awaitAdvisoryWaiter(holderPid.get(), suspension, Duration.ofSeconds(3));
+            int waiterPid = awaitBlockedWaiter(holderPid.get(), suspension, Duration.ofSeconds(3));
             awaitBlocking(holderPid.get(), waiterPid, suspension, Duration.ofSeconds(1));
             releaseActivation.countDown();
             assertSuccess(activation.get(8, TimeUnit.SECONDS), 200);
@@ -392,45 +383,7 @@ class DriverConcurrencyPostgresIT {
         }
     }
 
-    @Test
-    void advisoryTimeoutReturns503WithTraceThenRetrySucceeds() throws Exception {
-        Account owner = account("timeout-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.VERIFIED);
-        Account admin = account("timeout-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
-        long driverId = seedDriver(owner, DriverStatus.PENDING);
-        seedProof(owner, "CITIZEN_ID", "APPROVED", LocalDate.of(2027, 10, 14), null);
-        seedProof(owner, "DRIVER_LICENSE", "APPROVED", LocalDate.of(2027, 10, 14), "B");
-        String token = login(admin);
-        CountDownLatch lockHeld = new CountDownLatch(1);
-        CountDownLatch releaseLock = new CountDownLatch(1);
-        AtomicReference<Integer> holderPid = new AtomicReference<>();
-        TransactionTemplate transaction = new TransactionTemplate(realTransactionManager);
-        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
-            CompletableFuture<Void> holder = CompletableFuture.runAsync(() -> transaction.executeWithoutResult(status -> {
-                statusLock.acquire();
-                holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
-                lockHeld.countDown();
-                await(releaseLock, "advisory timeout holder release");
-            }), executor);
-            assertThat(lockHeld.await(5, TimeUnit.SECONDS)).isTrue();
-            CompletableFuture<HttpResponse<String>> blocked = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
-                    "/api/drivers/" + driverId + "/status", token, "{\"status\":\"ACTIVE\"}"), executor);
-            int waiterPid = awaitAdvisoryWaiter(holderPid.get(), blocked, Duration.ofMillis(800));
-            long blockingMillis = awaitBlocking(holderPid.get(), waiterPid, blocked, Duration.ofMillis(600));
-            HttpResponse<String> unavailable = blocked.get(3, TimeUnit.SECONDS);
-            assertError(unavailable, 503, "DEPENDENCY_UNAVAILABLE");
-            assertThat(driverStatus(driverId)).isEqualTo("PENDING");
-            releaseLock.countDown();
-            holder.get(5, TimeUnit.SECONDS);
-            assertSuccess(send("PATCH", "/api/drivers/" + driverId + "/status", token, "{\"status\":\"ACTIVE\"}"), 200);
-            assertThat(driverStatus(driverId)).isEqualTo("ACTIVE");
-            System.out.println("P07_TIMEOUT holderPid=" + holderPid.get() + " waiterPid=" + waiterPid
-                    + " pgBlockingPidsConfirmed=true blockedMillis=" + blockingMillis + " first=503 retry=200");
-        } finally {
-            releaseLock.countDown();
-        }
-    }
-
-    private void stubCommitBarrier(long ownerId, String ownerStatus, Long driverId,
+private void stubCommitBarrier(long ownerId, String ownerStatus, Long driverId,
             AtomicBoolean holdOnce, CountDownLatch held, CountDownLatch release, AtomicReference<Integer> pid) {
         doAnswer(invocation -> {
             boolean match = false;
@@ -448,28 +401,24 @@ class DriverConcurrencyPostgresIT {
                 held.countDown();
                 await(release, "transaction commit release");
             }
-            return invocation.callRealMethod();
+            return SpySupport.callRealMethod(invocation);
         }).when(transactionManager).commit(any(TransactionStatus.class));
     }
 
-    private int awaitAdvisoryWaiter(int holderPid, CompletableFuture<?> request, Duration timeout) throws Exception {
+    private int awaitBlockedWaiter(int holderPid, CompletableFuture<?> request, Duration timeout) throws Exception {
         long deadline = System.nanoTime() + timeout.toNanos();
         do {
             if (request.isDone()) throw new AssertionError("HTTP operation completed before its expected PostgreSQL wait");
             List<Integer> pids = jdbc.queryForList("""
                     select pid from pg_stat_activity
                     where pid <> ? and state='active' and wait_event_type='Lock'
-                      and lower(query) like '%pg_advisory_xact_lock%'
+                      and ? = any(pg_blocking_pids(pid))
                     order by query_start desc
-                    """, Integer.class, holderPid);
-            for (int pid : pids) {
-                Boolean blocked = jdbc.queryForObject("select ? = any(pg_blocking_pids(?::integer))",
-                        Boolean.class, holderPid, pid);
-                if (Boolean.TRUE.equals(blocked)) return pid;
-            }
+                    """, Integer.class, holderPid, holderPid);
+            if (!pids.isEmpty()) return pids.getFirst();
             TimeUnit.MILLISECONDS.sleep(15);
         } while (System.nanoTime() < deadline);
-        throw new AssertionError("No PostgreSQL advisory-lock waiter observed within " + timeout.toMillis() + "ms");
+        throw new AssertionError("No PostgreSQL row-lock waiter observed within " + timeout.toMillis() + "ms");
     }
 
     private long awaitBlocking(int holderPid, int waiterPid, CompletableFuture<?> request, Duration timeout) throws Exception {
@@ -527,8 +476,8 @@ class DriverConcurrencyPostgresIT {
     }
 
     private long seedPendingLicense(Account owner) throws Exception {
-        String front = storage.store(new CanonicalDocumentImage(png(), DocumentImageFormat.PNG)).locator();
-        String back = storage.store(new CanonicalDocumentImage(png(), DocumentImageFormat.PNG)).locator();
+        String front = storage.store(new UploadedDocumentImage("test.png", "image/png", png())).locator();
+        String back = storage.store(new UploadedDocumentImage("test.png", "image/png", png())).locator();
         return jdbc.queryForObject("""
                 insert into user_documents(customer_id,doc_type,doc_number,full_name_on_doc,date_of_birth_on_doc,
                     issue_place,issue_date,expires_at,license_class,front_image_url,back_image_url,verify_status)
@@ -594,7 +543,7 @@ class DriverConcurrencyPostgresIT {
     private record Account(long id, String email) { }
 
     private static final class SafeLogCapture implements AutoCloseable {
-        private final Logger logger = (Logger) LoggerFactory.getLogger("com.carrental.service.DriverChangeLogger");
+        private final Logger logger = (Logger) LoggerFactory.getLogger("com.carrental.service.impl.ActionLogServiceImpl");
         private final CapturingAppender appender = new CapturingAppender();
         private SafeLogCapture() {
             appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());

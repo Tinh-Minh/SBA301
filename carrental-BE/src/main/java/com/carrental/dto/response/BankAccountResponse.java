@@ -2,6 +2,8 @@ package com.carrental.dto.response;
 
 import java.time.LocalDateTime;
 
-/** Safe HTTP projection; it has no property capable of carrying the full account number. */
+/** The full account number is never returned; only the last 4 digits are visible. */
 public record BankAccountResponse(long id, long customerId, String bankName, String accountNumberMasked,
-        String accountHolder, boolean isDefault, LocalDateTime createdAt) { }
+        String accountHolder, boolean isDefault, LocalDateTime createdAt) {
+
+}

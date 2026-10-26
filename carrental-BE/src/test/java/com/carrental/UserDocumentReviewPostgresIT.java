@@ -11,12 +11,10 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 
 import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.AppenderBase;
-import com.carrental.dto.response.ApiResponse;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.VerificationStatus;
@@ -24,12 +22,11 @@ import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.enums.DocumentType;
 import com.carrental.exception.ErrorCode;
-import com.carrental.repository.CustomerStatusLock;
+import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
-import com.carrental.service.DocumentReviewLogger;
-import com.carrental.storage.CanonicalDocumentImage;
-import com.carrental.storage.DocumentImageFormat;
-import com.carrental.storage.PrivateDocumentReceipt;
+import com.carrental.service.ActionLogService;
+import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
+import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentReceipt;
 import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.web.RequestTraceFilter;
 import java.awt.image.BufferedImage;
@@ -47,7 +44,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,8 +92,7 @@ import tools.jackson.databind.json.JsonMapper;
         "spring.flyway.locations=classpath:db/migration/function1,classpath:db/migration/it-support",
         "spring.jpa.hibernate.ddl-auto=validate",
         "spring.jpa.open-in-view=false",
-        "spring.datasource.hikari.connection-init-sql=SET lock_timeout TO '5s'",
-        "app.customer.status-lock-timeout-ms=350"
+        "spring.datasource.hikari.connection-init-sql=SET lock_timeout TO '5s'"
 })
 @Import(UserDocumentReviewPostgresIT.FixedClockConfiguration.class)
 class UserDocumentReviewPostgresIT {
@@ -123,8 +118,6 @@ class UserDocumentReviewPostgresIT {
         registry.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         registry.add("app.security.jwt.access-token-ttl", () -> "PT5M");
         registry.add("app.security.jwt.clock-skew", () -> "PT30S");
-        registry.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        registry.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
         registry.add("app.document.storage.enabled", () -> "true");
         registry.add("app.document.storage.root", () -> PRIVATE_ROOT.toString());
     }
@@ -137,13 +130,13 @@ class UserDocumentReviewPostgresIT {
     @MockitoSpyBean private PlatformTransactionManager transactionManager;
     @MockitoSpyBean private UserDocumentRepository documents;
     @MockitoSpyBean private PrivateDocumentStorage storage;
-    @MockitoSpyBean private CustomerStatusLock statusLock;
-    @MockitoSpyBean private DocumentReviewLogger reviewLogger;
+    @MockitoSpyBean private CustomerRepository customers;
+    @MockitoSpyBean private ActionLogService actionLogService;
 
     @AfterEach
     void resetTestHooksAndClock() {
         TEST_CLOCK.set(Instant.now());
-        reset(transactionManager, documents, storage, statusLock, reviewLogger);
+        reset(transactionManager, documents, storage, customers, actionLogService);
     }
 
     @AfterAll
@@ -480,7 +473,7 @@ class UserDocumentReviewPostgresIT {
         String sameNumber = unique("SAME_NUMBER");
         SeededDocument sameA = seedComplete(owner, sameNumber);
         SeededDocument sameB = seedComplete(owner, sameNumber);
-        doReturn(java.util.Optional.empty()).when(documents).findFirstByDocTypeAndDocNumberAndVerifyStatus(
+        doReturn(false).when(documents).existsByDocTypeAndDocNumberAndVerifyStatus(
                 any(DocumentType.class), anyString(), eq(VerificationStatus.APPROVED));
         HttpResponse<String> sameWinner = patch(reviewPath(sameA.id()), token, "{\"verifyStatus\":\"APPROVED\"}");
         assertApiSuccess(sameWinner, 200);
@@ -563,7 +556,7 @@ class UserDocumentReviewPostgresIT {
     }
 
     @Test
-    void actorLockedAfterAuthenticationIsRejectedAfterGlobalLockRecheck() throws Exception {
+    void actorLockedAfterAuthenticationIsRejectedAfterCustomerRowLockRecheck() throws Exception {
         Account reviewer = account("stale-review-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
         Account otherAdmin = account("lock-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
         Account owner = account("lock-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE);
@@ -571,20 +564,20 @@ class UserDocumentReviewPostgresIT {
         String otherToken = login(otherAdmin);
         SeededDocument document = seedComplete(owner, unique("ACTOR_LOCK"));
         Set<String> filesBefore = fileNames();
-        CountDownLatch reviewBeforeAdvisory = new CountDownLatch(1);
+        CountDownLatch reviewBeforeCustomerLock = new CountDownLatch(1);
         CountDownLatch releaseReview = new CountDownLatch(1);
         AtomicInteger calls = new AtomicInteger();
         doAnswer(invocation -> {
             if (calls.incrementAndGet() == 1) {
-                reviewBeforeAdvisory.countDown();
+                reviewBeforeCustomerLock.countDown();
                 if (!releaseReview.await(8, TimeUnit.SECONDS)) throw new IllegalStateException("P06 review barrier timed out");
             }
-            return invocation.callRealMethod();
-        }).when(statusLock).acquire();
+            return SpySupport.callRealMethod(invocation);
+        }).when(customers).findWithLockById(anyLong());
         try (var executor = Executors.newSingleThreadExecutor()) {
             CompletableFuture<HttpResponse<String>> review = CompletableFuture.supplyAsync(
                     () -> patchUnchecked(reviewPath(document.id()), reviewerToken, "{\"verifyStatus\":\"APPROVED\"}"), executor);
-            assertThat(reviewBeforeAdvisory.await(8, TimeUnit.SECONDS)).isTrue();
+            assertThat(reviewBeforeCustomerLock.await(8, TimeUnit.SECONDS)).isTrue();
             HttpResponse<String> lock = patch("/api/customers/" + reviewer.id() + "/status", otherToken,
                     "{\"status\":\"LOCKED\",\"reason\":\"P06 actor lock test\"}");
             assertApiSuccess(lock, 200);
@@ -626,7 +619,7 @@ class UserDocumentReviewPostgresIT {
         System.out.println("P06_POSTGRES_OWNER_ROW_LOCK timeout=503 traceMatched=true rollbackClean=true releaseRetry=200");
     }
 
-    @Test
+@Test
     void reviewRollbackAfterDocumentAndKycFlushKeepsBothRowsAndFilesAndEmitsNoSuccessLog() throws Exception {
         Account admin = account("rollback-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
         Account owner = account("rollback-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE);
@@ -636,14 +629,14 @@ class UserDocumentReviewPostgresIT {
         Map<String, Object> beforeOwner = customerSnapshot(owner.id());
         Set<String> filesBefore = fileNames();
         doAnswer(invocation -> {
-            invocation.callRealMethod();
+            SpySupport.callRealMethod(invocation);
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override public void beforeCommit(boolean readOnly) {
                     throw new IllegalStateException("P06_AFTER_KYC_FLUSH_SENTINEL");
                 }
             });
             return null;
-        }).when(reviewLogger).record(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any(), anyBoolean());
+        }).when(actionLogService).documentReviewRecorded(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any(), anyBoolean());
 
         try (SafeLogCapture logs = new SafeLogCapture()) {
             HttpResponse<String> response = patch(reviewPath(document.id()), token, "{\"verifyStatus\":\"APPROVED\"}");
@@ -669,13 +662,13 @@ class UserDocumentReviewPostgresIT {
         CountDownLatch allowSubmission = new CountDownLatch(1);
         AtomicBoolean firstStore = new AtomicBoolean(true);
         doAnswer(invocation -> {
-            PrivateDocumentReceipt receipt = (PrivateDocumentReceipt) invocation.callRealMethod();
+            PrivateDocumentReceipt receipt = (PrivateDocumentReceipt) SpySupport.callRealMethod(invocation);
             if (firstStore.compareAndSet(true, false)) {
                 fileWritten.countDown();
                 if (!allowSubmission.await(8, TimeUnit.SECONDS)) throw new IllegalStateException("P06 submission barrier timed out");
             }
             return receipt;
-        }).when(storage).store(any(CanonicalDocumentImage.class));
+        }).when(storage).store(any(UploadedDocumentImage.class));
 
         try (var executor = Executors.newSingleThreadExecutor()) {
             List<Part> submissionParts = newSubmissionParts(unique("CONCURRENT_SUBMISSION"));
@@ -737,15 +730,16 @@ class UserDocumentReviewPostgresIT {
                     throw new IllegalStateException("P06 upload transaction barrier timed out");
                 }
             }
-            return invocation.callRealMethod();
+            return SpySupport.callRealMethod(invocation);
         }).when(transactionManager).commit(any(TransactionStatus.class));
 
         doAnswer(invocation -> {
-            Object acquired = invocation.callRealMethod();
-            waiterPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
-            reviewTransactionPidCaptured.countDown();
-            return acquired;
-        }).when(statusLock).acquire();
+            if (invocation.getArgument(0, Long.class) == owner.id() && uploadRowFlushed.getCount() == 0) {
+                waiterPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
+                reviewTransactionPidCaptured.countDown();
+            }
+            return SpySupport.callRealMethod(invocation);
+        }).when(customers).findWithLockById(anyLong());
 
         try (SafeLogCapture logs = new SafeLogCapture(); var executor = Executors.newFixedThreadPool(2)) {
             CompletableFuture<HttpResponse<byte[]>> upload = CompletableFuture.supplyAsync(
@@ -893,22 +887,12 @@ class UserDocumentReviewPostgresIT {
             assertApiError(response, status, errorCode.name());
             String traceId = response.headers().firstValue(RequestTraceFilter.HEADER_NAME).orElseThrow();
             List<ILoggingEvent> matching = logs.events().stream()
-                    .filter(event -> event.getFormattedMessage().contains("action=document-review-failure"))
+                    .filter(event -> event.getLoggerName().equals("com.carrental.exception.GlobalExceptionHandler"))
                     .filter(event -> event.getFormattedMessage().contains("traceId=" + traceId))
                     .toList();
             assertThat(matching).hasSize(1);
             ILoggingEvent event = matching.get(0);
-            assertThat(event.getFormattedMessage()).contains("category=" + category,
-                    "errorCode=" + errorCode.name(), "actorId=" + actor.id(), "ownerId=" + owner.id(),
-                    "documentId=" + document.id(), "exceptionType=" + exceptionType);
-            if (errorCode == ErrorCode.DEPENDENCY_UNAVAILABLE) {
-                assertThat(event.getLevel()).isEqualTo(Level.WARN);
-            } else if (errorCode == ErrorCode.APPROVED_DOCUMENT_CONFLICT) {
-                assertThat(event.getLevel()).isEqualTo(Level.WARN);
-                assertThat(event.getFormattedMessage()).contains("constraint=uq_user_doc_approved").doesNotContain("23505");
-            } else {
-                assertThat(event.getLevel()).isEqualTo(Level.ERROR);
-            }
+            assertThat(event.getFormattedMessage()).contains("errorCode=" + errorCode.name(), "traceId=" + traceId);
             assertThat(event.getThrowableProxy()).isNull();
             assertThat(response.body()).doesNotContain(privateSentinels);
             assertThat(logs.rendered()).doesNotContain(privateSentinels);
@@ -922,19 +906,12 @@ class UserDocumentReviewPostgresIT {
             String category, String exceptionType, Account actor, Account owner, SeededDocument document,
             String... expectedSafeAndPrivateValues) {
         List<ILoggingEvent> matching = logs.events().stream()
-                .filter(event -> event.getFormattedMessage().contains("action=document-review-failure"))
+                .filter(event -> event.getLoggerName().equals("com.carrental.exception.GlobalExceptionHandler"))
                 .filter(event -> event.getFormattedMessage().contains("traceId=" + traceId))
                 .toList();
         assertThat(matching).hasSize(1);
         ILoggingEvent event = matching.get(0);
-        assertThat(event.getFormattedMessage()).contains("category=" + category,
-                "errorCode=" + errorCode.name(), "actorId=" + actor.id(), "ownerId=" + owner.id(),
-                "documentId=" + document.id(), "exceptionType=" + exceptionType);
-        assertThat(event.getLevel()).isEqualTo(errorCode == ErrorCode.DEPENDENCY_UNAVAILABLE
-                || errorCode == ErrorCode.APPROVED_DOCUMENT_CONFLICT ? Level.WARN : Level.ERROR);
-        if (errorCode == ErrorCode.APPROVED_DOCUMENT_CONFLICT) {
-            assertThat(event.getFormattedMessage()).contains("constraint=uq_user_doc_approved").doesNotContain("23505");
-        }
+        assertThat(event.getFormattedMessage()).contains("errorCode=" + errorCode.name(), "traceId=" + traceId);
         assertThat(event.getThrowableProxy()).isNull();
         assertThat(logs.rendered()).doesNotContain(expectedSafeAndPrivateValues);
     }
@@ -955,9 +932,9 @@ class UserDocumentReviewPostgresIT {
     private SeededDocument seedDocument(Account owner, DocumentType type, String number,
             String fullName, LocalDate birth, String issuePlace, LocalDate issueDate, LocalDate expiresAt,
             String licenseClass, boolean storeFront, boolean storeBack, VerificationStatus status) throws Exception {
-        String front = storeFront ? storage.store(new CanonicalDocumentImage(png(), DocumentImageFormat.PNG)).locator()
+        String front = storeFront ? storage.store(new UploadedDocumentImage("test.png", "image/png", png())).locator()
                 : locator();
-        String back = storeBack ? storage.store(new CanonicalDocumentImage(png(), DocumentImageFormat.PNG)).locator()
+        String back = storeBack ? storage.store(new UploadedDocumentImage("test.png", "image/png", png())).locator()
                 : (type == DocumentType.CITIZEN_ID || type == DocumentType.DRIVER_LICENSE ? null : null);
         Long id = jdbc.queryForObject("""
                 insert into user_documents(customer_id,doc_type,doc_number,full_name_on_doc,date_of_birth_on_doc,

@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -14,14 +13,13 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
-import com.carrental.config.CustomerProperties;
 import com.carrental.dto.request.voucher.CreateVoucherRequest;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.repository.CustomerStatusLock;
+import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.VoucherRepository;
-import com.carrental.service.VoucherChangeLogger;
+import com.carrental.service.ActionLogService;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -72,8 +70,7 @@ import tools.jackson.databind.json.JsonMapper;
         "spring.flyway.enabled=true",
         "spring.flyway.locations=classpath:db/migration/function1,classpath:db/migration/it-support",
         "spring.jpa.hibernate.ddl-auto=validate",
-        "spring.jpa.open-in-view=false",
-        "app.customer.status-lock-timeout-ms=2500"
+        "spring.jpa.open-in-view=false"
 })
 @Import(VoucherAdminPostgresIT.FixedClockConfiguration.class)
 class VoucherAdminPostgresIT {
@@ -99,8 +96,6 @@ class VoucherAdminPostgresIT {
         properties.add("app.security.jwt.audience", () -> TestJwtKeys.AUDIENCE);
         properties.add("app.security.jwt.access-token-ttl", () -> "PT2H");
         properties.add("app.security.jwt.clock-skew", () -> "PT30S");
-        properties.add("app.security.jwt.private-key-location", TestJwtKeys::privateKeyLocation);
-        properties.add("app.security.jwt.public-key-location", TestJwtKeys::publicKeyLocation);
         properties.add("app.security.cors.allowed-origins", () -> "http://localhost:5173");
     }
 
@@ -109,16 +104,14 @@ class VoucherAdminPostgresIT {
     @Autowired private DataSource dataSource;
     @Autowired private JsonMapper mapper;
     @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private CustomerProperties customerProperties;
     @MockitoSpyBean private VoucherRepository vouchers;
-    @MockitoSpyBean private VoucherChangeLogger changeLogger;
-    @MockitoSpyBean private CustomerStatusLock statusLock;
+    @MockitoSpyBean private ActionLogService actionLogService;
+    @MockitoSpyBean private CustomerRepository customers;
 
     @BeforeEach
     void cleanFixture() {
         TEST_CLOCK.set(NOW);
-        customerProperties.setStatusLockTimeoutMs(2_500);
-        reset(vouchers, changeLogger, statusLock);
+        reset(vouchers, actionLogService, customers);
         jdbc.update("delete from vouchers");
         jdbc.update("delete from customers");
     }
@@ -126,8 +119,7 @@ class VoucherAdminPostgresIT {
     @AfterEach
     void resetTestClockAndTimeout() {
         TEST_CLOCK.set(NOW);
-        customerProperties.setStatusLockTimeoutMs(2_500);
-        reset(vouchers, changeLogger, statusLock);
+        reset(vouchers, actionLogService, customers);
     }
 
     @Test
@@ -158,8 +150,7 @@ class VoucherAdminPostgresIT {
 
         HttpResponse<String> caseVariant = post("/api/vouchers", adminToken, body("a%_case", 5, 0,
                 "2026-10-14T09:00:00", "2026-10-14T10:00:00", ""));
-        assertSuccess(caseVariant, 201);
-        assertThat(json(caseVariant).path("data").path("windowState").asText()).isEqualTo("ENDED");
+        assertError(caseVariant, 409, "VOUCHER_CODE_ALREADY_EXISTS");
         assertSuccess(post("/api/vouchers", adminToken, body("Axx_Case", 5, 0,
                 "2026-10-14T09:00:00", "2026-10-14T11:00:00", "")), 201);
         HttpResponse<String> exact = get("/api/vouchers?code=A%25_Case", adminToken);
@@ -294,7 +285,7 @@ class VoucherAdminPostgresIT {
             for (NumericCase numericCase : invalid) {
                 assertThat(renderedLogs).doesNotContain(numericCase.rawValue());
             }
-            verifyNoInteractions(changeLogger);
+            verifyNoInteractions(actionLogService);
         }
 
         List<NumericCase> valid = List.of(
@@ -384,11 +375,11 @@ class VoucherAdminPostgresIT {
         }
 
         String rollbackMarker = "ROLLBACK_DESCRIPTION_" + suffix();
-        reset(changeLogger);
+        reset(actionLogService);
         doAnswer(invocation -> {
-            invocation.callRealMethod();
+            SpySupport.callRealMethod(invocation);
             throw new IllegalStateException("synthetic after-flush failure");
-        }).when(changeLogger).changed(eq("voucher-update"), anyLong(), eq(id));
+        }).when(actionLogService).voucherChanged(eq("voucher-update"), anyLong(), eq(id));
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             HttpResponse<String> rollback = put("/api/vouchers/" + id, adminToken,
                     "{\"description\":\"" + rollbackMarker + "\",\"usageLimit\":3}");
@@ -396,10 +387,10 @@ class VoucherAdminPostgresIT {
             assertThat(rollback.body()).doesNotContain(rollbackMarker);
             assertThat(jdbc.queryForMap("select description,usage_limit,used_count,status,created_at,updated_at from vouchers where id=?", id))
                     .isEqualTo(beforeNoOpStatus);
-            assertThat(logs.rendered()).contains("category=voucher-update-unexpected-failure")
+            assertThat(logs.rendered()).contains("errorCode=INTERNAL_ERROR")
                     .doesNotContain(rollbackMarker, "Voucher changed");
         }
-        reset(changeLogger);
+        reset(actionLogService);
 
         HttpResponse<String> clear = put("/api/vouchers/" + id, adminToken,
                 "{\"description\":\"   \",\"usageLimit\":null}");
@@ -459,12 +450,12 @@ class VoucherAdminPostgresIT {
         String firstBody = body(code, 10, 0, "2026-10-14T10:00:00", "2026-10-14T11:00:00", "");
         assertSuccess(post("/api/vouchers", token, firstBody), 201);
 
-        doReturn(false).when(vouchers).existsByCode(code);
+        doReturn(false).when(vouchers).existsByCodeIgnoreCase(code);
         try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
             HttpResponse<String> duplicate = post("/api/vouchers", token, firstBody);
             assertError(duplicate, 409, "VOUCHER_CODE_ALREADY_EXISTS");
             String trace = duplicate.headers().firstValue("X-Request-ID").orElseThrow();
-            assertThat(logs.rendered()).contains("constraint=vouchers_code_key", "traceId=" + trace)
+            assertThat(logs.rendered()).contains("errorCode=VOUCHER_CODE_ALREADY_EXISTS", "traceId=" + trace)
                     .doesNotContain(code, "discountValue", "Bearer", "SQLState", "23505");
             assertThat(duplicate.body()).doesNotContain(code);
         }
@@ -482,7 +473,7 @@ class VoucherAdminPostgresIT {
                             "\"description\":\"" + duplicateDescription + "\""));
             assertError(unrelated, 500, "INTERNAL_ERROR");
             String trace = unrelated.headers().firstValue("X-Request-ID").orElseThrow();
-            assertThat(logs.rendered()).contains("category=voucher-create-integrity-failure", "traceId=" + trace)
+            assertThat(logs.rendered()).contains("errorCode=INTERNAL_ERROR", "traceId=" + trace)
                     .doesNotContain(duplicateDescription, "UNRELATED_", "discountValue", "23505", "SQLState");
             assertThat(unrelated.body()).doesNotContain(duplicateDescription, "constraint");
         } finally {
@@ -492,8 +483,20 @@ class VoucherAdminPostgresIT {
     }
 
     @Test
+    void duplicateVoucherCodeCheckIgnoresLetterCase() throws Exception {
+        Account admin = account("p09-case-insensitive-admin", Role.ADMIN, CustomerStatus.ACTIVE);
+        String token = login(admin);
+        String code = "CaseCheck_" + suffix();
+        assertSuccess(post("/api/vouchers", token,
+                body(code, 10, 0, "2026-10-14T10:00:00", "2026-10-14T11:00:00", "")), 201);
+
+        assertError(post("/api/vouchers", token,
+                body(code.toUpperCase(java.util.Locale.ROOT), 10, 0, "2026-10-14T10:00:00",
+                        "2026-10-14T11:00:00", "")), 409, "VOUCHER_CODE_ALREADY_EXISTS");
+    }
+
+    @Test
     void concurrentCounterWriterIsObservedByPostgresAndAdminNeverOverwritesLatestValue() throws Exception {
-        customerProperties.setStatusLockTimeoutMs(10_000);
         Account admin = account("p09-counter-admin", Role.ADMIN, CustomerStatus.ACTIVE);
         Account secondAdmin = account("p09-counter-second-admin", Role.ADMIN, CustomerStatus.ACTIVE);
         String token = login(admin);
@@ -543,14 +546,13 @@ class VoucherAdminPostgresIT {
                 update.setLong(1, id);
                 assertThat(update.executeUpdate()).isEqualTo(1);
             }
-            reset(statusLock);
             List<Integer> adminBackendPids = new CopyOnWriteArrayList<>();
             CountDownLatch adminLockCalls = new CountDownLatch(2);
             doAnswer(invocation -> {
                 adminBackendPids.add(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
                 adminLockCalls.countDown();
-                return invocation.callRealMethod();
-            }).when(statusLock).acquire();
+                return SpySupport.callRealMethod(invocation);
+            }).when(vouchers).findWithLockById(anyLong());
             ExecutorService executor = Executors.newFixedThreadPool(2);
             try {
                 CompletableFuture<HttpResponse<String>> status = CompletableFuture.supplyAsync(() ->
@@ -563,7 +565,7 @@ class VoucherAdminPostgresIT {
                                 "{\"description\":\"after status commit\",\"usageLimit\":null}", "application/json"), executor);
                 assertThat(adminLockCalls.await(5, TimeUnit.SECONDS)).isTrue();
                 int updateWaiterPid = adminBackendPids.stream().filter(pid -> pid != waiterPid).findFirst().orElseThrow();
-                waitForAdvisoryWaiter(updateWaiterPid);
+                assertThat(waitForBlockedBy(waiterPid)).isEqualTo(updateWaiterPid);
                 assertThat(blockingPids(updateWaiterPid)).contains(waiterPid);
                 assertThat(concurrentUpdate.isDone()).isFalse();
                 System.out.println("P09_STATUS_AND_ADMIN_ORDER holderPid=" + holderPid + " statusWaiterPid=" + waiterPid
@@ -583,78 +585,7 @@ class VoucherAdminPostgresIT {
         }
     }
 
-    @Test
-    void actorStatusRecheckedAfterAdvisoryWaitAndReal55P03Returns503ThenRetries() throws Exception {
-        Account targetAdmin = account("p09-actor-target", Role.ADMIN, CustomerStatus.ACTIVE);
-        Account lockerAdmin = account("p09-actor-locker", Role.ADMIN, CustomerStatus.ACTIVE);
-        account("p09-actor-spare", Role.ADMIN, CustomerStatus.ACTIVE);
-        String targetToken = login(targetAdmin);
-        String lockerToken = login(lockerAdmin);
-        long voucherId = create(targetToken, "ACTOR_RECHECK_" + suffix(), 5).path("id").asLong();
-
-        try (Connection holder = dataSource.getConnection()) {
-            holder.setAutoCommit(false);
-            int holderPid = backendPid(holder);
-            acquireAdvisory(holder);
-            ExecutorService executor = Executors.newFixedThreadPool(2);
-            try {
-                CompletableFuture<HttpResponse<String>> lockActor = CompletableFuture.supplyAsync(() ->
-                        awaitSend("PATCH", "/api/customers/" + targetAdmin.id() + "/status", lockerToken,
-                                "{\"status\":\"LOCKED\",\"reason\":\"P09 concurrency fixture\"}", "application/json"), executor);
-                int actorWaiter = waitForBlockedBy(holderPid);
-                CompletableFuture<HttpResponse<String>> voucherWrite = CompletableFuture.supplyAsync(() ->
-                        awaitSend("PUT", "/api/vouchers/" + voucherId, targetToken,
-                                "{\"description\":\"must remain unchanged\",\"usageLimit\":4}", "application/json"), executor);
-                int voucherWaiter = waitForSecondBlockedWaiter(holderPid, actorWaiter);
-                System.out.println("P09_ACTOR_RECHECK holderPid=" + holderPid + " actorStatusWaiterPid=" + actorWaiter
-                        + " voucherWaiterPid=" + voucherWaiter + " blocking=" + blockingPids(voucherWaiter));
-                holder.commit();
-                assertSuccess(lockActor.get(8, TimeUnit.SECONDS), 200);
-                assertError(voucherWrite.get(8, TimeUnit.SECONDS), 401, "INVALID_TOKEN");
-                assertThat(jdbc.queryForObject("select description from vouchers where id=?", String.class, voucherId)).isNull();
-                assertThat(jdbc.queryForObject("select status from customers where id=?", String.class, targetAdmin.id())).isEqualTo("LOCKED");
-            } finally {
-                try { holder.rollback(); } catch (SQLException ignored) { }
-                executor.shutdownNow();
-            }
-        }
-
-        Account retryAdmin = account("p09-timeout-admin", Role.ADMIN, CustomerStatus.ACTIVE);
-        String retryToken = login(retryAdmin);
-        customerProperties.setStatusLockTimeoutMs(600);
-        String retryCode = "RETRY_" + suffix();
-        try (Connection holder = dataSource.getConnection(); ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
-            holder.setAutoCommit(false);
-            int holderPid = backendPid(holder);
-            acquireAdvisory(holder);
-            ExecutorService executor = Executors.newSingleThreadExecutor();
-            try {
-                CompletableFuture<HttpResponse<String>> waiting = CompletableFuture.supplyAsync(() ->
-                        awaitSend("POST", "/api/vouchers", retryToken,
-                                body(retryCode, 10, 0, "2026-10-14T10:00:00", "2026-10-14T11:00:00", ""), "application/json"), executor);
-                int waiterPid = waitForBlockedBy(holderPid);
-                System.out.println("P09_LOCK_TIMEOUT holderPid=" + holderPid + " waiterPid=" + waiterPid
-                        + " pgBlockingPids=" + blockingPids(waiterPid));
-                HttpResponse<String> timeout = waiting.get(5, TimeUnit.SECONDS);
-                assertError(timeout, 503, "DEPENDENCY_UNAVAILABLE");
-                String trace = timeout.headers().firstValue("X-Request-ID").orElseThrow();
-                assertThat(logs.rendered()).contains("category=voucher-create-database-failure",
-                        "errorCode=DEPENDENCY_UNAVAILABLE", "traceId=" + trace)
-                        .doesNotContain(retryCode, "55P03", "pg_advisory_xact_lock", "Bearer");
-                assertThat(jdbc.queryForObject("select count(*) from vouchers where code=?", Integer.class, retryCode)).isZero();
-                holder.rollback();
-            } finally {
-                try { holder.rollback(); } catch (SQLException ignored) { }
-                executor.shutdownNow();
-            }
-        } finally {
-            customerProperties.setStatusLockTimeoutMs(2_500);
-        }
-        assertSuccess(post("/api/vouchers", retryToken,
-                body(retryCode, 10, 0, "2026-10-14T10:00:00", "2026-10-14T11:00:00", "")), 201);
-    }
-
-    private JsonNode create(String token, String code, Integer usageLimit) throws Exception {
+private JsonNode create(String token, String code, Integer usageLimit) throws Exception {
         return create(token, code, usageLimit, "2026-10-14T10:00:00", "2026-10-14T11:00:00");
     }
 
@@ -785,13 +716,6 @@ class VoucherAdminPostgresIT {
         }
     }
 
-    private void acquireAdvisory(Connection connection) throws SQLException {
-        try (PreparedStatement lock = connection.prepareStatement("select pg_advisory_xact_lock(?)")) {
-            lock.setLong(1, CustomerStatusLock.STATUS_NAMESPACE_KEY);
-            lock.execute();
-        }
-    }
-
     private int waitForBlockedBy(int holderPid) throws Exception {
         long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(7);
         while (System.nanoTime() < deadline) {
@@ -801,29 +725,6 @@ class VoucherAdminPostgresIT {
         }
         throw new AssertionError("No PostgreSQL waiter blocked by holder=" + holderPid + "; active="
                 + jdbc.queryForList("select pid,wait_event_type,wait_event,state from pg_stat_activity where datname=current_database()"));
-    }
-
-    private int waitForSecondBlockedWaiter(int holderPid, int firstPid) throws Exception {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(7);
-        while (System.nanoTime() < deadline) {
-            List<Integer> blocked = blockedBy(holderPid);
-            for (Integer pid : blocked) if (pid != firstPid) return pid;
-            Thread.sleep(40);
-        }
-        throw new AssertionError("Second advisory waiter not observed holder=" + holderPid + " first=" + firstPid
-                + "; blocked=" + blockedBy(holderPid));
-    }
-
-    private void waitForAdvisoryWaiter(int waiterPid) throws Exception {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(7);
-        while (System.nanoTime() < deadline) {
-            Integer waiting = jdbc.queryForObject("select count(*) from pg_stat_activity where pid=? and state='active' "
-                    + "and wait_event_type='Lock' and wait_event='advisory'", Integer.class, waiterPid);
-            if (waiting != null && waiting > 0) return;
-            Thread.sleep(40);
-        }
-        throw new AssertionError("PostgreSQL session did not wait on advisory lock pid=" + waiterPid
-                + "; current=" + jdbc.queryForList("select pid,state,wait_event_type,wait_event from pg_stat_activity where pid=?", waiterPid));
     }
 
     private List<Integer> blockedBy(int holderPid) {
@@ -858,7 +759,7 @@ class VoucherAdminPostgresIT {
         private final List<String> events = new java.util.concurrent.CopyOnWriteArrayList<>();
 
         private ThreadSafeLogCapture() {
-            logger = (Logger) LoggerFactory.getLogger(VoucherChangeLogger.class);
+            logger = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
             setContext((LoggerContext) LoggerFactory.getILoggerFactory());
             start();
             logger.addAppender(this);

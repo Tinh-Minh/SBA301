@@ -1,7 +1,7 @@
 package com.carrental.dto.response;
 
-import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.DocumentType;
+import com.carrental.enums.VerificationStatus;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -24,4 +24,5 @@ public record UserDocumentDetailResponse(
         boolean hasBackImage,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
+
 }

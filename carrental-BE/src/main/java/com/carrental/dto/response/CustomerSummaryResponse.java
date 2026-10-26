@@ -16,4 +16,5 @@ public record CustomerSummaryResponse(
         boolean emailVerified,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
+
 }

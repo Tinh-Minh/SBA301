@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.List;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -36,6 +37,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AppException.class)
     public ResponseEntity<ApiResponse<Void>> handleAppException(AppException e) {
         ErrorCode errorCode = e.errorCode();
+        if (errorCode != null && errorCode.status().is5xxServerError()) {
+            log.error("Request failed traceId={} errorCode={}", RequestTraceFilter.currentTraceId(), errorCode);
+        } else if (errorCode != null) {
+            log.warn("Request rejected traceId={} errorCode={}", RequestTraceFilter.currentTraceId(), errorCode);
+        }
         HttpStatus status = e.getStatus() != null ? e.getStatus() : (errorCode != null ? errorCode.status() : HttpStatus.BAD_REQUEST);
         String code = errorCode != null ? errorCode.name() : status.name();
         List<FieldErrorResponse> fieldErrors = e.fieldErrors() != null ? e.fieldErrors() : List.of();
@@ -94,7 +100,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             QueryTimeoutException.class
     })
     public ResponseEntity<ApiResponse<Void>> handleDatabaseLockOrAvailabilityFailure(Exception ex) {
-        log.warn("Database unavailable traceId={} exceptionType={}",
+        log.warn("Database unavailable traceId={} errorCode=DEPENDENCY_UNAVAILABLE exceptionType={}",
                 RequestTraceFilter.currentTraceId(), ex.getClass().getSimpleName());
         return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.DEPENDENCY_UNAVAILABLE.name(),
                 ErrorCode.DEPENDENCY_UNAVAILABLE.message());
@@ -117,6 +123,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
+        for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
+            if (cause instanceof DataAccessResourceFailureException) {
+                log.warn("Authentication dependency unavailable traceId={} errorCode=DEPENDENCY_UNAVAILABLE",
+                        RequestTraceFilter.currentTraceId());
+                return build(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.DEPENDENCY_UNAVAILABLE.name(),
+                        ErrorCode.DEPENDENCY_UNAVAILABLE.message());
+            }
+        }
         return build(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_FAILED.name(), "Thông tin xác thực không hợp lệ hoặc đã hết hạn");
     }
 
@@ -146,7 +160,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * CHECK/trigger (23514), khóa ngoại (23503), unique (23505).
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
+        ErrorCode f1Code = function1Constraint(ex);
+        if (f1Code != null) {
+            log.warn("Database constraint rejected traceId={} errorCode={}", RequestTraceFilter.currentTraceId(), f1Code);
+            return build(f1Code.status(), f1Code.name(), f1Code.message());
+        }
+        // Keep Function 1's contract: unexpected database failures are server errors, not duplicates.
+        if (isFunction1Request(request)) {
+            log.error("Database operation failed traceId={} errorCode=INTERNAL_ERROR", RequestTraceFilter.currentTraceId());
+            return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR.name(), ErrorCode.INTERNAL_ERROR.message());
+        }
         String detail = rootMessage(ex);
         log.warn("Data integrity failure traceId={} exceptionType={}",
                 RequestTraceFilter.currentTraceId(), ex.getClass().getSimpleName());
@@ -156,10 +180,40 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION", "Dữ liệu vi phạm ràng buộc");
     }
 
+    private boolean isFunction1Request(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return List.of("auth", "customers", "drivers", "user-documents", "bank-accounts", "vouchers").stream()
+                .anyMatch(resource -> path.equals("/api/" + resource) || path.startsWith("/api/" + resource + "/"));
+    }
+
+    private ErrorCode function1Constraint(Throwable exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (!(cause instanceof org.hibernate.exception.ConstraintViolationException violation)
+                    || violation.getSQLException() == null) continue;
+            String state = violation.getSQLException().getSQLState();
+            String name = violation.getConstraintName();
+            if (name == null) continue;
+            if ("23503".equals(state) && "payouts_bank_account_id_recipient_id_fkey".equals(name)) {
+                return ErrorCode.BANK_ACCOUNT_IN_USE;
+            }
+            if (!"23505".equals(state)) continue;
+            return switch (name) {
+                case "uq_customers_email_lower", "customers_phone_key" -> ErrorCode.ACCOUNT_ALREADY_EXISTS;
+                case "drivers_customer_id_key" -> ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS;
+                case "uq_user_doc_approved" -> ErrorCode.APPROVED_DOCUMENT_CONFLICT;
+                case "bank_accounts_customer_id_bank_name_account_number_key" -> ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS;
+                case "uq_bank_default_per_customer" -> ErrorCode.BANK_DEFAULT_CONFLICT;
+                case "vouchers_code_key" -> ErrorCode.VOUCHER_CODE_ALREADY_EXISTS;
+                default -> null;
+            };
+        }
+        return null;
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception e) {
-        log.error("Unhandled request failure traceId={} exceptionType={}",
-                RequestTraceFilter.currentTraceId(), e.getClass().getSimpleName(), e);
+        log.error("Unhandled request failure traceId={} errorCode=INTERNAL_ERROR exceptionType={}",
+                RequestTraceFilter.currentTraceId(), e.getClass().getSimpleName());
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR.name(), ErrorCode.INTERNAL_ERROR.message());
     }
 

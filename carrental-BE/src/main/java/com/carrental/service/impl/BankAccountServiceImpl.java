@@ -14,20 +14,11 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.mapper.BankAccountMapper;
 import com.carrental.repository.BankAccountRepository;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.repository.CustomerStatusLock;
 import com.carrental.security.CurrentAccount;
-import com.carrental.service.BankAccountChangeLogger;
+import com.carrental.service.ActionLogService;
 import com.carrental.service.BankAccountService;
-import java.sql.SQLException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
-import java.util.TreeSet;
-import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.dao.DataAccessException;
-import org.springframework.dao.DataAccessResourceFailureException;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -37,20 +28,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BankAccountServiceImpl implements BankAccountService {
 
-    static final String CUSTOMER_BANK_ACCOUNT_UNIQUE = "bank_accounts_customer_id_bank_name_account_number_key";
-    static final String DEFAULT_PER_CUSTOMER_UNIQUE = "uq_bank_default_per_customer";
-    static final String PAYOUT_BANK_RECIPIENT_FK = "payouts_bank_account_id_recipient_id_fkey";
-
     private final BankAccountRepository bankAccounts;
     private final CustomerRepository customers;
-    private final CustomerStatusLock statusLock;
-    private final BankAccountChangeLogger changeLogger;
+    private final ActionLogService actionLogService;
     public BankAccountServiceImpl(BankAccountRepository bankAccounts, CustomerRepository customers,
-            CustomerStatusLock statusLock, BankAccountChangeLogger changeLogger) {
+            ActionLogService actionLogService) {
         this.bankAccounts = bankAccounts;
         this.customers = customers;
-        this.statusLock = statusLock;
-        this.changeLogger = changeLogger;
+        this.actionLogService = actionLogService;
     }
 
     @Override
@@ -59,52 +44,15 @@ public class BankAccountServiceImpl implements BankAccountService {
     public BankAccountResponse create(CurrentAccount account, CreateBankAccountRequest request) {
         requirePrincipal(account);
         PayeeInput input = validateRequest(request);
-        try {
-            Customer owner = lockActiveOwner(account);
-            if (bankAccounts.existsByCustomer_IdAndBankNameAndAccountNumber(
-                    owner.getId(), input.bankName(), input.accountNumber())) {
-                changeLogger.failure("bank-account-duplicate", ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS,
-                        account.customerId(), null, "PrecheckConflict", CUSTOMER_BANK_ACCOUNT_UNIQUE);
-                throw new AppException(ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS);
-            }
-
-            if (input.makeDefault()) {
-                BankAccount previous = bankAccounts.findByCustomer_IdAndIsDefaultTrue(owner.getId()).orElse(null);
-                if (previous != null) {
-                    BankAccount lockedPrevious = lockRows(owner.getId(), List.of(previous.getId())).getFirst();
-                    lockedPrevious.setIsDefault(false);
-                    bankAccounts.flush();
-                }
-            }
-            BankAccount bankAccount = new BankAccount();
-            bankAccount.setCustomer(owner);
-            bankAccount.setBankName(input.bankName());
-            bankAccount.setAccountNumber(input.accountNumber());
-            bankAccount.setAccountHolder(input.accountHolder());
-            bankAccount.setIsDefault(input.makeDefault());
-            BankAccount saved = bankAccounts.saveAndFlush(bankAccount);
-            changeLogger.changed("bank-account-create", owner.getId(), saved.getId());
-            return BankAccountMapper.toResponse(saved);
-        } catch (DataIntegrityViolationException exception) {
-            ErrorCode conflict = exactUniqueConflict(exception);
-            if (conflict != null) {
-                String constraint = conflict == ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS
-                        ? CUSTOMER_BANK_ACCOUNT_UNIQUE : DEFAULT_PER_CUSTOMER_UNIQUE;
-                changeLogger.failure("bank-account-constraint-conflict", conflict, account.customerId(), null,
-                        exception.getClass().getSimpleName(), constraint);
-                throw new AppException(conflict, exception);
-            }
-            logDatabaseFailure("bank-account-create-integrity-failure", account.customerId(), null, exception);
-            throw exception;
-        } catch (DataAccessException exception) {
-            logDatabaseFailure("bank-account-create-database-failure", account.customerId(), null, exception);
-            throw exception;
-        } catch (AppException exception) {
-            throw exception;
-        } catch (RuntimeException exception) {
-            logUnexpected("bank-account-create-unexpected-failure", account.customerId(), null, exception);
-            throw exception;
+        Customer owner = lockActiveOwner(account);
+        if (bankAccounts.existsByCustomerIdAndBankNameAndAccountNumber(owner.getId(), input.bankName(), input.accountNumber())) {
+            throw new AppException(ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS);
         }
+        if (input.makeDefault()) clearDefault(owner.getId());
+        BankAccount saved = bankAccounts.saveAndFlush(BankAccountMapper.toNewEntity(owner,
+                input.bankName(), input.accountNumber(), input.accountHolder(), input.makeDefault()));
+        actionLogService.bankAccountChanged("bank-account-create", owner.getId(), saved.getId());
+        return BankAccountMapper.toResponse(saved);
     }
 
     @Override
@@ -113,7 +61,7 @@ public class BankAccountServiceImpl implements BankAccountService {
     public PageResponse<BankAccountResponse> list(CurrentAccount account, BankAccountListQuery query) {
         Customer owner = activeOwner(account);
         Objects.requireNonNull(query);
-        Page<BankAccount> page = bankAccounts.findAllByCustomer_Id(owner.getId(), query.pageable());
+        Page<BankAccount> page = bankAccounts.findAllByCustomerId(owner.getId(), query.pageable());
         List<BankAccountResponse> content = page.getContent().stream().map(BankAccountMapper::toResponse).toList();
         return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
     }
@@ -124,7 +72,7 @@ public class BankAccountServiceImpl implements BankAccountService {
     public BankAccountResponse get(CurrentAccount account, long bankAccountId) {
         requirePositiveId(bankAccountId);
         Customer owner = activeOwner(account);
-        return bankAccounts.findByIdAndCustomer_Id(bankAccountId, owner.getId())
+        return bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId())
                 .map(BankAccountMapper::toResponse)
                 .orElseThrow(() -> notFound());
     }
@@ -135,47 +83,15 @@ public class BankAccountServiceImpl implements BankAccountService {
     public BankAccountResponse setDefault(CurrentAccount account, long bankAccountId) {
         requirePositiveId(bankAccountId);
         requirePrincipal(account);
-        try {
-            Customer owner = lockActiveOwner(account);
-            BankAccount targetSnapshot = bankAccounts.findByIdAndCustomer_Id(bankAccountId, owner.getId())
-                    .orElseThrow(() -> notFound());
-            BankAccount currentDefault = bankAccounts.findByCustomer_IdAndIsDefaultTrue(owner.getId()).orElse(null);
-            TreeSet<Long> ids = new TreeSet<>();
-            ids.add(targetSnapshot.getId());
-            if (currentDefault != null) ids.add(currentDefault.getId());
-            List<BankAccount> lockedRows = lockRows(owner.getId(), ids);
-            BankAccount target = findLocked(lockedRows, bankAccountId).orElseThrow(() -> notFound());
-            if (Boolean.TRUE.equals(target.getIsDefault())) return BankAccountMapper.toResponse(target);
-
-            BankAccount oldDefault = lockedRows.stream().filter(BankAccount::getIsDefault).findFirst().orElse(null);
-            if (oldDefault != null) {
-                oldDefault.setIsDefault(false);
-                bankAccounts.flush();
-            }
-            target.setIsDefault(true);
-            bankAccounts.flush();
-            changeLogger.changed("bank-account-default", owner.getId(), target.getId());
-            return BankAccountMapper.toResponse(target);
-        } catch (DataIntegrityViolationException exception) {
-            ErrorCode conflict = exactUniqueConflict(exception);
-            if (conflict != null) {
-                String constraint = conflict == ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS
-                        ? CUSTOMER_BANK_ACCOUNT_UNIQUE : DEFAULT_PER_CUSTOMER_UNIQUE;
-                changeLogger.failure("bank-account-default-constraint-conflict", conflict, account.customerId(),
-                        bankAccountId, exception.getClass().getSimpleName(), constraint);
-                throw new AppException(conflict, exception);
-            }
-            logDatabaseFailure("bank-account-default-integrity-failure", account.customerId(), bankAccountId, exception);
-            throw exception;
-        } catch (DataAccessException exception) {
-            logDatabaseFailure("bank-account-default-database-failure", account.customerId(), bankAccountId, exception);
-            throw exception;
-        } catch (AppException exception) {
-            throw exception;
-        } catch (RuntimeException exception) {
-            logUnexpected("bank-account-default-unexpected-failure", account.customerId(), bankAccountId, exception);
-            throw exception;
-        }
+        // One owner lock serializes all default changes, including the first default account.
+        Customer owner = lockActiveOwner(account);
+        BankAccount target = bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId()).orElseThrow(BankAccountServiceImpl::notFound);
+        if (Boolean.TRUE.equals(target.getIsDefault())) return BankAccountMapper.toResponse(target);
+        clearDefault(owner.getId());
+        target.setIsDefault(true);
+        bankAccounts.flush();
+        actionLogService.bankAccountChanged("bank-account-default", owner.getId(), target.getId());
+        return BankAccountMapper.toResponse(target);
     }
 
     @Override
@@ -184,36 +100,22 @@ public class BankAccountServiceImpl implements BankAccountService {
     public void delete(CurrentAccount account, long bankAccountId) {
         requirePositiveId(bankAccountId);
         requirePrincipal(account);
-        try {
-            Customer owner = lockActiveOwner(account);
-            bankAccounts.findByIdAndCustomer_Id(bankAccountId, owner.getId()).orElseThrow(() -> notFound());
-            BankAccount target = bankAccounts.findOwnedByIdForUpdate(bankAccountId, owner.getId())
-                    .orElseThrow(() -> notFound());
-            bankAccounts.delete(target);
-            bankAccounts.flush();
-            changeLogger.changed("bank-account-delete", owner.getId(), target.getId());
-        } catch (DataIntegrityViolationException exception) {
-            if (hasExactViolation(exception, "23503", PAYOUT_BANK_RECIPIENT_FK)) {
-                changeLogger.failure("bank-account-referenced", ErrorCode.BANK_ACCOUNT_IN_USE, account.customerId(),
-                        bankAccountId, exception.getClass().getSimpleName(), PAYOUT_BANK_RECIPIENT_FK);
-                throw new AppException(ErrorCode.BANK_ACCOUNT_IN_USE, exception);
-            }
-            logDatabaseFailure("bank-account-delete-integrity-failure", account.customerId(), bankAccountId, exception);
-            throw exception;
-        } catch (DataAccessException exception) {
-            logDatabaseFailure("bank-account-delete-database-failure", account.customerId(), bankAccountId, exception);
-            throw exception;
-        } catch (AppException exception) {
-            throw exception;
-        } catch (RuntimeException exception) {
-            logUnexpected("bank-account-delete-unexpected-failure", account.customerId(), bankAccountId, exception);
-            throw exception;
-        }
+        Customer owner = lockActiveOwner(account);
+        BankAccount target = bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId()).orElseThrow(BankAccountServiceImpl::notFound);
+        bankAccounts.delete(target);
+        bankAccounts.flush();
+        actionLogService.bankAccountChanged("bank-account-delete", owner.getId(), target.getId());
+    }
+
+    private void clearDefault(long ownerId) {
+        bankAccounts.findByCustomerIdAndIsDefaultTrue(ownerId).ifPresent(previous -> {
+            previous.setIsDefault(false);
+            bankAccounts.flush(); // Clear the partial unique index before setting the new default.
+        });
     }
 
     private Customer lockActiveOwner(CurrentAccount account) {
-        statusLock.acquire();
-        Customer owner = customers.findByIdForUpdate(account.customerId())
+        Customer owner = customers.findWithLockById(account.customerId())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
         requireCurrentOwner(owner, account);
         return owner;
@@ -246,18 +148,6 @@ public class BankAccountServiceImpl implements BankAccountService {
         if (id <= 0) throw new AppException(ErrorCode.INVALID_REQUEST);
     }
 
-    private List<BankAccount> lockRows(long ownerId, Collection<Long> ids) {
-        if (ids.isEmpty()) return List.of();
-        List<BankAccount> result = bankAccounts.findOwnedByIdsForUpdate(ownerId, ids);
-        // A row disappearing between discovery and lock is treated as not found, never widened to another owner.
-        if (result.size() != ids.size()) throw notFound();
-        return result;
-    }
-
-    private static java.util.Optional<BankAccount> findLocked(List<BankAccount> rows, long id) {
-        return rows.stream().filter(row -> row.getId() == id).findFirst();
-    }
-
     private PayeeInput validateRequest(CreateBankAccountRequest request) {
         if (request == null || !request.bankNameWasProvided() || !request.accountNumberWasProvided()
                 || !request.accountHolderWasProvided()) throw new AppException(ErrorCode.INVALID_REQUEST);
@@ -281,55 +171,6 @@ public class BankAccountServiceImpl implements BankAccountService {
     }
 
     private static AppException notFound() { return new AppException(ErrorCode.RESOURCE_NOT_FOUND); }
-
-    private static ErrorCode exactUniqueConflict(Throwable exception) {
-        if (hasExactViolation(exception, "23505", CUSTOMER_BANK_ACCOUNT_UNIQUE)) {
-            return ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS;
-        }
-        if (hasExactViolation(exception, "23505", DEFAULT_PER_CUSTOMER_UNIQUE)) {
-            return ErrorCode.BANK_DEFAULT_CONFLICT;
-        }
-        return null;
-    }
-
-    static boolean hasExactViolation(Throwable failure, String expectedState, String expectedConstraint) {
-        for (Throwable current = failure; current != null; current = current.getCause()) {
-            if (current instanceof SQLException sql && expectedState.equals(sql.getSQLState())
-                    && expectedConstraint.equals(constraintName(current))) return true;
-            if (current instanceof ConstraintViolationException violation
-                    && expectedState.equals(violation.getSQLException() == null ? null : violation.getSQLException().getSQLState())
-                    && expectedConstraint.equals(violation.getConstraintName())) return true;
-        }
-        return false;
-    }
-
-    private static String constraintName(Throwable failure) {
-        if (failure instanceof ConstraintViolationException violation) return violation.getConstraintName();
-        for (Throwable current = failure.getCause(); current != null; current = current.getCause()) {
-            if (current instanceof ConstraintViolationException violation) return violation.getConstraintName();
-        }
-        return null;
-    }
-
-    private void logDatabaseFailure(String category, long actorId, Long bankAccountId, DataAccessException exception) {
-        ErrorCode code = exception instanceof PessimisticLockingFailureException
-                || exception instanceof DataAccessResourceFailureException || hasSqlState(exception, "55P03")
-                ? ErrorCode.DEPENDENCY_UNAVAILABLE : ErrorCode.INTERNAL_ERROR;
-        changeLogger.failure(category, code, actorId, bankAccountId,
-                exception.getClass().getSimpleName(), null);
-    }
-
-    private static boolean hasSqlState(Throwable failure, String expectedState) {
-        for (Throwable current = failure; current != null; current = current.getCause()) {
-            if (current instanceof SQLException sql && expectedState.equals(sql.getSQLState())) return true;
-        }
-        return false;
-    }
-
-    private void logUnexpected(String category, long actorId, Long bankAccountId, RuntimeException exception) {
-        changeLogger.failure(category, ErrorCode.INTERNAL_ERROR, actorId, bankAccountId,
-                exception.getClass().getSimpleName(), null);
-    }
 
     private record PayeeInput(String bankName, String accountNumber, String accountHolder, boolean makeDefault) { }
 }
