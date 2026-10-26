@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import com.carrental.config.security.BootstrapAdminProperties;
 import com.carrental.entity.Customer;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.service.AdminBootstrapService;
+import com.carrental.config.security.AdminBootstrapRunner;
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
@@ -98,7 +98,7 @@ class AuthSecurityPostgresIT {
     @Autowired private JdbcTemplate jdbc;
     @Autowired private Clock clock;
     @Autowired private PasswordEncoder passwordEncoder;
-    @Autowired private AdminBootstrapService bootstrapService;
+    @Autowired private AdminBootstrapRunner bootstrapService;
     @MockitoSpyBean private CustomerRepository customers;
 
     @Test
@@ -476,9 +476,9 @@ class AuthSecurityPostgresIT {
         assertError(get("/__test/security/admin", customerToken, Map.of()), 403, "ACCESS_DENIED");
 
         String adminEmail = email("bootstrap-admin-role");
-        AdminBootstrapService.Result created = bootstrapService.ensureAdmin(bootstrapProperties(
+        AdminBootstrapRunner.Result created = bootstrapService.ensureAdmin(bootstrapProperties(
                 adminEmail, phone("A"), "Bootstrap Admin", "admin fake password"));
-        assertThat(created).isEqualTo(AdminBootstrapService.Result.CREATED);
+        assertThat(created).isEqualTo(AdminBootstrapRunner.Result.CREATED);
         String adminToken = loginToken(adminEmail, "admin fake password");
         assertThat(get("/__test/security/admin", adminToken, Map.of()).statusCode()).isEqualTo(200);
         Long adminId = jdbc.queryForObject("select id from customers where email=?", Long.class, adminEmail);
@@ -544,7 +544,7 @@ class AuthSecurityPostgresIT {
     void bootstrapIsDisabledByDefaultAndEnabledModeIsIdempotentWithoutPromotingOrUnlocking() throws Exception {
         String disabledEmail = email("bootstrap-disabled");
         BootstrapAdminProperties disabled = new BootstrapAdminProperties();
-        assertThat(bootstrapService.ensureAdmin(disabled)).isEqualTo(AdminBootstrapService.Result.DISABLED);
+        assertThat(bootstrapService.ensureAdmin(disabled)).isEqualTo(AdminBootstrapRunner.Result.DISABLED);
         assertThat(jdbc.queryForObject("select count(*) from customers where email=?", Integer.class, disabledEmail)).isZero();
 
         BootstrapAdminProperties incomplete = new BootstrapAdminProperties();
@@ -559,7 +559,7 @@ class AuthSecurityPostgresIT {
         String firstPassword = "bootstrap fake password 1";
         BootstrapAdminProperties enabled = bootstrapProperties(" " + email.toUpperCase(java.util.Locale.ROOT) + " ",
                 " " + phone("b") + " ", " First Admin ", firstPassword);
-        assertThat(bootstrapService.ensureAdmin(enabled)).isEqualTo(AdminBootstrapService.Result.CREATED);
+        assertThat(bootstrapService.ensureAdmin(enabled)).isEqualTo(AdminBootstrapRunner.Result.CREATED);
         Long id = jdbc.queryForObject("select id from customers where email=?", Long.class, email);
         String hash = jdbc.queryForObject("select password_hash from customers where id=?", String.class, id);
         assertThat(passwordEncoder.matches(firstPassword, hash)).isTrue();
@@ -567,7 +567,7 @@ class AuthSecurityPostgresIT {
                 .containsEntry("role", "ADMIN").containsEntry("status", "ACTIVE")
                 .containsEntry("kyc_status", "NONE").containsEntry("email_verified", false);
         BootstrapAdminProperties changed = bootstrapProperties(email, phone("z"), "Changed Admin", "changed fake password");
-        assertThat(bootstrapService.ensureAdmin(changed)).isEqualTo(AdminBootstrapService.Result.ALREADY_PRESENT);
+        assertThat(bootstrapService.ensureAdmin(changed)).isEqualTo(AdminBootstrapRunner.Result.ALREADY_PRESENT);
         assertThat(jdbc.queryForObject("select password_hash from customers where id=?", String.class, id)).isEqualTo(hash);
         assertThat(jdbc.queryForObject("select full_name from customers where id=?", String.class, id)).isEqualTo("First Admin");
 

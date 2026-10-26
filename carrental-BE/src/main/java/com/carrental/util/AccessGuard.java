@@ -1,4 +1,4 @@
-package com.carrental.service;
+package com.carrental.util;
 
 import com.carrental.entity.Car;
 import com.carrental.entity.Customer;

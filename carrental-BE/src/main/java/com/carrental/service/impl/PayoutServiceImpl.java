@@ -14,7 +14,7 @@ import com.carrental.repository.BankAccountRepository;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.PayoutRepository;
 import com.carrental.repository.RentalOrderRepository;
-import com.carrental.service.OrderAccess;
+import com.carrental.util.OrderAccess;
 import com.carrental.service.PayoutService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

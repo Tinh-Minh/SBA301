@@ -8,7 +8,7 @@ import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Review;
 import com.carrental.enums.OrderStatus;
 import com.carrental.exception.AppException;
-import com.carrental.service.OrderAccess;
+import com.carrental.util.OrderAccess;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.ReviewRepository;

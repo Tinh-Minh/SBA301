@@ -17,7 +17,7 @@ import com.carrental.exception.AppException;
 import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.CarSlotRepository;
-import com.carrental.service.AccessGuard;
+import com.carrental.util.AccessGuard;
 import com.carrental.service.CarSlotService;
 import com.carrental.util.DbErrors;
 import com.carrental.util.PageRequestFactory;

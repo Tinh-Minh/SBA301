@@ -14,7 +14,7 @@ import com.carrental.entity.RentalOrder;
 import com.carrental.enums.DisputeStatus;
 import com.carrental.enums.ExtraFeeStatus;
 import com.carrental.exception.AppException;
-import com.carrental.service.OrderAccess;
+import com.carrental.util.OrderAccess;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.DisputeEvidenceRepository;
 import com.carrental.repository.DisputeRepository;
