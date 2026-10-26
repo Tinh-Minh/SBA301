@@ -92,8 +92,8 @@ public class CarSlotServiceImpl implements CarSlotService {
             }
 
             // Kiểm tra trùng lặp lịch
-            boolean isOverlapping = carSlotRepository.existsOverlappingSlot(
-                    car.getId(), request.getStartTime(), request.getEndTime(), SlotStatus.CANCELLED);
+            boolean isOverlapping = carSlotRepository.existsByCarIdAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                    car.getId(), SlotStatus.CANCELLED, request.getEndTime(), request.getStartTime());
             if (isOverlapping) {
                 throw new AppException(HttpStatus.CONFLICT, "Khung giờ này đã bị trùng với một slot khác của xe");
             }
@@ -150,8 +150,8 @@ public class CarSlotServiceImpl implements CarSlotService {
             }
 
             // Kiểm tra trùng slot khác
-            boolean isOverlapping = carSlotRepository.existsOverlappingSlotExcluding(
-                    slot.getCar().getId(), slot.getId(), newStart, newEnd, SlotStatus.CANCELLED);
+            boolean isOverlapping = carSlotRepository.existsByCarIdAndIdNotAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                    slot.getCar().getId(), slot.getId(), SlotStatus.CANCELLED, newEnd, newStart);
             if (isOverlapping) {
                 throw new AppException(HttpStatus.CONFLICT, "Thời gian chỉnh sửa bị trùng với slot khác của xe");
             }
@@ -255,8 +255,8 @@ public class CarSlotServiceImpl implements CarSlotService {
             }
 
             // Kiểm tra overlap
-            boolean isOverlapping = carSlotRepository.existsOverlappingSlotExcluding(
-                    slot.getCar().getId(), slot.getId(), slot.getStartTime(), slot.getEndTime(), SlotStatus.CANCELLED);
+            boolean isOverlapping = carSlotRepository.existsByCarIdAndIdNotAndStatusNotAndStartTimeLessThanAndEndTimeGreaterThan(
+                    slot.getCar().getId(), slot.getId(), SlotStatus.CANCELLED, slot.getEndTime(), slot.getStartTime());
             if (isOverlapping) {
                 throw new AppException(HttpStatus.CONFLICT, "Khung giờ này đã bị trùng với một slot mở khác");
             }
@@ -347,7 +347,7 @@ public class CarSlotServiceImpl implements CarSlotService {
             Page<CarSlot> slotPage = carSlotRepository.findAll(spec, pageable);
 
             List<Long> carIds = slotPage.getContent().stream().map(s -> s.getCar().getId()).toList();
-            Map<Long, String> primaryImages = carImageRepository.findPrimaryImages(carIds).stream()
+            Map<Long, String> primaryImages = carImageRepository.findAllByCarIdInAndIsPrimaryTrue(carIds).stream()
                     .collect(Collectors.toMap(img -> img.getCar().getId(), CarImage::getImageUrl, (a, b) -> a));
 
             return PageResponse.from(slotPage.map(slot ->

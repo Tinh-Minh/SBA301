@@ -550,7 +550,7 @@ public class CarServiceImpl implements CarService {
 
     private PageResponse<CarSummaryResponse> toPageSummaryBatch(Page<Car> carPage) {
         List<Long> carIds = carPage.getContent().stream().map(Car::getId).toList();
-        Map<Long, String> primaryImages = carImageRepository.findPrimaryImages(carIds).stream()
+        Map<Long, String> primaryImages = carImageRepository.findAllByCarIdInAndIsPrimaryTrue(carIds).stream()
                 .collect(Collectors.toMap(img -> img.getCar().getId(), CarImage::getImageUrl, (a, b) -> a));
 
         return PageResponse.from(carPage.map(c -> CarSummaryResponse.from(c, primaryImages.get(c.getId()))));
