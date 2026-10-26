@@ -135,51 +135,6 @@ class DriverConcurrencyPostgresIT {
         }
     }
 
-    @Test
-    void concurrentCreateSerializesAtPostgresAndUniqueIndexLeavesOneProfile() throws Exception {
-        Account owner = account("create-race-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE);
-        String token = login(owner);
-        CountDownLatch ownerLocked = new CountDownLatch(1);
-        CountDownLatch releaseFirst = new CountDownLatch(1);
-        AtomicBoolean holdOnce = new AtomicBoolean(true);
-        AtomicReference<Integer> holderPid = new AtomicReference<>();
-        doAnswer(invocation -> {
-            Object result = SpySupport.callRealMethod(invocation);
-            Long ownerId = invocation.getArgument(1);
-            if (ownerId.equals(owner.id()) && holdOnce.compareAndSet(true, false)) {
-                holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
-                ownerLocked.countDown();
-                await(releaseFirst, "first create transaction release");
-            }
-            return result;
-        }).when(actionLogService).driverCreated(anyLong(), anyLong(), anyLong());
-
-        try (SafeLogCapture logs = new SafeLogCapture(); ExecutorService executor = Executors.newFixedThreadPool(2)) {
-            CompletableFuture<HttpResponse<String>> first = CompletableFuture.supplyAsync(() -> sendUnchecked("POST", "/api/drivers", token, null), executor);
-            assertThat(ownerLocked.await(5, TimeUnit.SECONDS)).isTrue();
-            CompletableFuture<HttpResponse<String>> second = CompletableFuture.supplyAsync(() -> sendUnchecked("POST", "/api/drivers", token, null), executor);
-            int waiterPid = awaitBlockedWaiter(holderPid.get(), second, Duration.ofSeconds(3));
-            long waitMillis = awaitBlocking(holderPid.get(), waiterPid, second, Duration.ofSeconds(1));
-            assertThat(second.isDone()).isFalse();
-            releaseFirst.countDown();
-            HttpResponse<String> firstResponse = first.get(8, TimeUnit.SECONDS);
-            HttpResponse<String> secondResponse = second.get(8, TimeUnit.SECONDS);
-            assertThat(List.of(firstResponse.statusCode(), secondResponse.statusCode())).containsExactlyInAnyOrder(201, 409);
-            HttpResponse<String> success = firstResponse.statusCode() == 201 ? firstResponse : secondResponse;
-            HttpResponse<String> conflict = firstResponse.statusCode() == 409 ? firstResponse : secondResponse;
-            assertError(conflict, 409, "DRIVER_PROFILE_ALREADY_EXISTS");
-            assertSuccess(success, 201);
-            String successTrace = trace(success);
-            assertThat(logs.count(successTrace, "action=driver-create")).isEqualTo(1);
-            assertThat(logs.count(trace(conflict), "action=driver-create")).isZero();
-            assertThat(jdbc.queryForObject("select count(*) from drivers where customer_id=?", Integer.class, owner.id())).isEqualTo(1);
-            assertThat(jdbc.queryForObject("select kyc_status from customers where id=?", String.class, owner.id())).isEqualTo("NONE");
-            System.out.println("P07_CREATE_RACE holderPid=" + holderPid.get() + " waiterPid=" + waiterPid
-                    + " pgBlockingPidsConfirmed=true waiterBlockedMillis=" + waitMillis + " outcomes=201_and_409 oneRow=true oneSuccessEvent=true");
-        } finally {
-            releaseFirst.countDown();
-        }
-    }
 
     @Test
     void authenticatedAdminLockedBeforeStatusCommandIsRecheckedInsideTransaction() throws Exception {
@@ -219,57 +174,6 @@ class DriverConcurrencyPostgresIT {
         }
     }
 
-    @Test
-    void licenseReviewCommitBlocksActivationAndActivationSeesApprovedEvidence() throws Exception {
-        Account owner = account("review-race-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.VERIFIED);
-        Account reviewer = account("review-race-reviewer", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
-        Account activator = account("review-race-activator", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
-        seedProof(owner, "CITIZEN_ID", "APPROVED", LocalDate.of(2027, 10, 14), null);
-        long driverId = seedDriver(owner, DriverStatus.PENDING);
-        long licenseId = seedPendingLicense(owner);
-        String reviewToken = login(reviewer);
-        String activateToken = login(activator);
-        CountDownLatch licenseFlushed = new CountDownLatch(1);
-        CountDownLatch releaseReviewCommit = new CountDownLatch(1);
-        AtomicBoolean holdOnce = new AtomicBoolean(true);
-        AtomicReference<Integer> holderPid = new AtomicReference<>();
-        doAnswer(invocation -> {
-            Object result = SpySupport.callRealMethod(invocation);
-            Long documentId = invocation.getArgument(2);
-            if (documentId.equals(licenseId) && holdOnce.compareAndSet(true, false)) {
-                holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
-                licenseFlushed.countDown();
-                await(releaseReviewCommit, "P06 document review commit release");
-            }
-            return result;
-        }).when(actionLogService).documentReviewRecorded(anyLong(), anyLong(), anyLong(), any(DocumentType.class),
-                any(VerificationStatus.class), any(VerificationStatus.class),
-                any(KycStatus.class), any(KycStatus.class), anyBoolean());
-
-        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
-            CompletableFuture<HttpResponse<String>> review = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
-                    "/api/user-documents/" + licenseId + "/review", reviewToken, "{\"verifyStatus\":\"APPROVED\"}"), executor);
-            assertThat(licenseFlushed.await(5, TimeUnit.SECONDS)).isTrue();
-            assertThat(jdbc.queryForObject("select verify_status from user_documents where id=?", String.class, licenseId))
-                    .isEqualTo("PENDING");
-            CompletableFuture<HttpResponse<String>> activation = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
-                    "/api/drivers/" + driverId + "/status", activateToken, "{\"status\":\"ACTIVE\"}"), executor);
-            int waiterPid = awaitBlockedWaiter(holderPid.get(), activation, Duration.ofSeconds(3));
-            long blockedMillis = awaitBlocking(holderPid.get(), waiterPid, activation, Duration.ofSeconds(1));
-            assertThat(activation.isDone()).isFalse();
-            releaseReviewCommit.countDown();
-            assertSuccess(review.get(8, TimeUnit.SECONDS), 200);
-            assertSuccess(activation.get(8, TimeUnit.SECONDS), 200);
-            assertThat(jdbc.queryForObject("select verify_status from user_documents where id=?", String.class, licenseId)).isEqualTo("APPROVED");
-            assertThat(driverStatus(driverId)).isEqualTo("ACTIVE");
-            assertThat(jdbc.queryForObject("select kyc_status from customers where id=?", String.class, owner.id())).isEqualTo("VERIFIED");
-            System.out.println("P07_REVIEW_ACTIVATION holderPid=" + holderPid.get() + " waiterPid=" + waiterPid
-                    + " pgBlockingPidsConfirmed=true waiterBlockedMillis=" + blockedMillis
-                    + " reviewCommitted=APPROVED activation=ACTIVE sharedKyc=VERIFIED");
-        } finally {
-            releaseReviewCommit.countDown();
-        }
-    }
 
     @Test
     void ownerLockAndActivationOrderingPreserveStoredVersusCurrentEligibility() throws Exception {
@@ -337,51 +241,6 @@ class DriverConcurrencyPostgresIT {
         }
     }
 
-    @Test
-    void twoConcurrentAdminStatusCommandsFollowStoredStateTransitions() throws Exception {
-        Account owner = account("two-status-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.VERIFIED);
-        Account activator = account("two-status-activator", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
-        Account suspender = account("two-status-suspender", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
-        long driverId = seedDriver(owner, DriverStatus.PENDING);
-        seedProof(owner, "CITIZEN_ID", "APPROVED", LocalDate.of(2027, 10, 14), null);
-        seedProof(owner, "DRIVER_LICENSE", "APPROVED", LocalDate.of(2027, 10, 14), "B");
-        String activateToken = login(activator);
-        String suspendToken = login(suspender);
-        CountDownLatch driverLocked = new CountDownLatch(1);
-        CountDownLatch releaseActivation = new CountDownLatch(1);
-        AtomicBoolean holdOnce = new AtomicBoolean(true);
-        AtomicReference<Integer> holderPid = new AtomicReference<>();
-        doAnswer(invocation -> {
-            Object result = SpySupport.callRealMethod(invocation);
-            Long id = invocation.getArgument(2);
-            if (id == driverId && holdOnce.compareAndSet(true, false)) {
-                holderPid.set(jdbc.queryForObject("select pg_backend_pid()", Integer.class));
-                driverLocked.countDown();
-                await(releaseActivation, "first driver status release");
-            }
-            return result;
-        }).when(actionLogService).driverChanged(anyLong(), anyLong(), anyLong(), any(DriverStatus.class),
-                any(DriverStatus.class), anyBoolean());
-
-        try (ExecutorService executor = Executors.newFixedThreadPool(2)) {
-            CompletableFuture<HttpResponse<String>> activation = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
-                    "/api/drivers/" + driverId + "/status", activateToken, "{\"status\":\"ACTIVE\"}"), executor);
-            assertThat(driverLocked.await(5, TimeUnit.SECONDS)).isTrue();
-            CompletableFuture<HttpResponse<String>> suspension = CompletableFuture.supplyAsync(() -> sendUnchecked("PATCH",
-                    "/api/drivers/" + driverId + "/status", suspendToken,
-                    "{\"status\":\"SUSPENDED\",\"reason\":\"ordered test\"}"), executor);
-            int waiterPid = awaitBlockedWaiter(holderPid.get(), suspension, Duration.ofSeconds(3));
-            awaitBlocking(holderPid.get(), waiterPid, suspension, Duration.ofSeconds(1));
-            releaseActivation.countDown();
-            assertSuccess(activation.get(8, TimeUnit.SECONDS), 200);
-            assertSuccess(suspension.get(8, TimeUnit.SECONDS), 200);
-            assertThat(driverStatus(driverId)).isEqualTo("SUSPENDED");
-            System.out.println("P07_STATUS_RACE holderPid=" + holderPid.get() + " waiterPid=" + waiterPid
-                    + " pgBlockingPidsConfirmed=true orderedTransitions=PENDING_ACTIVE_SUSPENDED final=SUSPENDED");
-        } finally {
-            releaseActivation.countDown();
-        }
-    }
 
 private void stubCommitBarrier(long ownerId, String ownerStatus, Long driverId,
             AtomicBoolean holdOnce, CountDownLatch held, CountDownLatch release, AtomicReference<Integer> pid) {

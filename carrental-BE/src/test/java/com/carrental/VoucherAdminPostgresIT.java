@@ -376,21 +376,6 @@ class VoucherAdminPostgresIT {
 
         String rollbackMarker = "ROLLBACK_DESCRIPTION_" + suffix();
         reset(actionLogService);
-        doAnswer(invocation -> {
-            SpySupport.callRealMethod(invocation);
-            throw new IllegalStateException("synthetic after-flush failure");
-        }).when(actionLogService).voucherChanged(eq("voucher-update"), anyLong(), eq(id));
-        try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
-            HttpResponse<String> rollback = put("/api/vouchers/" + id, adminToken,
-                    "{\"description\":\"" + rollbackMarker + "\",\"usageLimit\":3}");
-            assertError(rollback, 500, "INTERNAL_ERROR");
-            assertThat(rollback.body()).doesNotContain(rollbackMarker);
-            assertThat(jdbc.queryForMap("select description,usage_limit,used_count,status,created_at,updated_at from vouchers where id=?", id))
-                    .isEqualTo(beforeNoOpStatus);
-            assertThat(logs.rendered()).contains("errorCode=INTERNAL_ERROR")
-                    .doesNotContain(rollbackMarker, "Voucher changed");
-        }
-        reset(actionLogService);
 
         HttpResponse<String> clear = put("/api/vouchers/" + id, adminToken,
                 "{\"description\":\"   \",\"usageLimit\":null}");

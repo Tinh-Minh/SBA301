@@ -50,7 +50,7 @@ import com.carrental.dto.response.UserDocumentReviewResponse;
 import com.carrental.dto.response.UserDocumentSummaryResponse;
 import com.carrental.dto.response.BankAccountResponse;
 import com.carrental.dto.response.VoucherResponse;
-import com.carrental.dto.response.VoucherWindowState;
+import com.carrental.enums.VoucherWindowState;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.VerificationStatus;

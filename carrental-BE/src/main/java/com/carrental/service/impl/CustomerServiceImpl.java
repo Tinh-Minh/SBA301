@@ -1,5 +1,7 @@
 package com.carrental.service.impl;
 
+import static com.carrental.util.RequestChecks.fieldError;
+
 import com.carrental.config.CustomerProperties;
 import com.carrental.dto.request.auth.AuthInputNormalizer;
 import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
@@ -8,18 +10,16 @@ import com.carrental.dto.request.customer.UpdateProfileRequest;
 import com.carrental.dto.response.CustomerAdminResponse;
 import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.CustomerSummaryResponse;
-import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
-import com.carrental.mapper.CustomerMapper;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.CustomerService;
-import com.carrental.service.ActionLogService;
+import com.carrental.util.RequestChecks;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -27,42 +27,42 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
+@Transactional(readOnly = true)
 public class CustomerServiceImpl implements CustomerService {
 
     private static final Pattern PHONE = Pattern.compile("^(?:\\+84|0)[0-9]{8,14}$");
-
     private static final char LIKE_ESCAPE = '\\';
 
     private final CustomerRepository customers;
     private final EntityManager entityManager;
-    private final ActionLogService actionLogService;
     private final CustomerProperties properties;
     private final Clock clock;
 
     public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
-            ActionLogService actionLogService, CustomerProperties properties, Clock clock) {
+            CustomerProperties properties, Clock clock) {
         this.customers = customers;
         this.entityManager = entityManager;
-        this.actionLogService = actionLogService;
         this.properties = properties;
         this.clock = clock;
     }
 
     @Override
-    @Transactional(readOnly = true)
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     public CustomerProfileResponse getMe(CurrentAccount account) {
         return customers.findById(account.customerId())
-                .map(CustomerMapper::toProfile)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                .map(CustomerProfileResponse::from)
+                .orElseThrow(RequestChecks::notFound);
     }
 
     @Override
@@ -93,31 +93,27 @@ public class CustomerServiceImpl implements CustomerService {
                     .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
         }
 
-        boolean changed = CustomerMapper.applyProfileUpdate(customer, request,
-                new CustomerMapper.ProfileUpdateValues(fullName, dateOfBirth, address, email, phone, avatarUrl));
+        boolean changed = applyProfileUpdate(customer, request, fullName, dateOfBirth, address, email, phone, avatarUrl);
         if (changed) {
             customers.flush();
             // The database trigger is authoritative for updated_at; reload it after the write.
             entityManager.refresh(customer);
         }
-        return CustomerMapper.toProfile(customer);
+        return CustomerProfileResponse.from(customer);
     }
 
     @Override
-    @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<CustomerSummaryResponse> listCustomers(CustomerListQuery query) {
         Page<Customer> page = customers.findAll(customerSpecification(query), query.pageable());
-        List<CustomerSummaryResponse> content = page.getContent().stream().map(CustomerMapper::toSummary).toList();
-        return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
+        return PageResponse.from(page.map(CustomerSummaryResponse::from));
     }
 
     @Override
-    @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public CustomerAdminResponse getCustomer(long id) {
-        return customers.findById(id).map(CustomerMapper::toAdmin)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+        return customers.findById(id).map(CustomerAdminResponse::from)
+                .orElseThrow(RequestChecks::notFound);
     }
 
     @Override
@@ -134,10 +130,10 @@ public class CustomerServiceImpl implements CustomerService {
             actorRow = admins.stream().filter(c -> c.getId().equals(actor.customerId())).findFirst()
                     .orElseThrow(() -> new AppException(ErrorCode.ACCESS_DENIED));
             target = admins.stream().filter(c -> c.getId().equals(targetId)).findFirst()
-                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(RequestChecks::notFound);
         } else {
             actorRow = customers.findById(actor.customerId()).orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
-            target = customers.findWithLockById(targetId).orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+            target = customers.findWithLockById(targetId).orElseThrow(RequestChecks::notFound);
         }
         if (actorRow.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
         if (actorRow.getRole() != Role.ADMIN) throw new AppException(ErrorCode.ACCESS_DENIED);
@@ -165,10 +161,9 @@ public class CustomerServiceImpl implements CustomerService {
 
         if (target.getStatus() != oldStatus) {
             customers.flush();
-            actionLogService.customerStatusChanged(actorRow.getId(), target.getId(), oldStatus,
-                    target.getStatus(), reason != null);
+            log.info("customer-status actorId={} targetId={} {} -> {} reasonProvided={}", actorRow.getId(), target.getId(), oldStatus, target.getStatus(), reason != null);
         }
-        return CustomerMapper.toAdmin(target);
+        return CustomerAdminResponse.from(target);
     }
 
     private Specification<Customer> customerSpecification(CustomerListQuery query) {
@@ -257,12 +252,38 @@ public class CustomerServiceImpl implements CustomerService {
         return reason;
     }
 
-    private AppException fieldError(String field, String message) {
-        return new AppException(ErrorCode.VALIDATION_ERROR, List.of(new FieldErrorResponse(field, message)));
-    }
-
     private String escapeLike(String value) {
         return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
+    private static boolean applyProfileUpdate(Customer customer, UpdateProfileRequest request, String fullName,
+            LocalDate dateOfBirth, String address, String email, String phone, String avatarUrl) {
+        boolean changed = false;
+        if (request.fullNameWasProvided() && !Objects.equals(fullName, customer.getFullName())) {
+            customer.setFullName(fullName);
+            changed = true;
+        }
+        if (request.dateOfBirthWasProvided() && !Objects.equals(dateOfBirth, customer.getDateOfBirth())) {
+            customer.setDateOfBirth(dateOfBirth);
+            changed = true;
+        }
+        if (request.addressWasProvided() && !Objects.equals(address, customer.getAddress())) {
+            customer.setAddress(address);
+            changed = true;
+        }
+        if (request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail())) {
+            customer.setEmail(email);
+            customer.setEmailVerified(false);
+            changed = true;
+        }
+        if (request.phoneWasProvided() && !Objects.equals(phone, customer.getPhone())) {
+            customer.setPhone(phone);
+            changed = true;
+        }
+        if (request.avatarUrlWasProvided() && !Objects.equals(avatarUrl, customer.getAvatarUrl())) {
+            customer.setAvatarUrl(avatarUrl);
+            changed = true;
+        }
+        return changed;
+    }
 }

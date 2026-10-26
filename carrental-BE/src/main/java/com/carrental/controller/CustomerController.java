@@ -1,5 +1,8 @@
 package com.carrental.controller;
 
+import static com.carrental.util.RequestChecks.ok;
+import static com.carrental.util.RequestChecks.requirePositiveId;
+
 import com.carrental.config.CustomerProperties;
 import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
 import com.carrental.dto.request.customer.CustomerListQuery;
@@ -10,17 +13,13 @@ import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.CustomerSummaryResponse;
 import com.carrental.dto.response.KycSummaryResponse;
 import com.carrental.dto.response.PageResponse;
-import com.carrental.exception.AppException;
-import com.carrental.exception.ErrorCode;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.CustomerService;
 import com.carrental.service.KycService;
-import com.carrental.web.RequestTraceFilter;
-import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -46,20 +45,20 @@ public class CustomerController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> me(
             @AuthenticationPrincipal CurrentAccount account) {
-        return accountResponse(customerService.getMe(account));
+        return ok(customerService.getMe(account));
     }
 
     @GetMapping("/me/kyc")
     public ResponseEntity<ApiResponse<KycSummaryResponse>> myKyc(
             @AuthenticationPrincipal CurrentAccount account) {
-        return accountResponse(kycService.getMe(account));
+        return ok(kycService.getMe(account));
     }
 
     @PatchMapping(path = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateMe(
             @AuthenticationPrincipal CurrentAccount account,
             @RequestBody UpdateProfileRequest request) {
-        return accountResponse(customerService.updateMe(account, request));
+        return ok(customerService.updateMe(account, request));
     }
 
     @GetMapping
@@ -67,21 +66,21 @@ public class CustomerController {
     public ResponseEntity<ApiResponse<PageResponse<CustomerSummaryResponse>>> listCustomers(
             @RequestParam MultiValueMap<String, String> parameters) {
         CustomerListQuery query = CustomerListQuery.parse(parameters, customerProperties);
-        return accountResponse(customerService.listCustomers(query));
+        return ok(customerService.listCustomers(query));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<CustomerAdminResponse>> getCustomer(@PathVariable long id) {
         requirePositiveId(id);
-        return accountResponse(customerService.getCustomer(id));
+        return ok(customerService.getCustomer(id));
     }
 
     @GetMapping("/{id}/kyc")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<KycSummaryResponse>> getCustomerKyc(@PathVariable long id) {
         requirePositiveId(id);
-        return accountResponse(kycService.getCustomer(id));
+        return ok(kycService.getCustomer(id));
     }
 
     @PatchMapping(path = "/{id}/status", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -91,16 +90,6 @@ public class CustomerController {
             @PathVariable long id,
             @RequestBody ChangeCustomerStatusRequest request) {
         requirePositiveId(id);
-        return accountResponse(customerService.changeCustomerStatus(actor, id, request));
-    }
-
-    private <T> ResponseEntity<ApiResponse<T>> accountResponse(T data) {
-        return ResponseEntity.ok()
-                .cacheControl(CacheControl.noStore())
-                .body(ApiResponse.success(data, RequestTraceFilter.currentTraceId()));
-    }
-
-    private void requirePositiveId(long id) {
-        if (id <= 0) throw new AppException(ErrorCode.INVALID_REQUEST);
+        return ok(customerService.changeCustomerStatus(actor, id, request));
     }
 }

@@ -2,6 +2,7 @@ package com.carrental.exception;
 
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.FieldErrorResponse;
+import com.carrental.util.DbErrors;
 import com.carrental.web.RequestTraceFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +162,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
-        ErrorCode f1Code = function1Constraint(ex);
+        ErrorCode f1Code = DbErrors.resolveConstraint(ex);
         if (f1Code != null) {
             log.warn("Database constraint rejected traceId={} errorCode={}", RequestTraceFilter.currentTraceId(), f1Code);
             return build(f1Code.status(), f1Code.name(), f1Code.message());
@@ -184,30 +185,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String path = request.getServletPath();
         return List.of("auth", "customers", "drivers", "user-documents", "bank-accounts", "vouchers").stream()
                 .anyMatch(resource -> path.equals("/api/" + resource) || path.startsWith("/api/" + resource + "/"));
-    }
-
-    private ErrorCode function1Constraint(Throwable exception) {
-        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (!(cause instanceof org.hibernate.exception.ConstraintViolationException violation)
-                    || violation.getSQLException() == null) continue;
-            String state = violation.getSQLException().getSQLState();
-            String name = violation.getConstraintName();
-            if (name == null) continue;
-            if ("23503".equals(state) && "payouts_bank_account_id_recipient_id_fkey".equals(name)) {
-                return ErrorCode.BANK_ACCOUNT_IN_USE;
-            }
-            if (!"23505".equals(state)) continue;
-            return switch (name) {
-                case "uq_customers_email_lower", "customers_phone_key" -> ErrorCode.ACCOUNT_ALREADY_EXISTS;
-                case "drivers_customer_id_key" -> ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS;
-                case "uq_user_doc_approved" -> ErrorCode.APPROVED_DOCUMENT_CONFLICT;
-                case "bank_accounts_customer_id_bank_name_account_number_key" -> ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS;
-                case "uq_bank_default_per_customer" -> ErrorCode.BANK_DEFAULT_CONFLICT;
-                case "vouchers_code_key" -> ErrorCode.VOUCHER_CODE_ALREADY_EXISTS;
-                default -> null;
-            };
-        }
-        return null;
     }
 
     @ExceptionHandler(Exception.class)

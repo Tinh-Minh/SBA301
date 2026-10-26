@@ -1,5 +1,10 @@
 package com.carrental.controller;
 
+import static com.carrental.util.RequestChecks.created;
+import static com.carrental.util.RequestChecks.ok;
+import static com.carrental.util.RequestChecks.rejectQuery;
+import static com.carrental.util.RequestChecks.requirePositiveId;
+
 import com.carrental.config.CustomerProperties;
 import com.carrental.dto.request.voucher.ChangeVoucherStatusRequest;
 import com.carrental.dto.request.voucher.CreateVoucherRequest;
@@ -8,14 +13,10 @@ import com.carrental.dto.request.voucher.VoucherListQuery;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.VoucherResponse;
-import com.carrental.exception.AppException;
-import com.carrental.exception.ErrorCode;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.VoucherService;
-import com.carrental.web.RequestTraceFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
-import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @RestController
 @RequestMapping(path = "/api/vouchers", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -48,17 +48,14 @@ public class VoucherController {
     public ResponseEntity<ApiResponse<VoucherResponse>> create(@AuthenticationPrincipal CurrentAccount actor,
             HttpServletRequest servletRequest, @Valid @RequestBody CreateVoucherRequest request) {
         rejectQuery(servletRequest);
-        VoucherResponse created = service.create(actor, request);
-        return ResponseEntity.created(UriComponentsBuilder.fromPath("/api/vouchers/{id}")
-                        .buildAndExpand(created.id()).toUri())
-                .cacheControl(CacheControl.noStore())
-                .body(ApiResponse.success(created, RequestTraceFilter.currentTraceId()));
+        VoucherResponse saved = service.create(actor, request);
+        return created("/api/vouchers/{id}", saved.id(), saved);
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<VoucherResponse>>> list(@AuthenticationPrincipal CurrentAccount actor,
             @RequestParam MultiValueMap<String, String> parameters) {
-        return success(service.list(actor, VoucherListQuery.parse(parameters, properties)));
+        return ok(service.list(actor, VoucherListQuery.parse(parameters, properties)));
     }
 
     @GetMapping("/{id}")
@@ -66,7 +63,7 @@ public class VoucherController {
             @PathVariable long id, HttpServletRequest servletRequest) {
         rejectQuery(servletRequest);
         requirePositiveId(id);
-        return success(service.get(actor, id));
+        return ok(service.get(actor, id));
     }
 
     @PutMapping(path = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -74,7 +71,7 @@ public class VoucherController {
             @PathVariable long id, HttpServletRequest servletRequest, @Valid @RequestBody UpdateVoucherAdminRequest request) {
         rejectQuery(servletRequest);
         requirePositiveId(id);
-        return success(service.update(actor, id, request));
+        return ok(service.update(actor, id, request));
     }
 
     @PatchMapping(path = "/{id}/status", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -82,19 +79,6 @@ public class VoucherController {
             @PathVariable long id, HttpServletRequest servletRequest, @Valid @RequestBody ChangeVoucherStatusRequest request) {
         rejectQuery(servletRequest);
         requirePositiveId(id);
-        return success(service.changeStatus(actor, id, request));
-    }
-
-    private void rejectQuery(HttpServletRequest request) {
-        if (request.getQueryString() != null) throw new AppException(ErrorCode.INVALID_REQUEST);
-    }
-
-    private void requirePositiveId(long id) {
-        if (id <= 0) throw new AppException(ErrorCode.INVALID_REQUEST);
-    }
-
-    private <T> ResponseEntity<ApiResponse<T>> success(T data) {
-        return ResponseEntity.ok().cacheControl(CacheControl.noStore())
-                .body(ApiResponse.success(data, RequestTraceFilter.currentTraceId()));
+        return ok(service.changeStatus(actor, id, request));
     }
 }

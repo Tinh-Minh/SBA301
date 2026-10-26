@@ -1,9 +1,12 @@
 package com.carrental.service.impl;
 
+import static com.carrental.util.RequestChecks.fieldError;
+import static com.carrental.util.RequestChecks.requirePositiveId;
+import static com.carrental.util.RequestChecks.requirePrincipal;
+
 import com.carrental.dto.request.bankaccount.BankAccountListQuery;
 import com.carrental.dto.request.bankaccount.CreateBankAccountRequest;
 import com.carrental.dto.response.BankAccountResponse;
-import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.entity.BankAccount;
 import com.carrental.entity.Customer;
@@ -11,35 +14,34 @@ import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
-import com.carrental.mapper.BankAccountMapper;
 import com.carrental.repository.BankAccountRepository;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
-import com.carrental.service.ActionLogService;
 import com.carrental.service.BankAccountService;
-import java.util.List;
+import com.carrental.util.RequestChecks;
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /** Bank account operations scoped to the authenticated owner and leader schema. */
+@Slf4j
 @Service
+@PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+@Transactional(readOnly = true)
 public class BankAccountServiceImpl implements BankAccountService {
 
     private final BankAccountRepository bankAccounts;
     private final CustomerRepository customers;
-    private final ActionLogService actionLogService;
-    public BankAccountServiceImpl(BankAccountRepository bankAccounts, CustomerRepository customers,
-            ActionLogService actionLogService) {
+
+    public BankAccountServiceImpl(BankAccountRepository bankAccounts, CustomerRepository customers) {
         this.bankAccounts = bankAccounts;
         this.customers = customers;
-        this.actionLogService = actionLogService;
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @Transactional
     public BankAccountResponse create(CurrentAccount account, CreateBankAccountRequest request) {
         requirePrincipal(account);
@@ -49,62 +51,66 @@ public class BankAccountServiceImpl implements BankAccountService {
             throw new AppException(ErrorCode.BANK_ACCOUNT_ALREADY_EXISTS);
         }
         if (input.makeDefault()) clearDefault(owner.getId());
-        BankAccount saved = bankAccounts.saveAndFlush(BankAccountMapper.toNewEntity(owner,
-                input.bankName(), input.accountNumber(), input.accountHolder(), input.makeDefault()));
-        actionLogService.bankAccountChanged("bank-account-create", owner.getId(), saved.getId());
-        return BankAccountMapper.toResponse(saved);
+        BankAccount saved = bankAccounts.saveAndFlush(newAccount(owner, input));
+        log.info("bank-account-create ownerId={} bankAccountId={}", owner.getId(), saved.getId());
+        return BankAccountResponse.from(saved);
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    @Transactional(readOnly = true)
     public PageResponse<BankAccountResponse> list(CurrentAccount account, BankAccountListQuery query) {
         Customer owner = activeOwner(account);
         Objects.requireNonNull(query);
         Page<BankAccount> page = bankAccounts.findAllByCustomerId(owner.getId(), query.pageable());
-        List<BankAccountResponse> content = page.getContent().stream().map(BankAccountMapper::toResponse).toList();
-        return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
+        return PageResponse.from(page.map(BankAccountResponse::from));
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    @Transactional(readOnly = true)
     public BankAccountResponse get(CurrentAccount account, long bankAccountId) {
         requirePositiveId(bankAccountId);
         Customer owner = activeOwner(account);
         return bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId())
-                .map(BankAccountMapper::toResponse)
-                .orElseThrow(() -> notFound());
+                .map(BankAccountResponse::from)
+                .orElseThrow(RequestChecks::notFound);
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @Transactional
     public BankAccountResponse setDefault(CurrentAccount account, long bankAccountId) {
         requirePositiveId(bankAccountId);
         requirePrincipal(account);
         // One owner lock serializes all default changes, including the first default account.
         Customer owner = lockActiveOwner(account);
-        BankAccount target = bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId()).orElseThrow(BankAccountServiceImpl::notFound);
-        if (Boolean.TRUE.equals(target.getIsDefault())) return BankAccountMapper.toResponse(target);
+        BankAccount target = bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId())
+                .orElseThrow(RequestChecks::notFound);
+        if (Boolean.TRUE.equals(target.getIsDefault())) return BankAccountResponse.from(target);
         clearDefault(owner.getId());
         target.setIsDefault(true);
         bankAccounts.flush();
-        actionLogService.bankAccountChanged("bank-account-default", owner.getId(), target.getId());
-        return BankAccountMapper.toResponse(target);
+        log.info("bank-account-default ownerId={} bankAccountId={}", owner.getId(), target.getId());
+        return BankAccountResponse.from(target);
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @Transactional
     public void delete(CurrentAccount account, long bankAccountId) {
         requirePositiveId(bankAccountId);
         requirePrincipal(account);
         Customer owner = lockActiveOwner(account);
-        BankAccount target = bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId()).orElseThrow(BankAccountServiceImpl::notFound);
+        BankAccount target = bankAccounts.findByIdAndCustomerId(bankAccountId, owner.getId())
+                .orElseThrow(RequestChecks::notFound);
         bankAccounts.delete(target);
         bankAccounts.flush();
-        actionLogService.bankAccountChanged("bank-account-delete", owner.getId(), target.getId());
+        log.info("bank-account-delete ownerId={} bankAccountId={}", owner.getId(), target.getId());
+    }
+
+    private static BankAccount newAccount(Customer owner, PayeeInput input) {
+        BankAccount account = new BankAccount();
+        account.setCustomer(owner);
+        account.setBankName(input.bankName());
+        account.setAccountNumber(input.accountNumber());
+        account.setAccountHolder(input.accountHolder());
+        account.setIsDefault(input.makeDefault());
+        return account;
     }
 
     private void clearDefault(long ownerId) {
@@ -138,16 +144,6 @@ public class BankAccountServiceImpl implements BankAccountService {
         }
     }
 
-    private static void requirePrincipal(CurrentAccount account) {
-        if (account == null || account.customerId() <= 0 || account.role() == null) {
-            throw new AppException(ErrorCode.INVALID_TOKEN);
-        }
-    }
-
-    private static void requirePositiveId(long id) {
-        if (id <= 0) throw new AppException(ErrorCode.INVALID_REQUEST);
-    }
-
     private PayeeInput validateRequest(CreateBankAccountRequest request) {
         if (request == null || !request.bankNameWasProvided() || !request.accountNumberWasProvided()
                 || !request.accountHolderWasProvided()) throw new AppException(ErrorCode.INVALID_REQUEST);
@@ -165,12 +161,6 @@ public class BankAccountServiceImpl implements BankAccountService {
         if (value.codePoints().anyMatch(Character::isISOControl)) throw fieldError(field, "Chứa ký tự không hợp lệ");
         return value;
     }
-
-    private static AppException fieldError(String field, String message) {
-        return new AppException(ErrorCode.VALIDATION_ERROR, List.of(new FieldErrorResponse(field, message)));
-    }
-
-    private static AppException notFound() { return new AppException(ErrorCode.RESOURCE_NOT_FOUND); }
 
     private record PayeeInput(String bankName, String accountNumber, String accountHolder, boolean makeDefault) { }
 }

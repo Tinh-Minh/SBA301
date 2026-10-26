@@ -1,0 +1,15 @@
+package com.carrental.config;
+
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+/**
+ * Bật các job chạy định kỳ. Dùng công tắc app.scheduling.enabled=false
+ * khi chạy test để tắt scheduling.
+ */
+@Configuration
+@EnableScheduling
+@ConditionalOnProperty(name = "app.scheduling.enabled", havingValue = "true", matchIfMissing = true)
+public class SchedulingConfig {
+}

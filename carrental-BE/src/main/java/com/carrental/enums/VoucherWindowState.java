@@ -1,4 +1,4 @@
-package com.carrental.dto.response;
+package com.carrental.enums;
 
 public enum VoucherWindowState {
     UPCOMING, CURRENT, ENDED

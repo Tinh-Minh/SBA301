@@ -15,11 +15,11 @@ import org.springframework.stereotype.Service;
 
 /** Đọc người dùng từ principal JWT. Header X-User-Id bị bỏ qua. */
 @Service
-public class HeaderCurrentUserServiceImpl implements CurrentUserService {
+public class CurrentUserServiceImpl implements CurrentUserService {
 
     private final CustomerRepository customerRepository;
 
-    public HeaderCurrentUserServiceImpl(CustomerRepository customerRepository) {
+    public CurrentUserServiceImpl(CustomerRepository customerRepository) {
         this.customerRepository = customerRepository;
     }
 

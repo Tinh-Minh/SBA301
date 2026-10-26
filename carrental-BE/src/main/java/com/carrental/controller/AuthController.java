@@ -1,5 +1,7 @@
 package com.carrental.controller;
 
+import static com.carrental.util.RequestChecks.ok;
+
 import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.LoginRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
@@ -38,9 +40,7 @@ public class AuthController {
 
     @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok()
-                .cacheControl(CacheControl.noStore())
-                .body(ApiResponse.success(authService.login(request), RequestTraceFilter.currentTraceId()));
+        return ok(authService.login(request));
     }
 
     @PostMapping(path = "/change-password", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -48,8 +48,6 @@ public class AuthController {
             @AuthenticationPrincipal CurrentAccount account,
             @Valid @RequestBody ChangePasswordRequest request) {
         authService.changePassword(account, request);
-        return ResponseEntity.ok()
-                .cacheControl(CacheControl.noStore())
-                .body(ApiResponse.success(null, RequestTraceFilter.currentTraceId()));
+        return ok(null);
     }
 }

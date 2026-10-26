@@ -1,17 +1,16 @@
 package com.carrental.security;
 
+import com.carrental.web.RequestTraceFilter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.carrental.web.RequestTraceFilter;
 import java.io.IOException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 
+@Slf4j
 public final class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
-    private static final Logger log = LoggerFactory.getLogger(ApiAuthenticationEntryPoint.class);
     private final SecurityErrorResponses responses;
 
     public ApiAuthenticationEntryPoint(SecurityErrorResponses responses) {

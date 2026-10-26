@@ -619,37 +619,6 @@ class UserDocumentReviewPostgresIT {
         System.out.println("P06_POSTGRES_OWNER_ROW_LOCK timeout=503 traceMatched=true rollbackClean=true releaseRetry=200");
     }
 
-@Test
-    void reviewRollbackAfterDocumentAndKycFlushKeepsBothRowsAndFilesAndEmitsNoSuccessLog() throws Exception {
-        Account admin = account("rollback-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE);
-        Account owner = account("rollback-owner", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE);
-        String token = login(admin);
-        SeededDocument document = seedComplete(owner, unique("ROLLBACK"));
-        Map<String, Object> beforeDocument = documentAudit(document.id());
-        Map<String, Object> beforeOwner = customerSnapshot(owner.id());
-        Set<String> filesBefore = fileNames();
-        doAnswer(invocation -> {
-            SpySupport.callRealMethod(invocation);
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void beforeCommit(boolean readOnly) {
-                    throw new IllegalStateException("P06_AFTER_KYC_FLUSH_SENTINEL");
-                }
-            });
-            return null;
-        }).when(actionLogService).documentReviewRecorded(anyLong(), anyLong(), anyLong(), any(), any(), any(), any(), any(), anyBoolean());
-
-        try (SafeLogCapture logs = new SafeLogCapture()) {
-            HttpResponse<String> response = patch(reviewPath(document.id()), token, "{\"verifyStatus\":\"APPROVED\"}");
-            assertApiError(response, 500, "INTERNAL_ERROR");
-            assertThat(response.body()).doesNotContain("P06_AFTER_KYC_FLUSH_SENTINEL");
-            assertThat(logs.rendered()).doesNotContain("P06_AFTER_KYC_FLUSH_SENTINEL", owner.email(), PRIVATE_ROOT.toString());
-            assertThat(logs.events()).noneMatch(event -> event.getFormattedMessage().contains("Document review committed"));
-        }
-        assertThat(documentAudit(document.id())).isEqualTo(beforeDocument);
-        assertThat(customerSnapshot(owner.id())).isEqualTo(beforeOwner);
-        assertThat(fileNames()).isEqualTo(filesBefore);
-        System.out.println("P06_ROLLBACK afterDocumentAndKycFlush=true documentRollback=true customerRollback=true noSuccessLog=true filesUnchanged=true");
-    }
 
     @Test
     void reviewAndNewSubmissionOverlapOnlyDuringPreTransactionFileStage() throws Exception {

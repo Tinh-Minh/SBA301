@@ -1,66 +1,66 @@
 package com.carrental.service.impl;
 
+import static com.carrental.util.RequestChecks.notFound;
+import static com.carrental.util.RequestChecks.requirePositiveId;
+import static com.carrental.util.RequestChecks.requirePrincipal;
+
+import com.carrental.dto.request.document.ReviewUserDocumentRequest;
 import com.carrental.dto.request.document.UserDocumentListQuery;
 import com.carrental.dto.request.document.UserDocumentSubmissionCommand;
-import com.carrental.dto.request.document.ReviewUserDocumentRequest;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.UserDocumentDetailResponse;
-import com.carrental.dto.response.UserDocumentSummaryResponse;
 import com.carrental.dto.response.UserDocumentReviewResponse;
+import com.carrental.dto.response.UserDocumentSummaryResponse;
 import com.carrental.entity.Customer;
 import com.carrental.entity.UserDocument;
 import com.carrental.enums.CustomerStatus;
-import com.carrental.enums.VerificationStatus;
+import com.carrental.enums.DocumentType;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.DocumentType;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
-import com.carrental.mapper.UserDocumentMapper;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
-import com.carrental.service.UserDocumentService;
-import com.carrental.service.ActionLogService;
 import com.carrental.service.KycService;
+import com.carrental.service.UserDocumentService;
+import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentFile;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentReceipt;
-import com.carrental.storage.PrivateDocumentStorage;
+import com.carrental.util.RequestChecks;
 import com.carrental.web.RequestTraceFilter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
+@Transactional(readOnly = true)
 public class UserDocumentServiceImpl implements UserDocumentService {
-
-    private static final Logger log = LoggerFactory.getLogger(UserDocumentServiceImpl.class);
     private final CustomerRepository customers;
     private final UserDocumentRepository documents;
     private final PrivateDocumentStorage storage;
     private final KycService kycService;
-    private final ActionLogService actionLogService;
     private final Clock clock;
 
     public UserDocumentServiceImpl(CustomerRepository customers, UserDocumentRepository documents,
-            PrivateDocumentStorage storage, KycService kycService, ActionLogService actionLogService, Clock clock) {
+            PrivateDocumentStorage storage, KycService kycService, Clock clock) {
         this.customers = customers;
         this.documents = documents;
         this.storage = storage;
         this.kycService = kycService;
-        this.actionLogService = actionLogService;
         this.clock = clock;
     }
 
@@ -68,7 +68,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @Transactional
     public UserDocumentDetailResponse submit(CurrentAccount account, UserDocumentSubmissionCommand command) {
-        requireActivePrincipal(account);
+        requirePrincipal(account);
         if (command == null || command.metadata() == null) throw new AppException(ErrorCode.INVALID_REQUEST);
         if (!customers.existsByIdAndStatusAndRole(account.customerId(), CustomerStatus.ACTIVE, account.role())) {
             throw new AppException(ErrorCode.INVALID_TOKEN);
@@ -94,9 +94,9 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             if (owner.getStatus() != CustomerStatus.ACTIVE || owner.getRole() != account.role()) {
                 throw new AppException(ErrorCode.INVALID_TOKEN);
             }
-            UserDocument document = UserDocumentMapper.toNewEntity(owner, command.metadata(),
+            UserDocument document = command.metadata().toEntity(owner,
                     receipts.get(0).locator(), receipts.size() == 2 ? receipts.get(1).locator() : null);
-            return UserDocumentMapper.toDetail(documents.saveAndFlush(document));
+            return UserDocumentDetailResponse.from(documents.saveAndFlush(document));
         } catch (RuntimeException failure) {
             cleanup(receipts);
             throw failure;
@@ -105,9 +105,8 @@ public class UserDocumentServiceImpl implements UserDocumentService {
 
     @Override
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    @Transactional(readOnly = true)
     public PageResponse<UserDocumentSummaryResponse> list(CurrentAccount account, UserDocumentListQuery query) {
-        requireActivePrincipal(account);
+        requirePrincipal(account);
         Objects.requireNonNull(query);
         if (account.role() != Role.ADMIN && (!query.scope().equals("mine") || query.customerId() != null)) {
             throw new AppException(ErrorCode.ACCESS_DENIED);
@@ -117,33 +116,23 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         }
         Specification<UserDocument> specification = documentSpecification(account, query);
         Page<UserDocument> page = documents.findAll(specification, query.pageable());
-        return new PageResponse<>(page.getContent().stream().map(UserDocumentMapper::toSummary).toList(),
-                page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
+        return PageResponse.from(page.map(UserDocumentSummaryResponse::from));
     }
 
     @Override
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    @Transactional(readOnly = true)
     public UserDocumentDetailResponse get(CurrentAccount account, long documentId) {
-        requireActivePrincipal(account);
-        requirePositiveId(documentId);
-        UserDocument document = account.role() == Role.ADMIN
-                ? documents.findById(documentId).orElseThrow(() -> notFound())
-                : documents.findByIdAndCustomerId(documentId, account.customerId()).orElseThrow(() -> notFound());
-        return UserDocumentMapper.toDetail(document);
+        return UserDocumentDetailResponse.from(findAccessibleDocument(account, documentId));
     }
 
     @Override
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-    @Transactional(readOnly = true)
     public PrivateDocumentFile download(CurrentAccount account, long documentId, String side) {
-        requireActivePrincipal(account);
+        requirePrincipal(account);
         requirePositiveId(documentId);
         if (!"front".equals(side) && !"back".equals(side)) throw new AppException(ErrorCode.INVALID_REQUEST);
         requireStorage();
-        UserDocument document = account.role() == Role.ADMIN
-                ? documents.findById(documentId).orElseThrow(this::notFound)
-                : documents.findByIdAndCustomerId(documentId, account.customerId()).orElseThrow(this::notFound);
+        UserDocument document = findAccessibleDocument(account, documentId);
         String locator = "front".equals(side) ? document.getFrontImageUrl() : document.getBackImageUrl();
         if (locator == null || locator.isBlank()) throw notFound();
         return storage.open(locator);
@@ -160,16 +149,15 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         }
 
         long ownerId = documents.findCustomerIdById(documentId)
-                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(RequestChecks::notFound);
         if (actor.customerId() == ownerId) throw new AppException(ErrorCode.DOCUMENT_SELF_REVIEW_FORBIDDEN);
         // Reviews of different documents of one customer share this lock so the KYC update is consistent.
-        Customer owner = customers.findWithLockById(ownerId).orElseThrow(this::notFound);
-        UserDocument document = documents.findWithLockById(documentId).orElseThrow(this::notFound);
+        Customer owner = customers.findWithLockById(ownerId).orElseThrow(RequestChecks::notFound);
+        UserDocument document = documents.findWithLockById(documentId).orElseThrow(RequestChecks::notFound);
         Customer actorRow = customers.findById(actor.customerId())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
         if (actorRow.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
         if (actorRow.getRole() != Role.ADMIN) throw new AppException(ErrorCode.ACCESS_DENIED);
-        if (actorRow.getId().equals(owner.getId())) throw new AppException(ErrorCode.DOCUMENT_SELF_REVIEW_FORBIDDEN);
         switch (document.getVerifyStatus()) {
             case PENDING -> { }
             case APPROVED, REJECTED -> throw new AppException(ErrorCode.DOCUMENT_ALREADY_REVIEWED);
@@ -200,10 +188,17 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             owner.setKycStatus(currentKyc);
             customers.flush();
         }
-        UserDocumentReviewResponse response = UserDocumentMapper.toReviewResponse(document, currentKyc, evaluatedOn);
-        actionLogService.documentReviewRecorded(actorRow.getId(), owner.getId(), document.getId(), document.getDocType(),
-                oldStatus, command.status(), oldKyc, currentKyc, command.reason() != null);
+        UserDocumentReviewResponse response = UserDocumentReviewResponse.from(document, currentKyc, evaluatedOn);
+        log.info("document-review actorId={} ownerId={} documentId={} type={} {} -> {} kyc {} -> {} reasonProvided={}", actorRow.getId(), owner.getId(), document.getId(), document.getDocType(), oldStatus, command.status(), oldKyc, currentKyc, command.reason() != null);
         return response;
+    }
+
+    private UserDocument findAccessibleDocument(CurrentAccount account, long documentId) {
+        requirePrincipal(account);
+        requirePositiveId(documentId);
+        return account.role() == Role.ADMIN
+                ? documents.findById(documentId).orElseThrow(RequestChecks::notFound)
+                : documents.findByIdAndCustomerId(documentId, account.customerId()).orElseThrow(RequestChecks::notFound);
     }
 
     private ReviewCommand reviewCommand(ReviewUserDocumentRequest request) {
@@ -260,8 +255,6 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         }
     }
 
-    /** Review failure diagnostics deliberately exclude throwable/message, request fields and storage locators. */
-
     private boolean notBlank(String value) { return value != null && !value.strip().isEmpty(); }
 
     private record ReviewCommand(VerificationStatus status, String reason) { }
@@ -291,15 +284,4 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     private void requireStorage() {
         if (!storage.isEnabled()) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, "Dịch vụ lưu tệp chưa được bật");
     }
-
-    private void requireActivePrincipal(CurrentAccount account) {
-        if (account == null || account.customerId() <= 0 || account.role() == null) throw new AppException(ErrorCode.INVALID_TOKEN);
-    }
-
-    private void requirePositiveId(long id) {
-        if (id <= 0) throw new AppException(ErrorCode.INVALID_REQUEST);
-    }
-
-    private AppException notFound() { return new AppException(ErrorCode.RESOURCE_NOT_FOUND); }
-
 }

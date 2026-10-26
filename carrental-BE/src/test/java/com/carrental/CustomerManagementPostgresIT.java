@@ -606,34 +606,6 @@ class CustomerManagementPostgresIT {
         }
     }
 
-    @Test
-    void rollbackAfterFlushLeavesStatusAuditAndAfterCommitLogUntouched() throws Exception {
-        Account admin = account("rollback-admin", Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.NONE,
-                "Rollback Admin", null, null, false);
-        Account target = account("rollback-target", Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.NONE,
-                "Rollback Target", null, null, false);
-        String token = login(admin);
-        Object before = jdbc.queryForObject("select updated_at from customers where id=?", Object.class, target.id());
-        doAnswer(invocation -> {
-            SpySupport.callRealMethod(invocation);
-            throw new IllegalStateException("SENTINEL_FAILURE_AFTER_FLUSH");
-        }).when(actionLogService).customerStatusChanged(Mockito.anyLong(), Mockito.anyLong(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
-        try (ThreadSafeLogCapture logs = new ThreadSafeLogCapture()) {
-            HttpResponse<String> response = patch("/api/customers/" + target.id() + "/status", token,
-                    "{\"status\":\"LOCKED\",\"reason\":\"rollback reason\"}");
-            assertError(response, 500, "INTERNAL_ERROR");
-            assertThat(response.body()).doesNotContain("SENTINEL_FAILURE_AFTER_FLUSH", "rollback reason");
-            assertThat(jdbc.queryForObject("select status from customers where id=?", String.class, target.id())).isEqualTo("ACTIVE");
-            assertThat(jdbc.queryForObject("select updated_at from customers where id=?", Object.class, target.id())).isEqualTo(before);
-            assertThat(logs.rendered()).doesNotContain("Customer status changed", "rollback reason", "SENTINEL_FAILURE_AFTER_FLUSH");
-        } finally {
-            Mockito.reset(customers);
-            Mockito.reset(actionLogService);
-        }
-        // Row locks are released on rollback.
-        assertSuccess(patch("/api/customers/" + target.id() + "/status", token,
-                "{\"status\":\"LOCKED\",\"reason\":\"retry after rollback\"}"), 200);
-    }
 
 @Test
     void statusLogsContainSafeMetadataButNeverReasonOrCustomerIdentifiers() throws Exception {

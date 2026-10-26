@@ -1,4 +1,4 @@
-package com.carrental.dto.response;
+package com.carrental.enums;
 
 /** Non-sensitive reason for a current eligibility result. */
 public enum DriverEligibilityReasonCode {

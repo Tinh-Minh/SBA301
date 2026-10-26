@@ -1,6 +1,7 @@
 package com.carrental.storage;
 
 import com.carrental.config.DocumentProperties;
+import com.carrental.enums.DocumentImageFormat;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import java.io.ByteArrayInputStream;

@@ -7,7 +7,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.carrental.config.CustomerProperties;
 import com.carrental.dto.request.voucher.CreateVoucherRequest;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
@@ -18,7 +17,6 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.security.CurrentAccount;
-import com.carrental.service.ActionLogService;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Instant;
@@ -34,12 +32,11 @@ class VoucherServiceImplTest {
 
     private final VoucherRepository vouchers = mock(VoucherRepository.class);
     private final CustomerRepository customers = mock(CustomerRepository.class);
-    private final ActionLogService actionLogs = mock(ActionLogService.class);
     private VoucherServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new VoucherServiceImpl(vouchers, customers, actionLogs, new CustomerProperties(),
+        service = new VoucherServiceImpl(vouchers, customers,
                 Clock.fixed(Instant.parse("2026-01-01T00:00:00Z"), ZoneOffset.UTC));
         Customer admin = new Customer();
         admin.setId(ADMIN_ID);

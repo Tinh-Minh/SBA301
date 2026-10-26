@@ -1,7 +1,14 @@
 package com.carrental.dto.request.voucher;
 
+import com.carrental.entity.Voucher;
 import com.carrental.enums.DiscountType;
-import jakarta.validation.constraints.*;
+import com.carrental.enums.VoucherStatus;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.Getter;
@@ -41,5 +48,22 @@ public class CreateVoucherRequest {
 
     private static BigDecimal normalize(BigDecimal value) {
         return value == null ? null : value.stripTrailingZeros();
+    }
+
+    public Voucher toEntity() {
+        Voucher voucher = new Voucher();
+        voucher.setCode(getCode().strip());
+        voucher.setDescription(getDescription() == null || getDescription().isBlank() ? null : getDescription().strip());
+        voucher.setDiscountType(getDiscountType());
+        voucher.setDiscountValue(getDiscountValue());
+        voucher.setMaxDiscount(getMaxDiscount());
+        voucher.setMinOrderAmount(getMinOrderAmount());
+        voucher.setStartAt(getStartAt());
+        voucher.setEndAt(getEndAt());
+        voucher.setUsageLimit(getUsageLimit());
+        voucher.setPerUserLimit(getPerUserLimit());
+        voucher.setUsedCount(0);
+        voucher.setStatus(VoucherStatus.ACTIVE);
+        return voucher;
     }
 }

@@ -90,7 +90,7 @@ class UserDocumentTransactionTest {
         });
         PlatformTransactionManager transactions = new CompletionTransactionManager(completionStatus, failCommit);
         UserDocumentServiceImpl service = new UserDocumentServiceImpl(customers, documents, storage,
-                mock(KycService.class), mock(ActionLogService.class), Clock.systemDefaultZone());
+                mock(KycService.class), Clock.systemDefaultZone());
         UserDocumentSubmissionRequest metadata = new UserDocumentSubmissionRequest(DocumentType.CITIZEN_ID,
                 "SYNTHETIC-" + UUID.randomUUID().toString().substring(0, 8), null, LocalDate.of(2000, 1, 1),
                 null, null, null, null);

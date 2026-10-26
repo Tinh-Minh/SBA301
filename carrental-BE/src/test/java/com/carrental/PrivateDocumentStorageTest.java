@@ -2,6 +2,7 @@ package com.carrental;
 
 import static org.assertj.core.api.Assertions.*;
 import com.carrental.config.DocumentProperties;
+import com.carrental.enums.DocumentImageFormat;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.storage.LocalPrivateDocumentStorage;
