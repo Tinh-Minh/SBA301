@@ -11,13 +11,10 @@ import com.carrental.entity.CarImage;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CarStatus;
-import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.RentalOption;
 import com.carrental.enums.RentalType;
 import com.carrental.enums.SlotStatus;
 import com.carrental.exception.AppException;
-import com.carrental.exception.ForbiddenException;
-import com.carrental.exception.UnauthorizedException;
 import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.CarSlotRepository;
@@ -43,7 +40,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -63,14 +59,7 @@ public class CarSlotServiceImpl implements CarSlotService {
         log.info("Create car slot carId={}, start={}, end={}",
                 request.getCarId(), request.getStartTime(), request.getEndTime());
         try {
-            Customer owner = requireActiveUser();
-
-            Car car = carRepository.findById(request.getCarId())
-                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + request.getCarId()));
-
-            if (!isOwner(car, owner.getId())) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
-            }
+            Car car = loadOwnedCar(request.getCarId());
 
             if (car.getStatus() != CarStatus.ACTIVE) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Xe phải ở trạng thái ACTIVE mới được mở slot cho thuê");
@@ -86,9 +75,7 @@ public class CarSlotServiceImpl implements CarSlotService {
             );
 
             CarSlot slot = request.toEntity(car);
-            CarSlot saved = carSlotRepository.saveAndFlush(slot);
-
-            return CarSlotResponse.from(saved);
+            return CarSlotResponse.from(carSlotRepository.saveAndFlush(slot));
         } catch (AppException e) {
             log.warn("Tạo slot thất bại carId={}: {}", request.getCarId(), e.getMessage());
             throw e;
@@ -132,8 +119,7 @@ public class CarSlotServiceImpl implements CarSlotService {
             if (request.getPricePerHour() != null) slot.setPricePerHour(request.getPricePerHour());
             if (request.getPricePerDay() != null) slot.setPricePerDay(request.getPricePerDay());
 
-            CarSlot updated = carSlotRepository.saveAndFlush(slot);
-            return CarSlotResponse.from(updated);
+            return CarSlotResponse.from(carSlotRepository.saveAndFlush(slot));
         } catch (AppException e) {
             log.warn("Cập nhật slot thất bại slotId={}: {}", slotId, e.getMessage());
             throw e;
@@ -152,7 +138,6 @@ public class CarSlotServiceImpl implements CarSlotService {
         log.info("Close slot id={}", slotId);
         try {
             CarSlot slot = loadOwnedSlot(slotId);
-
             slot.getStatus().validateTransitionTo(SlotStatus.CLOSED);
             slot.setStatus(SlotStatus.CLOSED);
 
@@ -175,7 +160,6 @@ public class CarSlotServiceImpl implements CarSlotService {
         log.info("Cancel slot id={}", slotId);
         try {
             CarSlot slot = loadOwnedSlot(slotId);
-
             slot.getStatus().validateTransitionTo(SlotStatus.CANCELLED);
             slot.setStatus(SlotStatus.CANCELLED);
 
@@ -199,7 +183,6 @@ public class CarSlotServiceImpl implements CarSlotService {
         log.info("Reopen slot id={}", slotId);
         try {
             CarSlot slot = loadOwnedSlot(slotId);
-
             slot.getStatus().validateTransitionTo(SlotStatus.OPEN);
 
             if (slot.getCar().getStatus() != CarStatus.ACTIVE) {
@@ -240,12 +223,10 @@ public class CarSlotServiceImpl implements CarSlotService {
             CarSlot slot = carSlotRepository.findWithCarById(slotId)
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy slot id=" + slotId));
 
-            Optional<Customer> requester = optionalActiveUser();
-            boolean canViewFull = requester
-                    .map(u -> isOwner(slot.getCar(), u.getId()) || currentUserService.isAdmin(u))
+            boolean canViewFull = currentUserService.optionalCurrentUser()
+                    .map(u -> currentUserService.isOwner(slot.getCar(), u) || currentUserService.isAdmin(u))
                     .orElse(false);
 
-            // Công khai chỉ trả slot OPEN của xe ACTIVE
             if (!canViewFull && (slot.getStatus() != SlotStatus.OPEN || slot.getCar().getStatus() != CarStatus.ACTIVE)) {
                 throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy slot id=" + slotId);
             }
@@ -264,13 +245,7 @@ public class CarSlotServiceImpl implements CarSlotService {
     public PageResponse<CarSlotResponse> getSlotsByCarId(Long carId, Pageable pageable) {
         log.info("Get slots by car carId={}", carId);
         try {
-            Customer owner = requireActiveUser();
-            Car car = carRepository.findById(carId)
-                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId));
-            if (!isOwner(car, owner.getId())) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
-            }
-
+            loadOwnedCar(carId);
             Page<CarSlot> page = carSlotRepository.findAllByCarId(carId, pageable);
             return PageResponse.from(page.map(CarSlotResponse::from));
         } catch (AppException e) {
@@ -320,15 +295,21 @@ public class CarSlotServiceImpl implements CarSlotService {
         }
     }
 
-    private CarSlot findSlotOrThrow(Long slotId) {
-        return carSlotRepository.findById(slotId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy slot id=" + slotId));
+    private Car loadOwnedCar(Long carId) {
+        Customer owner = currentUserService.getCurrentUser();
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId));
+        if (!currentUserService.isOwner(car, owner)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
+        }
+        return car;
     }
 
     private CarSlot loadOwnedSlot(Long slotId) {
-        Customer owner = requireActiveUser();
-        CarSlot slot = findSlotOrThrow(slotId);
-        if (!isOwner(slot.getCar(), owner.getId())) {
+        Customer owner = currentUserService.getCurrentUser();
+        CarSlot slot = carSlotRepository.findById(slotId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy slot id=" + slotId));
+        if (!currentUserService.isOwner(slot.getCar(), owner)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
         }
         return slot;
@@ -357,34 +338,6 @@ public class CarSlotServiceImpl implements CarSlotService {
 
         if (carSlotRepository.existsOverlapping(carId, startTime, endTime, excludeSlotId)) {
             throw new AppException(HttpStatus.CONFLICT, "Khung giờ này đã bị trùng với một slot khác của xe");
-        }
-    }
-
-    private boolean isOwner(Car car, Long customerId) {
-        return customerId != null && car != null && car.getOwner() != null && car.getOwner().getId().equals(customerId);
-    }
-
-    private Customer requireActiveUser() {
-        try {
-            Customer user = currentUserService.getCurrentUser();
-            if (user.getStatus() != CustomerStatus.ACTIVE) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Tài khoản đang bị khoá");
-            }
-            return user;
-        } catch (UnauthorizedException e) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, e.getMessage());
-        } catch (ForbiddenException e) {
-            throw new AppException(HttpStatus.FORBIDDEN, e.getMessage());
-        }
-    }
-
-    private Optional<Customer> optionalActiveUser() {
-        try {
-            return currentUserService.optionalCurrentUser();
-        } catch (UnauthorizedException e) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, e.getMessage());
-        } catch (ForbiddenException e) {
-            throw new AppException(HttpStatus.FORBIDDEN, e.getMessage());
         }
     }
 

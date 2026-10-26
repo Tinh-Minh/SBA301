@@ -16,11 +16,8 @@ import com.carrental.entity.CarImage;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
-import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.VerificationStatus;
 import com.carrental.exception.AppException;
-import com.carrental.exception.ForbiddenException;
-import com.carrental.exception.UnauthorizedException;
 import com.carrental.repository.CarDocumentRepository;
 import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
@@ -42,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -62,7 +59,7 @@ public class CarServiceImpl implements CarService {
     public CarResponse createCar(CarCreateRequest request) {
         log.info("Create car licensePlate={}", request.getLicensePlate());
         try {
-            Customer owner = requireActiveUser();
+            Customer owner = currentUserService.getCurrentUser();
 
             Car car = request.toEntity();
             if (carRepository.existsByLicensePlateIgnoreCase(car.getLicensePlate())) {
@@ -90,18 +87,15 @@ public class CarServiceImpl implements CarService {
         log.info("Update car id={}", carId);
         try {
             Car car = loadOwnedCar(carId);
-
             request.applyTo(car);
 
-            // Xe đang REJECTED mà chủ xe sửa xong: tự chuyển về PENDING_APPROVAL
             if (car.getStatus() == CarStatus.REJECTED) {
                 car.getStatus().validateTransitionTo(CarStatus.PENDING_APPROVAL);
                 car.setStatus(CarStatus.PENDING_APPROVAL);
                 log.info("Car id={} được gửi duyệt lại (REJECTED -> PENDING_APPROVAL)", carId);
             }
 
-            Car updatedCar = carRepository.saveAndFlush(car);
-            return toResponse(updatedCar);
+            return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Cập nhật xe thất bại carId={}: {}", carId, e.getMessage());
             throw e;
@@ -122,9 +116,8 @@ public class CarServiceImpl implements CarService {
             Car car = carRepository.findWithOwnerById(carId)
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId));
 
-            Optional<Customer> requester = optionalActiveUser();
-            boolean canViewFull = requester
-                    .map(u -> isOwner(car, u.getId()) || currentUserService.isAdmin(u))
+            boolean canViewFull = currentUserService.optionalCurrentUser()
+                    .map(u -> currentUserService.isOwner(car, u) || currentUserService.isAdmin(u))
                     .orElse(false);
 
             if (!canViewFull && car.getStatus() != CarStatus.ACTIVE) {
@@ -149,12 +142,12 @@ public class CarServiceImpl implements CarService {
     public PageResponse<CarSummaryResponse> getMyCars(CarStatus status, Pageable pageable) {
         log.info("Get my cars status={}", status);
         try {
-            Customer owner = requireActiveUser();
+            Customer owner = currentUserService.getCurrentUser();
             Page<Car> carPage = status != null
                     ? carRepository.findAllByOwnerIdAndStatus(owner.getId(), status, pageable)
                     : carRepository.findAllByOwnerId(owner.getId(), pageable);
 
-            return toPageSummaryBatch(carPage, false);
+            return toPageSummaryBatch(carPage, CarSummaryResponse::from);
         } catch (AppException e) {
             throw e;
         } catch (Exception e) {
@@ -168,12 +161,11 @@ public class CarServiceImpl implements CarService {
     public PageResponse<CarSummaryResponse> getCarsByStatus(CarStatus status, Pageable pageable) {
         log.info("Admin get cars by status status={}", status);
         try {
-            requireAdmin();
             Page<Car> carPage = status != null
                     ? carRepository.findAllByStatus(status, pageable)
                     : carRepository.findAll(pageable);
 
-            return toPageSummaryBatch(carPage, false);
+            return toPageSummaryBatch(carPage, CarSummaryResponse::from);
         } catch (AppException e) {
             throw e;
         } catch (Exception e) {
@@ -195,8 +187,7 @@ public class CarServiceImpl implements CarService {
 
             car.getStatus().validateTransitionTo(newStatus);
             car.setStatus(newStatus);
-            Car savedCar = carRepository.saveAndFlush(car);
-            return toResponse(savedCar);
+            return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Chủ xe đổi trạng thái thất bại carId={}: {}", carId, e.getMessage());
             throw e;
@@ -240,7 +231,7 @@ public class CarServiceImpl implements CarService {
             };
 
             Page<Car> carPage = carRepository.findAll(spec, pageable);
-            return toPageSummaryBatch(carPage, true);
+            return toPageSummaryBatch(carPage, CarSummaryResponse::publicFrom);
         } catch (AppException e) {
             throw e;
         } catch (Exception e) {
@@ -254,13 +245,10 @@ public class CarServiceImpl implements CarService {
     public CarResponse approveCar(Long carId) {
         log.info("Admin approve car carId={}", carId);
         try {
-            requireAdmin();
             Car car = findCarOrThrow(carId);
-
             car.getStatus().validateTransitionTo(CarStatus.ACTIVE);
             car.setStatus(CarStatus.ACTIVE);
-            Car savedCar = carRepository.saveAndFlush(car);
-            return toResponse(savedCar);
+            return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Duyệt xe thất bại carId={}: {}", carId, e.getMessage());
             throw e;
@@ -278,17 +266,10 @@ public class CarServiceImpl implements CarService {
     public CarResponse rejectCar(Long carId, String reason) {
         log.info("Admin reject car carId={}, reason={}", carId, reason);
         try {
-            requireAdmin();
             Car car = findCarOrThrow(carId);
-
-            if (reason == null || reason.isBlank()) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Lý do từ chối không được để trống");
-            }
-
             car.getStatus().validateTransitionTo(CarStatus.REJECTED);
             car.setStatus(CarStatus.REJECTED);
-            Car savedCar = carRepository.saveAndFlush(car);
-            return toResponse(savedCar);
+            return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Từ chối xe thất bại carId={}: {}", carId, e.getMessage());
             throw e;
@@ -342,8 +323,9 @@ public class CarServiceImpl implements CarService {
                 entities.add(image);
             }
 
-            List<CarImage> saved = carImageRepository.saveAllAndFlush(entities);
-            return saved.stream().map(CarImageResponse::from).toList();
+            return carImageRepository.saveAllAndFlush(entities).stream()
+                    .map(CarImageResponse::from)
+                    .toList();
         } catch (AppException e) {
             log.warn("Thêm ảnh xe thất bại carId={}: {}", carId, e.getMessage());
             throw e;
@@ -370,7 +352,6 @@ public class CarServiceImpl implements CarService {
             carImageRepository.delete(img);
             carImageRepository.flush();
 
-            // Nếu xoá ảnh chính, tự động đặt ảnh có sortOrder nhỏ nhất còn lại làm ảnh chính
             if (wasPrimary) {
                 carImageRepository.findFirstByCarIdOrderBySortOrderAsc(carId).ifPresent(nextImg -> {
                     nextImg.setIsPrimary(true);
@@ -400,7 +381,6 @@ public class CarServiceImpl implements CarService {
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy ảnh id=" + imageId + " của xe id=" + carId));
 
             clearPrimary(carId);
-
             targetImg.setIsPrimary(true);
             return CarImageResponse.from(carImageRepository.saveAndFlush(targetImg));
         } catch (AppException e) {
@@ -458,9 +438,9 @@ public class CarServiceImpl implements CarService {
     public List<CarDocumentResponse> getCarDocuments(Long carId) {
         log.info("Get car documents carId={}", carId);
         try {
-            Customer requester = requireActiveUser();
+            Customer requester = currentUserService.getCurrentUser();
             Car car = findCarOrThrow(carId);
-            if (!isOwner(car, requester.getId()) && !currentUserService.isAdmin(requester)) {
+            if (!currentUserService.isOwner(car, requester) && !currentUserService.isAdmin(requester)) {
                 throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem giấy tờ của xe này");
             }
             return carDocumentRepository.findAllByCarId(carId).stream()
@@ -479,7 +459,7 @@ public class CarServiceImpl implements CarService {
     public CarDocumentResponse verifyCarDocumentByAdmin(Long carId, Long documentId, CarDocumentVerifyRequest request) {
         log.info("Admin verify car document docId={}, status={}", documentId, request.getVerifyStatus());
         try {
-            Customer admin = requireAdmin();
+            Customer admin = currentUserService.getCurrentUser();
 
             CarDocument doc = carDocumentRepository.findByIdAndCarId(documentId, carId)
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giấy tờ xe id=" + documentId + " của xe id=" + carId));
@@ -518,48 +498,12 @@ public class CarServiceImpl implements CarService {
     }
 
     private Car loadOwnedCar(Long carId) {
-        Customer owner = requireActiveUser();
+        Customer owner = currentUserService.getCurrentUser();
         Car car = findCarOrThrow(carId);
-        if (!isOwner(car, owner.getId())) {
+        if (!currentUserService.isOwner(car, owner)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");
         }
         return car;
-    }
-
-    private boolean isOwner(Car car, Long customerId) {
-        return customerId != null && car.getOwner() != null && car.getOwner().getId().equals(customerId);
-    }
-
-    private Customer requireActiveUser() {
-        try {
-            Customer user = currentUserService.getCurrentUser();
-            if (user.getStatus() != CustomerStatus.ACTIVE) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Tài khoản đang bị khoá");
-            }
-            return user;
-        } catch (UnauthorizedException e) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, e.getMessage());
-        } catch (ForbiddenException e) {
-            throw new AppException(HttpStatus.FORBIDDEN, e.getMessage());
-        }
-    }
-
-    private Optional<Customer> optionalActiveUser() {
-        try {
-            return currentUserService.optionalCurrentUser();
-        } catch (UnauthorizedException e) {
-            throw new AppException(HttpStatus.UNAUTHORIZED, e.getMessage());
-        } catch (ForbiddenException e) {
-            throw new AppException(HttpStatus.FORBIDDEN, e.getMessage());
-        }
-    }
-
-    private Customer requireAdmin() {
-        Customer user = requireActiveUser();
-        if (!currentUserService.isAdmin(user)) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ admin được thực hiện thao tác này");
-        }
-        return user;
     }
 
     private CarResponse toResponse(Car car) {
@@ -575,13 +519,14 @@ public class CarServiceImpl implements CarService {
         });
     }
 
-    private PageResponse<CarSummaryResponse> toPageSummaryBatch(Page<Car> carPage, boolean publicView) {
+    private PageResponse<CarSummaryResponse> toPageSummaryBatch(
+            Page<Car> carPage,
+            BiFunction<Car, String, CarSummaryResponse> mapper
+    ) {
         List<Long> carIds = carPage.getContent().stream().map(Car::getId).toList();
         Map<Long, String> primaryImages = carImageRepository.findAllByCarIdInAndIsPrimaryTrue(carIds).stream()
                 .collect(Collectors.toMap(img -> img.getCar().getId(), CarImage::getImageUrl, (a, b) -> a));
 
-        return PageResponse.from(carPage.map(c -> publicView
-                ? CarSummaryResponse.publicFrom(c, primaryImages.get(c.getId()))
-                : CarSummaryResponse.from(c, primaryImages.get(c.getId()))));
+        return PageResponse.from(carPage.map(c -> mapper.apply(c, primaryImages.get(c.getId()))));
     }
 }
