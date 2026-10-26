@@ -8,8 +8,6 @@ export const transactionService = {
     createPayment: ({ orderId, amount, method = "VNPAY" }) => request("/api/transactions/payment", { method: "POST", json: { orderId: Number(orderId), amount: amount ?? null, method } }),
     /** POST /api/transactions/deposit */
     createDeposit: ({ orderId, amount, method = "VNPAY" }) => request("/api/transactions/deposit", { method: "POST", json: { orderId: Number(orderId), amount: amount ?? null, method } }),
-    /** POST /api/transactions/{id}/simulate-gateway — giả lập cổng thanh toán (môi trường thử nghiệm). */
-    simulate: (id, success = true) => request(`/api/transactions/${id}/simulate-gateway`, { method: "POST", json: { simulateSuccess: success, providerRef: `SIM-${Date.now()}` } }),
     /** GET /api/transactions/{id}/vnpay-url */
     vnpayUrl: (id, bankCode) => request(`/api/transactions/${id}/vnpay-url`, { query: { bankCode } }).then(data => data?.paymentUrl),
     /** GET /api/transactions/vnpay-return?format=json&vnp_... — xác thực chữ ký VNPay trả về. */

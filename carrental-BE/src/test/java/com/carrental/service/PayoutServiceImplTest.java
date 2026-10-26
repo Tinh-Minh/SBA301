@@ -87,7 +87,7 @@ class PayoutServiceImplTest {
 
         when(rentalOrderRepository.findById(22L)).thenReturn(Optional.of(order));
         when(customerRepository.findById(8L)).thenReturn(Optional.of(owner));
-        when(bankAccountRepository.findByCustomer_IdAndIsDefaultTrue(8L)).thenReturn(Optional.of(defaultBankAccount));
+        when(bankAccountRepository.findByCustomerIdAndIsDefaultTrue(8L)).thenReturn(Optional.of(defaultBankAccount));
         when(payoutRepository.save(any(Payout.class))).thenAnswer(invocation -> {
             Payout p = invocation.getArgument(0);
             p.setId(100L);
@@ -117,7 +117,7 @@ class PayoutServiceImplTest {
         existingPayout.setId(22L);
 
         when(payoutRepository.findById(22L)).thenReturn(Optional.of(existingPayout));
-        when(bankAccountRepository.findByCustomer_IdAndIsDefaultTrue(8L)).thenReturn(Optional.of(defaultBankAccount));
+        when(bankAccountRepository.findByCustomerIdAndIsDefaultTrue(8L)).thenReturn(Optional.of(defaultBankAccount));
         when(payoutRepository.save(any(Payout.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         ProcessPayoutRequest request = new ProcessPayoutRequest();
@@ -148,8 +148,8 @@ class PayoutServiceImplTest {
         existingPayout.setId(22L);
 
         when(payoutRepository.findById(22L)).thenReturn(Optional.of(existingPayout));
-        when(bankAccountRepository.findByCustomer_IdAndIsDefaultTrue(8L)).thenReturn(Optional.empty());
-        when(bankAccountRepository.findAllByCustomer_IdOrderByCreatedAtDesc(8L)).thenReturn(Collections.emptyList());
+        when(bankAccountRepository.findByCustomerIdAndIsDefaultTrue(8L)).thenReturn(Optional.empty());
+        when(bankAccountRepository.findAllByCustomerIdOrderByCreatedAtDesc(8L)).thenReturn(Collections.emptyList());
 
         ProcessPayoutRequest request = new ProcessPayoutRequest();
         request.setStatus("PAID");

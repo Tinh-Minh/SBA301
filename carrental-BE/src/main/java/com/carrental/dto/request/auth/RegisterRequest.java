@@ -1,5 +1,10 @@
 package com.carrental.dto.request.auth;
 
+import com.carrental.entity.Customer;
+import com.carrental.enums.CustomerStatus;
+import com.carrental.enums.KycStatus;
+import com.carrental.enums.Role;
+
 import com.carrental.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -40,5 +45,18 @@ public final class RegisterRequest {
     @JsonAnySetter
     public void rejectUnknownField(String ignoredName, JsonNode ignoredValue) {
         throw new IllegalArgumentException("Unknown authentication request field");
+    }
+
+    public Customer toEntity(String encodedPassword) {
+        Customer customer = new Customer();
+        customer.setFullName(AuthInputNormalizer.trimmed(fullName));
+        customer.setEmail(AuthInputNormalizer.email(email));
+        customer.setPhone(AuthInputNormalizer.trimmed(phone));
+        customer.setPasswordHash(encodedPassword);
+        customer.setRole(Role.CUSTOMER);
+        customer.setStatus(CustomerStatus.ACTIVE);
+        customer.setKycStatus(KycStatus.NONE);
+        customer.setEmailVerified(false);
+        return customer;
     }
 }

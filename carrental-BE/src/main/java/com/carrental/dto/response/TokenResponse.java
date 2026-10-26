@@ -3,11 +3,6 @@ package com.carrental.dto.response;
 import com.carrental.enums.Role;
 
 public record TokenResponse(String accessToken, String tokenType, long expiresIn, AccountSummary account) {
-    public TokenResponse {
-        if (accessToken == null || tokenType == null || account == null) {
-            throw new IllegalArgumentException("Token response fields are required");
-        }
-    }
 
     @Override
     public String toString() {

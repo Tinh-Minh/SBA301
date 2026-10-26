@@ -6365,6 +6365,141 @@
           }
         }
       }
+    },
+    "/api/auth/change-password": {
+      "post": {
+        "operationId": "auth_change_password",
+        "summary": "Change the authenticated account password.",
+        "description": "Verify the current password, then replace it with a BCrypt hash of the new password. Invalid credentials or an inactive account return 401.",
+        "tags": [
+          "auth"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "success",
+                    "code",
+                    "message",
+                    "data",
+                    "errors",
+                    "traceId"
+                  ],
+                  "properties": {
+                    "success": {
+                      "const": true
+                    },
+                    "code": {
+                      "const": "OK"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "null"
+                    },
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/FieldError"
+                      },
+                      "maxItems": 0
+                    },
+                    "traceId": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request; strict parser failures do not echo rejected input",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid bearer token or inactive account",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error without stack trace or sensitive data",
+            "headers": {
+              "X-Request-ID": {
+                "schema": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "x-response-cache": "no-store; traceId equals X-Request-ID.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7200,9 +7335,30 @@
             ],
             "maxLength": 300,
             "description": "Null clears; empty/whitespace-only runtime input normalizes to null. 300 UTF-16 code units after strip at runtime."
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 150,
+            "description": "Trimmed and normalized to lowercase on binding; validated as email and limited to 150 Java UTF-16 code units at runtime."
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20,
+            "pattern": "\\S",
+            "description": "Trimmed on binding, nonblank, max 20 Java UTF-16 code units at runtime."
+          },
+          "avatarUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500,
+            "description": "Null or blank clears; other values are stripped and limited to 500 UTF-16 code units."
           }
         },
-        "description": "Omitted fields are unchanged. fullName must be non-null/nonblank when present. dateOfBirth and address accept null to clear. Runtime strips text before validation; fullName/address limits use Java String.length() UTF-16 code units after strip, while JSON Schema maxLength counts Unicode code points and cannot model strip semantics exactly. Future dateOfBirth is rejected using the configured Clock."
+        "description": "Omitted fields are unchanged. fullName must be non-null/nonblank when present. dateOfBirth and address accept null to clear. Runtime strips text before validation; fullName/address limits use Java String.length() UTF-16 code units after strip, while JSON Schema maxLength counts Unicode code points and cannot model strip semantics exactly. Future dateOfBirth is rejected using the configured Clock. email and phone must be non-null and unique when supplied. Changing email resets emailVerified to false. avatarUrl accepts null to clear."
       },
       "CustomerStatus": {
         "type": "object",
@@ -8038,6 +8194,30 @@
           "totalPages": {
             "type": "integer",
             "minimum": 0
+          }
+        }
+      },
+      "ChangePasswordRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ],
+        "properties": {
+          "currentPassword": {
+            "type": "string",
+            "writeOnly": true,
+            "description": "Nonblank; maximum 72 UTF-8 bytes for BCrypt. Runtime password policy validates bytes.",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "newPassword": {
+            "type": "string",
+            "writeOnly": true,
+            "description": "Nonblank; configured Unicode code-point minimum; maximum 72 UTF-8 bytes for BCrypt. Byte and code-point rules are runtime validation.",
+            "minLength": 1,
+            "pattern": "\\S"
           }
         }
       }

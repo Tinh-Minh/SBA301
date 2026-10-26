@@ -3,78 +3,31 @@ package com.carrental.dto.request.voucher;
 import com.carrental.config.CustomerProperties;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.VoucherStatus;
-import com.carrental.dto.response.VoucherWindowState;
-import com.carrental.exception.AppException;
-import com.carrental.exception.ErrorCode;
-import java.util.Locale;
+import com.carrental.enums.VoucherWindowState;
+import com.carrental.util.ListQueryParser;
 import java.util.Set;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.util.MultiValueMap;
 
 /** Strict, database-backed voucher list filters and pagination. */
 public record VoucherListQuery(String code, VoucherStatus status, DiscountType discountType,
-        VoucherWindowState window, int page, int size, String sortField, Sort.Direction direction) {
+        VoucherWindowState window, Pageable pageable) {
     private static final Set<String> ALLOWED = Set.of("code", "status", "discountType", "window", "page", "size", "sort");
     private static final Set<String> SORT_FIELDS = Set.of("id", "code", "createdAt", "updatedAt", "startAt", "endAt", "usedCount");
 
     public static VoucherListQuery parse(MultiValueMap<String, String> parameters, CustomerProperties properties) {
-        if (parameters == null || !ALLOWED.containsAll(parameters.keySet())) throw invalid();
-        String code = optional(parameters, "code");
+        ListQueryParser.requireAllowed(parameters, ALLOWED);
+        String code = ListQueryParser.optional(parameters, "code");
         if (code != null) {
             code = code.strip();
-            if (code.isEmpty() || code.codePointCount(0, code.length()) > 50 || containsControlOrNul(code)) throw invalid();
+            if (code.isEmpty() || code.codePointCount(0, code.length()) > 50 || ListQueryParser.containsControlOrNul(code)) {
+                throw ListQueryParser.invalid();
+            }
         }
-        VoucherStatus status = enumValue(optional(parameters, "status"), VoucherStatus.class);
-        DiscountType type = enumValue(optional(parameters, "discountType"), DiscountType.class);
-        VoucherWindowState window = enumValue(optional(parameters, "window"), VoucherWindowState.class);
-        int page = integer(value(parameters, "page", "0"));
-        int size = integer(value(parameters, "size", Integer.toString(properties.getDefaultPageSize())));
-        if (page < 0 || size <= 0 || size > properties.getMaxPageSize() || (long) page * size > Integer.MAX_VALUE) throw invalid();
-        String[] parts = value(parameters, "sort", "createdAt,desc").split(",", -1);
-        if (parts.length != 2) throw invalid();
-        String field = parts[0].trim();
-        if (!SORT_FIELDS.contains(field)) throw invalid();
-        Sort.Direction direction;
-        try { direction = Sort.Direction.fromString(parts[1].trim().toUpperCase(Locale.ROOT)); }
-        catch (IllegalArgumentException exception) { throw invalid(); }
-        return new VoucherListQuery(code, status, type, window, page, size, field, direction);
+        VoucherStatus status = ListQueryParser.enumValue(parameters, "status", VoucherStatus.class);
+        DiscountType type = ListQueryParser.enumValue(parameters, "discountType", DiscountType.class);
+        VoucherWindowState window = ListQueryParser.enumValue(parameters, "window", VoucherWindowState.class);
+        return new VoucherListQuery(code, status, type, window, ListQueryParser.pageable(
+                parameters, properties.getDefaultPageSize(), properties.getMaxPageSize(), SORT_FIELDS));
     }
-
-    public Pageable pageable() {
-        Sort sort = Sort.by(direction, sortField);
-        if (!"id".equals(sortField)) sort = sort.and(Sort.by(direction, "id"));
-        return PageRequest.of(page, size, sort);
-    }
-
-    private static String optional(MultiValueMap<String, String> parameters, String key) {
-        var values = parameters.get(key);
-        if (values == null) return null;
-        if (values.size() != 1 || values.getFirst() == null) throw invalid();
-        return values.getFirst();
-    }
-
-    private static String value(MultiValueMap<String, String> parameters, String key, String fallback) {
-        String value = optional(parameters, key);
-        return value == null ? fallback : value.trim();
-    }
-
-    private static int integer(String value) {
-        if (value == null || !value.matches("[0-9]+")) throw invalid();
-        try { return Integer.parseInt(value); }
-        catch (NumberFormatException exception) { throw invalid(); }
-    }
-
-    private static <E extends Enum<E>> E enumValue(String value, Class<E> type) {
-        if (value == null) return null;
-        try { return Enum.valueOf(type, value); }
-        catch (IllegalArgumentException exception) { throw invalid(); }
-    }
-
-    private static boolean containsControlOrNul(String value) {
-        return value.codePoints().anyMatch(cp -> cp == 0 || Character.isISOControl(cp));
-    }
-
-    private static AppException invalid() { return new AppException(ErrorCode.INVALID_REQUEST); }
 }

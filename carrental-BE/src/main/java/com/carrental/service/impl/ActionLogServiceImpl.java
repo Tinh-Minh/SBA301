@@ -14,7 +14,6 @@ import java.util.List;
 
 @Service
 public class ActionLogServiceImpl implements ActionLogService {
-
     private final ActionLogRepository actionLogRepository;
 
     public ActionLogServiceImpl(ActionLogRepository actionLogRepository) {

@@ -4,26 +4,20 @@ import com.carrental.repository.CustomerRepository;
 import com.carrental.security.ApiAccessDeniedHandler;
 import com.carrental.security.ApiAuthenticationEntryPoint;
 import com.carrental.security.CurrentAccountJwtAuthenticationConverter;
-import com.carrental.security.CustomerUserDetailsService;
 import com.carrental.security.SecurityErrorResponses;
 import com.carrental.web.RequestTraceFilter;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -37,15 +31,7 @@ public class SecurityConfiguration {
 
     @Bean
     PasswordEncoder passwordEncoder(PasswordPolicyProperties properties) {
-        return new DelegatingPasswordEncoder("bcrypt", Map.of("bcrypt", new BCryptPasswordEncoder(properties.bcryptStrength())));
-    }
-
-    @Bean
-    AuthenticationManager authenticationManager(CustomerUserDetailsService userDetailsService,
-            PasswordEncoder passwordEncoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider(userDetailsService);
-        provider.setPasswordEncoder(passwordEncoder);
-        return new org.springframework.security.authentication.ProviderManager(provider);
+        return new BCryptPasswordEncoder(properties.bcryptStrength());
     }
 
     @Bean
@@ -96,8 +82,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/cars/search", "/api/cars/{id:[0-9]+}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/slots/search", "/api/slots/{id:[0-9]+}").permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/payments/vnpay/return", "/api/payments/vnpay/ipn",
-                                "/api/transactions/vnpay-return", "/api/transactions/vnpay-ipn").permitAll()
+                                "/api/payments/vnpay/return", "/api/payments/vnpay/ipn").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer

@@ -12,11 +12,13 @@ import com.carrental.service.OrderAccess;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.ReviewRepository;
+import com.carrental.repository.ReviewSpecification;
 import com.carrental.service.ReviewService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,15 +40,15 @@ public class ReviewServiceImpl implements ReviewService {
                 request.getOrderId(), request.getReviewerId(), request.getRevieweeId(), request.getRating());
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
-            Customer reviewer = orderAccess.requireUser();
-            orderAccess.requireSelf(request.getReviewerId());
+            Customer current = orderAccess.requireUser();
             if (order.getStatus() != OrderStatus.COMPLETED) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ đánh giá được đơn đã hoàn thành");
+                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ đánh giá được đơn đã hoàn thành (COMPLETED)");
             }
+            Customer reviewer = current;
             boolean renter = orderAccess.isRenter(order, reviewer);
             boolean owner = orderAccess.isOwner(order, reviewer);
             if (!renter && !owner) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe của đơn này được đánh giá");
+                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe của đơn này mới được đánh giá");
             }
             Long otherPartyId;
             if (renter) {
@@ -69,11 +71,7 @@ public class ReviewServiceImpl implements ReviewService {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Bạn đã gửi đánh giá cho đơn thuê này rồi");
             }
 
-            Review review = request.toEntity();
-            review.setOrder(order);
-            review.setReviewer(reviewer);
-            review.setReviewee(reviewee);
-
+            Review review = request.toEntity(order, reviewer, reviewee);
             Review saved = reviewRepository.save(review);
             log.info("Tạo đánh giá thành công id={}", saved.getId());
             return ReviewResponse.from(saved);
@@ -95,14 +93,8 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getPaged(Long orderId, Long revieweeId, Pageable pageable) {
-        Page<Review> page;
-        if (orderId != null) {
-            page = reviewRepository.findByOrderId(orderId, pageable);
-        } else if (revieweeId != null) {
-            page = reviewRepository.findByRevieweeId(revieweeId, pageable);
-        } else {
-            page = reviewRepository.findAll(pageable);
-        }
+        Specification<Review> spec = ReviewSpecification.filter(orderId, revieweeId);
+        Page<Review> page = reviewRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(ReviewResponse::from));
     }
 

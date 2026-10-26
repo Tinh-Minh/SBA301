@@ -9,7 +9,7 @@ import com.carrental.entity.Transaction;
 import com.carrental.enums.*;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.RentalOrderRepository;
-import com.carrental.repository.transaction.TransactionRepository;
+import com.carrental.repository.TransactionRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -150,7 +150,7 @@ class VNPayIntegrationTest {
 
     @Test
     void vnpayReturn_rejectsMissingSecureHash() throws Exception {
-        mockMvc.perform(get("/api/transactions/vnpay-return")
+        mockMvc.perform(get("/api/payments/vnpay/return")
                         .param("vnp_TxnRef", pendingTx.getId() + "_123456")
                         .param("vnp_ResponseCode", "00")
                         .param("vnp_Amount", "80000000")
@@ -164,7 +164,7 @@ class VNPayIntegrationTest {
 
     @Test
     void vnpayReturn_rejectsInvalidSecureHash() throws Exception {
-        mockMvc.perform(get("/api/transactions/vnpay-return")
+        mockMvc.perform(get("/api/payments/vnpay/return")
                         .param("vnp_TxnRef", pendingTx.getId() + "_123456")
                         .param("vnp_ResponseCode", "00")
                         .param("vnp_Amount", "80000000")
@@ -187,7 +187,7 @@ class VNPayIntegrationTest {
         String hash = calculateSecureHash(params);
 
         // Request WITHOUT Accept header: must return 200 OK (HTML), NOT 500 error!
-        mockMvc.perform(get("/api/transactions/vnpay-return")
+        mockMvc.perform(get("/api/payments/vnpay/return")
                         .param("vnp_TxnRef", params.get("vnp_TxnRef"))
                         .param("vnp_ResponseCode", params.get("vnp_ResponseCode"))
                         .param("vnp_TransactionNo", params.get("vnp_TransactionNo"))
@@ -212,7 +212,7 @@ class VNPayIntegrationTest {
         params.put("vnp_Amount", "80000000");
         String hash = calculateSecureHash(params);
 
-        mockMvc.perform(get("/api/transactions/vnpay-return")
+        mockMvc.perform(get("/api/payments/vnpay/return")
                         .param("vnp_TxnRef", params.get("vnp_TxnRef"))
                         .param("vnp_ResponseCode", params.get("vnp_ResponseCode"))
                         .param("vnp_TransactionNo", params.get("vnp_TransactionNo"))
@@ -226,7 +226,7 @@ class VNPayIntegrationTest {
 
     @Test
     void vnpayIpn_returns97WhenChecksumInvalid() throws Exception {
-        mockMvc.perform(get("/api/transactions/vnpay-ipn")
+        mockMvc.perform(get("/api/payments/vnpay/ipn")
                         .param("vnp_TxnRef", pendingTx.getId() + "_123456")
                         .param("vnp_ResponseCode", "00")
                         .param("vnp_Amount", "80000000")

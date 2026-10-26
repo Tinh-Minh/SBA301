@@ -1,6 +1,8 @@
 package com.carrental.dto.request;
 
+import com.carrental.entity.Customer;
 import com.carrental.entity.ExtraFee;
+import com.carrental.entity.RentalOrder;
 import com.carrental.enums.ExtraFeeStatus;
 import com.carrental.enums.FeeType;
 import jakarta.validation.constraints.NotBlank;
@@ -10,7 +12,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -30,6 +31,10 @@ public class CreateExtraFeeRequest {
     private String description;
 
     public ExtraFee toEntity() {
+        return toEntity(null, null);
+    }
+
+    public ExtraFee toEntity(RentalOrder order, Customer createdBy) {
         ExtraFee extraFee = new ExtraFee();
         FeeType type = FeeType.OTHER;
         if (this.feeType != null) {
@@ -37,12 +42,12 @@ public class CreateExtraFeeRequest {
                 type = FeeType.valueOf(this.feeType.toUpperCase());
             } catch (IllegalArgumentException ignored) {}
         }
+        extraFee.setOrder(order);
+        extraFee.setCreatedBy(createdBy);
         extraFee.setFeeType(type);
         extraFee.setAmount(this.amount);
         extraFee.setDescription(this.description);
         extraFee.setStatus(ExtraFeeStatus.PENDING);
-        extraFee.setCreatedAt(LocalDateTime.now());
-        extraFee.setUpdatedAt(LocalDateTime.now());
         return extraFee;
     }
 }

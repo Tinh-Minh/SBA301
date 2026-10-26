@@ -36,7 +36,6 @@ public class PaymentEventListener {
             if (transaction.getTransactionType() == TransactionType.RENTAL_PAYMENT) {
                 if (order.getPaymentStatus() != PaymentStatus.PAID) {
                     order.setPaymentStatus(PaymentStatus.PAID);
-                    order.setUpdatedAt(LocalDateTime.now());
                     rentalOrderRepository.save(order);
                     log.info("Cập nhật order id={} sang trạng thái PAID", order.getId());
                 }
@@ -47,7 +46,6 @@ public class PaymentEventListener {
             ExtraFee extraFee = transaction.getExtraFee();
             if (extraFee != null && extraFee.getStatus() != ExtraFeeStatus.PAID) {
                 extraFee.setStatus(ExtraFeeStatus.PAID);
-                extraFee.setUpdatedAt(LocalDateTime.now());
                 extraFeeRepository.save(extraFee);
                 log.info("Cập nhật extraFee id={} sang trạng thái PAID", extraFee.getId());
             }

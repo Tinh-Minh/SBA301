@@ -104,7 +104,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@carrental.com\",\n  \"password\": \"Password123!\"\n}"
+              "raw": "{\n  \"email\": \"admin@carrental.com\",\n  \"password\": \"123456\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",

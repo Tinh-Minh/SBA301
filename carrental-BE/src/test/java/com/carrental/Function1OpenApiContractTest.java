@@ -16,7 +16,6 @@ import com.carrental.controller.VoucherController;
 import com.carrental.service.AuthService;
 import com.carrental.service.BankAccountService;
 import com.carrental.service.CustomerService;
-import com.carrental.service.DriverEligibilityService;
 import com.carrental.service.DriverService;
 import com.carrental.service.KycService;
 import com.carrental.service.UserDocumentService;
@@ -25,6 +24,7 @@ import com.carrental.web.UserDocumentMultipartReader;
 import com.carrental.dto.request.bankaccount.CreateBankAccountRequest;
 import com.carrental.dto.request.bankaccount.BankAccountListQuery;
 import com.carrental.dto.request.auth.LoginRequest;
+import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
 import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
 import com.carrental.dto.request.customer.CustomerListQuery;
@@ -50,7 +50,7 @@ import com.carrental.dto.response.UserDocumentReviewResponse;
 import com.carrental.dto.response.UserDocumentSummaryResponse;
 import com.carrental.dto.response.BankAccountResponse;
 import com.carrental.dto.response.VoucherResponse;
-import com.carrental.dto.response.VoucherWindowState;
+import com.carrental.enums.VoucherWindowState;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.VerificationStatus;
@@ -80,7 +80,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
@@ -136,7 +135,7 @@ class Function1OpenApiContractTest {
             }));
         });
         assertThat(documented).containsExactlyInAnyOrderElementsOf(actual);
-        assertThat(actual).hasSize(32);
+        assertThat(actual).hasSize(33);
         actual.forEach(key -> {
             String[] pair = key.split(" ", 2);
             JsonNode operation = paths.path(pair[1]).path(pair[0].toLowerCase(java.util.Locale.ROOT));
@@ -179,6 +178,7 @@ class Function1OpenApiContractTest {
         Map<String, Class<?>> dtoTypes = Map.ofEntries(
                 Map.entry("RegisterRequest", RegisterRequest.class),
                 Map.entry("LoginRequest", LoginRequest.class),
+                Map.entry("ChangePasswordRequest", ChangePasswordRequest.class),
                 Map.entry("ProfilePatch", UpdateProfileRequest.class),
                 Map.entry("CustomerStatus", ChangeCustomerStatusRequest.class),
                 Map.entry("DocumentReviewRequest", ReviewUserDocumentRequest.class),

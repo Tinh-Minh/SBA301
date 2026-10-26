@@ -1,0 +1,244 @@
+### Manual examples for the VS Code REST Client extension against a disposable local app/database.
+### Supply these process environment values outside this file; {{$processEnv NAME}} avoids self-referencing placeholders.
+### BASE_URL=http://localhost:8080; CUSTOMER_EMAIL/PASSWORD and ADMIN_TOKEN/CUSTOMER_TOKEN/PEER_TOKEN are synthetic local values.
+### DOCUMENT_ID/DRIVER_ID/BANK_ACCOUNT_ID/VOUCHER_ID come from synthetic local responses. Do not put real secrets here.
+
+@baseUrl = {{$processEnv BASE_URL}}
+@customerEmail = {{$processEnv CUSTOMER_EMAIL}}
+@customerPassword = {{$processEnv CUSTOMER_PASSWORD}}
+@customerToken = {{$processEnv CUSTOMER_TOKEN}}
+@peerToken = {{$processEnv PEER_TOKEN}}
+@adminToken = {{$processEnv ADMIN_TOKEN}}
+@documentId = {{$processEnv DOCUMENT_ID}}
+@driverId = {{$processEnv DRIVER_ID}}
+@bankAccountId = {{$processEnv BANK_ACCOUNT_ID}}
+@voucherId = {{$processEnv VOUCHER_ID}}
+
+### Public web liveness. A successful response means the HTTP application responds; it does not mean database/storage readiness.
+GET {{baseUrl}}/api/health
+Accept: application/json
+
+### Public registration. This always creates CUSTOMER; the admin account is provisioned by the group.
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Synthetic Local Customer",
+  "email": "replace-with-unique-synthetic@example.test",
+  "phone": "replace-with-unique-synthetic-phone",
+  "password": "Synthetic local password 2026"
+}
+
+### Public login. Store accessToken in your local HTTP-client environment; never commit or log it.
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{customerEmail}}",
+  "password": "{{customerPassword}}"
+}
+
+### Current caller profile; `kycStatus` is the stored profile snapshot.
+GET {{baseUrl}}/api/customers/me
+Authorization: Bearer {{customerToken}}
+
+### PATCH only allowlisted profile fields. Omitted is unchanged; explicit null clears nullable fields.
+PATCH {{baseUrl}}/api/customers/me
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "address": "Synthetic local address"
+}
+
+### Current Clock-evaluated KYC, distinct from the stored profile snapshot.
+GET {{baseUrl}}/api/customers/me/kyc
+Authorization: Bearer {{customerToken}}
+
+### Submit a synthetic passport with U-13 review metadata. Replace the sample reference with a local synthetic PNG.
+### Upload always returns PENDING; a minimal docType/docNumber/frontImage submission is allowed but cannot be approved.
+POST {{baseUrl}}/api/user-documents
+Authorization: Bearer {{customerToken}}
+Content-Type: multipart/form-data; boundary=ExampleBoundaryP10
+
+--ExampleBoundaryP10
+Content-Disposition: form-data; name="docType"
+
+PASSPORT
+--ExampleBoundaryP10
+Content-Disposition: form-data; name="docNumber"
+
+SYNTHETIC-PASSPORT-001
+--ExampleBoundaryP10
+Content-Disposition: form-data; name="fullNameOnDoc"
+
+Synthetic Local Customer
+--ExampleBoundaryP10
+Content-Disposition: form-data; name="dateOfBirthOnDoc"
+
+1990-01-02
+--ExampleBoundaryP10
+Content-Disposition: form-data; name="issuePlace"
+
+Synthetic province
+--ExampleBoundaryP10
+Content-Disposition: form-data; name="issueDate"
+
+2020-01-01
+--ExampleBoundaryP10
+Content-Disposition: form-data; name="frontImage"; filename="synthetic-front.png"
+Content-Type: image/png
+
+< ./fixtures/synthetic-front.png
+--ExampleBoundaryP10--
+
+### Owner-only authenticated image bytes (JPEG/PNG); consume as binary/blob, not JSON or public img URL.
+GET {{baseUrl}}/api/user-documents/{{documentId}}/files/front
+Authorization: Bearer {{customerToken}}
+
+### ADMIN review. U-13 metadata/images/expiry requirements apply to APPROVED.
+PATCH {{baseUrl}}/api/user-documents/{{documentId}}/review
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "verifyStatus": "APPROVED"
+}
+
+### DRIVER_LICENSE submission requires licenseClass immediately; approval also requires metadata, expiry and both images.
+### This request remains PENDING until an ADMIN reviews it. Replace sample paths with local synthetic PNGs.
+POST {{baseUrl}}/api/user-documents
+Authorization: Bearer {{customerToken}}
+Content-Type: multipart/form-data; boundary=ExampleBoundaryLicenseP10
+
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="docType"
+
+DRIVER_LICENSE
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="docNumber"
+
+SYNTHETIC-LICENSE-001
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="licenseClass"
+
+B2
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="fullNameOnDoc"
+
+Synthetic Local Customer
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="dateOfBirthOnDoc"
+
+1990-01-02
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="issuePlace"
+
+Synthetic province
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="issueDate"
+
+2020-01-01
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="expiresAt"
+
+2030-01-01
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="frontImage"; filename="synthetic-license-front.png"
+Content-Type: image/png
+
+< ./fixtures/synthetic-front.png
+--ExampleBoundaryLicenseP10
+Content-Disposition: form-data; name="backImage"; filename="synthetic-license-back.png"
+Content-Type: image/png
+
+< ./fixtures/synthetic-back.png
+--ExampleBoundaryLicenseP10--
+
+### Create own driver profile. This route is bodyless: do not add Content-Type, query, or body bytes.
+POST {{baseUrl}}/api/drivers
+Authorization: Bearer {{customerToken}}
+
+### Current eligibility is a snapshot; it does not reserve a driver or car slot.
+GET {{baseUrl}}/api/drivers/{{driverId}}/eligibility
+Authorization: Bearer {{customerToken}}
+
+### ADMIN driver status transition. A current approved GPLX plus identity KYC is required for ACTIVE.
+PATCH {{baseUrl}}/api/drivers/{{driverId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "ACTIVE"
+}
+
+### First bank account is non-default when makeDefault is omitted (U-16). REST response masks the number.
+POST {{baseUrl}}/api/bank-accounts
+Authorization: Bearer {{customerToken}}
+Content-Type: application/json
+
+{
+  "bankName": "Synthetic Bank",
+  "accountNumber": "001234567890",
+  "accountHolder": "SYNTHETIC HOLDER"
+}
+
+### Set a caller-owned account as default. Bodyless: no query and no byte body.
+PATCH {{baseUrl}}/api/bank-accounts/{{bankAccountId}}/default
+Authorization: Bearer {{customerToken}}
+
+### Delete a caller-owned unreferenced account. Bodyless; U-17 permits zero defaults afterward.
+DELETE {{baseUrl}}/api/bank-accounts/{{bankAccountId}}
+Authorization: Bearer {{customerToken}}
+
+### ADMIN creates a voucher definition. Amounts are exact integral values; timestamps are local and have no offset/Z.
+### `1.0` can be valid for an amount; 12.5 is rejected. Integer quotas require integer JSON tokens.
+POST {{baseUrl}}/api/vouchers
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "code": "SYNTHETIC-LOCAL-001",
+  "description": "Synthetic local voucher",
+  "discountType": "FIXED",
+  "discountValue": 1000,
+  "maxDiscount": 0,
+  "minOrderAmount": 0,
+  "startAt": "2026-10-15T10:00:00",
+  "endAt": "2026-10-16T10:00:00",
+  "usageLimit": 5,
+  "perUserLimit": 1
+}
+
+### ADMIN list/filter. Window state is independent of stored ACTIVE/INACTIVE status.
+GET {{baseUrl}}/api/vouchers?code=SYNTHETIC-LOCAL-001&window=CURRENT&page=0&size=20&sort=createdAt,desc
+Authorization: Bearer {{adminToken}}
+
+### ADMIN may update only these two fields; both keys are required.
+PUT {{baseUrl}}/api/vouchers/{{voucherId}}
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "description": "Revised synthetic description",
+  "usageLimit": 10
+}
+
+### ADMIN disables without deleting the row.
+PATCH {{baseUrl}}/api/vouchers/{{voucherId}}/status
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "status": "INACTIVE"
+}
+
+### Error probes (run only against the disposable local instance):
+### 401: omit/expire the bearer token on a protected request. Account LOCKED also returns 401 on next request.
+### 403: call POST /api/vouchers with customerToken; or ADMIN self-review/self-driver-status policy route.
+### 404: use a peer-owned document or bank ID; bank remains owner-only even when the caller is ADMIN.
+### 409: retry an already-created driver, review a terminal document, or reuse an exact voucher code.
+### 413: upload a synthetic fixture exceeding the configured file/request cap; do not include a huge fixture here.
+### 415: send an unsupported Content-Type to a JSON/multipart route.
+### 503: with private storage disabled, an authenticated upload/download returns DEPENDENCY_UNAVAILABLE.
+### Errors use the normal JSON envelope/trace and do not echo the rejected values.

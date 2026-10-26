@@ -2,6 +2,7 @@ package com.carrental.dto.request;
 
 import com.carrental.entity.Payout;
 import com.carrental.enums.PayoutStatus;
+import com.carrental.util.TimeUtil;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
@@ -28,8 +29,7 @@ public class ProcessPayoutRequest {
             payout.setNote(this.note);
         }
         if (next == PayoutStatus.PAID) {
-            payout.setPaidAt(LocalDateTime.now());
+            payout.setPaidAt(TimeUtil.nowVn());
         }
-        payout.setUpdatedAt(LocalDateTime.now());
     }
 }

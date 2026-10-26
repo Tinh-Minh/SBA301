@@ -5,7 +5,7 @@ import com.carrental.dto.request.document.UserDocumentSubmissionCommand;
 import com.carrental.dto.request.document.UserDocumentSubmissionRequest;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
-import com.carrental.storage.UploadedDocumentImage;
+import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;

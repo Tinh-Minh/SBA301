@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface DisputeEvidenceRepository extends JpaRepository<DisputeEvidence, Long> {
     List<DisputeEvidence> findByDisputeId(Long disputeId);
+
+    List<DisputeEvidence> findByDisputeIdIn(List<Long> disputeIds);
 }

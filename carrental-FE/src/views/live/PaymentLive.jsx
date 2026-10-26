@@ -251,13 +251,6 @@ function Pay({ orderId }) {
         }
         return tx;
     });
-    const simulate = useAsyncAction(async (success) => {
-        const targetId = activePending?.id;
-        if (!targetId) return;
-        await transactionService.simulate(targetId, success);
-        setPending(null);
-        detail.reload();
-    });
     if (!detail.data)
         return <LiveState loading={detail.loading} error={detail.error} label="đơn thanh toán" onRetry={detail.reload}/>;
     const { order } = detail.data;
@@ -291,14 +284,11 @@ function Pay({ orderId }) {
           <span>Giao dịch #{activePending.id} đang chờ ({formatMoney(activePending.amount)})</span>
         </div>
         <p className="text-xs text-[#666666]">
-          Nếu bạn đã hoàn tất thanh toán trên VNPay Sandbox ở tab khác, bấm <strong>"Kiểm tra lại"</strong> hoặc dùng nút <strong>"Xác nhận đã thanh toán (Sandbox)"</strong> để cập nhật ngay trạng thái đơn.
+          Vui lòng hoàn tất thanh toán trên cổng VNPay. Sau khi thanh toán xong, hệ thống sẽ tự động cập nhật hoặc bạn có thể bấm <strong>"Kiểm tra lại"</strong>.
         </p>
         {activePending.paymentUrl ? <a href={activePending.paymentUrl} className="mt-1 inline-flex text-xs font-bold text-[#FC6C26] hover:underline">Mở lại trang thanh toán VNPay</a> : null}
-        {simulate.error ? <p className="mt-1 text-xs text-[#B91C1C]">{simulate.error.message}</p> : null}
         <div className="mt-2 flex flex-wrap gap-2">
-          <button type="button" disabled={detail.loading} onClick={() => void detail.reload()} className="rounded-lg border border-[#E9E9E7] bg-white px-3 py-1.5 text-xs font-bold text-[#292929] hover:bg-[#F7F7F5]">🔄 Kiểm tra lại</button>
-          <button type="button" disabled={simulate.running} onClick={() => void simulate.run(true)} className="rounded-lg bg-[#047857] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#059669]">✓ Xác nhận đã thanh toán (Sandbox)</button>
-          <button type="button" disabled={simulate.running} onClick={() => void simulate.run(false)} className="rounded-lg border border-[#EF4444] px-3 py-1.5 text-xs font-bold text-[#EF4444] hover:bg-[#FEF2F2]">✕ Đánh dấu thất bại</button>
+          <button type="button" disabled={detail.loading} onClick={() => void detail.reload()} className="rounded-lg border border-[#E9E9E7] bg-white px-3 py-1.5 text-xs font-bold text-[#292929] hover:bg-[#F7F7F5]">🔄 Kiểm tra lại trạng thái</button>
         </div>
       </div> : null}
     </>}

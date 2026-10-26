@@ -1,5 +1,6 @@
 package com.carrental.dto.request;
 
+import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Transaction;
 import com.carrental.enums.PaymentMethod;
 import com.carrental.enums.TransactionStatus;
@@ -10,7 +11,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -18,26 +18,26 @@ public class CreateDepositRequest {
     @NotNull(message = "Mã đơn hàng không được để trống")
     private Long orderId;
 
-    @Positive(message = "Số tiền cọc phải lớn hơn 0")
     private BigDecimal amount;
 
     private String method;
 
     public Transaction toEntity() {
+        return toEntity(null, this.amount);
+    }
+
+    public Transaction toEntity(RentalOrder order, BigDecimal depositAmount) {
         Transaction transaction = new Transaction();
+        transaction.setOrder(order);
         transaction.setTransactionType(TransactionType.DEPOSIT);
-        transaction.setAmount(this.amount);
+        transaction.setAmount(depositAmount);
 
         PaymentMethod paymentMethod = PaymentMethod.VNPAY;
-        if (this.method != null) {
-            try {
-                paymentMethod = PaymentMethod.valueOf(this.method.toUpperCase());
-            } catch (IllegalArgumentException ignored) {}
+        if (this.method != null && !this.method.isBlank()) {
+            paymentMethod = PaymentMethod.valueOf(this.method.trim().toUpperCase());
         }
         transaction.setMethod(paymentMethod);
         transaction.setStatus(TransactionStatus.PENDING);
-        transaction.setCreatedAt(LocalDateTime.now());
-        transaction.setUpdatedAt(LocalDateTime.now());
         return transaction;
     }
 }

@@ -15,9 +15,14 @@ public record ExtraFeeResponse(
         BigDecimal amount,
         String description,
         String status,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String paymentUrl
 ) {
     public static ExtraFeeResponse from(ExtraFee ef) {
+        return from(ef, null);
+    }
+
+    public static ExtraFeeResponse from(ExtraFee ef, String paymentUrl) {
         if (ef == null) return null;
         return new ExtraFeeResponse(
                 ef.getId(),
@@ -29,7 +34,8 @@ public record ExtraFeeResponse(
                 ef.getAmount(),
                 ef.getDescription(),
                 ef.getStatus() != null ? ef.getStatus().name() : null,
-                ef.getCreatedAt()
+                ef.getCreatedAt(),
+                paymentUrl
         );
     }
 }

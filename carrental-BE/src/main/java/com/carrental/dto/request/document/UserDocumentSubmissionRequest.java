@@ -1,5 +1,9 @@
 package com.carrental.dto.request.document;
 
+import com.carrental.entity.Customer;
+import com.carrental.entity.UserDocument;
+import com.carrental.enums.VerificationStatus;
+
 import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.enums.DocumentType;
 import com.carrental.exception.AppException;
@@ -82,5 +86,25 @@ public record UserDocumentSubmissionRequest(
             errors.add(new FieldErrorResponse(field, "Loại giấy tờ không hợp lệ"));
             return null;
         }
+    }
+
+    public UserDocument toEntity(Customer owner, String frontImageUrl, String backImageUrl) {
+        UserDocument document = new UserDocument();
+        document.setCustomer(owner);
+        document.setDocType(docType());
+        document.setDocNumber(docNumber());
+        document.setFullNameOnDoc(fullNameOnDoc());
+        document.setDateOfBirthOnDoc(dateOfBirthOnDoc());
+        document.setIssuePlace(issuePlace());
+        document.setIssueDate(issueDate());
+        document.setExpiresAt(expiresAt());
+        document.setLicenseClass(licenseClass());
+        document.setFrontImageUrl(frontImageUrl);
+        document.setBackImageUrl(backImageUrl);
+        document.setVerifyStatus(VerificationStatus.PENDING);
+        document.setRejectReason(null);
+        document.setVerifiedBy(null);
+        document.setVerifiedAt(null);
+        return document;
     }
 }

@@ -20,4 +20,16 @@ public final class PageRequestFactory {
         return PageRequest.of(safePage, safeSize,
                 Sort.by(new Sort.Order(dir, field), Sort.Order.asc("id")));
     }
+
+    public static Pageable of(int page, int size, String sort) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), MAX_SIZE);
+        if (sort == null || sort.isBlank()) {
+            return PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "id"));
+        }
+        String[] parts = sort.split(",");
+        String field = parts[0].trim();
+        Sort.Direction dir = (parts.length > 1 && parts[1].trim().equalsIgnoreCase("asc")) ? Sort.Direction.ASC : Sort.Direction.DESC;
+        return PageRequest.of(safePage, safeSize, Sort.by(dir, field));
+    }
 }

@@ -5,6 +5,7 @@ import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
+import com.carrental.service.CurrentUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
