@@ -27,7 +27,7 @@ async function backend(page) {
       case "/api/drivers/me/eligibility": data = { eligibleNow: true, kycStatus: "APPROVED", hasValidDriverLicense: true }; break;
       case "/api/payouts": data = pageOf([payout]); break;
       case "/api/slots/car/42": data = pageOf([]); break;
-      case "/api/transactions": case "/api/reviews": case "/api/disputes": case "/api/user-documents": case "/api/vouchers": data = pageOf([]); break;
+      case "/api/transactions": case "/api/reviews": case "/api/disputes": case "/api/user-documents": case "/api/vouchers": case "/api/extra-fees": data = pageOf([]); break;
       default: errors.push(`Unexpected API path: ${url.pathname}`); return route.fulfill({ status: 501, json: { message: "Unhandled test endpoint" } });
     }
     return route.fulfill({ json: { success: true, data } });

@@ -10,6 +10,7 @@ import { formatDateTime } from "@/shared/utils/datetime.js";
 import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/shared/utils/owner.js";
 import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/shared/utils/labels.js";
 import { useHandoverActions } from "@/shared/hooks/useHandovers.js";
+import { OrderExtraFeesSection } from "@/features/bookings/components/OrderExtraFeesSection.jsx";
 
 export function OrderDetail({ orderId, justCreated = false }) {
     return <LivePage width="max-w-3xl">
@@ -85,6 +86,8 @@ function Detail({ orderId, justCreated }) {
       {confirmHandover.error ? <p className="mt-2 text-sm text-[#B91C1C]">{confirmHandover.error.message}</p> : null}
       <p className="mt-3 text-xs text-[#666666]">Biên bản nhận xe chỉ lập được từ 60 phút trước giờ nhận. Nếu bị từ chối, hãy kiểm tra lại thời điểm.</p>
     </section>
+
+    <OrderExtraFeesSection order={order} onReloadParent={reload}/>
 
     <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
       <h2 className="font-bold">Nhật ký</h2>

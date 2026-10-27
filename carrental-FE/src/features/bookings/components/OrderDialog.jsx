@@ -3,6 +3,7 @@ import { useAdminOrderDetail } from "@/shared/hooks/useAdmin.js";
 import { AdminDialog, AdminState } from "@/shared/components/admin/AdminUi.jsx";
 import { formatDateTime } from "@/shared/utils/datetime.js";
 import { formatMoney, orderStatusLabels, paymentMethodLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/shared/utils/labels.js";
+import { OrderExtraFeesSection } from "@/features/bookings/components/OrderExtraFeesSection.jsx";
 
 export const tabs = [{ id: "", label: "Tất cả" }, ...["PENDING", "CONFIRMED", "ONGOING", "COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"].map(id => ({ id, label: orderStatusLabels[id] }))];
 export const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger", REJECTED: "danger", EXPIRED: "neutral" };
@@ -34,6 +35,7 @@ export function OrderDialog({ order, onClose }) {
             {detail.data.logs.map((log, index) => <li key={log.id ?? index}><b>{orderStatusLabels[log.toStatus] ?? log.toStatus ?? log.action}</b> • {formatDateTime(log.createdAt)}{log.actorName ? ` • ${log.actorName}` : ""}{log.note ? ` • ${log.note}` : ""}</li>)}
           </ol>
         </section>
+        <OrderExtraFeesSection order={order} />
       </> : null}
     </div>
   </AdminDialog>;

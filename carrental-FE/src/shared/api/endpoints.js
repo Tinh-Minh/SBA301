@@ -46,6 +46,12 @@ export const endpoints = {
         me: "/api/drivers/me",
         meEligibility: "/api/drivers/me/eligibility",
     },
+    extraFees: {
+        byId: (id) => `/api/extra-fees/${id}`,
+        byIdPay: (id) => `/api/extra-fees/${id}/pay`,
+        byIdWaive: (id) => `/api/extra-fees/${id}/waive`,
+        list: "/api/extra-fees",
+    },
     handovers: {
         byIdConfirm: (handoverId) => `/api/handovers/${handoverId}/confirm`,
     },

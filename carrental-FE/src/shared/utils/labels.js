@@ -53,6 +53,27 @@ export const verifyStatusLabels = { PENDING: "Chờ duyệt", APPROVED: "Đã du
 export const docTypeLabels = { CITIZEN_ID: "CCCD / CMND", DRIVER_LICENSE: "Giấy phép lái xe", PASSPORT: "Hộ chiếu" };
 export const disputeStatusLabels = { OPEN: "Mới mở", IN_REVIEW: "Đang xem xét", RESOLVED: "Đã giải quyết", REJECTED: "Bác bỏ" };
 export const handoverTypeLabels = { PICKUP: "Nhận xe", RETURN: "Trả xe" };
+export const feeTypeLabels = {
+    LATE_RETURN: "Trả xe trễ",
+    FUEL: "Nhiên liệu / Pin",
+    CLEANING: "Vệ sinh xe",
+    DAMAGE: "Hư hại / Trầy xước",
+    TRAFFIC_FINE: "Phạt nguội",
+    EXTRA_KM: "Quá số km",
+    OTHER: "Phí khác",
+};
+export const extraFeeStatusLabels = {
+    PENDING: "Chờ thanh toán",
+    PAID: "Đã thanh toán",
+    WAIVED: "Đã miễn trừ",
+    CANCELLED: "Đã hủy",
+};
+export const extraFeeStatusTone = {
+    PENDING: "bg-[#FEF3C7] text-[#B45309]",
+    PAID: "bg-[#D1FAE5] text-[#047857]",
+    WAIVED: "bg-[#F3F4F6] text-[#374151]",
+    CANCELLED: "bg-[#FEE2E2] text-[#B91C1C]",
+};
 
 export function carName(item) {
     if (!item)

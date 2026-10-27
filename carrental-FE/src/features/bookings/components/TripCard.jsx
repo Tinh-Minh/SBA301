@@ -3,6 +3,7 @@ import { Icon } from "@/shared/components/Icon.jsx";
 import { PayoutMath } from "@/shared/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/shared/components/owner/StatusBadge.jsx";
 import { findHandover, formatRentalPeriod, handoverTypeMeta, isHandoverConfirmed, nextHandoverType, orderStatusMeta } from "@/shared/utils/owner.js";
+import { OrderExtraFeesSection } from "@/features/bookings/components/OrderExtraFeesSection.jsx";
 
 export const filters = [
     { id: "all", label: "Tất cả" },
@@ -84,6 +85,9 @@ export function TripCard({ item, busy, error, onCreate, onConfirm }) {
           </div> : null}
           {error ? <p className="text-sm text-on-error-container">{error.message}</p> : null}
         </div> : <p className="text-sm font-semibold text-status-success-ink">C10-A và C10-B đã đủ chữ ký hai bên.</p>}
+        <div className="mt-2 pt-2 border-t border-gray-100">
+          <OrderExtraFeesSection order={order} isOwnerView={true} />
+        </div>
       </div>
       <PayoutMath order={order}/>
     </div>

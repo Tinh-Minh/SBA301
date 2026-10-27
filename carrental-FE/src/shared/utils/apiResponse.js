@@ -63,6 +63,16 @@ export function normalizeHandover(handover) {
     };
 }
 
+export function normalizeExtraFee(fee) {
+    if (!fee)
+        return fee;
+    return {
+        ...fee,
+        amount: money(fee.amount),
+        createdAt: isoOrNull(fee.createdAt),
+    };
+}
+
 export function normalizeSlot(slot) {
     if (!slot)
         return slot;
