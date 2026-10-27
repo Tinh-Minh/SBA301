@@ -247,7 +247,7 @@ class RentalOrderFlowIntegrationTest {
                 .andExpect(jsonPath("$.data.status").value("CANCELLED"))
                 .andExpect(jsonPath("$.data.cancelledById").value(renterId));
 
-        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isConflict());
+        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isBadRequest()); // luật chuyển trạng thái trong enum OrderStatus trả 400
         createOrder(otherRenterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", null);
     }
 
@@ -277,7 +277,7 @@ class RentalOrderFlowIntegrationTest {
 
         assertOrderStatus(orderId, OrderStatus.EXPIRED);
         assertThat(voucherUsedCount()).isZero();
-        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isConflict());
+        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isBadRequest()); // luật chuyển trạng thái trong enum OrderStatus trả 400
         as(renterId, get("/api/orders/" + orderId + "/logs"))
                 .andExpect(jsonPath("$.data[1].action").value("EXPIRE"))
                 .andExpect(jsonPath("$.data[1].actorId").doesNotExist())

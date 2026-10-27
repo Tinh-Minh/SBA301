@@ -10,7 +10,7 @@ import com.carrental.enums.RentalOption;
 import com.carrental.enums.RentalType;
 import com.carrental.enums.SlotStatus;
 import com.carrental.enums.VoucherStatus;
-import com.carrental.exception.BadRequestException;
+import com.carrental.exception.AppException;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.service.impl.PricingServiceImpl;
@@ -169,7 +169,7 @@ class PricingServiceImplTest {
     void reject_endBeforeStart() {
         assertThatThrownBy(() -> pricingService.validateBookingWindow(slot, RentalType.HOURLY,
                 LocalDateTime.of(2026, 10, 12, 13, 0), LocalDateTime.of(2026, 10, 12, 8, 0)))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(AppException.class);
     }
 
     @Test
@@ -177,7 +177,7 @@ class PricingServiceImplTest {
         slot.setStartTime(NOW.minusDays(5));
         assertThatThrownBy(() -> pricingService.validateBookingWindow(slot, RentalType.HOURLY,
                 NOW.minusHours(5), NOW.plusHours(1)))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("quá khứ");
     }
 
@@ -185,7 +185,7 @@ class PricingServiceImplTest {
     void reject_outsideSlot() {
         assertThatThrownBy(() -> pricingService.validateBookingWindow(slot, RentalType.DAILY,
                 LocalDateTime.of(2026, 10, 19, 8, 0), LocalDateTime.of(2026, 10, 21, 8, 0)))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("nằm trong slot");
     }
 
@@ -194,7 +194,7 @@ class PricingServiceImplTest {
         slot.setStatus(SlotStatus.CLOSED);
         assertThatThrownBy(() -> pricingService.validateBookingWindow(slot, RentalType.DAILY,
                 LocalDateTime.of(2026, 10, 12, 8, 0), LocalDateTime.of(2026, 10, 13, 8, 0)))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(AppException.class);
     }
 
     @Test
@@ -202,7 +202,7 @@ class PricingServiceImplTest {
         slot.setRentalOption(RentalOption.DAILY);
         assertThatThrownBy(() -> pricingService.validateBookingWindow(slot, RentalType.HOURLY,
                 LocalDateTime.of(2026, 10, 12, 8, 0), LocalDateTime.of(2026, 10, 12, 18, 0)))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("theo ngày");
     }
 
@@ -210,7 +210,7 @@ class PricingServiceImplTest {
     void reject_belowMinimumHours() {
         assertThatThrownBy(() -> pricingService.validateBookingWindow(slot, RentalType.HOURLY,
                 LocalDateTime.of(2026, 10, 12, 8, 0), LocalDateTime.of(2026, 10, 12, 11, 0)))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("tối thiểu");
     }
 
@@ -220,7 +220,7 @@ class PricingServiceImplTest {
     void voucher_notFound() {
         when(voucherRepository.findByCodeIgnoreCase("XXX")).thenReturn(Optional.empty());
         assertThatThrownBy(() -> pricingService.resolveVoucher("XXX", new BigDecimal("1000000"), 1L))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(AppException.class);
     }
 
     @Test
@@ -228,7 +228,7 @@ class PricingServiceImplTest {
         when(voucherRepository.findByCodeIgnoreCase("SALE"))
                 .thenReturn(Optional.of(voucher(DiscountType.FIXED, "50000", null, "1000000")));
         assertThatThrownBy(() -> pricingService.resolveVoucher("SALE", new BigDecimal("999999"), 1L))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("tối thiểu");
     }
 
@@ -238,7 +238,7 @@ class PricingServiceImplTest {
         v.setEndAt(NOW.minusMinutes(1));
         when(voucherRepository.findByCodeIgnoreCase("SALE")).thenReturn(Optional.of(v));
         assertThatThrownBy(() -> pricingService.resolveVoucher("SALE", new BigDecimal("100000"), 1L))
-                .isInstanceOf(BadRequestException.class);
+                .isInstanceOf(AppException.class);
     }
 
     @Test
@@ -247,7 +247,7 @@ class PricingServiceImplTest {
         v.setUsedCount(100);
         when(voucherRepository.findByCodeIgnoreCase("SALE")).thenReturn(Optional.of(v));
         assertThatThrownBy(() -> pricingService.resolveVoucher("SALE", new BigDecimal("100000"), 1L))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("hết lượt");
     }
 
@@ -257,7 +257,7 @@ class PricingServiceImplTest {
                 .thenReturn(Optional.of(voucher(DiscountType.FIXED, "50000", null, "0")));
         when(rentalOrderRepository.countVoucherUsage(anyLong(), anyLong(), any())).thenReturn(1L);
         assertThatThrownBy(() -> pricingService.resolveVoucher("SALE", new BigDecimal("100000"), 1L))
-                .isInstanceOf(BadRequestException.class)
+                .isInstanceOf(AppException.class)
                 .hasMessageContaining("Bạn đã dùng hết");
     }
 }

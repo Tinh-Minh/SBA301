@@ -1,24 +1,20 @@
 package com.carrental.scheduling;
 
 import com.carrental.service.RentalOrderService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /** Định kỳ chuyển các đơn PENDING quá hạn chủ xe xác nhận sang EXPIRED. */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class OrderExpirationScheduler {
 
-    private static final Logger log = LoggerFactory.getLogger(OrderExpirationScheduler.class);
-
     private final RentalOrderService rentalOrderService;
-
-    public OrderExpirationScheduler(RentalOrderService rentalOrderService) {
-        this.rentalOrderService = rentalOrderService;
-    }
 
     @Scheduled(fixedDelayString = "${app.order.expire-check-ms:60000}",
             initialDelayString = "${app.order.expire-initial-delay-ms:30000}")
@@ -26,12 +22,13 @@ public class OrderExpirationScheduler {
         List<Long> ids = rentalOrderService.findOverduePendingOrderIds();
         int expired = 0;
         for (Long id : ids) {
+            // Mỗi đơn một transaction riêng: một đơn lỗi (vd. chủ xe vừa xác nhận đúng lúc)
+            // không làm hỏng cả lô; đơn đó được xét lại ở lần chạy sau.
             try {
                 if (rentalOrderService.expireOrder(id)) {
                     expired++;
                 }
             } catch (RuntimeException ex) {
-                // Ví dụ chủ xe vừa xác nhận đúng lúc job chạy (optimistic lock) -> bỏ qua, lần sau xét lại.
                 log.warn("Không thể chuyển đơn {} sang EXPIRED: {}", id, ex.getMessage());
             }
         }

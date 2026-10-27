@@ -107,21 +107,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 ErrorCode.DEPENDENCY_UNAVAILABLE.message());
     }
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotFound(ResourceNotFoundException ex) {
-        return build(HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND.name(), ex.getMessage());
-    }
-
-    @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBadRequest(BadRequestException ex) {
-        return build(HttpStatus.BAD_REQUEST, ErrorCode.INVALID_REQUEST.name(), ex.getMessage());
-    }
-
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleUnauthorized(UnauthorizedException ex) {
-        return build(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_FAILED.name(), ex.getMessage());
-    }
-
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleAuthentication(AuthenticationException ex) {
         for (Throwable cause = ex; cause != null; cause = cause.getCause()) {
@@ -135,19 +120,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ErrorCode.AUTHENTICATION_FAILED.name(), "Thông tin xác thực không hợp lệ hoặc đã hết hạn");
     }
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ApiResponse<Void>> handleForbidden(ForbiddenException ex) {
-        return build(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED.name(), ex.getMessage());
-    }
-
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return build(HttpStatus.FORBIDDEN, ErrorCode.ACCESS_DENIED.name(), "Bạn không có quyền thực hiện thao tác này");
-    }
-
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ApiResponse<Void>> handleConflict(ConflictException ex) {
-        return build(HttpStatus.CONFLICT, "CONFLICT", ex.getMessage());
     }
 
     /** Hai người cùng sửa một bản ghi có @Version. */

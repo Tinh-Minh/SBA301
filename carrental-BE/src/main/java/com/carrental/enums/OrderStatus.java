@@ -3,6 +3,10 @@ package com.carrental.enums;
 import com.carrental.exception.AppException;
 import org.springframework.http.HttpStatus;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
+
 public enum OrderStatus {
     PENDING,
     CONFIRMED,
@@ -11,6 +15,10 @@ public enum OrderStatus {
     ONGOING,
     COMPLETED,
     CANCELLED;
+
+    /** Đơn ở các trạng thái này đang giữ lịch xe (khớp điều kiện của EXCLUDE rental_orders_no_overlap). */
+    public static final Set<OrderStatus> HOLDING_SCHEDULE =
+            Collections.unmodifiableSet(EnumSet.of(PENDING, CONFIRMED, ONGOING));
 
     public boolean canTransitionTo(OrderStatus next) {
         if (this == PENDING) {

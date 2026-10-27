@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Entity
 @Table(name = "rental_orders")
@@ -112,5 +113,16 @@ public class RentalOrder extends BaseEntity {
     @Column(name = "version", nullable = false)
     @Builder.Default
     private Long version = 0L;
+
+    /** Người dùng là người thuê của đơn này. */
+    public boolean isRenter(Customer user) {
+        return user != null && customer != null && Objects.equals(customer.getId(), user.getId());
+    }
+
+    /** Người dùng là chủ của xe trong đơn này. */
+    public boolean isOwner(Customer user) {
+        return user != null && car != null && car.getOwner() != null
+                && Objects.equals(car.getOwner().getId(), user.getId());
+    }
 
 }

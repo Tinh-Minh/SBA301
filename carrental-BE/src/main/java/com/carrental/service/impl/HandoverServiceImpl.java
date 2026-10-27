@@ -1,5 +1,6 @@
 package com.carrental.service.impl;
 
+import com.carrental.config.OrderProperties;
 import com.carrental.dto.request.CreateHandoverRequestDTO;
 import com.carrental.dto.request.HandoverImageRequestDTO;
 import com.carrental.dto.response.HandoverResponseDTO;
@@ -8,20 +9,21 @@ import com.carrental.entity.HandoverImage;
 import com.carrental.entity.OrderHandover;
 import com.carrental.entity.RentalOrder;
 import com.carrental.enums.HandoverType;
+import com.carrental.enums.OrderAction;
 import com.carrental.enums.OrderStatus;
 import com.carrental.enums.PaymentStatus;
-import com.carrental.exception.BadRequestException;
-import com.carrental.exception.ConflictException;
-import com.carrental.exception.ForbiddenException;
-import com.carrental.exception.ResourceNotFoundException;
+import com.carrental.exception.AppException;
 import com.carrental.repository.HandoverImageRepository;
 import com.carrental.repository.OrderHandoverRepository;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.HandoverService;
-import com.carrental.policy.OrderStatusRules;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +31,11 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
+import java.util.function.Supplier;
 
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class HandoverServiceImpl implements HandoverService {
 
     private final OrderHandoverRepository handoverRepository;
@@ -39,127 +43,137 @@ public class HandoverServiceImpl implements HandoverService {
     private final RentalOrderRepository rentalOrderRepository;
     private final ActionLogService actionLogService;
     private final CurrentUserService currentUserService;
+    private final OrderProperties orderProperties;
     private final Clock clock;
-
-    /** Cho phép nhận xe sớm hơn giờ đặt bao nhiêu phút. */
-    @Value("${app.order.pickup-early-minutes:60}")
-    private long pickupEarlyMinutes;
-
-    /** Bật khi Function 4 đã cập nhật payment_status: bắt buộc thanh toán trước khi nhận xe. */
-    @Value("${app.order.require-payment-before-pickup:false}")
-    private boolean requirePaymentBeforePickup;
-
-    public HandoverServiceImpl(OrderHandoverRepository handoverRepository,
-                               HandoverImageRepository handoverImageRepository,
-                               RentalOrderRepository rentalOrderRepository,
-                               ActionLogService actionLogService,
-                               CurrentUserService currentUserService,
-                               Clock clock) {
-        this.handoverRepository = handoverRepository;
-        this.handoverImageRepository = handoverImageRepository;
-        this.rentalOrderRepository = rentalOrderRepository;
-        this.actionLogService = actionLogService;
-        this.currentUserService = currentUserService;
-        this.clock = clock;
-    }
 
     @Override
     @Transactional
     public HandoverResponseDTO createHandover(Long orderId, CreateHandoverRequestDTO request) {
-        Customer user = currentUserService.getCurrentUser();
-        RentalOrder order = findOrder(orderId);
-        boolean renter = isRenter(order, user);
-        boolean owner = isOwner(order, user);
-        if (!renter && !owner) {
-            throw new ForbiddenException("Chỉ người thuê hoặc chủ xe mới được lập biên bản bàn giao");
-        }
-        LocalDateTime now = LocalDateTime.now(clock);
-        HandoverType type = request.getHandoverType();
-
-        if (handoverRepository.existsByOrderIdAndHandoverType(orderId, type)) {
-            throw new ConflictException("Đơn đã có biên bản " + type);
-        }
-        if (type == HandoverType.PICKUP) {
-            validatePickup(order, now);
-        } else {
-            validateReturn(order, request);
-        }
-
-        OrderHandover handover = OrderHandover.builder()
-                .order(order)
-                .handoverType(type)
-                .odometerKm(request.getOdometerKm())
-                .fuelPercent(request.getFuelPercent())
-                .conditionNote(request.getConditionNote())
-                .handedAt(now)
-                .renterConfirmedAt(renter ? now : null)
-                .ownerConfirmedAt(owner ? now : null)
-                .build();
-        handover = handoverRepository.save(handover);
-        // Entity OrderHandover dùng chung không cascade ảnh nên lưu ảnh riêng qua repository.
-        List<HandoverImage> images = new ArrayList<>();
-        if (request.getImages() != null) {
-            for (HandoverImageRequestDTO img : request.getImages()) {
-                images.add(HandoverImage.builder()
-                        .handover(handover)
-                        .imageUrl(img.getImageUrl().trim())
-                        .caption(img.getCaption())
-                        .build());
+        log.info("Lập biên bản bàn giao orderId={}, type={}", orderId, request.getHandoverType());
+        return run("lập biên bản bàn giao", orderId, () -> {
+            Customer user = currentUserService.getCurrentUser();
+            RentalOrder order = findOrder(orderId);
+            boolean renter = order.isRenter(user);
+            boolean owner = order.isOwner(user);
+            if (!renter && !owner) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe mới được lập biên bản bàn giao");
             }
-            images = handoverImageRepository.saveAll(images);
-        }
-        actionLogService.log(order, user, ActionLogService.HANDOVER_CREATE, order.getStatus(), order.getStatus(),
-                "Lập biên bản " + type + (renter ? " (người thuê)" : " (chủ xe)"));
-        return HandoverResponseDTO.fromEntity(handover, images);
+            LocalDateTime now = LocalDateTime.now(clock);
+            HandoverType type = request.getHandoverType();
+
+            if (handoverRepository.existsByOrderIdAndHandoverType(orderId, type)) {
+                throw new AppException(HttpStatus.CONFLICT, "Đơn đã có biên bản " + type);
+            }
+            if (type == HandoverType.PICKUP) {
+                validatePickup(order, now);
+            } else {
+                validateReturn(order, request);
+            }
+
+            // Người lập được tính là đã xác nhận phần của mình; bên còn lại xác nhận sau.
+            OrderHandover handover = OrderHandover.builder()
+                    .order(order)
+                    .handoverType(type)
+                    .odometerKm(request.getOdometerKm())
+                    .fuelPercent(request.getFuelPercent())
+                    .conditionNote(request.getConditionNote())
+                    .handedAt(now)
+                    .renterConfirmedAt(renter ? now : null)
+                    .ownerConfirmedAt(owner ? now : null)
+                    .build();
+            handover = handoverRepository.save(handover);
+            // Entity OrderHandover dùng chung không cascade ảnh nên lưu ảnh riêng qua repository.
+            List<HandoverImage> images = new ArrayList<>();
+            if (request.getImages() != null) {
+                for (HandoverImageRequestDTO img : request.getImages()) {
+                    images.add(HandoverImage.builder()
+                            .handover(handover)
+                            .imageUrl(img.getImageUrl().trim())
+                            .caption(img.getCaption())
+                            .build());
+                }
+                images = handoverImageRepository.saveAll(images);
+            }
+            actionLogService.log(order, user, OrderAction.HANDOVER_CREATE, order.getStatus(), order.getStatus(),
+                    "Lập biên bản " + type + (renter ? " (người thuê)" : " (chủ xe)"));
+            return HandoverResponseDTO.fromEntity(handover, images);
+        });
     }
 
     @Override
     @Transactional
     public HandoverResponseDTO confirmHandover(Long handoverId) {
-        Customer user = currentUserService.getCurrentUser();
-        OrderHandover handover = handoverRepository.findById(handoverId)
-                .orElseThrow(() -> new ResourceNotFoundException("Biên bản bàn giao", handoverId));
-        RentalOrder order = handover.getOrder();
-        LocalDateTime now = LocalDateTime.now(clock);
+        log.info("Xác nhận biên bản bàn giao id={}", handoverId);
+        return run("xác nhận biên bản bàn giao", handoverId, () -> {
+            Customer user = currentUserService.getCurrentUser();
+            OrderHandover handover = handoverRepository.findById(handoverId)
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                            "Biên bản bàn giao không tồn tại (id=" + handoverId + ")"));
+            RentalOrder order = handover.getOrder();
+            LocalDateTime now = LocalDateTime.now(clock);
 
-        if (isRenter(order, user)) {
-            if (handover.getRenterConfirmedAt() != null) {
-                throw new ConflictException("Bạn đã xác nhận biên bản này rồi");
+            if (order.isRenter(user)) {
+                if (handover.getRenterConfirmedAt() != null) {
+                    throw new AppException(HttpStatus.CONFLICT, "Bạn đã xác nhận biên bản này rồi");
+                }
+                handover.setRenterConfirmedAt(now);
+            } else if (order.isOwner(user)) {
+                if (handover.getOwnerConfirmedAt() != null) {
+                    throw new AppException(HttpStatus.CONFLICT, "Bạn đã xác nhận biên bản này rồi");
+                }
+                handover.setOwnerConfirmedAt(now);
+            } else {
+                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe mới được xác nhận biên bản");
             }
-            handover.setRenterConfirmedAt(now);
-        } else if (isOwner(order, user)) {
-            if (handover.getOwnerConfirmedAt() != null) {
-                throw new ConflictException("Bạn đã xác nhận biên bản này rồi");
-            }
-            handover.setOwnerConfirmedAt(now);
-        } else {
-            throw new ForbiddenException("Chỉ người thuê hoặc chủ xe mới được xác nhận biên bản");
-        }
-        actionLogService.log(order, user, ActionLogService.HANDOVER_CONFIRM, order.getStatus(), order.getStatus(),
-                "Xác nhận biên bản " + handover.getHandoverType());
+            actionLogService.log(order, user, OrderAction.HANDOVER_CONFIRM, order.getStatus(), order.getStatus(),
+                    "Xác nhận biên bản " + handover.getHandoverType());
 
-        if (HandoverResponseDTO.isFullyConfirmed(handover)) {
-            applyHandover(order, handover, user);
-        }
-        handoverRepository.save(handover);
-        rentalOrderRepository.saveAndFlush(order);
-        return toResponse(handover);
+            if (HandoverResponseDTO.isFullyConfirmed(handover)) {
+                applyHandover(order, handover, user);
+            }
+            handoverRepository.save(handover);
+            // RentalOrder có @Version: hai bên xác nhận cùng lúc thì lần ghi sau báo 409 (xem hàm run).
+            rentalOrderRepository.saveAndFlush(order);
+            return toResponse(handover);
+        });
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<HandoverResponseDTO> getHandoversOfOrder(Long orderId) {
-        Customer user = currentUserService.getCurrentUser();
-        RentalOrder order = findOrder(orderId);
-        if (!isRenter(order, user) && !isOwner(order, user) && !currentUserService.isAdmin(user)) {
-            throw new ForbiddenException("Bạn không có quyền xem biên bản của đơn này");
-        }
-        return handoverRepository.findByOrderIdOrderByHandedAtAsc(orderId).stream()
-                .map(this::toResponse)
-                .toList();
+        return run("xem biên bản bàn giao", orderId, () -> {
+            Customer user = currentUserService.getCurrentUser();
+            RentalOrder order = findOrder(orderId);
+            if (!order.isRenter(user) && !order.isOwner(user) && !currentUserService.isAdmin(user)) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem biên bản của đơn này");
+            }
+            return handoverRepository.findByOrderIdOrderByHandedAtAsc(orderId).stream()
+                    .map(this::toResponse)
+                    .toList();
+        });
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /**
+     * Try/catch chung cho mọi hàm nghiệp vụ của service (quy ước nhóm mục 6):
+     * lỗi nghiệp vụ ném lại nguyên; lỗi ràng buộc DB và sửa đồng thời ném lại để
+     * GlobalExceptionHandler trả 409; lỗi khác bọc thành AppException 500.
+     */
+    private <T> T run(String action, Long id, Supplier<T> work) {
+        try {
+            return work.get();
+        } catch (AppException e) {
+            log.warn("{} thất bại id={}: {}", action, id, e.getMessage());
+            throw e;
+        } catch (DataIntegrityViolationException | ObjectOptimisticLockingFailureException e) {
+            log.warn("{} bị từ chối do xung đột dữ liệu id={}: {}", action, id, e.getClass().getSimpleName());
+            throw e;
+        } catch (Exception e) {
+            log.error("Lỗi không mong muốn khi {} id={}", action, id, e);
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể " + action);
+        }
+    }
 
     private HandoverResponseDTO toResponse(OrderHandover handover) {
         return HandoverResponseDTO.fromEntity(handover,
@@ -168,66 +182,55 @@ public class HandoverServiceImpl implements HandoverService {
 
     private void validatePickup(RentalOrder order, LocalDateTime now) {
         if (order.getStatus() != OrderStatus.CONFIRMED) {
-            throw new ConflictException("Chỉ bàn giao nhận xe cho đơn đã được chủ xe xác nhận");
+            throw new AppException(HttpStatus.CONFLICT, "Chỉ bàn giao nhận xe cho đơn đã được chủ xe xác nhận");
         }
-        if (now.isBefore(order.getStartTime().minusMinutes(pickupEarlyMinutes))) {
-            throw new BadRequestException("Chưa đến giờ nhận xe (sớm nhất "
-                    + order.getStartTime().minusMinutes(pickupEarlyMinutes) + ")");
+        LocalDateTime earliest = order.getStartTime().minusMinutes(orderProperties.getPickupEarlyMinutes());
+        if (now.isBefore(earliest)) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Chưa đến giờ nhận xe (sớm nhất " + earliest + ")");
         }
-        if (requirePaymentBeforePickup && order.getPaymentStatus() != PaymentStatus.PAID) {
-            throw new ConflictException("Đơn chưa được thanh toán, chưa thể nhận xe");
+        if (orderProperties.isRequirePaymentBeforePickup() && order.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new AppException(HttpStatus.CONFLICT, "Đơn chưa được thanh toán, chưa thể nhận xe");
         }
     }
 
     private void validateReturn(RentalOrder order, CreateHandoverRequestDTO request) {
         if (order.getStatus() != OrderStatus.ONGOING) {
-            throw new ConflictException("Chỉ bàn giao trả xe cho đơn đang thuê (ONGOING)");
+            throw new AppException(HttpStatus.CONFLICT, "Chỉ bàn giao trả xe cho đơn đang thuê (ONGOING)");
         }
         handoverRepository.findByOrderIdAndHandoverType(order.getId(), HandoverType.PICKUP)
                 .ifPresent(pickup -> {
                     if (pickup.getOdometerKm() != null && request.getOdometerKm() != null
                             && request.getOdometerKm() < pickup.getOdometerKm()) {
-                        throw new BadRequestException("Số km lúc trả (" + request.getOdometerKm()
+                        throw new AppException(HttpStatus.BAD_REQUEST, "Số km lúc trả (" + request.getOdometerKm()
                                 + ") nhỏ hơn lúc nhận (" + pickup.getOdometerKm() + ")");
                     }
                 });
     }
 
-    /** Biên bản đủ 2 bên xác nhận -> chuyển trạng thái đơn. */
+    /** Biên bản đủ 2 bên xác nhận -> chuyển trạng thái đơn theo luật trong enum OrderStatus. */
     private void applyHandover(RentalOrder order, OrderHandover handover, Customer actor) {
         OrderStatus from = order.getStatus();
         if (handover.getHandoverType() == HandoverType.PICKUP) {
-            changeStatus(order, OrderStatus.ONGOING);
+            from.validateTransitionTo(OrderStatus.ONGOING);
+            order.setStatus(OrderStatus.ONGOING);
             order.setActualStartTime(handover.getHandedAt());
-            actionLogService.log(order, actor, ActionLogService.PICKUP, from, OrderStatus.ONGOING,
+            log.info("Đơn chuyển sang ONGOING id={}", order.getId());
+            actionLogService.log(order, actor, OrderAction.PICKUP, from, OrderStatus.ONGOING,
                     "Đã bàn giao xe cho người thuê");
         } else {
-            changeStatus(order, OrderStatus.COMPLETED);
+            from.validateTransitionTo(OrderStatus.COMPLETED);
+            order.setStatus(OrderStatus.COMPLETED);
             order.setActualEndTime(handover.getHandedAt());
             String note = handover.getHandedAt().isAfter(order.getEndTime())
                     ? "Trả xe trễ so với giờ hẹn " + order.getEndTime()
                     : "Đã nhận lại xe";
-            actionLogService.log(order, actor, ActionLogService.RETURN, from, OrderStatus.COMPLETED, note);
+            log.info("Đơn chuyển sang COMPLETED id={}", order.getId());
+            actionLogService.log(order, actor, OrderAction.RETURN, from, OrderStatus.COMPLETED, note);
         }
-    }
-
-    private static void changeStatus(RentalOrder order, OrderStatus target) {
-        if (!OrderStatusRules.canTransition(order.getStatus(), target)) {
-            throw new ConflictException("Không thể chuyển đơn từ " + order.getStatus() + " sang " + target);
-        }
-        order.setStatus(target);
     }
 
     private RentalOrder findOrder(Long orderId) {
         return rentalOrderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Đơn thuê", orderId));
-    }
-
-    private static boolean isRenter(RentalOrder order, Customer user) {
-        return Objects.equals(order.getCustomer().getId(), user.getId());
-    }
-
-    private static boolean isOwner(RentalOrder order, Customer user) {
-        return Objects.equals(order.getCar().getOwner().getId(), user.getId());
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Đơn thuê không tồn tại (id=" + orderId + ")"));
     }
 }

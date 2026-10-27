@@ -1,6 +1,7 @@
 package com.carrental.controller;
 
-import com.carrental.exception.BadRequestException;
+import com.carrental.exception.AppException;
+import org.springframework.http.HttpStatus;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,13 +21,13 @@ final class PageableFactory {
 
     static Pageable forOrders(int page, int size, String sortBy, String direction) {
         if (page < 0) {
-            throw new BadRequestException("page phải >= 0");
+            throw new AppException(HttpStatus.BAD_REQUEST, "page phải >= 0");
         }
         if (size < 1 || size > MAX_SIZE) {
-            throw new BadRequestException("size phải từ 1 đến " + MAX_SIZE);
+            throw new AppException(HttpStatus.BAD_REQUEST, "size phải từ 1 đến " + MAX_SIZE);
         }
         if (!ORDER_SORT_FIELDS.contains(sortBy)) {
-            throw new BadRequestException("Không hỗ trợ sắp xếp theo '" + sortBy + "', chọn một trong " + ORDER_SORT_FIELDS);
+            throw new AppException(HttpStatus.BAD_REQUEST, "Không hỗ trợ sắp xếp theo '" + sortBy + "', chọn một trong " + ORDER_SORT_FIELDS);
         }
         Sort.Direction dir = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
         return PageRequest.of(page, size, Sort.by(dir, sortBy).and(Sort.by(Sort.Direction.DESC, "id")));
