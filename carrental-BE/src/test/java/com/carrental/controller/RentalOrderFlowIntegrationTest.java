@@ -1,6 +1,7 @@
 package com.carrental.controller;
 
 import com.carrental.TestJwtKeys;
+import com.carrental.config.OrderProperties;
 import com.carrental.entity.Car;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Customer;
@@ -11,6 +12,7 @@ import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.FuelType;
 import com.carrental.enums.OrderStatus;
+import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.RentalOption;
 import com.carrental.enums.Role;
 import com.carrental.enums.SlotStatus;
@@ -96,6 +98,7 @@ class RentalOrderFlowIntegrationTest {
     @Autowired private RentalOrderService rentalOrderService;
     @Autowired private EntityManager entityManager;
     @Autowired private EntityManagerFactory entityManagerFactory;
+    @Autowired private OrderProperties orderProperties;
     @Autowired private TransactionTemplate tx;
 
     private Long ownerId;
@@ -390,6 +393,51 @@ class RentalOrderFlowIntegrationTest {
         }
         // Đường dẫn hợp lệ vẫn được nhận
         createHandover(renterId, orderId, "PICKUP", 1000);
+    }
+
+    @Test
+    void handoverRulesForStrangersDuplicatesAndOrder() throws Exception {
+        Long orderId = createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", null);
+        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isOk());
+        clock.setTo(LocalDateTime.of(2026, 11, 3, 7, 30));
+
+        // Người ngoài đơn không được lập biên bản
+        as(strangerId, post("/api/orders/" + orderId + "/handovers").content(handoverJson("PICKUP", 1000)))
+                .andExpect(status().isForbidden());
+        // Chưa nhận xe thì chưa trả xe được
+        as(ownerId, post("/api/orders/" + orderId + "/handovers").content(handoverJson("RETURN", 1000)))
+                .andExpect(status().isConflict());
+
+        Long pickupId = createHandover(renterId, orderId, "PICKUP", 1000);
+        // Mỗi đơn chỉ một biên bản cho mỗi loại
+        as(ownerId, post("/api/orders/" + orderId + "/handovers").content(handoverJson("PICKUP", 1000)))
+                .andExpect(status().isConflict());
+        // Người ngoài không được xác nhận, cũng không xem được biên bản
+        as(strangerId, put("/api/handovers/" + pickupId + "/confirm")).andExpect(status().isForbidden());
+        as(strangerId, get("/api/orders/" + orderId + "/handovers")).andExpect(status().isForbidden());
+        // Biên bản không tồn tại
+        as(ownerId, put("/api/handovers/999999/confirm")).andExpect(status().isNotFound());
+        assertOrderStatus(orderId, OrderStatus.CONFIRMED);
+    }
+
+    @Test
+    void pickupRequiresPaymentWhenFlagIsOn() throws Exception {
+        Long orderId = createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", null);
+        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isOk());
+        clock.setTo(LocalDateTime.of(2026, 11, 3, 7, 30));
+
+        orderProperties.setRequirePaymentBeforePickup(true);
+        try {
+            as(renterId, post("/api/orders/" + orderId + "/handovers").content(handoverJson("PICKUP", 1000)))
+                    .andExpect(status().isConflict());
+
+            // Function 4 cập nhật đơn sang PAID thì nhận xe được
+            tx.executeWithoutResult(s -> rentalOrderRepository.findById(orderId).orElseThrow()
+                    .setPaymentStatus(PaymentStatus.PAID));
+            createHandover(renterId, orderId, "PICKUP", 1000);
+        } finally {
+            orderProperties.setRequirePaymentBeforePickup(false);
+        }
     }
 
     // ===================================================================== helpers
