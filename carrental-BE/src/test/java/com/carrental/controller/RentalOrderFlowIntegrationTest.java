@@ -376,6 +376,22 @@ class RentalOrderFlowIntegrationTest {
         assertThat(queries).isLessThanOrEqualTo(4);
     }
 
+    @Test
+    void handoverImageMustBeHttpUrl() throws Exception {
+        Long orderId = createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", null);
+        as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isOk());
+        clock.setTo(LocalDateTime.of(2026, 11, 3, 7, 30));
+
+        for (String badUrl : new String[]{"javascript:alert(1)", "ftp://img.test/a.jpg", "anh-xe.jpg"}) {
+            as(renterId, post("/api/orders/" + orderId + "/handovers").content(
+                    "{\"handoverType\":\"PICKUP\",\"odometerKm\":1000,\"images\":[{\"imageUrl\":\"" + badUrl + "\"}]}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errors[*].field", hasItem("images[0].imageUrl")));
+        }
+        // Đường dẫn hợp lệ vẫn được nhận
+        createHandover(renterId, orderId, "PICKUP", 1000);
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId,
