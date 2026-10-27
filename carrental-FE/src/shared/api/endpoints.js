@@ -83,7 +83,7 @@ export const endpoints = {
         deposit: "/api/transactions/deposit",
         list: "/api/transactions",
         payment: "/api/transactions/payment",
-        vnpayReturn: "/api/transactions/vnpay-return",
+        vnpayReturn: "/api/payments/vnpay/return",
     },
     userDocuments: {
         byId: (id) => `/api/user-documents/${id}`,

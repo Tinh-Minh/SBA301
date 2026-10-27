@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 
 test("an empty backend fleet stays empty without demo vehicles", async ({ page }) => {
   const requests = [];
-  await page.route("**/api/**", route => {
+  await page.route(/\/api\/(?!src)/, route => {
     requests.push(new URL(route.request().url()).pathname);
     return route.fulfill({ json: { success: true, data: { content: [], totalElements: 0, totalPages: 1 } } });
   });
@@ -20,7 +20,7 @@ test("an empty backend fleet stays empty without demo vehicles", async ({ page }
 });
 
 test("backend failures display an error instead of a sample fleet", async ({ page }) => {
-  await page.route("**/api/**", route => route.fulfill({ status: 503, json: { message: "Fleet backend unavailable" } }));
+  await page.route(/\/api\/(?!src)/, route => route.fulfill({ status: 503, json: { message: "Fleet backend unavailable" } }));
   await page.goto("/owner/vehicles");
   await expect(page.getByText("Fleet backend unavailable")).toBeVisible();
   await expect(page.locator("main article")).toHaveCount(0);

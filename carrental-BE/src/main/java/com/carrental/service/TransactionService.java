@@ -23,4 +23,6 @@ public interface TransactionService {
     PageResponse<TransactionResponse> getPaged(Long orderId, String transactionType, String status, Pageable pageable);
 
     String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
+
+    TransactionResponse simulateGateway(Long id, com.carrental.dto.request.SimulateGatewayRequest request);
 }

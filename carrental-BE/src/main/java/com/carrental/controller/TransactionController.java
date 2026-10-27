@@ -73,4 +73,12 @@ public class TransactionController {
         String url = transactionService.getVNPayUrl(id, bankCode, request);
         return ApiResponse.ok("Tạo link thanh toán VNPay thành công", Map.of("paymentUrl", url));
     }
+
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PostMapping("/{id}/simulate-gateway")
+    public ApiResponse<TransactionResponse> simulateGateway(
+            @PathVariable Long id,
+            @RequestBody(required = false) com.carrental.dto.request.SimulateGatewayRequest request) {
+        return ApiResponse.ok("Giả lập cổng thanh toán thành công", transactionService.simulateGateway(id, request));
+    }
 }

@@ -98,10 +98,10 @@ export const disputeService = {
     }),
     /** POST /api/disputes/{id}/evidences */
     addEvidence: (id, { fileUrl, fileType, description }) => request(endpoints.disputes.byIdEvidences(id), { method: "POST", json: { uploadedById: currentUserId(), fileUrl, fileType, description: description || null } }),
-    /** PUT /api/disputes/{id}/resolve { status: IN_REVIEW|RESOLVED|REJECTED, resolutionNote, resolvedById } */
-    resolve: (id, status, resolutionNote) => request(endpoints.disputes.byIdResolve(id), {
+    /** PUT /api/disputes/{id}/resolve { status: IN_REVIEW|RESOLVED|REJECTED, resolutionNote, resolvedById, approvedAmount } */
+    resolve: (id, status, resolutionNote, approvedAmount) => request(endpoints.disputes.byIdResolve(id), {
         method: "PUT",
-        json: { status, resolutionNote: resolutionNote || null, resolvedById: currentUserId() },
+        json: { status, resolutionNote: resolutionNote || null, resolvedById: currentUserId(), approvedAmount: approvedAmount ? Number(approvedAmount) : null },
     }),
 };
 

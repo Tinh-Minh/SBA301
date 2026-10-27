@@ -222,6 +222,9 @@ public class TransactionServiceImpl implements TransactionService {
         return PageResponse.from(page.map(TransactionResponse::from));
     }
 
+    @org.springframework.beans.factory.annotation.Value("${app.payment.simulate-gateway-enabled:false}")
+    private boolean simulateGatewayEnabled;
+
     @Override
     @Transactional
     public String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request) {
@@ -229,6 +232,41 @@ public class TransactionServiceImpl implements TransactionService {
         orderAccess.requireRenter(transaction.getOrder());
         HttpServletRequest req = request != null ? request : getCurrentHttpRequest();
         return vnPayService.createPaymentUrl(transactionId, bankCode, req);
+    }
+
+    @Override
+    @Transactional
+    public TransactionResponse simulateGateway(Long id, com.carrental.dto.request.SimulateGatewayRequest request) {
+        if (!simulateGatewayEnabled) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Tính năng giả lập cổng thanh toán không được kích hoạt");
+        }
+        Transaction transaction = findTransactionOrThrow(id);
+        orderAccess.requireParty(transaction.getOrder());
+
+        if (transaction.getStatus() != TransactionStatus.PENDING) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Giao dịch không ở trạng thái PENDING");
+        }
+
+        boolean success = request == null || request.getSimulateSuccess() == null || Boolean.TRUE.equals(request.getSimulateSuccess());
+        String providerRef = (request != null && request.getProviderRef() != null && !request.getProviderRef().isBlank())
+                ? request.getProviderRef()
+                : "SIM-" + System.currentTimeMillis();
+
+        if (success) {
+            transaction.setStatus(TransactionStatus.SUCCESS);
+            transaction.setPaidAt(TimeUtil.nowVn());
+            transaction.setProviderRef(providerRef);
+            Transaction saved = transactionRepository.save(transaction);
+            eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
+            log.info("Giả lập cổng thanh toán thành công id={}, providerRef={}", saved.getId(), providerRef);
+            return TransactionResponse.from(saved);
+        } else {
+            transaction.setStatus(TransactionStatus.FAILED);
+            transaction.setProviderRef(providerRef);
+            Transaction saved = transactionRepository.save(transaction);
+            log.info("Giả lập cổng thanh toán thất bại id={}, providerRef={}", saved.getId(), providerRef);
+            return TransactionResponse.from(saved);
+        }
     }
 
     private HttpServletRequest getCurrentHttpRequest() {

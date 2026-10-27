@@ -16,10 +16,13 @@ const decisions = [
 
 export function DisputeDetail({ dispute, onDone }) {
     const [decision, setDecision] = useState("refund");
+    const [approvedAmount, setApprovedAmount] = useState("");
     const [note, setNote] = useState("");
     const resolve = useApiMutation((status) => {
         const text = decisions.find(item => item.id === decision).text;
-        return disputeService.resolve(dispute.id, status, status === "IN_REVIEW" ? note || "Đang xem xét" : [status === "RESOLVED" ? text : "Bác bỏ khiếu nại", note].filter(Boolean).join(". "));
+        const resNote = status === "IN_REVIEW" ? note || "Đang xem xét" : [status === "RESOLVED" ? text : "Bác bỏ khiếu nại", note].filter(Boolean).join(". ");
+        const refundAmt = status === "RESOLVED" && (decision === "refund" || approvedAmount) ? approvedAmount : null;
+        return disputeService.resolve(dispute.id, status, resNote, refundAmt);
     }, onDone);
     const closed = dispute.status === "RESOLVED" || dispute.status === "REJECTED";
     return <aside className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
@@ -44,6 +47,19 @@ export function DisputeDetail({ dispute, onDone }) {
           <span>{item.text}</span>
         </label>)}
       </fieldset>
+      {decision === "refund" ? (
+        <label className="mt-3 block text-sm font-semibold text-[#292929]">Số tiền hoàn duyệt (VND)
+          <input
+            type="number"
+            min="0"
+            step="1000"
+            placeholder="Để trống nếu hoàn toàn bộ số tiền giao dịch gốc"
+            value={approvedAmount}
+            onChange={event => setApprovedAmount(event.target.value)}
+            className="mt-1 w-full rounded-xl border border-[#E9E9E7] p-2.5 font-normal"
+          />
+        </label>
+      ) : null}
       <label className="mt-3 block text-sm font-semibold text-[#292929]">Ghi chú phân định
         <textarea value={note} onChange={event => setNote(event.target.value)} rows={3} className="mt-1 w-full rounded-xl border border-[#E9E9E7] p-3 font-normal"/>
       </label>

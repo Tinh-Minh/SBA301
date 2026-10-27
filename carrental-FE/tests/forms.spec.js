@@ -64,7 +64,7 @@ test("registration validates confirmation and terms before making requests", asy
 
 test("registration submits only API fields and then logs in", async ({ page }) => {
   const requests = [];
-  await page.route("**/api/**", route => route.fulfill({ status: 503, json: { message: "Test backend unavailable" } }));
+  await page.route(/\/api\/(?!src)/, route => route.fulfill({ status: 503, json: { message: "Test backend unavailable" } }));
   await page.route("**/api/auth/register", route => {
     requests.push(route.request().postDataJSON());
     return route.fulfill({ json: { success: true, data: token.account } });
