@@ -4,6 +4,7 @@ import com.carrental.entity.RentalOrder;
 import com.carrental.enums.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,34 +20,25 @@ public interface RentalOrderRepository extends JpaRepository<RentalOrder, Long> 
 
     Optional<RentalOrder> findByOrderCode(String orderCode);
 
-    boolean existsByOrderCode(String orderCode);
+    /** Một đơn kèm người thuê, xe, chủ xe, slot, voucher, người huỷ (nạp cùng lúc, tránh N+1 query). */
+    @EntityGraph(attributePaths = {"customer", "car", "car.owner", "carSlot", "voucher", "cancelledBy"})
+    Optional<RentalOrder> findWithDetailsById(Long id);
 
-    /** Đơn của người thuê, lọc theo trạng thái nếu có. */
+    /**
+     * Danh sách đơn có phân trang, mọi điều kiện đều tuỳ chọn (null = bỏ qua):
+     * customerId = đơn tôi thuê, ownerId = đơn trên xe của tôi, cả hai null = admin xem tất cả.
+     */
+    @EntityGraph(attributePaths = {"customer", "car", "car.owner", "carSlot", "voucher", "cancelledBy"})
     @Query("""
             select o from RentalOrder o
-            where o.customer.id = :customerId
+            where (:customerId is null or o.customer.id = :customerId)
+              and (:ownerId is null or o.car.owner.id = :ownerId)
               and (:status is null or o.status = :status)
             """)
-    Page<RentalOrder> findByRenter(@Param("customerId") Long customerId,
-                                   @Param("status") OrderStatus status,
-                                   Pageable pageable);
-
-    /** Đơn trên các xe của một chủ xe, lọc theo trạng thái nếu có. */
-    @Query("""
-            select o from RentalOrder o
-            where o.car.owner.id = :ownerId
-              and (:status is null or o.status = :status)
-            """)
-    Page<RentalOrder> findByOwner(@Param("ownerId") Long ownerId,
-                                  @Param("status") OrderStatus status,
-                                  Pageable pageable);
-
-    /** Admin xem toàn bộ, lọc theo trạng thái nếu có. */
-    @Query("""
-            select o from RentalOrder o
-            where (:status is null or o.status = :status)
-            """)
-    Page<RentalOrder> findAllByStatus(@Param("status") OrderStatus status, Pageable pageable);
+    Page<RentalOrder> search(@Param("customerId") Long customerId,
+                             @Param("ownerId") Long ownerId,
+                             @Param("status") OrderStatus status,
+                             Pageable pageable);
 
     /**
      * Có đơn đang hiệu lực nào của xe chồng lên khoảng [start, end) không.

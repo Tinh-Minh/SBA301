@@ -5,7 +5,7 @@ import com.carrental.dto.request.CreateOrderRequestDTO;
 import com.carrental.dto.request.QuoteRequestDTO;
 import com.carrental.dto.response.ActionLogDTO;
 import com.carrental.dto.response.OrderResponseDTO;
-import com.carrental.dto.response.PageResponseDTO;
+import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.PriceQuoteDTO;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Customer;
@@ -22,6 +22,7 @@ import com.carrental.service.ActionLogService;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.PricingService;
 import com.carrental.service.RentalOrderService;
+import com.carrental.util.OrderCodeGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,10 +32,8 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -43,10 +42,6 @@ import java.util.function.Supplier;
 @Service
 @RequiredArgsConstructor
 public class RentalOrderServiceImpl implements RentalOrderService {
-
-    private static final DateTimeFormatter CODE_DATE = DateTimeFormatter.ofPattern("yyMMdd");
-    private static final String CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final RentalOrderRepository rentalOrderRepository;
     private final CarSlotRepository carSlotRepository;
@@ -106,7 +101,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             }
 
             RentalOrder order = RentalOrder.builder()
-                    .orderCode(generateOrderCode(now))
+                    .orderCode(OrderCodeGenerator.generate(now))
                     .customer(renter)
                     .car(slot.getCar())
                     .carSlot(slot)
@@ -126,8 +121,6 @@ public class RentalOrderServiceImpl implements RentalOrderService {
                     .note(request.getNote())
                     .commissionRate(orderProperties.getCommissionRate())
                     .build();
-            order.setCreatedAt(now);
-            order.setUpdatedAt(now);
             order = rentalOrderRepository.saveAndFlush(order);
 
             actionLogService.log(order, renter, OrderAction.CREATE, null, OrderStatus.PENDING,
@@ -152,30 +145,27 @@ public class RentalOrderServiceImpl implements RentalOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponseDTO<OrderResponseDTO> getMyRentals(OrderStatus status, Pageable pageable) {
+    public PageResponse<OrderResponseDTO> getMyRentals(OrderStatus status, Pageable pageable) {
         return run("xem đơn đã thuê", null, () -> {
             Customer user = currentUserService.getCurrentUser();
-            return PageResponseDTO.fromPage(rentalOrderRepository.findByRenter(user.getId(), status, pageable)
-                    .map(OrderResponseDTO::fromEntity));
+            return searchOrders(user.getId(), null, status, pageable);
         });
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponseDTO<OrderResponseDTO> getOrdersOfMyCars(OrderStatus status, Pageable pageable) {
+    public PageResponse<OrderResponseDTO> getOrdersOfMyCars(OrderStatus status, Pageable pageable) {
         return run("xem đơn trên xe của tôi", null, () -> {
             Customer user = currentUserService.getCurrentUser();
-            return PageResponseDTO.fromPage(rentalOrderRepository.findByOwner(user.getId(), status, pageable)
-                    .map(OrderResponseDTO::fromEntity));
+            return searchOrders(null, user.getId(), status, pageable);
         });
     }
 
     /** Chỉ admin gọi được: quyền được kiểm tra bằng @PreAuthorize ở controller. */
     @Override
     @Transactional(readOnly = true)
-    public PageResponseDTO<OrderResponseDTO> getAllOrders(OrderStatus status, Pageable pageable) {
-        return run("xem toàn bộ đơn", null, () -> PageResponseDTO.fromPage(
-                rentalOrderRepository.findAllByStatus(status, pageable).map(OrderResponseDTO::fromEntity)));
+    public PageResponse<OrderResponseDTO> getAllOrders(OrderStatus status, Pageable pageable) {
+        return run("xem toàn bộ đơn", null, () -> searchOrders(null, null, status, pageable));
     }
 
     @Override
@@ -340,12 +330,19 @@ public class RentalOrderServiceImpl implements RentalOrderService {
     }
 
     private CarSlot findSlot(Long slotId) {
-        return carSlotRepository.findById(slotId)
+        return carSlotRepository.findWithCarById(slotId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Slot không tồn tại (id=" + slotId + ")"));
     }
 
+    /** Một truy vấn có phân trang cho cả 3 danh sách (nạp sẵn quan hệ, tránh N+1). */
+    private PageResponse<OrderResponseDTO> searchOrders(Long customerId, Long ownerId,
+                                                        OrderStatus status, Pageable pageable) {
+        return PageResponse.from(rentalOrderRepository.search(customerId, ownerId, status, pageable)
+                .map(OrderResponseDTO::fromEntity));
+    }
+
     private RentalOrder findOrder(Long orderId) {
-        return rentalOrderRepository.findById(orderId)
+        return rentalOrderRepository.findWithDetailsById(orderId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Đơn thuê không tồn tại (id=" + orderId + ")"));
     }
 
@@ -361,17 +358,4 @@ public class RentalOrderServiceImpl implements RentalOrderService {
         }
     }
 
-    private String generateOrderCode(LocalDateTime now) {
-        for (int attempt = 0; attempt < 5; attempt++) {
-            StringBuilder sb = new StringBuilder("RO").append(now.format(CODE_DATE));
-            for (int i = 0; i < 6; i++) {
-                sb.append(CODE_CHARS.charAt(RANDOM.nextInt(CODE_CHARS.length())));
-            }
-            String code = sb.toString();
-            if (!rentalOrderRepository.existsByOrderCode(code)) {
-                return code;
-            }
-        }
-        throw new AppException(HttpStatus.CONFLICT, "Không sinh được mã đơn, vui lòng thử lại");
-    }
 }

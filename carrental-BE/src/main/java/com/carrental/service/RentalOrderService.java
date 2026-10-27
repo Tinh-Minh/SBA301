@@ -4,7 +4,7 @@ import com.carrental.dto.request.CreateOrderRequestDTO;
 import com.carrental.dto.request.QuoteRequestDTO;
 import com.carrental.dto.response.ActionLogDTO;
 import com.carrental.dto.response.OrderResponseDTO;
-import com.carrental.dto.response.PageResponseDTO;
+import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.PriceQuoteDTO;
 import com.carrental.enums.OrderStatus;
 import org.springframework.data.domain.Pageable;
@@ -21,11 +21,11 @@ public interface RentalOrderService {
     /** Người thuê, chủ xe của đơn hoặc admin mới xem được. */
     OrderResponseDTO getOrder(Long orderId);
 
-    PageResponseDTO<OrderResponseDTO> getMyRentals(OrderStatus status, Pageable pageable);
+    PageResponse<OrderResponseDTO> getMyRentals(OrderStatus status, Pageable pageable);
 
-    PageResponseDTO<OrderResponseDTO> getOrdersOfMyCars(OrderStatus status, Pageable pageable);
+    PageResponse<OrderResponseDTO> getOrdersOfMyCars(OrderStatus status, Pageable pageable);
 
-    PageResponseDTO<OrderResponseDTO> getAllOrders(OrderStatus status, Pageable pageable);
+    PageResponse<OrderResponseDTO> getAllOrders(OrderStatus status, Pageable pageable);
 
     /** Chủ xe xác nhận đơn PENDING. */
     OrderResponseDTO confirmOrder(Long orderId, String note);

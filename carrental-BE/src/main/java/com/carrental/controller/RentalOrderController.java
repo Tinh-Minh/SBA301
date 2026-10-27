@@ -6,13 +6,15 @@ import com.carrental.dto.request.QuoteRequestDTO;
 import com.carrental.dto.response.ActionLogDTO;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.OrderResponseDTO;
-import com.carrental.dto.response.PageResponseDTO;
+import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.PriceQuoteDTO;
 import com.carrental.enums.OrderStatus;
 import com.carrental.service.RentalOrderService;
+import com.carrental.util.PageRequestFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,11 +28,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/orders")
 @Tag(name = "Rental Orders API", description = "Đặt xe và vòng đời đơn thuê (Function 3)")
 public class RentalOrderController {
+
+    /** Cột được phép sắp xếp danh sách đơn; giá trị khác dùng mặc định createdAt. */
+    private static final Set<String> ORDER_SORT_FIELDS =
+            Set.of("createdAt", "startTime", "endTime", "totalAmount", "status", "orderCode");
 
     private final RentalOrderService rentalOrderService;
 
@@ -61,39 +68,39 @@ public class RentalOrderController {
 
     @Operation(summary = "Đơn tôi đã thuê", description = "Danh sách đơn của người thuê đang đăng nhập, lọc theo trạng thái, phân trang")
     @GetMapping("/my-rentals")
-    public ResponseEntity<ApiResponse<PageResponseDTO<OrderResponseDTO>>> getMyRentals(
+    public ResponseEntity<ApiResponse<PageResponse<OrderResponseDTO>>> getMyRentals(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         return ResponseEntity.ok(ApiResponse.ok("Get my rentals successfully",
-                rentalOrderService.getMyRentals(status, PageableFactory.forOrders(page, size, sortBy, direction))));
+                rentalOrderService.getMyRentals(status, orderPage(page, size, sortBy, direction))));
     }
 
     @Operation(summary = "Đơn trên xe của tôi", description = "Danh sách đơn đặt các xe của chủ xe đang đăng nhập")
     @GetMapping("/my-cars")
-    public ResponseEntity<ApiResponse<PageResponseDTO<OrderResponseDTO>>> getOrdersOfMyCars(
+    public ResponseEntity<ApiResponse<PageResponse<OrderResponseDTO>>> getOrdersOfMyCars(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         return ResponseEntity.ok(ApiResponse.ok("Get orders of my cars successfully",
-                rentalOrderService.getOrdersOfMyCars(status, PageableFactory.forOrders(page, size, sortBy, direction))));
+                rentalOrderService.getOrdersOfMyCars(status, orderPage(page, size, sortBy, direction))));
     }
 
     @Operation(summary = "Tất cả đơn (admin)")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<ApiResponse<PageResponseDTO<OrderResponseDTO>>> getAllOrders(
+    public ResponseEntity<ApiResponse<PageResponse<OrderResponseDTO>>> getAllOrders(
             @RequestParam(required = false) OrderStatus status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "desc") String direction) {
         return ResponseEntity.ok(ApiResponse.ok("Get orders successfully",
-                rentalOrderService.getAllOrders(status, PageableFactory.forOrders(page, size, sortBy, direction))));
+                rentalOrderService.getAllOrders(status, orderPage(page, size, sortBy, direction))));
     }
 
     @Operation(summary = "Chủ xe xác nhận đơn", description = "PENDING -> CONFIRMED")
@@ -128,5 +135,9 @@ public class RentalOrderController {
     public ResponseEntity<ApiResponse<List<ActionLogDTO>>> getOrderLogs(@PathVariable Long orderId) {
         return ResponseEntity.ok(ApiResponse.ok("Get order logs successfully",
                 rentalOrderService.getOrderLogs(orderId)));
+    }
+
+    private static Pageable orderPage(int page, int size, String sortBy, String direction) {
+        return PageRequestFactory.of(page, size, sortBy, direction, ORDER_SORT_FIELDS, "createdAt");
     }
 }

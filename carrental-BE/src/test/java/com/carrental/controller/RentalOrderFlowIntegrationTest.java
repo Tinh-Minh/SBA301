@@ -24,6 +24,9 @@ import com.carrental.service.RentalOrderService;
 import com.carrental.support.MutableClock;
 import com.jayway.jsonpath.JsonPath;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +95,7 @@ class RentalOrderFlowIntegrationTest {
     @Autowired private RentalOrderRepository rentalOrderRepository;
     @Autowired private RentalOrderService rentalOrderService;
     @Autowired private EntityManager entityManager;
+    @Autowired private EntityManagerFactory entityManagerFactory;
     @Autowired private TransactionTemplate tx;
 
     private Long ownerId;
@@ -331,9 +335,9 @@ class RentalOrderFlowIntegrationTest {
         // Slot không tồn tại
         as(renterId, post("/api/orders").content("{\"carSlotId\":999999,\"rentalType\":\"DAILY\",\"startTime\":\"2026-11-03T08:00:00\",\"endTime\":\"2026-11-04T08:00:00\"}"))
                 .andExpect(status().isNotFound());
-        // Sắp xếp theo cột không cho phép
+        // Sắp xếp theo cột không cho phép: PageRequestFactory dùng cột mặc định createdAt, không lộ cột khác
         as(renterId, get("/api/orders/my-rentals").param("sortBy", "password"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -352,6 +356,24 @@ class RentalOrderFlowIntegrationTest {
                 .andExpect(jsonPath("$.data.totalElements").value(3));
         as(ownerId, get("/api/orders/my-rentals"))
                 .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
+    void orderListLoadsRelationsWithoutNPlusOneQueries() throws Exception {
+        createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T12:00:00", null);
+        createOrder(otherRenterId, "HOURLY", "2026-11-04T08:00:00", "2026-11-04T12:00:00", null);
+        createOrder(strangerId, "HOURLY", "2026-11-05T08:00:00", "2026-11-05T12:00:00", null);
+
+        Statistics stats = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        stats.clear();
+        as(ownerId, get("/api/orders/my-cars"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(3));
+        long queries = stats.getPrepareStatementCount();
+        stats.setStatisticsEnabled(false);
+        // Người gọi (2 lần đọc customer) + trang đơn kèm quan hệ + đếm tổng; không tăng theo số đơn.
+        assertThat(queries).isLessThanOrEqualTo(4);
     }
 
     // ===================================================================== helpers

@@ -230,7 +230,7 @@ public class HandoverServiceImpl implements HandoverService {
     }
 
     private RentalOrder findOrder(Long orderId) {
-        return rentalOrderRepository.findById(orderId)
+        return rentalOrderRepository.findWithDetailsById(orderId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Đơn thuê không tồn tại (id=" + orderId + ")"));
     }
 }
