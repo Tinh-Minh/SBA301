@@ -1,6 +1,6 @@
 package com.carrental.service.impl;
 
-import com.carrental.dto.response.ActionLogDTO;
+import com.carrental.dto.response.ActionLogResponse;
 import com.carrental.entity.ActionLog;
 import com.carrental.entity.Customer;
 import com.carrental.entity.RentalOrder;
@@ -42,9 +42,9 @@ public class ActionLogServiceImpl implements ActionLogService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ActionLogDTO> getLogsOfOrder(Long orderId) {
+    public List<ActionLogResponse> getLogsOfOrder(Long orderId) {
         return actionLogRepository.findByOrderIdOrderByCreatedAtAscIdAsc(orderId).stream()
-                .map(ActionLogDTO::fromEntity)
+                .map(ActionLogResponse::from)
                 .toList();
     }
 

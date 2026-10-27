@@ -1,12 +1,12 @@
 package com.carrental.service.impl;
 
 import com.carrental.config.OrderProperties;
-import com.carrental.dto.request.CreateOrderRequestDTO;
-import com.carrental.dto.request.QuoteRequestDTO;
-import com.carrental.dto.response.ActionLogDTO;
-import com.carrental.dto.response.OrderResponseDTO;
+import com.carrental.dto.request.CreateOrderRequest;
+import com.carrental.dto.request.QuoteRequest;
+import com.carrental.dto.response.ActionLogResponse;
+import com.carrental.dto.response.OrderResponse;
 import com.carrental.dto.response.PageResponse;
-import com.carrental.dto.response.PriceQuoteDTO;
+import com.carrental.dto.response.PriceQuoteResponse;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Customer;
 import com.carrental.entity.RentalOrder;
@@ -56,7 +56,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public PriceQuoteDTO quote(QuoteRequestDTO request) {
+    public PriceQuoteResponse quote(QuoteRequest request) {
         return run("báo giá", request.getCarSlotId(), () -> {
             Customer renter = currentUserService.getCurrentUser();
             CarSlot slot = findSlot(request.getCarSlotId());
@@ -68,7 +68,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
 
     @Override
     @Transactional
-    public OrderResponseDTO createOrder(CreateOrderRequestDTO request) {
+    public OrderResponse createOrder(CreateOrderRequest request) {
         log.info("Tạo đơn thuê slotId={}, rentalType={}, start={}, end={}",
                 request.getCarSlotId(), request.getRentalType(), request.getStartTime(), request.getEndTime());
         return run("tạo đơn thuê", request.getCarSlotId(), () -> {
@@ -76,7 +76,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             CarSlot slot = findSlot(request.getCarSlotId());
             ensureNotOwnCar(slot, renter);
 
-            PriceQuoteDTO quote = pricingService.quote(slot, request.getRentalType(), request.getStartTime(),
+            PriceQuoteResponse quote = pricingService.quote(slot, request.getRentalType(), request.getStartTime(),
                     request.getEndTime(), request.getVoucherCode(), renter.getId());
 
             // Chống trùng lịch ở tầng service (DB còn EXCLUDE rental_orders_no_overlap làm lớp cuối).
@@ -86,12 +86,12 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             }
 
             Voucher voucher = null;
-            if (quote.getVoucherId() != null) {
+            if (quote.voucherId() != null) {
                 // Tăng lượt dùng nguyên tử: nếu vừa có người dùng hết lượt thì báo lỗi.
-                if (voucherRepository.increaseUsage(quote.getVoucherId()) == 0) {
+                if (voucherRepository.increaseUsage(quote.voucherId()) == 0) {
                     throw new AppException(HttpStatus.BAD_REQUEST, "Voucher đã hết lượt sử dụng");
                 }
-                voucher = voucherRepository.getReferenceById(quote.getVoucherId());
+                voucher = voucherRepository.getReferenceById(quote.voucherId());
             }
 
             LocalDateTime now = LocalDateTime.now(clock);
@@ -106,15 +106,15 @@ public class RentalOrderServiceImpl implements RentalOrderService {
                     .car(slot.getCar())
                     .carSlot(slot)
                     .voucher(voucher)
-                    .rentalType(quote.getRentalType())
-                    .startTime(quote.getStartTime())
-                    .endTime(quote.getEndTime())
-                    .unitPrice(quote.getUnitPrice())
-                    .quantity(quote.getQuantity())
-                    .rentalAmount(quote.getRentalAmount())
-                    .discountAmount(quote.getDiscountAmount())
-                    .totalAmount(quote.getTotalAmount())
-                    .depositAmount(quote.getDepositAmount())
+                    .rentalType(quote.rentalType())
+                    .startTime(quote.startTime())
+                    .endTime(quote.endTime())
+                    .unitPrice(quote.unitPrice())
+                    .quantity(quote.quantity())
+                    .rentalAmount(quote.rentalAmount())
+                    .discountAmount(quote.discountAmount())
+                    .totalAmount(quote.totalAmount())
+                    .depositAmount(quote.depositAmount())
                     .status(OrderStatus.PENDING)
                     .paymentStatus(PaymentStatus.UNPAID)
                     .expiresAt(deadline)
@@ -126,7 +126,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             actionLogService.log(order, renter, OrderAction.CREATE, null, OrderStatus.PENDING,
                     "Tạo đơn " + order.getOrderCode());
             log.info("Tạo đơn thuê thành công id={}, code={}", order.getId(), order.getOrderCode());
-            return OrderResponseDTO.fromEntity(order);
+            return OrderResponse.from(order);
         });
     }
 
@@ -134,18 +134,18 @@ public class RentalOrderServiceImpl implements RentalOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public OrderResponseDTO getOrder(Long orderId) {
+    public OrderResponse getOrder(Long orderId) {
         return run("xem đơn thuê", orderId, () -> {
             Customer user = currentUserService.getCurrentUser();
             RentalOrder order = findOrder(orderId);
             ensureCanView(order, user);
-            return OrderResponseDTO.fromEntity(order);
+            return OrderResponse.from(order);
         });
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<OrderResponseDTO> getMyRentals(OrderStatus status, Pageable pageable) {
+    public PageResponse<OrderResponse> getMyRentals(OrderStatus status, Pageable pageable) {
         return run("xem đơn đã thuê", null, () -> {
             Customer user = currentUserService.getCurrentUser();
             return searchOrders(user.getId(), null, status, pageable);
@@ -154,7 +154,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<OrderResponseDTO> getOrdersOfMyCars(OrderStatus status, Pageable pageable) {
+    public PageResponse<OrderResponse> getOrdersOfMyCars(OrderStatus status, Pageable pageable) {
         return run("xem đơn trên xe của tôi", null, () -> {
             Customer user = currentUserService.getCurrentUser();
             return searchOrders(null, user.getId(), status, pageable);
@@ -164,13 +164,13 @@ public class RentalOrderServiceImpl implements RentalOrderService {
     /** Chỉ admin gọi được: quyền được kiểm tra bằng @PreAuthorize ở controller. */
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<OrderResponseDTO> getAllOrders(OrderStatus status, Pageable pageable) {
+    public PageResponse<OrderResponse> getAllOrders(OrderStatus status, Pageable pageable) {
         return run("xem toàn bộ đơn", null, () -> searchOrders(null, null, status, pageable));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<ActionLogDTO> getOrderLogs(Long orderId) {
+    public List<ActionLogResponse> getOrderLogs(Long orderId) {
         return run("xem lịch sử đơn", orderId, () -> {
             Customer user = currentUserService.getCurrentUser();
             ensureCanView(findOrder(orderId), user);
@@ -182,7 +182,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
 
     @Override
     @Transactional
-    public OrderResponseDTO confirmOrder(Long orderId, String note) {
+    public OrderResponse confirmOrder(Long orderId, String note) {
         log.info("Chủ xe xác nhận đơn id={}", orderId);
         return run("xác nhận đơn", orderId, () -> {
             Customer user = currentUserService.getCurrentUser();
@@ -198,13 +198,13 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             order.setConfirmedAt(now);
             rentalOrderRepository.saveAndFlush(order);
             actionLogService.log(order, user, OrderAction.CONFIRM, from, OrderStatus.CONFIRMED, note);
-            return OrderResponseDTO.fromEntity(order);
+            return OrderResponse.from(order);
         });
     }
 
     @Override
     @Transactional
-    public OrderResponseDTO rejectOrder(Long orderId, String reason) {
+    public OrderResponse rejectOrder(Long orderId, String reason) {
         log.info("Chủ xe từ chối đơn id={}", orderId);
         return run("từ chối đơn", orderId, () -> {
             Customer user = currentUserService.getCurrentUser();
@@ -215,13 +215,13 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             releaseVoucher(order);
             rentalOrderRepository.saveAndFlush(order);
             actionLogService.log(order, user, OrderAction.REJECT, from, OrderStatus.REJECTED, reason);
-            return OrderResponseDTO.fromEntity(order);
+            return OrderResponse.from(order);
         });
     }
 
     @Override
     @Transactional
-    public OrderResponseDTO cancelOrder(Long orderId, String reason) {
+    public OrderResponse cancelOrder(Long orderId, String reason) {
         log.info("Huỷ đơn id={}", orderId);
         return run("huỷ đơn", orderId, () -> {
             Customer user = currentUserService.getCurrentUser();
@@ -245,7 +245,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             releaseVoucher(order);
             rentalOrderRepository.saveAndFlush(order);
             actionLogService.log(order, user, OrderAction.CANCEL, from, OrderStatus.CANCELLED, reason);
-            return OrderResponseDTO.fromEntity(order);
+            return OrderResponse.from(order);
         });
     }
 
@@ -335,10 +335,10 @@ public class RentalOrderServiceImpl implements RentalOrderService {
     }
 
     /** Một truy vấn có phân trang cho cả 3 danh sách (nạp sẵn quan hệ, tránh N+1). */
-    private PageResponse<OrderResponseDTO> searchOrders(Long customerId, Long ownerId,
+    private PageResponse<OrderResponse> searchOrders(Long customerId, Long ownerId,
                                                         OrderStatus status, Pageable pageable) {
         return PageResponse.from(rentalOrderRepository.search(customerId, ownerId, status, pageable)
-                .map(OrderResponseDTO::fromEntity));
+                .map(OrderResponse::from));
     }
 
     private RentalOrder findOrder(Long orderId) {

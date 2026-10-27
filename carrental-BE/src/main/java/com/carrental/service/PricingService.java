@@ -1,6 +1,6 @@
 package com.carrental.service;
 
-import com.carrental.dto.response.PriceQuoteDTO;
+import com.carrental.dto.response.PriceQuoteResponse;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.RentalType;
@@ -17,7 +17,7 @@ public interface PricingService {
      * @param voucherCode có thể null/rỗng
      * @param customerId  người thuê, dùng để kiểm tra giới hạn lượt dùng voucher mỗi người
      */
-    PriceQuoteDTO quote(CarSlot slot, RentalType rentalType, LocalDateTime startTime, LocalDateTime endTime,
+    PriceQuoteResponse quote(CarSlot slot, RentalType rentalType, LocalDateTime startTime, LocalDateTime endTime,
                         String voucherCode, Long customerId);
 
     /** Kiểm tra khoảng thuê có nằm trong slot, đúng hình thức thuê, đủ giờ tối thiểu, slot/xe còn mở. */

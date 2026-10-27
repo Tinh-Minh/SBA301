@@ -1,6 +1,6 @@
 package com.carrental.service.impl;
 
-import com.carrental.dto.response.PriceQuoteDTO;
+import com.carrental.dto.response.PriceQuoteResponse;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.CarStatus;
@@ -43,7 +43,7 @@ public class PricingServiceImpl implements PricingService {
     private final Clock clock;
 
     @Override
-    public PriceQuoteDTO quote(CarSlot slot, RentalType rentalType, LocalDateTime startTime, LocalDateTime endTime,
+    public PriceQuoteResponse quote(CarSlot slot, RentalType rentalType, LocalDateTime startTime, LocalDateTime endTime,
                                String voucherCode, Long customerId) {
         validateBookingWindow(slot, rentalType, startTime, endTime);
 
@@ -56,20 +56,10 @@ public class PricingServiceImpl implements PricingService {
         BigDecimal deposit = slot.getCar().getDepositAmount() == null
                 ? BigDecimal.ZERO : slot.getCar().getDepositAmount();
 
-        return PriceQuoteDTO.builder()
-                .carSlotId(slot.getId())
-                .rentalType(rentalType)
-                .startTime(startTime)
-                .endTime(endTime)
-                .unitPrice(unitPrice)
-                .quantity(quantity)
-                .rentalAmount(rentalAmount)
-                .discountAmount(discount)
-                .totalAmount(rentalAmount.subtract(discount))
-                .depositAmount(deposit)
-                .voucherId(voucher == null ? null : voucher.getId())
-                .voucherCode(voucher == null ? null : voucher.getCode())
-                .build();
+        return new PriceQuoteResponse(slot.getId(), rentalType, startTime, endTime,
+                unitPrice, quantity, rentalAmount, discount, rentalAmount.subtract(discount), deposit,
+                voucher == null ? null : voucher.getId(),
+                voucher == null ? null : voucher.getCode());
     }
 
     @Override

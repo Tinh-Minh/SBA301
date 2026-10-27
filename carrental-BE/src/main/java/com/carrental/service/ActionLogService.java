@@ -1,6 +1,6 @@
 package com.carrental.service;
 
-import com.carrental.dto.response.ActionLogDTO;
+import com.carrental.dto.response.ActionLogResponse;
 import com.carrental.entity.Customer;
 import com.carrental.entity.RentalOrder;
 import com.carrental.enums.OrderAction;
@@ -19,5 +19,5 @@ public interface ActionLogService {
     void log(RentalOrder order, Customer actor, OrderAction action,
              OrderStatus fromStatus, OrderStatus toStatus, String note);
 
-    List<ActionLogDTO> getLogsOfOrder(Long orderId);
+    List<ActionLogResponse> getLogsOfOrder(Long orderId);
 }

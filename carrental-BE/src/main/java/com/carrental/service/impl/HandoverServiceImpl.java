@@ -1,9 +1,9 @@
 package com.carrental.service.impl;
 
 import com.carrental.config.OrderProperties;
-import com.carrental.dto.request.CreateHandoverRequestDTO;
-import com.carrental.dto.request.HandoverImageRequestDTO;
-import com.carrental.dto.response.HandoverResponseDTO;
+import com.carrental.dto.request.CreateHandoverRequest;
+import com.carrental.dto.request.HandoverImageRequest;
+import com.carrental.dto.response.HandoverResponse;
 import com.carrental.entity.Customer;
 import com.carrental.entity.HandoverImage;
 import com.carrental.entity.OrderHandover;
@@ -48,7 +48,7 @@ public class HandoverServiceImpl implements HandoverService {
 
     @Override
     @Transactional
-    public HandoverResponseDTO createHandover(Long orderId, CreateHandoverRequestDTO request) {
+    public HandoverResponse createHandover(Long orderId, CreateHandoverRequest request) {
         log.info("Lập biên bản bàn giao orderId={}, type={}", orderId, request.getHandoverType());
         return run("lập biên bản bàn giao", orderId, () -> {
             Customer user = currentUserService.getCurrentUser();
@@ -85,7 +85,7 @@ public class HandoverServiceImpl implements HandoverService {
             // Entity OrderHandover dùng chung không cascade ảnh nên lưu ảnh riêng qua repository.
             List<HandoverImage> images = new ArrayList<>();
             if (request.getImages() != null) {
-                for (HandoverImageRequestDTO img : request.getImages()) {
+                for (HandoverImageRequest img : request.getImages()) {
                     images.add(HandoverImage.builder()
                             .handover(handover)
                             .imageUrl(img.getImageUrl().trim())
@@ -96,13 +96,13 @@ public class HandoverServiceImpl implements HandoverService {
             }
             actionLogService.log(order, user, OrderAction.HANDOVER_CREATE, order.getStatus(), order.getStatus(),
                     "Lập biên bản " + type + (renter ? " (người thuê)" : " (chủ xe)"));
-            return HandoverResponseDTO.fromEntity(handover, images);
+            return HandoverResponse.from(handover, images);
         });
     }
 
     @Override
     @Transactional
-    public HandoverResponseDTO confirmHandover(Long handoverId) {
+    public HandoverResponse confirmHandover(Long handoverId) {
         log.info("Xác nhận biên bản bàn giao id={}", handoverId);
         return run("xác nhận biên bản bàn giao", handoverId, () -> {
             Customer user = currentUserService.getCurrentUser();
@@ -128,7 +128,7 @@ public class HandoverServiceImpl implements HandoverService {
             actionLogService.log(order, user, OrderAction.HANDOVER_CONFIRM, order.getStatus(), order.getStatus(),
                     "Xác nhận biên bản " + handover.getHandoverType());
 
-            if (HandoverResponseDTO.isFullyConfirmed(handover)) {
+            if (HandoverResponse.isFullyConfirmed(handover)) {
                 applyHandover(order, handover, user);
             }
             handoverRepository.save(handover);
@@ -140,7 +140,7 @@ public class HandoverServiceImpl implements HandoverService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<HandoverResponseDTO> getHandoversOfOrder(Long orderId) {
+    public List<HandoverResponse> getHandoversOfOrder(Long orderId) {
         return run("xem biên bản bàn giao", orderId, () -> {
             Customer user = currentUserService.getCurrentUser();
             RentalOrder order = findOrder(orderId);
@@ -175,8 +175,8 @@ public class HandoverServiceImpl implements HandoverService {
         }
     }
 
-    private HandoverResponseDTO toResponse(OrderHandover handover) {
-        return HandoverResponseDTO.fromEntity(handover,
+    private HandoverResponse toResponse(OrderHandover handover) {
+        return HandoverResponse.from(handover,
                 handoverImageRepository.findByHandoverIdOrderByIdAsc(handover.getId()));
     }
 
@@ -193,7 +193,7 @@ public class HandoverServiceImpl implements HandoverService {
         }
     }
 
-    private void validateReturn(RentalOrder order, CreateHandoverRequestDTO request) {
+    private void validateReturn(RentalOrder order, CreateHandoverRequest request) {
         if (order.getStatus() != OrderStatus.ONGOING) {
             throw new AppException(HttpStatus.CONFLICT, "Chỉ bàn giao trả xe cho đơn đang thuê (ONGOING)");
         }

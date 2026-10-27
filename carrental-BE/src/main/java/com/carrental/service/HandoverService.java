@@ -1,7 +1,7 @@
 package com.carrental.service;
 
-import com.carrental.dto.request.CreateHandoverRequestDTO;
-import com.carrental.dto.response.HandoverResponseDTO;
+import com.carrental.dto.request.CreateHandoverRequest;
+import com.carrental.dto.response.HandoverResponse;
 
 import java.util.List;
 
@@ -13,9 +13,9 @@ import java.util.List;
  */
 public interface HandoverService {
 
-    HandoverResponseDTO createHandover(Long orderId, CreateHandoverRequestDTO request);
+    HandoverResponse createHandover(Long orderId, CreateHandoverRequest request);
 
-    HandoverResponseDTO confirmHandover(Long handoverId);
+    HandoverResponse confirmHandover(Long handoverId);
 
-    List<HandoverResponseDTO> getHandoversOfOrder(Long orderId);
+    List<HandoverResponse> getHandoversOfOrder(Long orderId);
 }

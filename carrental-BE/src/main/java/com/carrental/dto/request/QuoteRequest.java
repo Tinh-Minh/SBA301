@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class QuoteRequestDTO {
+public class QuoteRequest {
 
     @NotNull(message = "Vui lòng chọn slot")
     private Long carSlotId;

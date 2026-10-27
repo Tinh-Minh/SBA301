@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class HandoverImageRequestDTO {
+public class HandoverImageRequest {
 
     @NotBlank(message = "Thiếu đường dẫn ảnh")
     @Size(max = 500, message = "Đường dẫn ảnh tối đa 500 ký tự")

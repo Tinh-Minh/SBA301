@@ -1,6 +1,6 @@
 package com.carrental.service;
 
-import com.carrental.dto.response.PriceQuoteDTO;
+import com.carrental.dto.response.PriceQuoteResponse;
 import com.carrental.entity.Car;
 import com.carrental.entity.CarSlot;
 import com.carrental.entity.Voucher;
@@ -140,27 +140,27 @@ class PricingServiceImplTest {
         when(voucherRepository.findByCodeIgnoreCase("sale")).thenReturn(Optional.of(v));
         when(rentalOrderRepository.countVoucherUsage(eq(5L), eq(99L), any())).thenReturn(0L);
 
-        PriceQuoteDTO q = pricingService.quote(slot, RentalType.HOURLY,
+        PriceQuoteResponse q = pricingService.quote(slot, RentalType.HOURLY,
                 LocalDateTime.of(2026, 10, 12, 8, 0), LocalDateTime.of(2026, 10, 12, 13, 30), " sale ", 99L);
 
-        assertThat(q.getQuantity()).isEqualTo(6);
-        assertThat(q.getUnitPrice()).isEqualByComparingTo("100000");
-        assertThat(q.getRentalAmount()).isEqualByComparingTo("600000");
-        assertThat(q.getDiscountAmount()).isEqualByComparingTo("60000");
-        assertThat(q.getTotalAmount()).isEqualByComparingTo("540000");
-        assertThat(q.getDepositAmount()).isEqualByComparingTo("2000000");
-        assertThat(q.getVoucherId()).isEqualTo(5L);
+        assertThat(q.quantity()).isEqualTo(6);
+        assertThat(q.unitPrice()).isEqualByComparingTo("100000");
+        assertThat(q.rentalAmount()).isEqualByComparingTo("600000");
+        assertThat(q.discountAmount()).isEqualByComparingTo("60000");
+        assertThat(q.totalAmount()).isEqualByComparingTo("540000");
+        assertThat(q.depositAmount()).isEqualByComparingTo("2000000");
+        assertThat(q.voucherId()).isEqualTo(5L);
     }
 
     @Test
     void quote_dailyWithoutVoucher() {
-        PriceQuoteDTO q = pricingService.quote(slot, RentalType.DAILY,
+        PriceQuoteResponse q = pricingService.quote(slot, RentalType.DAILY,
                 LocalDateTime.of(2026, 10, 12, 8, 0), LocalDateTime.of(2026, 10, 13, 10, 0), null, 99L);
 
-        assertThat(q.getQuantity()).isEqualTo(2);
-        assertThat(q.getTotalAmount()).isEqualByComparingTo("1600000");
-        assertThat(q.getDiscountAmount()).isEqualByComparingTo("0");
-        assertThat(q.getVoucherId()).isNull();
+        assertThat(q.quantity()).isEqualTo(2);
+        assertThat(q.totalAmount()).isEqualByComparingTo("1600000");
+        assertThat(q.discountAmount()).isEqualByComparingTo("0");
+        assertThat(q.voucherId()).isNull();
     }
 
     // ---------- kiểm tra khoảng thuê ----------

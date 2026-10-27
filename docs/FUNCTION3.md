@@ -42,20 +42,41 @@ PENDING ──chủ xe xác nhận──> CONFIRMED ──biên bản PICKUP đ�
 | GET | `/api/orders/{id}/handovers` | Người thuê / chủ xe / admin |
 | PUT | `/api/handovers/{id}/confirm` | Bên còn lại xác nhận biên bản |
 
-Mọi response theo `ApiResponseDTO { status, message, data }`.
+Mọi response theo `ApiResponse { success, code, message, data, errors, traceId }`. API tạo mới (đơn, biên bản) trả 201.
+Danh sách dùng `PageRequestFactory` chung: tối đa 50 dòng/trang, `sortBy` chỉ nhận `createdAt, startTime, endTime, totalAmount, status, orderCode` (giá trị khác dùng `createdAt`).
 
-## Phần TẠM THỜI cần thay khi merge (đã đánh dấu "TẠM THỜI" trong code)
+## Mã lỗi
 
-| File | Thay bởi |
+| HTTP | Khi nào |
 |---|---|
-| `repository/CustomerRepository` | Function 1 |
-| `repository/VoucherRepository` (giữ `increaseUsage`, `decreaseUsage`) | Function 1 |
-| `repository/CarSlotRepository` | Function 2 |
-| `service/impl/HeaderCurrentUserServiceImpl` (header `X-User-Id`) | Function 1: cài `CurrentUserService` đọc từ JWT |
-| `config/Viet_Config`: phần 3 (Security, CORS) và phần 4 (ô `X-User-Id` trên Swagger) | Function 1: SecurityConfig + SwaggerConfig thật (giữ phần 1 `Clock` và phần 2 scheduling) |
-| FE: ô "User ID (tạm)" trên `AppNavbar`, header `X-User-Id` trong `services/api.js` | Function 1: trang đăng nhập, lưu `token` |
+| 400 | Dữ liệu sai, thiếu lý do, ngoài slot, voucher không hợp lệ, chuyển trạng thái không hợp lệ (luật trong `OrderStatus.validateTransitionTo`) |
+| 401 / 403 | Chưa đăng nhập / không phải người thuê, chủ xe hoặc admin của đơn |
+| 404 | Không có đơn, slot hoặc biên bản |
+| 409 | Trùng lịch, đơn quá hạn xác nhận, huỷ đơn đã nhận xe, biên bản đã có hoặc đã xác nhận, dữ liệu vừa bị người khác sửa (`@Version`) |
 
-Entity và enum dùng chung (`Customer`, `Car`, `CarSlot`, `Voucher`, `RentalOrder`, `ActionLog`, `OrderHandover`, `HandoverImage`...) lấy từ nhánh `BE` của Minh, Function 3 không sửa. Quy tắc chuyển trạng thái đơn nằm ở `service/OrderStatusRules`; ảnh bàn giao lưu qua `HandoverImageRepository`.
+## Cấu trúc code
+
+| Phần | Ở đâu |
+|---|---|
+| Controller | `RentalOrderController`, `HandoverController` (trả `ApiResponse`, admin kiểm tra bằng `@PreAuthorize`) |
+| Service | `RentalOrderServiceImpl`, `HandoverServiceImpl` (`@Slf4j`, try/catch qua hàm `run`), `PricingServiceImpl`, `ActionLogServiceImpl` |
+| Job hết hạn | `scheduling/OrderExpirationScheduler` (bật/tắt bằng `app.scheduling.enabled`) |
+| Luật trạng thái | enum `OrderStatus` (`canTransitionTo`, `validateTransitionTo`, `HOLDING_SCHEDULE` = trạng thái giữ lịch) |
+| Thao tác ghi log | enum `OrderAction` |
+| Quyền theo đơn | `RentalOrder.isRenter(user)`, `RentalOrder.isOwner(user)`, `CurrentUserService.isAdmin(user)` |
+| Cấu hình | `config/OrderProperties` (`app.order.*`) |
+| DTO | request: `QuoteRequest`, `CreateOrderRequest`, `OrderActionRequest`, `CreateHandoverRequest`, `HandoverImageRequest`; response (record): `PriceQuoteResponse`, `OrderResponse`, `HandoverResponse`, `ActionLogResponse` |
+| Mã đơn | `util/OrderCodeGenerator` |
+| Truy vấn | `RentalOrderRepository.search` (một truy vấn cho cả 3 danh sách) và `findWithDetailsById`, đều dùng `@EntityGraph` để tránh N+1 |
+
+Danh tính người dùng lấy từ JWT qua `CurrentUserService` (Function 1). Ảnh bàn giao lưu qua `HandoverImageRequest` → `HandoverImageRepository`.
+
+## Việc còn mở (cần thống nhất với nhóm)
+
+- Function 4: bật `app.order.require-payment-before-pickup` khi luồng thanh toán ổn định; hoàn tiền/cọc khi đơn đã thanh toán bị huỷ, từ chối hoặc hết hạn.
+- Function 1: đưa quy tắc voucher (còn hạn, đơn tối thiểu, lượt dùng, giới hạn mỗi người) về một hàm bên VoucherService.
+- Biên bản lập xong mà bên kia không xác nhận, hoặc đơn CONFIRMED quá giờ trả mà chưa nhận xe: cần quy tắc hết hạn hoặc cho admin xử lý.
+- `GET /api/orders/{id}/logs` và `/handovers` trả danh sách không phân trang (mỗi đơn chỉ vài dòng); cần nhóm chấp nhận ngoại lệ hoặc thêm phân trang.
 
 ## Cấu hình (`application.properties`)
 
@@ -65,8 +86,10 @@ app.order.commission-rate=10.00
 app.order.pickup-early-minutes=60
 app.order.require-payment-before-pickup=false   # bật khi Function 4 cập nhật payment_status
 app.order.expire-check-ms=60000
+# app.scheduling.enabled mặc định true; test đặt false để tắt job
 ```
 
 ## Test
 
 `./mvnw test` chạy trên H2 trong bộ nhớ (`src/test/resources/application.properties`), không đụng DB Supabase chung.
+Test F3: `PricingServiceImplTest` (tính giá, voucher), `enums/OrderStatusTest` (luật trạng thái), `controller/RentalOrderFlowIntegrationTest` (luồng API, phân quyền, hết hạn, không N+1).

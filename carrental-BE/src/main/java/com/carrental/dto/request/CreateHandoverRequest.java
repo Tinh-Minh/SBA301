@@ -19,7 +19,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateHandoverRequestDTO {
+public class CreateHandoverRequest {
 
     @NotNull(message = "Vui lòng chọn loại bàn giao (PICKUP/RETURN)")
     private HandoverType handoverType;
@@ -36,5 +36,5 @@ public class CreateHandoverRequestDTO {
 
     @Valid
     @Size(max = 20, message = "Tối đa 20 ảnh mỗi biên bản")
-    private List<HandoverImageRequestDTO> images = new ArrayList<>();
+    private List<HandoverImageRequest> images = new ArrayList<>();
 }
