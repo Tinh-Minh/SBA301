@@ -30,9 +30,15 @@ public class OrderAccess {
     }
 
     public void requireRenter(RentalOrder order) {
-        if (!isRenter(order, requireUser())) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê của đơn này được thực hiện thao tác này");
-        }
+        Customer user = requireUser();
+        if (isRenter(order, user)) return;
+        throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê của đơn này mới được thực hiện thao tác này");
+    }
+
+    public void requireOwner(RentalOrder order) {
+        Customer user = requireUser();
+        if (isOwner(order, user)) return;
+        throw new AppException(HttpStatus.FORBIDDEN, "Chỉ chủ xe của đơn này mới được thực hiện thao tác này");
     }
 
     public void requireRenterOrAdmin(RentalOrder order) {
@@ -55,6 +61,7 @@ public class OrderAccess {
 
     public void requireSelf(Long requestedId) {
         Customer user = requireUser();
+        if (isAdmin(user)) return;
         if (requestedId != null && !user.getId().equals(requestedId)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Không được dùng danh tính của người khác");
         }

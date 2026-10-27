@@ -8,21 +8,28 @@ import com.carrental.entity.BankAccount;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Payout;
 import com.carrental.entity.RentalOrder;
+import com.carrental.enums.OrderStatus;
 import com.carrental.enums.PayoutStatus;
 import com.carrental.exception.AppException;
 import com.carrental.repository.BankAccountRepository;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.PayoutRepository;
+import com.carrental.repository.PayoutSpecification;
 import com.carrental.repository.RentalOrderRepository;
 import com.carrental.util.OrderAccess;
 import com.carrental.service.PayoutService;
+import com.carrental.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Slf4j
 @Service
@@ -41,22 +48,60 @@ public class PayoutServiceImpl implements PayoutService {
         log.info("Tạo yêu cầu chi trả orderId={}, recipientId={}, grossAmount={}",
                 request.getOrderId(), request.getRecipientId(), request.getGrossAmount());
         try {
-            orderAccess.requireAdmin();
             RentalOrder order = findOrderOrThrow(request.getOrderId());
-            Customer recipient = findCustomerOrThrow(request.getRecipientId());
 
-            Payout payout = request.toEntity();
-            payout.setOrder(order);
-            payout.setRecipient(recipient);
-
-            if (request.getBankAccountId() != null) {
-                BankAccount bankAccount = bankAccountRepository.findById(request.getBankAccountId())
-                        .orElse(null);
-                payout.setBankAccount(bankAccount);
+            // 1. Kiểm tra đơn hàng phải ở trạng thái COMPLETED
+            if (order.getStatus() != OrderStatus.COMPLETED) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể tạo chi trả cho đơn thuê đã hoàn thành (COMPLETED)");
             }
 
+            // 2. Kiểm tra không cho phép tạo payout trùng cho cùng đơn hàng
+            if (payoutRepository.findByOrderId(order.getId()).isPresent()) {
+                throw new AppException(HttpStatus.CONFLICT, "Đơn thuê này đã được tạo yêu cầu chi trả");
+            }
+
+            // 3. Xác định người nhận (Chủ xe)
+            Customer owner = null;
+            if (order.getCar() != null) {
+                owner = order.getCar().getOwner();
+            }
+            if (owner == null) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê không có thông tin chủ xe nhận chi trả");
+            }
+            if (request.getRecipientId() != null && !request.getRecipientId().equals(owner.getId())) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Người nhận chi trả phải là chủ xe của xe thuê");
+            }
+            Customer recipient = owner;
+
+            // 4. Lấy số tiền và tính toán chi trả hoàn toàn từ đơn hàng trong cơ sở dữ liệu
+            BigDecimal grossAmount = order.getTotalAmount();
+            if (grossAmount == null) {
+                grossAmount = BigDecimal.ZERO;
+            }
+
+            BigDecimal commissionRate = order.getCommissionRate();
+            if (commissionRate == null) {
+                commissionRate = new BigDecimal("10.00");
+            }
+
+            BigDecimal platformFee = grossAmount.multiply(commissionRate)
+                    .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+
+            BigDecimal netAmount = grossAmount.subtract(platformFee);
+
+            BankAccount bankAccount;
+            if (request.getBankAccountId() != null) {
+                bankAccount = bankAccountRepository.findByIdAndCustomerId(request.getBankAccountId(), recipient.getId())
+                        .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Tài khoản ngân hàng không thuộc về người nhận"));
+            } else {
+                bankAccount = bankAccountRepository.findByCustomerIdAndIsDefaultTrue(recipient.getId())
+                        .or(() -> bankAccountRepository.findAllByCustomerIdOrderByCreatedAtDesc(recipient.getId()).stream().findFirst())
+                        .orElse(null);
+            }
+
+            Payout payout = request.toEntity(order, recipient, bankAccount, grossAmount, platformFee, netAmount);
             Payout saved = payoutRepository.save(payout);
-            log.info("Tạo yêu cầu chi trả thành công id={}", saved.getId());
+            log.info("Tạo yêu cầu chi trả thành công id={}, netAmount={}", saved.getId(), saved.getNetAmount());
             return PayoutResponse.from(saved);
         } catch (AppException e) {
             log.warn("Tạo yêu cầu chi trả thất bại orderId={}: {}", request.getOrderId(), e.getMessage());
@@ -72,8 +117,25 @@ public class PayoutServiceImpl implements PayoutService {
     public PayoutResponse processPayout(Long payoutId, ProcessPayoutRequest request) {
         log.info("Cập nhật trạng thái chi trả payoutId={}, nextStatus={}", payoutId, request.getStatus());
         try {
-            orderAccess.requireAdmin();
             Payout payout = findPayoutOrThrow(payoutId);
+
+            if (request.getBankAccountId() != null) {
+                BankAccount bankAccount = bankAccountRepository.findByIdAndCustomerId(request.getBankAccountId(), payout.getRecipient().getId())
+                        .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Tài khoản ngân hàng không thuộc về người nhận"));
+                payout.setBankAccount(bankAccount);
+            } else if (payout.getBankAccount() == null && payout.getRecipient() != null) {
+                BankAccount defaultAccount = bankAccountRepository.findByCustomerIdAndIsDefaultTrue(payout.getRecipient().getId())
+                        .or(() -> bankAccountRepository.findAllByCustomerIdOrderByCreatedAtDesc(payout.getRecipient().getId()).stream().findFirst())
+                        .orElse(null);
+                payout.setBankAccount(defaultAccount);
+            }
+
+            PayoutStatus nextStatus = PayoutStatus.valueOf(request.getStatus().toUpperCase());
+            if (nextStatus == PayoutStatus.PAID && payout.getBankAccount() == null) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Chủ xe chưa có tài khoản ngân hàng để nhận chi trả. Vui lòng yêu cầu chủ xe liên kết tài khoản ngân hàng trước.");
+            }
+
             request.applyTo(payout);
 
             Payout saved = payoutRepository.save(payout);
@@ -104,20 +166,16 @@ public class PayoutServiceImpl implements PayoutService {
     @Transactional(readOnly = true)
     public PageResponse<PayoutResponse> getPaged(Long recipientId, Long orderId, String status, Pageable pageable) {
         Customer user = orderAccess.requireUser();
-        if (!orderAccess.isAdmin(user) && (recipientId == null || !recipientId.equals(user.getId()))) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ xem được khoản chi trả của mình");
+        Long effectiveRecipientId = recipientId;
+        if (!orderAccess.isAdmin(user)) {
+            if (effectiveRecipientId != null && !effectiveRecipientId.equals(user.getId())) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ xem được khoản chi trả của mình");
+            }
+            effectiveRecipientId = user.getId();
         }
-        Page<Payout> page;
-        if (recipientId != null) {
-            page = payoutRepository.findByRecipientId(recipientId, pageable);
-        } else if (orderId != null) {
-            page = payoutRepository.findByOrderId(orderId, pageable);
-        } else if (status != null && !status.isBlank()) {
-            PayoutStatus payoutStatus = PayoutStatus.valueOf(status.toUpperCase());
-            page = payoutRepository.findByStatus(payoutStatus, pageable);
-        } else {
-            page = payoutRepository.findAll(pageable);
-        }
+
+        Specification<Payout> spec = PayoutSpecification.filter(effectiveRecipientId, orderId, status);
+        Page<Payout> page = payoutRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(PayoutResponse::from));
     }
 

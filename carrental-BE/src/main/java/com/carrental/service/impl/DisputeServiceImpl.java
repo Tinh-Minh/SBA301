@@ -17,20 +17,30 @@ import com.carrental.exception.AppException;
 import com.carrental.util.OrderAccess;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.DisputeEvidenceRepository;
+import com.carrental.dto.request.RefundRequest;
+import com.carrental.entity.Transaction;
+import com.carrental.enums.TransactionStatus;
+import com.carrental.enums.TransactionType;
 import com.carrental.repository.DisputeRepository;
+import com.carrental.repository.DisputeSpecification;
 import com.carrental.repository.ExtraFeeRepository;
 import com.carrental.repository.RentalOrderRepository;
+import com.carrental.repository.TransactionRepository;
 import com.carrental.service.DisputeService;
+import com.carrental.service.TransactionService;
+import com.carrental.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.math.BigDecimal;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -42,6 +52,8 @@ public class DisputeServiceImpl implements DisputeService {
     private final RentalOrderRepository rentalOrderRepository;
     private final CustomerRepository customerRepository;
     private final ExtraFeeRepository extraFeeRepository;
+    private final TransactionRepository transactionRepository;
+    private final TransactionService transactionService;
     private final OrderAccess orderAccess;
 
     @Override
@@ -51,34 +63,26 @@ public class DisputeServiceImpl implements DisputeService {
                 request.getOrderId(), request.getRaisedById(), request.getReason());
         try {
             RentalOrder order = findOrderOrThrow(request.getOrderId());
-            Customer raisedBy = orderAccess.requireUser();
-            orderAccess.requireSelf(request.getRaisedById());
-            if (!orderAccess.isRenter(order, raisedBy) && !orderAccess.isOwner(order, raisedBy)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe của đơn này được mở khiếu nại");
+            Customer current = orderAccess.requireUser();
+            if (!orderAccess.isRenter(order, current) && !orderAccess.isOwner(order, current)) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Chỉ người thuê hoặc chủ xe của đơn này mới được mở khiếu nại");
             }
 
-            Dispute dispute = request.toEntity();
-            dispute.setOrder(order);
-            dispute.setRaisedBy(raisedBy);
-
+            ExtraFee extraFee = null;
             if (request.getExtraFeeId() != null) {
-                ExtraFee extraFee = extraFeeRepository.findById(request.getExtraFeeId()).orElse(null);
-                if (extraFee != null) {
-                    dispute.setExtraFee(extraFee);
-                    extraFee.setStatus(ExtraFeeStatus.DISPUTED);
-                    extraFeeRepository.save(extraFee);
-                }
+                extraFee = extraFeeRepository.findById(request.getExtraFeeId())
+                        .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy phí phát sinh id=" + request.getExtraFeeId()));
+                extraFee.setStatus(ExtraFeeStatus.DISPUTED);
+                extraFeeRepository.save(extraFee);
             }
 
+            Dispute dispute = request.toEntity(order, current, extraFee);
             Dispute saved = disputeRepository.save(dispute);
 
             List<DisputeEvidence> savedEvidences = new ArrayList<>();
             if (request.getEvidences() != null && !request.getEvidences().isEmpty()) {
                 for (DisputeEvidenceRequest evReq : request.getEvidences()) {
-                    DisputeEvidence evidence = evReq.toEntity();
-                    evidence.setDispute(saved);
-                    Long uploaderId = evReq.getUploadedById() != null ? evReq.getUploadedById() : raisedBy.getId();
-                    evidence.setUploadedBy(findCustomerOrThrow(uploaderId));
+                    DisputeEvidence evidence = evReq.toEntity(saved, current);
                     savedEvidences.add(disputeEvidenceRepository.save(evidence));
                 }
             }
@@ -101,13 +105,9 @@ public class DisputeServiceImpl implements DisputeService {
         try {
             Dispute dispute = findDisputeOrThrow(disputeId);
             orderAccess.requireParty(dispute.getOrder());
-            orderAccess.requireSelf(request.getUploadedById());
-            Customer uploader = orderAccess.requireUser();
+            Customer current = orderAccess.requireUser();
 
-            DisputeEvidence evidence = request.toEntity();
-            evidence.setDispute(dispute);
-            evidence.setUploadedBy(uploader);
-
+            DisputeEvidence evidence = request.toEntity(dispute, current);
             DisputeEvidence added = disputeEvidenceRepository.save(evidence);
             log.info("Thêm bằng chứng thành công evidenceId={}, disputeId={}", added.getId(), disputeId);
             return DisputeEvidenceResponse.from(added);
@@ -126,12 +126,49 @@ public class DisputeServiceImpl implements DisputeService {
         log.info("Giải quyết khiếu nại disputeId={}, nextStatus={}", disputeId, request.getStatus());
         try {
             Dispute dispute = findDisputeOrThrow(disputeId);
-            orderAccess.requireAdmin();
-            orderAccess.requireSelf(request.getResolvedById());
-            dispute.setResolvedBy(orderAccess.requireUser());
+            Customer current = orderAccess.requireUser();
+            dispute.setResolvedBy(current);
 
             request.applyTo(dispute);
             Dispute saved = disputeRepository.save(dispute);
+
+            // Nếu giải quyết thành công khiếu nại về phụ phí đang PENDING -> tự động miễn trừ phí phát sinh
+            if (saved.getStatus() == DisputeStatus.RESOLVED && saved.getExtraFee() != null) {
+                if (saved.getExtraFee().getStatus() == ExtraFeeStatus.PENDING) {
+                    saved.getExtraFee().setStatus(ExtraFeeStatus.WAIVED);
+                    extraFeeRepository.save(saved.getExtraFee());
+                    log.info("Tự động miễn trừ phí phát sinh id={} theo kết quả khiếu nại id={}",
+                            saved.getExtraFee().getId(), saved.getId());
+                }
+            }
+
+            // Tự động kích hoạt tạo giao dịch REFUND hoàn tiền cho khách theo số tiền approvedAmount mà Admin phê duyệt
+            if (request.getApprovedAmount() != null && request.getApprovedAmount().compareTo(BigDecimal.ZERO) > 0) {
+                log.info("Kích hoạt tạo giao dịch REFUND tự động cho khiếu nại id={}, approvedAmount={}",
+                        saved.getId(), request.getApprovedAmount());
+
+                Transaction parentTx = null;
+                if (saved.getExtraFee() != null) {
+                    parentTx = transactionRepository.findByExtraFeeId(saved.getExtraFee().getId()).stream()
+                            .filter(t -> t.getStatus() == TransactionStatus.SUCCESS)
+                            .findFirst().orElse(null);
+                }
+                if (parentTx == null) {
+                    parentTx = transactionRepository.findByOrderId(saved.getOrder().getId()).stream()
+                            .filter(t -> t.getStatus() == TransactionStatus.SUCCESS && t.getTransactionType() != TransactionType.REFUND)
+                            .findFirst().orElse(null);
+                }
+
+                if (parentTx != null) {
+                    String reason = "Hoàn tiền theo phán quyết giải quyết khiếu nại #" + saved.getId()
+                            + (request.getResolutionNote() != null ? ": " + request.getResolutionNote() : "");
+                    transactionService.refund(RefundRequest.of(parentTx.getId(), request.getApprovedAmount(), reason));
+                    log.info("Tạo giao dịch hoàn tiền tự động thành công cho khiếu nại id={}", saved.getId());
+                } else {
+                    log.warn("Không tìm thấy giao dịch gốc SUCCESS để hoàn tiền cho khiếu nại id={}", saved.getId());
+                }
+            }
+
             List<DisputeEvidence> evidences = disputeEvidenceRepository.findByDisputeId(saved.getId());
             log.info("Giải quyết khiếu nại thành công id={}, status={}", saved.getId(), saved.getStatus());
             return DisputeResponse.from(saved, evidences);
@@ -157,30 +194,29 @@ public class DisputeServiceImpl implements DisputeService {
     @Transactional(readOnly = true)
     public PageResponse<DisputeResponse> getPaged(Long orderId, Long raisedById, String status, Pageable pageable) {
         Customer user = orderAccess.requireUser();
+        Long effectiveRaisedById = raisedById;
+
         if (orderId != null) {
             orderAccess.requireParty(findOrderOrThrow(orderId));
-        } else if (raisedById != null) {
-            if (!orderAccess.isAdmin(user) && !raisedById.equals(user.getId())) {
+        } else if (!orderAccess.isAdmin(user)) {
+            if (effectiveRaisedById != null && !effectiveRaisedById.equals(user.getId())) {
                 throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ xem được khiếu nại của mình");
             }
-        } else if (!orderAccess.isAdmin(user)) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ admin được xem toàn bộ khiếu nại");
+            effectiveRaisedById = user.getId();
         }
-        Page<Dispute> page;
-        if (orderId != null) {
-            page = disputeRepository.findByOrderId(orderId, pageable);
-        } else if (raisedById != null) {
-            page = disputeRepository.findByRaisedById(raisedById, pageable);
-        } else if (status != null && !status.isBlank()) {
-            DisputeStatus disputeStatus = DisputeStatus.valueOf(status.toUpperCase());
-            page = disputeRepository.findByStatus(disputeStatus, pageable);
-        } else {
-            page = disputeRepository.findAll(pageable);
+
+        Specification<Dispute> spec = DisputeSpecification.filter(orderId, effectiveRaisedById, status);
+        Page<Dispute> page = disputeRepository.findAll(spec, pageable);
+
+        // Batch fetch evidences để triệt tiêu hoàn toàn lỗi N+1 query
+        List<Long> disputeIds = page.getContent().stream().map(Dispute::getId).toList();
+        Map<Long, List<DisputeEvidence>> evidenceMap = new HashMap<>();
+        if (!disputeIds.isEmpty()) {
+            List<DisputeEvidence> allEvidences = disputeEvidenceRepository.findByDisputeIdIn(disputeIds);
+            evidenceMap = allEvidences.stream().collect(Collectors.groupingBy(e -> e.getDispute().getId()));
         }
-        return PageResponse.from(page.map(d -> {
-            List<DisputeEvidence> evidences = disputeEvidenceRepository.findByDisputeId(d.getId());
-            return DisputeResponse.from(d, evidences);
-        }));
+        final Map<Long, List<DisputeEvidence>> finalEvidenceMap = evidenceMap;
+        return PageResponse.from(page.map(d -> DisputeResponse.from(d, finalEvidenceMap.getOrDefault(d.getId(), Collections.emptyList()))));
     }
 
     private Dispute findDisputeOrThrow(Long id) {

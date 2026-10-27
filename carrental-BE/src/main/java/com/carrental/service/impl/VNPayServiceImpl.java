@@ -2,18 +2,17 @@ package com.carrental.service.impl;
 
 import com.carrental.config.VNPayConfig;
 import com.carrental.dto.response.TransactionResponse;
-import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Transaction;
-import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.TransactionStatus;
-import com.carrental.enums.TransactionType;
+import com.carrental.event.PaymentCompletedEvent;
 import com.carrental.exception.AppException;
-import com.carrental.repository.RentalOrderRepository;
 import com.carrental.repository.TransactionRepository;
 import com.carrental.service.VNPayService;
+import com.carrental.util.TimeUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +22,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 @Slf4j
 @Service
@@ -32,9 +34,15 @@ public class VNPayServiceImpl implements VNPayService {
 
     private final VNPayConfig vnPayConfig;
     private final TransactionRepository transactionRepository;
-    private final RentalOrderRepository rentalOrderRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static final DateTimeFormatter VNP_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+
+    @Override
+    @Transactional(readOnly = true)
+    public String createPaymentUrl(Long transactionId, String bankCode) {
+        return createPaymentUrl(transactionId, bankCode, null);
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -49,7 +57,7 @@ public class VNPayServiceImpl implements VNPayService {
         long amount = transaction.getAmount().multiply(BigDecimal.valueOf(100)).longValue();
         String txnRef = transaction.getId() + "_" + System.currentTimeMillis();
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = TimeUtil.nowVn();
         String createDate = now.format(VNP_DATE_FORMATTER);
         String expireDate = now.plusMinutes(15).format(VNP_DATE_FORMATTER);
 
@@ -93,7 +101,7 @@ public class VNPayServiceImpl implements VNPayService {
         String secureHash = vnPayConfig.hmacSHA512(vnPayConfig.getHashSecret(), hashData.toString());
         String paymentUrl = vnPayConfig.getPayUrl() + "?" + query.toString() + "&vnp_SecureHash=" + secureHash;
 
-        log.info("Khởi tạo VNPay paymentUrl cho giao dịch id={}, txnRef={}", transactionId, txnRef);
+        log.info("Khởi tạo VNPay paymentUrl cho giao dịch id={}, txnRef={}", transaction.getId(), txnRef);
         return paymentUrl;
     }
 
@@ -103,7 +111,8 @@ public class VNPayServiceImpl implements VNPayService {
         String txnRef = queryParams.get("vnp_TxnRef");
         Long transactionId = extractTransactionId(txnRef);
 
-        Transaction transaction = transactionRepository.findById(transactionId)
+        // Khóa pessimistic lock để ngăn race condition giữa Return URL và IPN
+        Transaction transaction = transactionRepository.findByIdForUpdate(transactionId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch từ vnp_TxnRef=" + txnRef));
 
         String responseCode = queryParams.get("vnp_ResponseCode");
@@ -115,26 +124,33 @@ public class VNPayServiceImpl implements VNPayService {
 
         validateChecksum(queryParams);
 
+        String vnpAmountStr = queryParams.get("vnp_Amount");
+        if (vnpAmountStr == null || vnpAmountStr.isBlank()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Thiếu thông tin số tiền vnp_Amount");
+        }
+        try {
+            long vnpAmount = Long.parseLong(vnpAmountStr) / 100;
+            if (transaction.getAmount().longValue() != vnpAmount) {
+                log.warn("Số tiền thanh toán VNPay không khớp: DB={}, VNPay={}", transaction.getAmount(), vnpAmount);
+                throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán không khớp với giao dịch");
+            }
+        } catch (NumberFormatException e) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Định dạng số tiền vnp_Amount không hợp lệ: " + vnpAmountStr);
+        }
+
         if ("00".equals(responseCode) && ("00".equals(transactionStatus) || transactionStatus == null)) {
             if (transaction.getStatus() == TransactionStatus.PENDING) {
                 transaction.setStatus(TransactionStatus.SUCCESS);
-                transaction.setPaidAt(LocalDateTime.now());
+                transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + (transactionNo != null ? transactionNo : txnRef));
-                transaction.setUpdatedAt(LocalDateTime.now());
-                transactionRepository.save(transaction);
-
-                RentalOrder order = transaction.getOrder();
-                if (order != null && transaction.getTransactionType() == TransactionType.RENTAL_PAYMENT) {
-                    order.setPaymentStatus(PaymentStatus.PAID);
-                    order.setUpdatedAt(LocalDateTime.now());
-                    rentalOrderRepository.save(order);
-                }
+                Transaction saved = transactionRepository.save(transaction);
+                eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
+                transaction = saved;
             }
         } else {
             if (transaction.getStatus() == TransactionStatus.PENDING) {
                 transaction.setStatus(TransactionStatus.FAILED);
-                transaction.setUpdatedAt(LocalDateTime.now());
-                transactionRepository.save(transaction);
+                transaction = transactionRepository.save(transaction);
             }
         }
 
@@ -149,7 +165,8 @@ public class VNPayServiceImpl implements VNPayService {
             String txnRef = queryParams.get("vnp_TxnRef");
             Long transactionId = extractTransactionId(txnRef);
 
-            Optional<Transaction> opt = transactionRepository.findById(transactionId);
+            // Khóa pessimistic lock để đảm bảo tính tuần tự khi IPN và Return cùng tới
+            Optional<Transaction> opt = transactionRepository.findByIdForUpdate(transactionId);
             if (opt.isEmpty()) {
                 response.put("RspCode", "01");
                 response.put("Message", "Order not found");
@@ -179,20 +196,12 @@ public class VNPayServiceImpl implements VNPayService {
 
             if ("00".equals(responseCode) && ("00".equals(transactionStatus) || transactionStatus == null)) {
                 transaction.setStatus(TransactionStatus.SUCCESS);
-                transaction.setPaidAt(LocalDateTime.now());
+                transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + transactionNo);
-                transaction.setUpdatedAt(LocalDateTime.now());
-                transactionRepository.save(transaction);
-
-                RentalOrder order = transaction.getOrder();
-                if (order != null && transaction.getTransactionType() == TransactionType.RENTAL_PAYMENT) {
-                    order.setPaymentStatus(PaymentStatus.PAID);
-                    order.setUpdatedAt(LocalDateTime.now());
-                    rentalOrderRepository.save(order);
-                }
+                Transaction saved = transactionRepository.save(transaction);
+                eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
             } else {
                 transaction.setStatus(TransactionStatus.FAILED);
-                transaction.setUpdatedAt(LocalDateTime.now());
                 transactionRepository.save(transaction);
             }
 
@@ -200,8 +209,21 @@ public class VNPayServiceImpl implements VNPayService {
             response.put("Message", "Confirm Success");
             return response;
         } catch (AppException e) {
-            response.put("RspCode", "97");
-            response.put("Message", "Invalid Checksum");
+            String msg = e.getMessage() != null ? e.getMessage().toLowerCase() : "";
+            if (msg.contains("vnp_securehash") || msg.contains("hợp lệ") || msg.contains("h?p l?")
+                    || msg.contains("chữ ký") || msg.contains("ch? k") || msg.contains("checksum") || msg.contains("hash")) {
+                response.put("RspCode", "97");
+                response.put("Message", "Invalid Checksum");
+            } else if (msg.contains("vnp_txnref") || msg.contains("không tìm thấy") || msg.contains("khng tm th?y") || msg.contains("order not found")) {
+                response.put("RspCode", "01");
+                response.put("Message", "Order not found");
+            } else if (msg.contains("số tiền") || msg.contains("s? ti?n") || msg.contains("amount")) {
+                response.put("RspCode", "04");
+                response.put("Message", "Invalid Amount");
+            } else {
+                response.put("RspCode", "99");
+                response.put("Message", e.getMessage());
+            }
             return response;
         } catch (Exception e) {
             response.put("RspCode", "99");
@@ -213,16 +235,20 @@ public class VNPayServiceImpl implements VNPayService {
     private void validateChecksum(Map<String, String> queryParams) {
         String secureHash = queryParams.get("vnp_SecureHash");
         if (secureHash == null || secureHash.isBlank()) {
-            return;
+            throw new AppException(HttpStatus.BAD_REQUEST, "Thiếu chữ ký bảo mật vnp_SecureHash");
         }
 
-        Map<String, String> fields = new TreeMap<>(queryParams);
-        fields.remove("vnp_SecureHash");
-        fields.remove("vnp_SecureHashType");
+        Map<String, String> fields = new TreeMap<>();
+        queryParams.forEach((k, v) -> {
+            if (k != null && k.startsWith("vnp_") && !k.equals("vnp_SecureHash") && !k.equals("vnp_SecureHashType")) {
+                fields.put(k, v);
+            }
+        });
 
         String calculatedHash = vnPayConfig.hashAllFields(fields);
         if (!secureHash.equalsIgnoreCase(calculatedHash)) {
             log.warn("Sai lệch chữ ký VNPay: nhận được={}, tính toán={}", secureHash, calculatedHash);
+            throw new AppException(HttpStatus.BAD_REQUEST, "Chữ ký bảo mật VNPay không hợp lệ");
         }
     }
 

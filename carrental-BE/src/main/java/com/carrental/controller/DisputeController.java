@@ -8,11 +8,11 @@ import com.carrental.dto.response.DisputeEvidenceResponse;
 import com.carrental.dto.response.DisputeResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.service.DisputeService;
+import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,11 +22,13 @@ public class DisputeController {
 
     private final DisputeService disputeService;
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping
     public ApiResponse<DisputeResponse> createDispute(@Valid @RequestBody CreateDisputeRequest request) {
         return ApiResponse.ok("Mở khiếu nại thành công", disputeService.createDispute(request));
     }
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/{id}/evidences")
     public ApiResponse<DisputeEvidenceResponse> addEvidence(
             @PathVariable Long id,
@@ -34,6 +36,7 @@ public class DisputeController {
         return ApiResponse.ok("Thêm bằng chứng khiếu nại thành công", disputeService.addEvidence(id, request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/resolve")
     public ApiResponse<DisputeResponse> resolveDispute(
             @PathVariable Long id,
@@ -41,11 +44,13 @@ public class DisputeController {
         return ApiResponse.ok("Giải quyết khiếu nại thành công", disputeService.resolveDispute(id, request));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<DisputeResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(disputeService.getById(id));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<DisputeResponse>> getPaged(
             @RequestParam(required = false) Long orderId,
@@ -54,9 +59,7 @@ public class DisputeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,desc") String sort) {
-        String[] sortParams = sort.split(",");
-        Sort.Direction direction = sortParams.length > 1 && sortParams[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortParams[0]));
+        Pageable pageable = PageRequestFactory.of(page, size, sort);
         return ApiResponse.ok(disputeService.getPaged(orderId, raisedById, status, pageable));
     }
 }

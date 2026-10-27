@@ -1,13 +1,15 @@
 package com.carrental.dto.request;
 
+import com.carrental.entity.Customer;
 import com.carrental.entity.Dispute;
+import com.carrental.entity.ExtraFee;
+import com.carrental.entity.RentalOrder;
 import com.carrental.enums.DisputeStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -18,7 +20,6 @@ public class CreateDisputeRequest {
 
     private Long extraFeeId;
 
-    @NotNull(message = "Mã người khiếu nại không được để trống")
     private Long raisedById;
 
     @NotBlank(message = "Lý do khiếu nại không được để trống")
@@ -29,12 +30,17 @@ public class CreateDisputeRequest {
     private List<DisputeEvidenceRequest> evidences;
 
     public Dispute toEntity() {
+        return toEntity(null, null, null);
+    }
+
+    public Dispute toEntity(RentalOrder order, Customer raisedBy, ExtraFee extraFee) {
         Dispute dispute = new Dispute();
+        dispute.setOrder(order);
+        dispute.setRaisedBy(raisedBy);
+        dispute.setExtraFee(extraFee);
         dispute.setReason(this.reason);
         dispute.setDescription(this.description);
         dispute.setStatus(DisputeStatus.OPEN);
-        dispute.setCreatedAt(LocalDateTime.now());
-        dispute.setUpdatedAt(LocalDateTime.now());
         return dispute;
     }
 }

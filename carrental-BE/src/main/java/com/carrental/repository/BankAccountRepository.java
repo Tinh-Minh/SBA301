@@ -1,5 +1,6 @@
 package com.carrental.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.carrental.entity.BankAccount;
@@ -14,6 +15,10 @@ public interface BankAccountRepository extends JpaRepository<BankAccount, Long> 
     Page<BankAccount> findAllByCustomerId(Long customerId, Pageable pageable);
 
     Optional<BankAccount> findByCustomerIdAndIsDefaultTrue(Long customerId);
+
+
+    List<BankAccount> findAllByCustomerIdOrderByCreatedAtDesc(Long customerId);
+
 
     boolean existsByCustomerIdAndBankNameAndAccountNumber(Long customerId, String bankName, String accountNumber);
 }

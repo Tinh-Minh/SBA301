@@ -90,6 +90,12 @@ function ProcessPayout({ payout, onClose, onDone }) {
     return <AdminDialog title={`Xử lý chi trả PO-${payout.id}`} onClose={onClose}>
     <div className="flex flex-col gap-3 text-sm">
       <p>{payout.recipientName} • thực nhận <b>{formatMoney(payout.netAmount)}</b></p>
+      {payout.bankName ? (
+        <div className="rounded-xl bg-[#F5F5F4] p-3 text-xs flex flex-col gap-1">
+          <p className="font-semibold text-[#292929]">Tài khoản nhận: {payout.bankName}</p>
+          <p className="font-mono text-[#555555]">STK: {payout.accountNumber} ({payout.accountHolder})</p>
+        </div>
+      ) : null}
       <label className="flex flex-col gap-1 text-xs font-semibold text-[#666666]">Ghi chú / mã chuyển khoản<input value={note} onChange={event => setNote(event.target.value)} className={adminInput}/></label>
       {process.error ? <p className="text-[#B91C1C]">{process.error.message}</p> : null}
       <div className="grid grid-cols-3 gap-2">

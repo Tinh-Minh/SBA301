@@ -148,10 +148,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR.name(), ErrorCode.INTERNAL_ERROR.message());
         }
         String detail = rootMessage(ex);
-        log.warn("Data integrity failure traceId={} exceptionType={}",
-                RequestTraceFilter.currentTraceId(), ex.getClass().getSimpleName());
+        log.warn("Data integrity failure traceId={} exceptionType={} detail={}",
+                RequestTraceFilter.currentTraceId(), ex.getClass().getSimpleName(), detail);
         if (detail.contains("rental_orders_no_overlap") || detail.contains("car_slots_no_overlap")) {
             return build(HttpStatus.CONFLICT, "SCHEDULE_OVERLAP", "Khung thời gian này đã có người đặt");
+        }
+        if (detail.contains("bank_account_id") || detail.contains("payouts")) {
+            return build(HttpStatus.BAD_REQUEST, "PAYOUT_BANK_ACCOUNT_REQUIRED", "Khoản chi trả phải có tài khoản ngân hàng hợp lệ của người nhận");
         }
         return build(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION", "Dữ liệu vi phạm ràng buộc");
     }

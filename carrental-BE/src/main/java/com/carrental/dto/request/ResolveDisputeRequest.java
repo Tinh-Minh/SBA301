@@ -2,10 +2,12 @@ package com.carrental.dto.request;
 
 import com.carrental.entity.Dispute;
 import com.carrental.enums.DisputeStatus;
+import com.carrental.util.TimeUtil;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter
@@ -18,6 +20,8 @@ public class ResolveDisputeRequest {
 
     private Long resolvedById;
 
+    private BigDecimal approvedAmount;
+
     public void applyTo(Dispute dispute) {
         DisputeStatus current = dispute.getStatus();
         DisputeStatus next = DisputeStatus.valueOf(this.status.toUpperCase());
@@ -25,7 +29,6 @@ public class ResolveDisputeRequest {
 
         dispute.setStatus(next);
         dispute.setResolutionNote(this.resolutionNote);
-        dispute.setResolvedAt(LocalDateTime.now());
-        dispute.setUpdatedAt(LocalDateTime.now());
+        dispute.setResolvedAt(TimeUtil.nowVn());
     }
 }

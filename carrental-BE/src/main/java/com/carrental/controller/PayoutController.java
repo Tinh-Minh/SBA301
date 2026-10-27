@@ -6,11 +6,11 @@ import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.PayoutResponse;
 import com.carrental.service.PayoutService;
+import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,11 +20,13 @@ public class PayoutController {
 
     private final PayoutService payoutService;
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ApiResponse<PayoutResponse> createPayout(@Valid @RequestBody CreatePayoutRequest request) {
         return ApiResponse.ok("Tạo yêu cầu chi trả thành công", payoutService.createPayout(request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}/process")
     public ApiResponse<PayoutResponse> processPayout(
             @PathVariable Long id,
@@ -32,11 +34,13 @@ public class PayoutController {
         return ApiResponse.ok("Cập nhật trạng thái chi trả thành công", payoutService.processPayout(id, request));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<PayoutResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(payoutService.getById(id));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<PayoutResponse>> getPaged(
             @RequestParam(required = false) Long recipientId,
@@ -45,9 +49,7 @@ public class PayoutController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,desc") String sort) {
-        String[] sortParams = sort.split(",");
-        Sort.Direction direction = sortParams.length > 1 && sortParams[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortParams[0]));
+        Pageable pageable = PageRequestFactory.of(page, size, sort);
         return ApiResponse.ok(payoutService.getPaged(recipientId, orderId, status, pageable));
     }
 }

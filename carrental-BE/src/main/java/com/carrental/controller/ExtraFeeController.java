@@ -6,11 +6,11 @@ import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.ExtraFeeResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.service.ExtraFeeService;
+import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,11 +20,13 @@ public class ExtraFeeController {
 
     private final ExtraFeeService extraFeeService;
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping
     public ApiResponse<ExtraFeeResponse> createExtraFee(@Valid @RequestBody CreateExtraFeeRequest request) {
         return ApiResponse.ok("Tạo phí phát sinh thành công", extraFeeService.createExtraFee(request));
     }
 
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/{id}/pay")
     public ApiResponse<ExtraFeeResponse> payExtraFee(
             @PathVariable Long id,
@@ -32,6 +34,7 @@ public class ExtraFeeController {
         return ApiResponse.ok("Thanh toán phí phát sinh thành công", extraFeeService.payExtraFee(id, request));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @PutMapping("/{id}/waive")
     public ApiResponse<ExtraFeeResponse> waiveExtraFee(
             @PathVariable Long id,
@@ -39,11 +42,13 @@ public class ExtraFeeController {
         return ApiResponse.ok("Miễn trừ phí phát sinh thành công", extraFeeService.waiveExtraFee(id, note));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<ExtraFeeResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(extraFeeService.getById(id));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<ExtraFeeResponse>> getPaged(
             @RequestParam(required = false) Long orderId,
@@ -51,9 +56,7 @@ public class ExtraFeeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,desc") String sort) {
-        String[] sortParams = sort.split(",");
-        Sort.Direction direction = sortParams.length > 1 && sortParams[1].equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortParams[0]));
+        Pageable pageable = com.carrental.util.PageRequestFactory.of(page, size, sort);
         return ApiResponse.ok(extraFeeService.getPaged(orderId, status, pageable));
     }
 }

@@ -82,8 +82,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/api/cars/search", "/api/cars/{id:[0-9]+}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/slots/search", "/api/slots/{id:[0-9]+}").permitAll()
                         .requestMatchers(HttpMethod.GET,
-                                "/api/payments/vnpay/return", "/api/payments/vnpay/ipn",
-                                "/api/transactions/vnpay-return", "/api/transactions/vnpay-ipn").permitAll()
+                                "/api/payments/vnpay/return", "/api/payments/vnpay/ipn").permitAll()
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(resourceServer -> resourceServer
