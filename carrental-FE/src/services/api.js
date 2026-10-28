@@ -120,8 +120,6 @@ export async function request(path, init = {}) {
     return response.data;
 }
 
-export const jsonBody = (value) => JSON.stringify(value);
-
 /** Chuẩn hóa trang Spring `{content,page,size,totalElements,totalPages}` (hoặc mảng) về một dạng. */
 export function toPage(data) {
     if (Array.isArray(data))

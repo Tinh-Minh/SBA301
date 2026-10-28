@@ -12,20 +12,6 @@ function toBasisPoints(commissionRate) {
         throw new RangeError(`commissionRate phải nằm trong 0–100, nhận ${commissionRate}`);
     return basisPoints;
 }
-export function calculateRentalAmount(unitPrice, quantity) {
-    assertVnd(unitPrice, "unitPrice");
-    if (!Number.isInteger(quantity) || quantity <= 0)
-        throw new RangeError(`quantity phải là số nguyên dương, nhận ${quantity}`);
-    const rentalAmount = unitPrice * quantity;
-    assertVnd(rentalAmount, "rentalAmount");
-    return rentalAmount;
-}
-/** Số tiền người thuê trả. Voucher không bao giờ làm tổng âm. */
-export function calculateTotalAmount(rentalAmount, discountAmount) {
-    assertVnd(rentalAmount, "rentalAmount");
-    assertVnd(discountAmount, "discountAmount");
-    return Math.max(0, rentalAmount - discountAmount);
-}
 /** Phí nền tảng làm tròn nửa lên đến đồng, khớp với ROUND của PostgreSQL cho số dương. */
 export function calculatePlatformFee(grossAmount, commissionRate = DEFAULT_COMMISSION_RATE) {
     assertVnd(grossAmount, "grossAmount");
@@ -101,7 +87,6 @@ export function isApprovedCar(status) {
     return status === "ACTIVE" || status === "INACTIVE";
 }
 
-export const OWNER_RESPONSE_WINDOW_MS = 2 * 60 * 60 * 1000;
 export function isOrderExpired(order, now = Date.now()) {
     return order.status === "PENDING" && !!order.expiresAt && Date.parse(order.expiresAt) <= now;
 }
@@ -122,10 +107,6 @@ export function nextHandoverType(handovers) {
     return isHandoverConfirmed(findHandover(handovers, "RETURN")) ? null : "RETURN";
 }
 /** Payout chuyển từ PENDING sang PAID chỉ khi C10-B được cả chủ xe và người thuê xác nhận. */
-export function isPayoutReleasable(handovers) {
-    return isHandoverConfirmed(findHandover(handovers, "RETURN"));
-}
-
 export const toneClasses = {
     neutral: "bg-badge-gray text-charcoal border-border-light",
     info: "bg-status-blue-bg text-blue-800 border-blue-200",
@@ -147,11 +128,6 @@ export const carStatusMeta = {
     INACTIVE: { label: "Tạm ngưng", tone: "neutral" },
     REJECTED: { label: "Bị từ chối", tone: "danger" },
 };
-export const slotStatusMeta = {
-    OPEN: { label: "Đang mở", tone: "success" },
-    CLOSED: { label: "Đã đóng", tone: "neutral" },
-    CANCELLED: { label: "Đã hủy", tone: "danger" },
-};
 export const orderStatusMeta = {
     PENDING: { label: "Chờ phản hồi", tone: "warning" },
     CONFIRMED: { label: "Đã xác nhận", tone: "info" },
@@ -160,11 +136,6 @@ export const orderStatusMeta = {
     ONGOING: { label: "Đang thuê", tone: "brand" },
     COMPLETED: { label: "Hoàn thành", tone: "success" },
     CANCELLED: { label: "Đã hủy", tone: "danger" },
-};
-export const paymentStatusMeta = {
-    UNPAID: { label: "Chưa thanh toán", tone: "warning" },
-    PAID: { label: "Đã thanh toán", tone: "success" },
-    REFUNDED: { label: "Đã hoàn tiền", tone: "neutral" },
 };
 export const payoutStatusMeta = {
     PENDING: { label: "Đang giữ escrow", tone: "warning" },

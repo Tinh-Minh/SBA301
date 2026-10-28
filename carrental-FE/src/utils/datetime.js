@@ -126,8 +126,3 @@ export function hoursBetween(start, end) {
         return 0;
     return Math.max(0, (b.getTime() - a.getTime()) / 3_600_000);
 }
-
-export function addHours(value, hours) {
-    const date = parseDate(value) ?? new Date();
-    return new Date(date.getTime() + hours * 3_600_000);
-}
