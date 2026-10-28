@@ -11,6 +11,7 @@ import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, rentalTy
 import { carService } from "@/services/vehicleService.js";
 import { rentalService } from "@/services/bookingService.js";
 import { slotService } from "@/services/slotService.js";
+import { CarReviews } from "@/components/reviews/CarReviews.jsx";
 
 export function Detail({ carId }) {
     const [params] = useSearchParams();
@@ -55,7 +56,8 @@ function Body({ car, slot, presetStart, presetEnd }) {
         const search = new URLSearchParams({ slotId: String(slot.id), start: startTime, end: endTime, type, voucher });
         navigate(`/booking/confirm?${search}`);
     }
-    return <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+    return <div className="flex flex-col gap-6">
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
     <article className="overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
       <img src={carImage(car)} alt={carName(car)} className="h-64 w-full object-cover"/>
       {car.images?.length > 1 ? <div className="flex gap-2 overflow-x-auto p-3">{car.images.map(image => <img key={image.id} src={image.imageUrl} alt="" className="h-16 w-24 shrink-0 rounded-lg object-cover"/>)}</div> : null}
@@ -95,6 +97,8 @@ function Body({ car, slot, presetStart, presetEnd }) {
         <Link to="/explore" className="mt-4 inline-flex font-bold text-[#FC6C26]">Tìm khung giờ trống</Link>
       </>}
     </aside>
+    </div>
+    <CarReviews ownerId={car.ownerId} ownerName={car.ownerFullName}/>
   </div>;
 }
 

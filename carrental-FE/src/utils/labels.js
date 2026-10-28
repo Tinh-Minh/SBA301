@@ -83,6 +83,21 @@ export function carName(item) {
     return [item.brand, item.model].filter(Boolean).join(" ") || "Xe";
 }
 
+/** Nhãn hiển thị. Role tài khoản vẫn là CUSTOMER/ADMIN; tài xế là hồ sơ riêng. */
+export function membershipLabel(user, driver) {
+    if (!user)
+        return "";
+    if (user.role === "ADMIN")
+        return "Quản trị viên";
+    if (driver?.status === "ACTIVE")
+        return "Tài xế";
+    if (driver?.status === "PENDING")
+        return "Tài xế • chờ duyệt";
+    if (driver?.status === "SUSPENDED")
+        return "Tài xế • tạm ngưng";
+    return "Khách hàng";
+}
+
 export function initials(name) {
     const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
     if (!parts.length)

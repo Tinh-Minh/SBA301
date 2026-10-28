@@ -113,12 +113,13 @@ export function Transactions() {
     const load = useCallback(async () => transactionService.listPage({ status: status || undefined, page, size: 20, sort: "id,desc" }), [page, status]);
     const list = useApiQuery(["admin", "transactions", { status, page }], load);
     const rows = list.data?.content ?? [];
+    const [refunding, setRefunding] = useState(null);
     return <>
     <Tabs items={[{ id: "", label: "Tất cả" }, { id: "SUCCESS", label: "Thành công" }, { id: "PENDING", label: "Đang chờ" }, { id: "FAILED", label: "Thất bại" }]} value={status} onChange={id => { setStatus(id); setPage(0); }}/>
     <AdminState loading={list.loading && !list.data} error={list.error} empty={list.data && !rows.length} label="giao dịch" onRetry={list.reload}/>
     {rows.length ? <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
       <table className="min-w-full text-left text-sm">
-        <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã GD", "Mã đơn", "Loại", "Phương thức", "Số tiền", "Mã cổng TT", "Thời gian", "Trạng thái"].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
+        <thead className="text-[11px] uppercase tracking-wide text-[#666666]"><tr>{["Mã GD", "Mã đơn", "Loại", "Phương thức", "Số tiền", "Mã cổng TT", "Thời gian", "Trạng thái", ""].map(head => <th key={head} className="whitespace-nowrap px-4 py-3 font-bold">{head}</th>)}</tr></thead>
         <tbody>
           {rows.map(tx => <tr key={tx.id} className="border-t border-[#E9E9E7]">
             <td className="whitespace-nowrap px-4 py-3 font-mono text-xs font-bold">TX-{tx.id}</td>
@@ -129,10 +130,48 @@ export function Transactions() {
             <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{tx.providerRef ?? "—"}</td>
             <td className="whitespace-nowrap px-4 py-3 text-xs">{formatDateTime(tx.paidAt ?? tx.createdAt)}</td>
             <td className="px-4 py-3"><StatusPill tone={txTone[tx.status]}>{transactionStatusLabels[tx.status] ?? tx.status}</StatusPill></td>
+            <td className="whitespace-nowrap px-4 py-3 text-right">{canRefund(tx, rows) ? <button type="button" onClick={() => setRefunding(tx)} className="rounded-lg bg-[#292929] px-3 py-1.5 text-xs font-bold text-white">Hoàn tiền</button> : null}</td>
           </tr>)}
         </tbody>
       </table>
     </div> : null}
     <Pager page={page} totalPages={list.data?.totalPages} onPage={setPage}/>
+    {refunding ? <RefundDialog transaction={refunding} refunded={refundedAmount(rows, refunding.id)} onClose={() => setRefunding(null)} onDone={() => { setRefunding(null); list.reload(); }}/> : null}
   </>;
+}
+
+function refundedAmount(rows, parentId) {
+    return rows
+        .filter(tx => tx.parentTransactionId === parentId && tx.transactionType === "REFUND" && tx.status === "SUCCESS")
+        .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
+}
+
+function canRefund(tx, rows) {
+    if (tx.transactionType === "REFUND" || tx.status !== "SUCCESS")
+        return false;
+    return Number(tx.amount || 0) - refundedAmount(rows, tx.id) > 0;
+}
+
+function RefundDialog({ transaction, refunded, onClose, onDone }) {
+    const remaining = Math.max(0, Number(transaction.amount || 0) - refunded);
+    const [amount, setAmount] = useState("");
+    const [reason, setReason] = useState("");
+    const refund = useApiMutation(() => {
+        const entered = amount.trim() === "" ? null : Number(amount.replace(/\D/g, ""));
+        return transactionService.refund({ parentTransactionId: transaction.id, amount: entered || null, reason });
+    }, onDone);
+    return <AdminDialog title={`Hoàn tiền TX-${transaction.id}`} onClose={onClose}>
+    <div className="flex flex-col gap-3 text-sm">
+      <p>Đơn <b>{transaction.orderCode}</b> • {transactionTypeLabels[transaction.transactionType] ?? transaction.transactionType}</p>
+      <p>Đã thu {formatMoney(transaction.amount)}. Còn hoàn được <b>{formatMoney(remaining)}</b>.</p>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-[#666666]">Số tiền hoàn (để trống = hoàn hết phần còn lại)
+        <input inputMode="numeric" value={amount} onChange={event => setAmount(event.target.value.replace(/[^\d]/g, ""))} placeholder={String(Math.round(remaining))} className={adminInput}/>
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold text-[#666666]">Lý do
+        <textarea value={reason} onChange={event => setReason(event.target.value)} rows={3} className={adminInput}/>
+      </label>
+      {refund.error ? <p className="text-[#B91C1C]">{refund.error.message}</p> : null}
+      <PrimaryButton disabled={refund.running} onClick={() => void refund.run()}>{refund.running ? "Đang hoàn…" : "Xác nhận hoàn tiền"}</PrimaryButton>
+    </div>
+  </AdminDialog>;
 }

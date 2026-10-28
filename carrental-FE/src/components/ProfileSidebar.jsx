@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth.js";
 import { Icon } from "@/components/Icon.jsx";
-import { initials } from "@/utils/labels.js";
+import { initials, membershipLabel } from "@/utils/labels.js";
 const groups = [
     { title: "Cài đặt tài khoản", links: [
             { section: "account", href: "/account", label: "Thông tin cá nhân", icon: "person" },
@@ -16,13 +16,13 @@ const groups = [
         ] },
 ];
 export function ProfileSidebar({ active, className = "" }) {
-    const { user } = useAuth();
+    const { user, driver, isDriver } = useAuth();
     return <aside className={`space-y-4 ${className}`} data-purpose="account-sidebar">
     <div className="relative overflow-hidden rounded-xl bg-surface-container-lowest p-4 shadow-sm">
       <div className="pointer-events-none absolute -top-4 -right-4 size-24 rounded-full bg-gradient-to-br from-primary-container/10 to-transparent blur-xl"/>
       <div className="flex items-center gap-4">
         <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#FFF2EB] text-lg font-bold text-[#FC6C26] ring-2 ring-primary-container/20">{initials(user?.fullName)}</span>
-        <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold text-on-surface">{user?.fullName ?? "Khách"}</h2><p className="mt-0.5 text-xs text-on-surface-variant">{user ? `Mã khách hàng #${user.id}` : "Chưa đăng nhập"}</p>{user?.role === "ADMIN" ? <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-secondary-fixed px-2 py-0.5 text-[10px] font-semibold text-on-secondary-fixed"><Icon name="admin_panel_settings" className="text-[12px]"/>Quản trị viên</span> : null}</div>
+        <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold text-on-surface">{user?.fullName ?? "Khách"}</h2><p className="mt-0.5 text-xs text-on-surface-variant">{user ? `${membershipLabel(user, driver)} #${user.id}` : "Chưa đăng nhập"}</p>{user?.role === "ADMIN" ? <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-secondary-fixed px-2 py-0.5 text-[10px] font-semibold text-on-secondary-fixed"><Icon name="admin_panel_settings" className="text-[12px]"/>Quản trị viên</span> : isDriver ? <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"><Icon name="id_card" className="text-[12px]"/>Tài xế</span> : null}</div>
       </div>
     </div>
     <nav aria-label="Hồ sơ và tài khoản" className="space-y-4 rounded-xl bg-surface-container-lowest p-2 shadow-sm">
