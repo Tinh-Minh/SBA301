@@ -4,7 +4,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { disputeStatusLabels } from "@/utils/labels.js";
 import { disputeService } from "@/hooks/useAdmin.js";
-import { DisputeDetail, tabs, tone } from "@/components/disputes/components/DisputeDetail.jsx";
+import { DisputeDetail, tabs, tone } from "@/components/disputes/DisputeDetail.jsx";
 
 export default function AdminDisputes() {
     const [status, setStatus] = useState("OPEN");

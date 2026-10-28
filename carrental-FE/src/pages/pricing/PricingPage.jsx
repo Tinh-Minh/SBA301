@@ -1,7 +1,7 @@
-import { PricingConsultation } from "@/components/pricing/components/PricingConsultation.jsx";
+import { PricingConsultation } from "@/components/pricing/PricingConsultation.jsx";
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
-import { PricingExplorer } from "@/components/pricing/components/PricingExplorer.jsx";
+import { PricingExplorer } from "@/components/pricing/PricingExplorer.jsx";
 import { formatPrice, pricingSegments } from "@/utils/pricing.js";
 
 const fees = [

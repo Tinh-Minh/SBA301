@@ -3,7 +3,7 @@ import { useProfile } from "@/hooks/useAccount.js";
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";
 import { LiveState } from "@/components/LiveUi.jsx";
 
-import { Editor } from "@/components/account/components/ProfileEditor.jsx";
+import { Editor } from "@/components/account/ProfileEditor.jsx";
 
 export default function AccountLive() {
     const detail = useProfile();

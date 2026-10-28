@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth.js";
 import { FormErrors } from "@/components/FormErrors.jsx";
 import { registrationSchema } from "@/utils/schemas/auth.js";
 import { Link, useNavigate } from "react-router";
-import { PasswordStrength } from "@/components/auth/components/PasswordStrength.jsx";
+import { PasswordStrength } from "@/components/auth/PasswordStrength.jsx";
 
 export function RegisterForm() {
     const navigate = useNavigate();

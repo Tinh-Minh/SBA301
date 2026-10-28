@@ -4,7 +4,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, orderStatusLabels, paymentStatusLabels } from "@/utils/labels.js";
 import { adminOrderService } from "@/hooks/useAdmin.js";
-import { OrderDialog, orderTone, payTone, tabs } from "@/components/bookings/components/OrderDialog.jsx";
+import { OrderDialog, orderTone, payTone, tabs } from "@/components/bookings/OrderDialog.jsx";
 
 export default function AdminOrders() {
     const [status, setStatus] = useState("");

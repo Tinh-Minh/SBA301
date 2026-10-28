@@ -7,7 +7,7 @@ import { LiveState, Primary } from "@/components/LiveUi.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate } from "@/utils/datetime.js";
 import { kycStatusLabels } from "@/utils/labels.js";
-import { Item, driverStatus, reasons } from "@/components/account/components/DriverDetails.jsx";
+import { Item, driverStatus, reasons } from "@/components/account/DriverDetails.jsx";
 
 export default function DriverLive() {
     const detail = useDriverProfile();

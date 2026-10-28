@@ -5,7 +5,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { useHandoverActions } from "@/hooks/useHandovers.js";
 import { orderService } from "@/services/bookingService.js";
-import { TripCard, filters, tripGroup } from "@/components/bookings/components/TripCard.jsx";
+import { TripCard, filters, tripGroup } from "@/components/bookings/TripCard.jsx";
 
 export default function OwnerTrips() {
     const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());

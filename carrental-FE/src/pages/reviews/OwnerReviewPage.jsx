@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage } from "@/components/LiveUi.jsx";
-import { OwnerReviewForm } from "@/components/reviews/components/OwnerReviewForm.jsx";
+import { OwnerReviewForm } from "@/components/reviews/OwnerReviewForm.jsx";
 
 export default function OwnerReviewPage() {
     const orderId = useSearchParams()[0].get("orderId");

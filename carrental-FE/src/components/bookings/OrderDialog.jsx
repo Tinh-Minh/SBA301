@@ -3,7 +3,7 @@ import { useAdminOrderDetail } from "@/hooks/useAdmin.js";
 import { AdminDialog, AdminState } from "@/components/admin/AdminUi.jsx";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, orderStatusLabels, paymentMethodLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
-import { OrderExtraFeesSection } from "@/components/bookings/components/OrderExtraFeesSection.jsx";
+import { OrderExtraFeesSection } from "@/components/bookings/OrderExtraFeesSection.jsx";
 
 export const tabs = [{ id: "", label: "Tất cả" }, ...["PENDING", "CONFIRMED", "ONGOING", "COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"].map(id => ({ id, label: orderStatusLabels[id] }))];
 export const orderTone = { CONFIRMED: "info", ONGOING: "success", COMPLETED: "neutral", PENDING: "warning", CANCELLED: "danger", REJECTED: "danger", EXPIRED: "neutral" };

@@ -5,7 +5,7 @@ import { OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerSc
 import { useOwnerCalendar } from "@/hooks/useCalendar.js";
 import { formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
-import { DayPanel, SlotManager, cellFor, shortPrice, startOfDay, weekdayLabels } from "@/components/vehicles/components/SlotManager.jsx";
+import { DayPanel, SlotManager, cellFor, shortPrice, startOfDay, weekdayLabels } from "@/components/vehicles/SlotManager.jsx";
 
 export default function OwnerCalendar() {
     const today = new Date();

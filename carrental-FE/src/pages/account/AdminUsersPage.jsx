@@ -3,7 +3,7 @@ import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs, adminInput } from
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { kycStatusLabels } from "@/utils/labels.js";
 import { adminUserService } from "@/hooks/useAdmin.js";
-import { UserDetail, kycTone, tabs } from "@/components/account/components/UserDetail.jsx";
+import { UserDetail, kycTone, tabs } from "@/components/account/UserDetail.jsx";
 
 export default function AdminUsers() {
     const [tab, setTab] = useState("all");

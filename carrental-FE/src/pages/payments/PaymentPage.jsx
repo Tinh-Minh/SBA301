@@ -2,7 +2,7 @@ import { Link, useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState } from "@/components/LiveUi.jsx";
-import { Pay } from "@/components/payments/components/PaymentForm.jsx";
+import { Pay } from "@/components/payments/PaymentForm.jsx";
 import { transactionService } from "@/hooks/usePayments.js";
 import { formatMoney } from "@/utils/labels.js";
 

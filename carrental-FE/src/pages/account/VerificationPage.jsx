@@ -5,7 +5,7 @@ import { LiveState, Pill } from "@/components/LiveUi.jsx";
 
 import { formatDateTime } from "@/utils/datetime.js";
 import { docTypeLabels, verifyStatusLabels } from "@/utils/labels.js";
-import { SubmitForm, tone } from "@/components/account/components/VerificationForm.jsx";
+import { SubmitForm, tone } from "@/components/account/VerificationForm.jsx";
 
 export default function VerificationLive() {
     const list = useDocuments();

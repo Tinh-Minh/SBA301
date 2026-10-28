@@ -6,7 +6,7 @@ import { LivePage, LiveState, Pill } from "@/components/LiveUi.jsx";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, orderStatusLabels, orderStatusTone, paymentStatusLabels } from "@/utils/labels.js";
 import { useRentals } from "@/hooks/useBookings.js";
-import { Filter } from "@/components/bookings/components/RentalFilter.jsx";
+import { Filter } from "@/components/bookings/RentalFilter.jsx";
 
 export default function MyRentals({ mode = "all" }) {
     const list = useRentals(mode);

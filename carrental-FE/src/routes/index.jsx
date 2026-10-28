@@ -2,7 +2,7 @@ import { useLayoutEffect } from "react";
 import { createBrowserRouter, RouterProvider, Outlet, ScrollRestoration, useMatches } from "react-router";
 import CustomerLayout from "@/components/layouts/CustomerLayout.jsx";
 import NotFoundPage from "@/pages/information/NotFoundPage.jsx";
-import { InformationPage } from "@/components/information/components/InformationPage.jsx";
+import { InformationPage } from "@/components/information/InformationPage.jsx";
 import { pageTitles } from "@/routes/paths.js";
 import { routeAliases } from "@/routes/aliases.js";
 import { AliasRedirect } from "@/routes/elements.jsx";

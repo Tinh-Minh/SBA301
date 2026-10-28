@@ -3,7 +3,7 @@ import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/componen
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { carImage, carTypeLabels, formatMoney } from "@/utils/labels.js";
 import { adminCarService } from "@/hooks/useAdmin.js";
-import { CarDetail, statusLabel, statusTone, tabs } from "@/components/vehicles/components/VehicleApprovalDialog.jsx";
+import { CarDetail, statusLabel, statusTone, tabs } from "@/components/vehicles/VehicleApprovalDialog.jsx";
 
 export default function AdminVehicles() {
     const [status, setStatus] = useState("PENDING_APPROVAL");

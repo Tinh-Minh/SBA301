@@ -5,7 +5,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { orderService } from "@/services/bookingService.js";
-import { RequestCard, filters } from "@/components/bookings/components/RequestCard.jsx";
+import { RequestCard, filters } from "@/components/bookings/RequestCard.jsx";
 
 export default function OwnerRequests() {
     const resource = useApiQuery(["owner", "bookings"], () => orderService.listMine());

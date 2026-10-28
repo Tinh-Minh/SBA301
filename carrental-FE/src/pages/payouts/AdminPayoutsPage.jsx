@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AdminPageHeader, Tabs } from "@/components/admin/AdminUi.jsx";
-import { Payouts, Transactions, tabs } from "@/components/payouts/components/Payouts.jsx";
+import { Payouts, Transactions, tabs } from "@/components/payouts/Payouts.jsx";
 
 export default function AdminPayouts() {
     const [tab, setTab] = useState("payouts");

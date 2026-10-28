@@ -11,7 +11,7 @@ import { formatDateTime } from "@/utils/datetime.js";
 import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner.js";
 import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/utils/labels.js";
 import { useHandoverActions } from "@/hooks/useHandovers.js";
-import { OrderExtraFeesSection } from "@/components/bookings/components/OrderExtraFeesSection.jsx";
+import { OrderExtraFeesSection } from "@/components/bookings/OrderExtraFeesSection.jsx";
 
 export function OrderDetail({ orderId, justCreated = false }) {
     return <LivePage width="max-w-3xl">

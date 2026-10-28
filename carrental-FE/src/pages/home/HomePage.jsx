@@ -1,7 +1,7 @@
-import "@/components/home/components/home.css";
+import "@/components/home/home.css";
 import { Link } from "react-router";
 import { InteractiveGrid } from "@/components/InteractiveGrid.jsx";
-import { HeroCarScene } from "@/components/home/components/HeroCarScene.jsx";
+import { HeroCarScene } from "@/components/home/HeroCarScene.jsx";
 export default function Home() {
     return (<div className="cardb-screen screen-home bg-page-bg font-sans text-text-primary antialiased selection:bg-brand-accent selection:text-white  flex flex-col justify-between">
 

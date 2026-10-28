@@ -1,7 +1,7 @@
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage } from "@/components/LiveUi.jsx";
 
-import { Confirm } from "@/components/bookings/components/BookingConfirmation.jsx";
+import { Confirm } from "@/components/bookings/BookingConfirmation.jsx";
 
 export default function Checkout() {
     return <LivePage width="max-w-3xl">

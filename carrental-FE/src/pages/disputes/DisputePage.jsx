@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from "react-router";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage } from "@/components/LiveUi.jsx";
-import { Form } from "@/components/disputes/components/DisputeForm.jsx";
+import { Form } from "@/components/disputes/DisputeForm.jsx";
 
 export default function DisputeLive() {
     const orderId = useSearchParams()[0].get("orderId");

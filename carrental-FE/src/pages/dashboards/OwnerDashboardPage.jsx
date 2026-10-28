@@ -4,7 +4,7 @@ import { Money } from "@/components/owner/Money.jsx";
 import { useOwnerDashboard } from "@/hooks/useDashboards.js";
 import { maskBankAccount } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
-import { ActivityRow, PendingRow, QuickAction, StatCard, VehicleCard } from "@/components/dashboards/components/OwnerDashboardCards.jsx";
+import { ActivityRow, PendingRow, QuickAction, StatCard, VehicleCard } from "@/components/dashboards/OwnerDashboardCards.jsx";
 
 export default function OwnerDashboard() {
     const { data, loading, error } = useOwnerDashboard();
