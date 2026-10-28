@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { clearSession, readSession } from "@/shared/storage/session.js";
+import { clearSession, readSession } from "@/utils/session.js";
 
 /**
  * Mặc định gọi cùng origin `/api/...`; Vite / nginx proxy chuyển tiếp sang backend.

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { AdminDialog, PrimaryButton, adminInput } from "@/components/admin/AdminUi.jsx";
 import { DateTimeField } from "@/components/DateField.jsx";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { toInputDateTime } from "@/shared/utils/datetime.js";
-import { adminVoucherService } from "@/shared/hooks/useAdmin.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { toInputDateTime } from "@/utils/datetime.js";
+import { adminVoucherService } from "@/hooks/useAdmin.js";
 
 export const tabs = [
     { id: "", label: "Tất cả" },

@@ -2,7 +2,7 @@ import { Icon } from "@/components/Icon.jsx";
 import { CountdownBadge } from "@/components/owner/CountdownBadge.jsx";
 import { PayoutMath } from "@/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { canRespondToOrder, formatRentalPeriod, kycStatusMeta, orderStatusMeta } from "@/shared/utils/owner.js";
+import { canRespondToOrder, formatRentalPeriod, kycStatusMeta, orderStatusMeta } from "@/utils/owner.js";
 
 export const filters = [
     { id: "all", label: "Tất cả" },

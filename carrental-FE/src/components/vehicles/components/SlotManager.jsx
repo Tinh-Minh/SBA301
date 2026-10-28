@@ -1,4 +1,4 @@
-import { slotService, useCarSlots } from "@/shared/hooks/useAvailability.js";
+import { slotService, useCarSlots } from "@/hooks/useAvailability.js";
 import { Link } from "react-router";
 import { useState } from "react";
 import { DateTimeField } from "@/components/DateField.jsx";
@@ -6,10 +6,10 @@ import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { PayoutMath } from "@/components/owner/OwnerScreen.jsx";
 
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDateTime, toInputDateTime } from "@/shared/utils/datetime.js";
-import { formatVnd } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/paths.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDateTime, toInputDateTime } from "@/utils/datetime.js";
+import { formatVnd } from "@/utils/owner.js";
+import { ownerRoutes } from "@/routes/paths.js";
 
 export const weekdayLabels = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 export function startOfDay(date) {

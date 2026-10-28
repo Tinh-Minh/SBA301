@@ -2,7 +2,7 @@ import { PricingConsultation } from "@/components/pricing/components/PricingCons
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { PricingExplorer } from "@/components/pricing/components/PricingExplorer.jsx";
-import { formatPrice, pricingSegments } from "@/shared/utils/pricing.js";
+import { formatPrice, pricingSegments } from "@/utils/pricing.js";
 
 const fees = [
     { icon: "person", title: "Tài xế riêng", price: "350.000 đ/ngày", detail: "Khung phục vụ tham khảo 10 giờ/ngày. Lưu trú và ngoài giờ được thống nhất riêng trước chuyến đi." },

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAuth } from "@/shared/hooks/useAuth.js";
+import { useAuth } from "@/hooks/useAuth.js";
 import { FormErrors } from "@/components/FormErrors.jsx";
-import { registrationSchema } from "@/shared/schemas/auth.js";
+import { registrationSchema } from "@/utils/schemas/auth.js";
 import { Link, useNavigate } from "react-router";
 import { PasswordStrength } from "@/components/auth/components/PasswordStrength.jsx";
 

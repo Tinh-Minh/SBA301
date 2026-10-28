@@ -1,10 +1,10 @@
 import { SummaryCard } from "@/components/SummaryCard.jsx";
 import { useMemo, useState } from "react";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { ownerRoutes } from "@/app/routes/paths.js";
-import { orderService } from "@/shared/hooks/useBookings.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { ownerRoutes } from "@/routes/paths.js";
+import { orderService } from "@/hooks/useBookings.js";
 import { RequestCard, filters } from "@/components/bookings/components/RequestCard.jsx";
 
 export default function OwnerRequests() {

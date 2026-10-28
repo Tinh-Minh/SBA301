@@ -1,9 +1,9 @@
-import { reviewService, useOrderReview } from "@/shared/hooks/useReviews.js";
+import { reviewService, useOrderReview } from "@/hooks/useReviews.js";
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
 
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 
 export function OwnerReviewForm({ orderId }) {
     const navigate = useNavigate();

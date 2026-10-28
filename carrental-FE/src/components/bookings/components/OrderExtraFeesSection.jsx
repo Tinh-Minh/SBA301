@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { formatMoney, feeTypeLabels, extraFeeStatusLabels, extraFeeStatusTone } from "@/shared/utils/labels.js";
-import { formatDateTime } from "@/shared/utils/datetime.js";
+import { formatMoney, feeTypeLabels, extraFeeStatusLabels, extraFeeStatusTone } from "@/utils/labels.js";
+import { formatDateTime } from "@/utils/datetime.js";
 import { Pill, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useAuth } from "@/shared/hooks/useAuth.js";
-import { useOrderExtraFees, useExtraFeeActions } from "@/shared/hooks/useExtraFees.js";
+import { useAuth } from "@/hooks/useAuth.js";
+import { useOrderExtraFees, useExtraFeeActions } from "@/hooks/useExtraFees.js";
 
 const FEE_TYPE_OPTIONS = [
     { value: "LATE_RETURN", label: "Trả xe trễ" },

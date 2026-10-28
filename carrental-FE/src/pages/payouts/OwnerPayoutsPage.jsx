@@ -1,13 +1,13 @@
-import { ownerRoutes } from "@/app/routes/paths.js";
+import { ownerRoutes } from "@/routes/paths.js";
 import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { useOwnerPayouts } from "@/shared/hooks/usePayouts.js";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { formatTrVnd, maskBankAccount, payoutStatusMeta } from "@/shared/utils/owner.js";
+import { useOwnerPayouts } from "@/hooks/usePayouts.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { formatTrVnd, maskBankAccount, payoutStatusMeta } from "@/utils/owner.js";
 
 const filters = [
     { id: "all", label: "Tất cả" },

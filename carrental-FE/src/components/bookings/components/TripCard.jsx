@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { PayoutMath } from "@/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { findHandover, formatRentalPeriod, handoverTypeMeta, isHandoverConfirmed, nextHandoverType, orderStatusMeta } from "@/shared/utils/owner.js";
+import { findHandover, formatRentalPeriod, handoverTypeMeta, isHandoverConfirmed, nextHandoverType, orderStatusMeta } from "@/utils/owner.js";
 import { OrderExtraFeesSection } from "@/components/bookings/components/OrderExtraFeesSection.jsx";
 
 export const filters = [

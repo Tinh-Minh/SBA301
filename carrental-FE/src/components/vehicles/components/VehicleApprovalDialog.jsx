@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { AdminDialog, AdminState, PrimaryButton, StatusPill } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDate } from "@/shared/utils/datetime.js";
-import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
-import { adminCarService } from "@/shared/hooks/useAdmin.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDate } from "@/utils/datetime.js";
+import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels, verifyStatusLabels } from "@/utils/labels.js";
+import { adminCarService } from "@/hooks/useAdmin.js";
 
 export const tabs = [
     { id: "PENDING_APPROVAL", label: "Chờ duyệt" },

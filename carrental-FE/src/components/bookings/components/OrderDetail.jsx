@@ -1,15 +1,15 @@
 import { DetailItem } from "@/components/DetailItem.jsx";
-import { rentalService, useBookingDetail } from "@/shared/hooks/useBookings.js";
+import { rentalService, useBookingDetail } from "@/hooks/useBookings.js";
 import { Link } from "react-router";
 import { useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState, Pill, Primary, fieldClass } from "@/components/LiveUi.jsx";
 
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/shared/utils/owner.js";
-import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/shared/utils/labels.js";
-import { useHandoverActions } from "@/shared/hooks/useHandovers.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner.js";
+import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/utils/labels.js";
+import { useHandoverActions } from "@/hooks/useHandovers.js";
 import { OrderExtraFeesSection } from "@/components/bookings/components/OrderExtraFeesSection.jsx";
 
 export function OrderDetail({ orderId, justCreated = false }) {

@@ -1,10 +1,10 @@
-import { transactionService, usePaymentDetail } from "@/shared/hooks/usePayments.js";
+import { transactionService, usePaymentDetail } from "@/hooks/usePayments.js";
 import { Link } from "react-router";
 import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
 
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatMoney, paymentMethodLabels, paymentStatusLabels } from "@/shared/utils/labels.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatMoney, paymentMethodLabels, paymentStatusLabels } from "@/utils/labels.js";
 
 export function Pay({ orderId }) {
     const detail = usePaymentDetail(orderId);

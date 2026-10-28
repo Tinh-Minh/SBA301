@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { carImage, carTypeLabels, formatMoney } from "@/shared/utils/labels.js";
-import { adminCarService } from "@/shared/hooks/useAdmin.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { carImage, carTypeLabels, formatMoney } from "@/utils/labels.js";
+import { adminCarService } from "@/hooks/useAdmin.js";
 import { CarDetail, statusLabel, statusTone, tabs } from "@/components/vehicles/components/VehicleApprovalDialog.jsx";
 
 export default function AdminVehicles() {

@@ -1,9 +1,9 @@
-import { bankAccountService, useBankAccounts } from "@/shared/hooks/useAccount.js";
+import { bankAccountService, useBankAccounts } from "@/hooks/useAccount.js";
 
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";
 import { LiveState } from "@/components/LiveUi.jsx";
 
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { AddForm } from "@/components/account/components/BankAccountForm.jsx";
 
 export default function BanksLive() {

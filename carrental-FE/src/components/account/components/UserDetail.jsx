@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { AdminDialog, AdminState, PrimaryButton, StatusPill } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDate, formatDateTime } from "@/shared/utils/datetime.js";
-import { docTypeLabels, kycStatusLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
-import { adminUserService } from "@/shared/hooks/useAdmin.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDate, formatDateTime } from "@/utils/datetime.js";
+import { docTypeLabels, kycStatusLabels, verifyStatusLabels } from "@/utils/labels.js";
+import { adminUserService } from "@/hooks/useAdmin.js";
 
 export const tabs = [
     { id: "all", label: "Tất cả" },

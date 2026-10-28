@@ -1,9 +1,9 @@
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
-import { useOwnerDashboard } from "@/shared/hooks/useDashboards.js";
-import { maskBankAccount } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/paths.js";
+import { useOwnerDashboard } from "@/hooks/useDashboards.js";
+import { maskBankAccount } from "@/utils/owner.js";
+import { ownerRoutes } from "@/routes/paths.js";
 import { ActivityRow, PendingRow, QuickAction, StatCard, VehicleCard } from "@/components/dashboards/components/OwnerDashboardCards.jsx";
 
 export default function OwnerDashboard() {

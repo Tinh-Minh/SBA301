@@ -1,7 +1,7 @@
 import { Link } from "react-router";
-import { useAuth } from "@/shared/hooks/useAuth.js";
+import { useAuth } from "@/hooks/useAuth.js";
 import { Icon } from "@/components/Icon.jsx";
-import { initials } from "@/shared/utils/labels.js";
+import { initials } from "@/utils/labels.js";
 const groups = [
     { title: "Cài đặt tài khoản", links: [
             { section: "account", href: "/account", label: "Thông tin cá nhân", icon: "person" },

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router";
-import { useAuth } from "@/shared/hooks/useAuth.js";
+import { useAuth } from "@/hooks/useAuth.js";
 import { Icon } from "@/components/Icon.jsx";
 
 /** Chặn nội dung cần đăng nhập (và tùy chọn quyền ADMIN) — backend trả 401/403 nếu thiếu JWT. */

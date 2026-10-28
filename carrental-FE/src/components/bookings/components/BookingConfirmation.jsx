@@ -2,13 +2,13 @@ import { DetailItem } from "@/components/DetailItem.jsx";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { carName, formatMoney, rentalTypeLabels } from "@/shared/utils/labels.js";
-import { carService } from "@/shared/hooks/useVehicles.js";
-import { rentalService } from "@/shared/hooks/useBookings.js";
-import { slotService } from "@/shared/hooks/useAvailability.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { carName, formatMoney, rentalTypeLabels } from "@/utils/labels.js";
+import { carService } from "@/hooks/useVehicles.js";
+import { rentalService } from "@/hooks/useBookings.js";
+import { slotService } from "@/hooks/useAvailability.js";
 
 export function Confirm() {
     const [params] = useSearchParams();

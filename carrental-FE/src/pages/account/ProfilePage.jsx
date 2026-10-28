@@ -1,4 +1,4 @@
-import { useProfile } from "@/shared/hooks/useAccount.js";
+import { useProfile } from "@/hooks/useAccount.js";
 
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";
 import { LiveState } from "@/components/LiveUi.jsx";

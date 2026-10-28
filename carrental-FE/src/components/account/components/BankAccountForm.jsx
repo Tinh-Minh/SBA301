@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { bankAccountService } from "@/shared/hooks/useAccount.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { bankAccountService } from "@/hooks/useAccount.js";
 
 export function AddForm({ onDone }) {
     const [form, setForm] = useState({ bankName: "", accountNumber: "", accountHolder: "", makeDefault: true });

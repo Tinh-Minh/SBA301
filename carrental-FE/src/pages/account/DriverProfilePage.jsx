@@ -1,12 +1,12 @@
-import { driverService, useDriverProfile } from "@/shared/hooks/useAccount.js";
+import { driverService, useDriverProfile } from "@/hooks/useAccount.js";
 
 import { Link } from "react-router";
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";
 import { LiveState, Primary } from "@/components/LiveUi.jsx";
 
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDate } from "@/shared/utils/datetime.js";
-import { kycStatusLabels } from "@/shared/utils/labels.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDate } from "@/utils/datetime.js";
+import { kycStatusLabels } from "@/utils/labels.js";
 import { Item, driverStatus, reasons } from "@/components/account/components/DriverDetails.jsx";
 
 export default function DriverLive() {

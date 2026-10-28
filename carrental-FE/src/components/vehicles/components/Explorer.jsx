@@ -2,10 +2,10 @@ import { Link, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
 import { DateTimeField } from "@/components/DateField.jsx";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { formatDateTime, parseQueryDateTime, toInputDateTime } from "@/shared/utils/datetime.js";
-import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/shared/utils/labels.js";
-import { slotService } from "@/shared/hooks/useAvailability.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { formatDateTime, parseQueryDateTime, toInputDateTime } from "@/utils/datetime.js";
+import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/utils/labels.js";
+import { slotService } from "@/hooks/useAvailability.js";
 
 const carTypes = ["", "SEDAN", "SUV", "HATCHBACK", "MPV", "PICKUP", "LUXURY", "OTHER"];
 

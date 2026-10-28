@@ -2,9 +2,9 @@ import { Link } from "react-router";
 import { useMemo, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
-import { useOwnerCalendar } from "@/shared/hooks/useCalendar.js";
-import { formatVnd } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/paths.js";
+import { useOwnerCalendar } from "@/hooks/useCalendar.js";
+import { formatVnd } from "@/utils/owner.js";
+import { ownerRoutes } from "@/routes/paths.js";
 import { DayPanel, SlotManager, cellFor, shortPrice, startOfDay, weekdayLabels } from "@/components/vehicles/components/SlotManager.jsx";
 
 export default function OwnerCalendar() {

@@ -1,8 +1,8 @@
 import { DetailItem } from "@/components/DetailItem.jsx";
-import { useAdminOrderDetail } from "@/shared/hooks/useAdmin.js";
+import { useAdminOrderDetail } from "@/hooks/useAdmin.js";
 import { AdminDialog, AdminState } from "@/components/admin/AdminUi.jsx";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { formatMoney, orderStatusLabels, paymentMethodLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/shared/utils/labels.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { formatMoney, orderStatusLabels, paymentMethodLabels, rentalTypeLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
 import { OrderExtraFeesSection } from "@/components/bookings/components/OrderExtraFeesSection.jsx";
 
 export const tabs = [{ id: "", label: "Tất cả" }, ...["PENDING", "CONFIRMED", "ONGOING", "COMPLETED", "CANCELLED", "REJECTED", "EXPIRED"].map(id => ({ id, label: orderStatusLabels[id] }))];

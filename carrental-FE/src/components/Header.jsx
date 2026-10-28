@@ -1,9 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { useId, useState } from "react";
-import { useAuth } from "@/shared/hooks/useAuth.js";
+import { useAuth } from "@/hooks/useAuth.js";
 import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
-import { initials } from "@/shared/utils/labels.js";
+import { initials } from "@/utils/labels.js";
 
 const publicNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Chuyến xe của tôi"], ["/list-your-car", "Cho thuê xe"], ["/pricing", "Cách tính giá"]];
 const memberNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Chuyến xe của tôi"], ["/owner/dashboard", "Chủ xe"], ["/pricing", "Cách tính giá"]];

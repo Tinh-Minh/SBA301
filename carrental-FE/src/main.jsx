@@ -1,4 +1,4 @@
-import App from "@/app/App.jsx";
+import App from "@/App.jsx";
 
 import "@/shared/styles/globals.css";
 

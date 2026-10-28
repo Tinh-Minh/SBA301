@@ -1,9 +1,9 @@
 import { useCallback, useState } from "react";
 import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { formatMoney, orderStatusLabels, paymentStatusLabels } from "@/shared/utils/labels.js";
-import { adminOrderService } from "@/shared/hooks/useAdmin.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { formatMoney, orderStatusLabels, paymentStatusLabels } from "@/utils/labels.js";
+import { adminOrderService } from "@/hooks/useAdmin.js";
 import { OrderDialog, orderTone, payTone, tabs } from "@/components/bookings/components/OrderDialog.jsx";
 
 export default function AdminOrders() {

@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
-import { formatPrice, pricingSegments, rentalDiscount } from "@/shared/utils/pricing.js";
+import { formatPrice, pricingSegments, rentalDiscount } from "@/utils/pricing.js";
 const modes = [{ id: "self", label: "Thuê tự lái", icon: "key" }, { id: "driver", label: "Kèm tài xế", icon: "person" }, { id: "month", label: "Thuê theo tháng", icon: "garage_home" }];
 export function PricingExplorer({ intro, benefits, comparison, fees }) {
     const [mode, setMode] = useState("self");

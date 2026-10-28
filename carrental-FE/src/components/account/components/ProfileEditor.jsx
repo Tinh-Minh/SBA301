@@ -1,12 +1,12 @@
 import { useRef, useState } from "react";
 import { DateField } from "@/components/DateField.jsx";
 import { Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDate, toLocalDate } from "@/shared/utils/datetime.js";
-import { kycStatusLabels } from "@/shared/utils/labels.js";
-import { updateSessionAccount } from "@/shared/storage/session.js";
-import { changePassword } from "@/shared/hooks/useAccount.js";
-import { updateMyProfile } from "@/shared/hooks/useAccount.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDate, toLocalDate } from "@/utils/datetime.js";
+import { kycStatusLabels } from "@/utils/labels.js";
+import { updateSessionAccount } from "@/utils/session.js";
+import { changePassword } from "@/hooks/useAccount.js";
+import { updateMyProfile } from "@/hooks/useAccount.js";
 
 export function Editor({ profile, kyc, onSaved }) {
     const [editing, setEditing] = useState(false);

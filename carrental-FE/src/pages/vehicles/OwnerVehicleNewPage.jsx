@@ -1,18 +1,18 @@
 import { useForm, useWatch } from "react-hook-form";
-import { vehicleCreateSchema, vehicleStepFields, vehicleStepSchemas } from "@/shared/schemas/vehicle.js";
-import { validateInput } from "@/shared/utils/validateInput.js";
+import { vehicleCreateSchema, vehicleStepFields, vehicleStepSchemas } from "@/utils/schemas/vehicle.js";
+import { validateInput } from "@/utils/validateInput.js";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormErrors } from "@/components/FormErrors.jsx";
-import { parseVndInput } from "@/shared/utils/inputParser.js";
+import { parseVndInput } from "@/utils/inputParser.js";
 import { Link, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { OwnerCrumb } from "@/components/owner/OwnerScreen.jsx";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { calculatePlatformFee, formatVnd } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/paths.js";
-import { carService } from "@/shared/hooks/useVehicles.js";
-import { useAuth } from "@/shared/hooks/useAuth.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { calculatePlatformFee, formatVnd } from "@/utils/owner.js";
+import { ownerRoutes } from "@/routes/paths.js";
+import { carService } from "@/hooks/useVehicles.js";
+import { useAuth } from "@/hooks/useAuth.js";
 import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, amenities, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/components/vehicles/components/VehicleRegistrationSteps.jsx";
 
 export default function OwnerVehicleNew() {

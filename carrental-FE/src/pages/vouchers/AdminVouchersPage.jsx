@@ -1,10 +1,10 @@
 import { useCallback, useState } from "react";
 import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/components/admin/AdminUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { formatMoney } from "@/shared/utils/labels.js";
-import { adminVoucherService } from "@/shared/hooks/useAdmin.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { formatMoney } from "@/utils/labels.js";
+import { adminVoucherService } from "@/hooks/useAdmin.js";
 import { CreateDialog, EditDialog, tabs, windowLabel } from "@/components/vouchers/components/VoucherDialogs.jsx";
 
 export default function AdminVouchers() {

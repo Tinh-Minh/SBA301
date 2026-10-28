@@ -1,12 +1,12 @@
 import { Link } from "react-router";
 import { AdminPageHeader, AdminState, StatusPill } from "@/components/admin/AdminUi.jsx";
 import { Money } from "@/components/owner/Money.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { formatTrVnd } from "@/shared/utils/owner.js";
-import { adminRoutes } from "@/app/routes/paths.js";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { kycStatusLabels, orderStatusLabels } from "@/shared/utils/labels.js";
-import { getAdminOverview } from "@/shared/hooks/useAdmin.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { formatTrVnd } from "@/utils/owner.js";
+import { adminRoutes } from "@/routes/paths.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { kycStatusLabels, orderStatusLabels } from "@/utils/labels.js";
+import { getAdminOverview } from "@/hooks/useAdmin.js";
 import { Stat, orderTone } from "@/components/dashboards/components/DashboardStat.jsx";
 
 export default function AdminDashboard() {

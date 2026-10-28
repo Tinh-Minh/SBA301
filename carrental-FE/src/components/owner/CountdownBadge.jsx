@@ -1,4 +1,4 @@
-import { useCountdown } from "@/shared/hooks/useCountdown.js";
+import { useCountdown } from "@/hooks/useCountdown.js";
 import { Icon } from "@/components/Icon.jsx";
 const URGENT_MS = 30 * 60 * 1000;
 export function CountdownBadge({ deadline }) {

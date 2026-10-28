@@ -3,9 +3,9 @@ import { useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";
 import { LivePage, LiveState, Pill } from "@/components/LiveUi.jsx";
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { formatMoney, orderStatusLabels, orderStatusTone, paymentStatusLabels } from "@/shared/utils/labels.js";
-import { useRentals } from "@/shared/hooks/useBookings.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { formatMoney, orderStatusLabels, orderStatusTone, paymentStatusLabels } from "@/utils/labels.js";
+import { useRentals } from "@/hooks/useBookings.js";
 import { Filter } from "@/components/bookings/components/RentalFilter.jsx";
 
 export default function MyRentals({ mode = "all" }) {

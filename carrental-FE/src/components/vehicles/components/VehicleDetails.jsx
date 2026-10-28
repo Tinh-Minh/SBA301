@@ -1,16 +1,16 @@
 import { DetailItem } from "@/components/DetailItem.jsx";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useCallback, useState } from "react";
-import { useAuth } from "@/shared/hooks/useAuth.js";
+import { useAuth } from "@/hooks/useAuth.js";
 import { DateTimeField } from "@/components/DateField.jsx";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
-import { useApiQuery } from "@/shared/hooks/useApiQuery.js";
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { formatDateTime, hoursBetween, parseQueryDateTime, toInputDateTime } from "@/shared/utils/datetime.js";
-import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/shared/utils/labels.js";
-import { carService } from "@/shared/hooks/useVehicles.js";
-import { rentalService } from "@/shared/hooks/useBookings.js";
-import { slotService } from "@/shared/hooks/useAvailability.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { formatDateTime, hoursBetween, parseQueryDateTime, toInputDateTime } from "@/utils/datetime.js";
+import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/utils/labels.js";
+import { carService } from "@/hooks/useVehicles.js";
+import { rentalService } from "@/hooks/useBookings.js";
+import { slotService } from "@/hooks/useAvailability.js";
 
 export function Detail({ carId }) {
     const [params] = useSearchParams();

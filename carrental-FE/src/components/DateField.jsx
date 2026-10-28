@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useState } from "react";
-import { formatInputDate, formatInputDateTime, parseInputDate, parseInputDateTime } from "@/shared/utils/datetime.js";
+import { formatInputDate, formatInputDateTime, parseInputDate, parseInputDateTime } from "@/utils/datetime.js";
 
 const dateMessage = "Nhập theo ngày/tháng/năm, ví dụ 07/06/2004";
 const dateTimeMessage = "Nhập theo ngày/tháng/năm giờ:phút, ví dụ 07/06/2004 08:30";

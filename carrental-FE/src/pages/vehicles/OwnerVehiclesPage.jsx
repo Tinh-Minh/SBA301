@@ -4,9 +4,9 @@ import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
-import { useOwnerCars } from "@/shared/hooks/useVehicles.js";
-import { carStatusMeta, carSubtitle, isApprovedCar } from "@/shared/utils/owner.js";
-import { ownerRoutes } from "@/app/routes/paths.js";
+import { useOwnerCars } from "@/hooks/useVehicles.js";
+import { carStatusMeta, carSubtitle, isApprovedCar } from "@/utils/owner.js";
+import { ownerRoutes } from "@/routes/paths.js";
 
 const filters = [
     { id: "all", label: "Tất cả" },

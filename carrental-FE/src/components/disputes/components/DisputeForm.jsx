@@ -1,10 +1,10 @@
-import { disputeService, useOrderDisputes } from "@/shared/hooks/useAdmin.js";
+import { disputeService, useOrderDisputes } from "@/hooks/useAdmin.js";
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
 
-import { useApiMutation } from "@/shared/hooks/useApiMutation.js";
-import { disputeStatusLabels } from "@/shared/utils/labels.js";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { disputeStatusLabels } from "@/utils/labels.js";
 
 export function Form({ orderId }) {
     const navigate = useNavigate();

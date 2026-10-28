@@ -1,10 +1,10 @@
-import { useDocuments } from "@/shared/hooks/useAccount.js";
+import { useDocuments } from "@/hooks/useAccount.js";
 
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";
 import { LiveState, Pill } from "@/components/LiveUi.jsx";
 
-import { formatDateTime } from "@/shared/utils/datetime.js";
-import { docTypeLabels, verifyStatusLabels } from "@/shared/utils/labels.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { docTypeLabels, verifyStatusLabels } from "@/utils/labels.js";
 import { SubmitForm, tone } from "@/components/account/components/VerificationForm.jsx";
 
 export default function VerificationLive() {
