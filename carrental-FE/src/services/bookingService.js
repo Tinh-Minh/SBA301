@@ -3,7 +3,7 @@ import { toLocalIso } from "@/utils/datetime.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { carFromOrder, normalizeCar, normalizeHandover, normalizeOrder, renterFromOrder } from "@/utils/apiResponse.js";
 
-export const reasonBody = (reason) => (reason ? { reason } : {});
+const reasonBody = (reason) => (reason ? { reason } : {});
 
 /** Tải chi tiết xe (có cache theo lần gọi) để ghép vào đơn. */
 export async function loadCarsById(carIds) {

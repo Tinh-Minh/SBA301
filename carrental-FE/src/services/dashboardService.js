@@ -9,7 +9,7 @@ import { toOwnerViews } from "@/services/bookingService.js";
 import { toPayoutRows } from "@/services/payoutService.js";
 import { slotService } from "@/services/slotService.js";
 
-export function buildActivities(views) {
+function buildActivities(views) {
     const items = [];
     for (const { order, car } of views) {
         const name = `${car.brand} ${car.model}`.trim();

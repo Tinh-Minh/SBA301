@@ -8,7 +8,7 @@ import { normalizeCar, normalizeOrder } from "@/utils/apiResponse.js";
 import { getCustomer, getCustomerKyc, listCustomers, updateCustomerStatus } from "@/services/accountService.js";
 import { adminPayoutService } from "@/services/payoutService.js";
 
-export const pageOf = async (path, query, map = (item) => item) => {
+const pageOf = async (path, query, map = (item) => item) => {
     const result = toPage(await request(path, { query }));
     return { ...result, content: result.content.map(map) };
 };
@@ -50,7 +50,7 @@ export const adminCarService = {
     }),
 };
 
-export const normalizeVoucher = (voucher) => ({
+const normalizeVoucher = (voucher) => ({
     ...voucher,
     discountValue: toNumber(voucher.discountValue),
     maxDiscount: voucher.maxDiscount === null || voucher.maxDiscount === undefined ? null : toNumber(voucher.maxDiscount),

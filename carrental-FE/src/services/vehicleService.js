@@ -2,12 +2,12 @@ import { endpoints } from "@/services/endpoints.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { normalizeCar } from "@/utils/apiResponse.js";
 
-export const nullable = (value) => (value === "" || value === undefined ? null : value);
+const nullable = (value) => (value === "" || value === undefined ? null : value);
 
-export const numberOrNull = (value) => (value === "" || value === null || value === undefined ? null : Number(value));
+const numberOrNull = (value) => (value === "" || value === null || value === undefined ? null : Number(value));
 
 /** Trường dùng chung giữa CarCreateRequest và CarUpdateRequest (PUT ghi đè toàn bộ). */
-export function carPayload(draft) {
+function carPayload(draft) {
     return {
         brand: draft.brand?.trim(),
         model: draft.model?.trim(),
@@ -32,7 +32,7 @@ export function carPayload(draft) {
     };
 }
 
-export async function getCar(id) {
+async function getCar(id) {
     return normalizeCar(await request(endpoints.cars.byId(id)));
 }
 
