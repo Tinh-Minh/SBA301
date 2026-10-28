@@ -3,7 +3,7 @@ import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/componen
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { disputeStatusLabels } from "@/utils/labels.js";
-import { disputeService } from "@/hooks/useAdmin.js";
+import { disputeService } from "@/services/adminService.js";
 import { DisputeDetail, tabs, tone } from "@/components/disputes/DisputeDetail.jsx";
 
 export default function AdminDisputes() {

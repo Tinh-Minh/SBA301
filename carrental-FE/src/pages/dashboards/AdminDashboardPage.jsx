@@ -6,7 +6,7 @@ import { formatTrVnd } from "@/utils/owner.js";
 import { adminRoutes } from "@/routes/paths.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { kycStatusLabels, orderStatusLabels } from "@/utils/labels.js";
-import { getAdminOverview } from "@/hooks/useAdmin.js";
+import { getAdminOverview } from "@/services/adminService.js";
 import { Stat, orderTone } from "@/components/dashboards/DashboardStat.jsx";
 
 export default function AdminDashboard() {

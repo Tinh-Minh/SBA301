@@ -1,4 +1,5 @@
-import { disputeService, useOrderDisputes } from "@/hooks/useAdmin.js";
+import { disputeService } from "@/services/adminService.js";
+import { useOrderDisputes } from "@/hooks/useAdmin.js";
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";

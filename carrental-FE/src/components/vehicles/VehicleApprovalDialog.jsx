@@ -4,7 +4,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate } from "@/utils/datetime.js";
 import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels, verifyStatusLabels } from "@/utils/labels.js";
-import { adminCarService } from "@/hooks/useAdmin.js";
+import { adminCarService } from "@/services/adminService.js";
 
 export const tabs = [
     { id: "PENDING_APPROVAL", label: "Chờ duyệt" },

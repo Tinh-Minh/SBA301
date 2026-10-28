@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs, adminInput } from "@/components/admin/AdminUi.jsx";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { kycStatusLabels } from "@/utils/labels.js";
-import { adminUserService } from "@/hooks/useAdmin.js";
+import { adminUserService } from "@/services/adminService.js";
 import { UserDetail, kycTone, tabs } from "@/components/account/UserDetail.jsx";
 
 export default function AdminUsers() {

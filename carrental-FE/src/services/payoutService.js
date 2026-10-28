@@ -3,7 +3,7 @@ import { sumAmounts } from "@/utils/owner.js";
 import { currentUserId } from "@/utils/session.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { carFromOrder, normalizeOrder, normalizePayout } from "@/utils/apiResponse.js";
-import { bankAccountService } from "@/hooks/useAccount.js";
+import { bankAccountService } from "@/services/accountService.js";
 import { loadCarsById } from "@/services/bookingService.js";
 
 /** Ghép payout với đơn thuê và xe để hiển thị sao kê. */

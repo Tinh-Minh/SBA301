@@ -7,7 +7,7 @@ import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, paymentMethodLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
 import { calculatePayout } from "@/utils/owner.js";
 import { request, toPage } from "@/services/api.js";
-import { adminOrderService, adminPayoutService } from "@/hooks/useAdmin.js";
+import { adminOrderService, adminPayoutService } from "@/services/adminService.js";
 
 export const tabs = [{ id: "payouts", label: "Chi trả chủ xe" }, { id: "transactions", label: "Giao dịch thanh toán" }];
 const payoutTone = { PENDING: "warning", PROCESSING: "info", PAID: "success", FAILED: "danger" };

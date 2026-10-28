@@ -1,4 +1,5 @@
-import { driverService, useDriverProfile } from "@/hooks/useAccount.js";
+import { driverService } from "@/services/accountService.js";
+import { useDriverProfile } from "@/hooks/useAccount.js";
 
 import { Link } from "react-router";
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";

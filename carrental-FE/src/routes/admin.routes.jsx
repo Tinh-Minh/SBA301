@@ -14,7 +14,7 @@ import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { useAuth } from "@/hooks/useAuth.js";
 import { adminRoutes } from "@/routes/paths.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { getAdminBadges } from "@/hooks/useAdmin.js";
+import { getAdminBadges } from "@/services/adminService.js";
 
 export const adminNavigation = [
     { code: "A01", href: adminRoutes.dashboard, label: "Tổng quan", icon: "grid_view" },

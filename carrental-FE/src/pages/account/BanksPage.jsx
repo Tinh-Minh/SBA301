@@ -1,4 +1,5 @@
-import { bankAccountService, useBankAccounts } from "@/hooks/useAccount.js";
+import { bankAccountService } from "@/services/accountService.js";
+import { useBankAccounts } from "@/hooks/useAccount.js";
 
 import { ProfileLayout } from "@/components/layouts/ProfileLayout.jsx";
 import { LiveState } from "@/components/LiveUi.jsx";

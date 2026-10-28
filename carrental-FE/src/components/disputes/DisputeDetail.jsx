@@ -3,7 +3,7 @@ import { PrimaryButton } from "@/components/admin/AdminUi.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { disputeStatusLabels } from "@/utils/labels.js";
-import { disputeService } from "@/hooks/useAdmin.js";
+import { disputeService } from "@/services/adminService.js";
 
 export const tone = { OPEN: "warning", IN_REVIEW: "info", RESOLVED: "success", REJECTED: "danger" };
 export const tabs = [{ id: "", label: "Tất cả" }, ...["OPEN", "IN_REVIEW", "RESOLVED", "REJECTED"].map(id => ({ id, label: disputeStatusLabels[id] }))];

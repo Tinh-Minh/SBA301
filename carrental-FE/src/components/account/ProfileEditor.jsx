@@ -5,8 +5,8 @@ import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate, toLocalDate } from "@/utils/datetime.js";
 import { kycStatusLabels } from "@/utils/labels.js";
 import { updateSessionAccount } from "@/utils/session.js";
-import { changePassword } from "@/hooks/useAccount.js";
-import { updateMyProfile } from "@/hooks/useAccount.js";
+import { changePassword } from "@/services/accountService.js";
+import { updateMyProfile } from "@/services/accountService.js";
 
 export function Editor({ profile, kyc, onSaved }) {
     const [editing, setEditing] = useState(false);

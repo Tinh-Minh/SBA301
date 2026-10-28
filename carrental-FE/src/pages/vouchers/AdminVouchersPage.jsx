@@ -4,7 +4,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney } from "@/utils/labels.js";
-import { adminVoucherService } from "@/hooks/useAdmin.js";
+import { adminVoucherService } from "@/services/adminService.js";
 import { CreateDialog, EditDialog, tabs, windowLabel } from "@/components/vouchers/VoucherDialogs.jsx";
 
 export default function AdminVouchers() {

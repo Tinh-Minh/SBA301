@@ -3,7 +3,7 @@ import { AdminPageHeader, AdminState, Pager, StatusPill, Tabs } from "@/componen
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, orderStatusLabels, paymentStatusLabels } from "@/utils/labels.js";
-import { adminOrderService } from "@/hooks/useAdmin.js";
+import { adminOrderService } from "@/services/adminService.js";
 import { OrderDialog, orderTone, payTone, tabs } from "@/components/bookings/OrderDialog.jsx";
 
 export default function AdminOrders() {
