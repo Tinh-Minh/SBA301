@@ -1,16 +1,42 @@
-# React + Vite
+# CarDB – Frontend (carrental-FE)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 + Vite 8, React Router 8, axios, TanStack Query, Tailwind CSS 4. Gọi backend Spring Boot qua `/api` (Vite proxy sang `API_PROXY_TARGET`, mặc định `http://127.0.0.1:8080`).
 
-Currently, two official plugins are available:
+## Chạy dự án
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```sh
+npm ci
+npm run dev        # http://localhost:3000
+npm run build      # build vào dist/
+npm run typecheck  # kiểm tra các file TypeScript trong src/interfaces
+npm test           # Playwright
+```
 
-## React Compiler
+Tạo `.env` từ `.env.example`: `API_PROXY_TARGET` (backend khi chạy dev), `VITE_API_URL` (để trống thì gọi cùng origin `/api`).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Cấu trúc thư mục
 
-## Expanding the ESLint configuration
+```
+src/
+├── main.jsx          điểm vào, import styles/style.css
+├── App.jsx           khung ứng dụng
+├── providers.jsx     React Query, đăng nhập
+├── routes/           định tuyến: public, customer, owner, admin (+ paths.js, aliases.js)
+├── pages/            màn hình theo nhóm: account, auth, bookings, dashboards, disputes, home,
+│                     information, payments, payouts, pricing, reviews, vehicles, vouchers
+├── components/       thành phần dùng lại: Header, RequireAuth, ...; layouts/; admin/; owner/;
+│                     và thư mục theo nhóm (bookings/, vehicles/, ...)
+├── services/         gọi API: api.js (axios), endpoints.js, <nhóm>Service.js
+├── interfaces/       kiểu TypeScript tương ứng DTO backend (api, order, car, payment, account)
+├── hooks/            hook React: useApiQuery, useApiMutation, useBookings, ...
+├── context/          AuthProvider
+├── utils/            datetime, labels, session, schemas (zod), ...
+└── styles/           style.css (Tailwind + màu + font + style chung), tokens.json
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Quy tắc phân tầng:
+
+- `pages` và `components` không gọi `request()` trực tiếp; dùng hook trong `hooks/` hoặc hàm trong `services/`.
+- `hooks/` chỉ chứa hook React (`useXxx`), lấy dữ liệu qua `services/`.
+- `services/` là nơi duy nhất gọi API (qua `services/api.js`); kiểu dữ liệu trả về mô tả trong `interfaces/`.
+- Style chung chỉ nằm trong `styles/style.css`; màu, font lấy từ `tokens.json` qua `tailwind.config.js`.
