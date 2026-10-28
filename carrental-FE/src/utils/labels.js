@@ -90,7 +90,7 @@ export function initials(name) {
     return parts.length === 1 ? parts[0][0].toUpperCase() : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-export const FALLBACK_CAR_IMAGE = "/images/cardb-02d5cb41aa8f9514.webp";
+const FALLBACK_CAR_IMAGE = "/images/cardb-02d5cb41aa8f9514.webp";
 
 export function carImage(item) {
     if (!item)

@@ -1,6 +1,6 @@
 import { parseDate } from "@/utils/datetime.js";
 
-export const DEFAULT_COMMISSION_RATE = 10;
+const DEFAULT_COMMISSION_RATE = 10;
 function assertVnd(amount, field) {
     if (!Number.isSafeInteger(amount) || amount < 0)
         throw new RangeError(`${field} phải là số VND nguyên không âm, nhận ${amount}`);

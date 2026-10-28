@@ -23,7 +23,7 @@ export function matches(car, filter) {
         return car.status === "INACTIVE" || car.status === "REJECTED";
     return true;
 }
-export function statusNote(status) {
+function statusNote(status) {
     if (status === "ACTIVE")
         return "Đang mở lịch cho thuê";
     if (status === "PENDING_APPROVAL")

@@ -16,7 +16,7 @@ import { adminRoutes } from "@/routes/paths.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { getAdminBadges } from "@/services/adminService.js";
 
-export const adminNavigation = [
+const adminNavigation = [
     { code: "A01", href: adminRoutes.dashboard, label: "Tổng quan", icon: "grid_view" },
     { code: "A02", href: adminRoutes.users, label: "Người dùng & KYC", icon: "verified_user", badgeKey: "kyc", badgeSuffix: "chờ", badgeTone: "warning" },
     { code: "A03", href: adminRoutes.vehicles, label: "Duyệt xe", icon: "directions_car", badgeKey: "cars", badgeSuffix: "xe", badgeTone: "warning" },

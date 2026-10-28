@@ -70,7 +70,7 @@ async function decodeResponse(response) {
     return body ? { message: String(body).length > 300 ? undefined : String(body) } : undefined;
 }
 
-export const httpClient = axios.create({
+const httpClient = axios.create({
     baseURL: API_BASE_URL || undefined,
     headers: { Accept: "application/json" },
     paramsSerializer: { serialize: buildQuery },

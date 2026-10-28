@@ -16,7 +16,7 @@ import { useAuth } from "@/hooks/useAuth.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { useOwnerCounts } from "@/hooks/useVehicles.js";
 
-export const ownerNavigation = [
+const ownerNavigation = [
     { code: "O01", href: ownerRoutes.dashboard, label: "Tổng quan", icon: "grid_view" },
     { code: "O02", href: ownerRoutes.vehicles, label: "Xe của tôi", icon: "garage_home", badgeKey: "cars" },
     { code: "O04", href: ownerRoutes.calendar, label: "Lịch cho thuê", icon: "calendar_month" },

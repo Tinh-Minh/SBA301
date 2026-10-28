@@ -19,7 +19,7 @@ export async function loadCarsById(carIds) {
     return new Map(entries);
 }
 
-export async function loadHandovers(orderId) {
+async function loadHandovers(orderId) {
     const list = await request(endpoints.orders.byIdHandovers(orderId));
     return (Array.isArray(list) ? list : []).map(normalizeHandover);
 }

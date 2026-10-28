@@ -3,7 +3,7 @@ import { clearSession, readSession, subscribeSession } from "@/utils/session.js"
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
-export function endSession() {
+function endSession() {
     clearSession();
 }
 
