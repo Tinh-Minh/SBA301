@@ -1,14 +1,14 @@
 import { lazy } from "react";
-const CarDetailPage = lazy(() => import("@/features/vehicles/pages/CarDetailPage.jsx"));
-const ExploreCarsPage = lazy(() => import("@/features/vehicles/pages/ExploreCarsPage.jsx"));
-const HomePage = lazy(() => import("@/features/home/pages/HomePage.jsx"));
-const PricingPage = lazy(() => import("@/features/pricing/pages/PricingPage.jsx"));
-const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage.jsx"));
-const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage.jsx"));
-const BanksAlternativePage = lazy(() => import("@/features/account/pages/BanksAlternativePage.jsx"));
-const PaymentSuccessPage = lazy(() => import("@/features/payments/pages/PaymentSuccessPage.jsx"));
-const PaymentFailedPage = lazy(() => import("@/features/payments/pages/PaymentFailedPage.jsx"));
-const HeaderShowcasePage = lazy(() => import("@/features/information/pages/HeaderShowcasePage.jsx"));
+const CarDetailPage = lazy(() => import("@/pages/vehicles/CarDetailPage.jsx"));
+const ExploreCarsPage = lazy(() => import("@/pages/vehicles/ExploreCarsPage.jsx"));
+const HomePage = lazy(() => import("@/pages/home/HomePage.jsx"));
+const PricingPage = lazy(() => import("@/pages/pricing/PricingPage.jsx"));
+const LoginPage = lazy(() => import("@/pages/auth/LoginPage.jsx"));
+const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage.jsx"));
+const BanksAlternativePage = lazy(() => import("@/pages/account/BanksAlternativePage.jsx"));
+const PaymentSuccessPage = lazy(() => import("@/pages/payments/PaymentSuccessPage.jsx"));
+const PaymentFailedPage = lazy(() => import("@/pages/payments/PaymentFailedPage.jsx"));
+const HeaderShowcasePage = lazy(() => import("@/pages/information/HeaderShowcasePage.jsx"));
 import { page, CarRoute } from "@/app/routes/elements.jsx";
 
 export const publicPages = [

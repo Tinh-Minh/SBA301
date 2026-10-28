@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Navigate, useLocation, useParams } from "react-router";
-import NotFoundPage from "@/features/information/pages/NotFoundPage.jsx";
+import NotFoundPage from "@/pages/information/NotFoundPage.jsx";
 import { pageTitles } from "@/app/routes/paths.js";
 
 function PendingPage() {

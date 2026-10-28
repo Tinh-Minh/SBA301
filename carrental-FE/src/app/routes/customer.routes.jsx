@@ -1,14 +1,14 @@
 import { lazy } from "react";
-const BanksPage = lazy(() => import("@/features/account/pages/BanksPage.jsx"));
-const DriverProfilePage = lazy(() => import("@/features/account/pages/DriverProfilePage.jsx"));
-const MyRentalsPage = lazy(() => import("@/features/bookings/pages/MyRentalsPage.jsx"));
-const ProfilePage = lazy(() => import("@/features/account/pages/ProfilePage.jsx"));
-const VerificationPage = lazy(() => import("@/features/account/pages/VerificationPage.jsx"));
-const CheckoutPage = lazy(() => import("@/features/bookings/pages/CheckoutPage.jsx"));
-const DisputePage = lazy(() => import("@/features/disputes/pages/DisputePage.jsx"));
-const OrderDetailPage = lazy(() => import("@/features/bookings/pages/OrderDetailPage.jsx").then(module => ({ default: module.OrderDetailPage })));
-const PaymentPage = lazy(() => import("@/features/payments/pages/PaymentPage.jsx"));
-const OwnerReviewPage = lazy(() => import("@/features/reviews/pages/OwnerReviewPage.jsx"));
+const BanksPage = lazy(() => import("@/pages/account/BanksPage.jsx"));
+const DriverProfilePage = lazy(() => import("@/pages/account/DriverProfilePage.jsx"));
+const MyRentalsPage = lazy(() => import("@/pages/bookings/MyRentalsPage.jsx"));
+const ProfilePage = lazy(() => import("@/pages/account/ProfilePage.jsx"));
+const VerificationPage = lazy(() => import("@/pages/account/VerificationPage.jsx"));
+const CheckoutPage = lazy(() => import("@/pages/bookings/CheckoutPage.jsx"));
+const DisputePage = lazy(() => import("@/pages/disputes/DisputePage.jsx"));
+const OrderDetailPage = lazy(() => import("@/pages/bookings/OrderDetailPage.jsx").then(module => ({ default: module.OrderDetailPage })));
+const PaymentPage = lazy(() => import("@/pages/payments/PaymentPage.jsx"));
+const OwnerReviewPage = lazy(() => import("@/pages/reviews/OwnerReviewPage.jsx"));
 import { page, AliasRedirect, OrderRoute } from "@/app/routes/elements.jsx";
 
 export const customerPages = [
