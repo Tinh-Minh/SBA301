@@ -1,4 +1,5 @@
-import { transactionService, usePaymentDetail } from "@/hooks/usePayments.js";
+import { transactionService } from "@/services/paymentService.js";
+import { usePaymentDetail } from "@/hooks/usePayments.js";
 import { Link } from "react-router";
 import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";

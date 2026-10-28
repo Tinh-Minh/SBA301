@@ -1,4 +1,5 @@
-import { reviewService, useOrderReview } from "@/hooks/useReviews.js";
+import { reviewService } from "@/services/reviewService.js";
+import { useOrderReview } from "@/hooks/useReviews.js";
 import { Link, useNavigate } from "react-router";
 import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
