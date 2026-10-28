@@ -1,6 +1,6 @@
 import { useCallback } from "react";
-import { endpoints } from "@/shared/api/endpoints.js";
-import { fetchAllPages, request } from "@/shared/api/client.js";
+import { endpoints } from "@/services/endpoints.js";
+import { fetchAllPages, request } from "@/services/api.js";
 import { normalizeExtraFee } from "@/utils/apiResponse.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";

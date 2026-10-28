@@ -1,8 +1,8 @@
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { endpoints } from "@/shared/api/endpoints.js";
+import { endpoints } from "@/services/endpoints.js";
 import { toLocalIso } from "@/utils/datetime.js";
-import { fetchAllPages, request, toPage } from "@/shared/api/client.js";
+import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { carFromOrder, normalizeCar, normalizeHandover, normalizeOrder, renterFromOrder } from "@/utils/apiResponse.js";
 
 const reasonBody = (reason) => (reason ? { reason } : {});

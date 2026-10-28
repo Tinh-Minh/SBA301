@@ -1,5 +1,5 @@
-import { endpoints } from "@/shared/api/endpoints.js";
-import { fetchAllPages, request, toPage } from "@/shared/api/client.js";
+import { endpoints } from "@/services/endpoints.js";
+import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { normalizeCar } from "@/utils/apiResponse.js";
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";

@@ -2,9 +2,9 @@ import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { currentUserId } from "@/utils/session.js";
 import { rentalService } from "@/hooks/useBookings.js";
-import { endpoints } from "@/shared/api/endpoints.js";
+import { endpoints } from "@/services/endpoints.js";
 
-import { request, toPage } from "@/shared/api/client.js";
+import { request, toPage } from "@/services/api.js";
 
 export const reviewService = {
     create: ({ orderId, revieweeId, rating, comment }) => request(endpoints.reviews.list, {

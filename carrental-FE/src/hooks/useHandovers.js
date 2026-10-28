@@ -1,6 +1,6 @@
 import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { endpoints } from "@/shared/api/endpoints.js";
-import { request } from "@/shared/api/client.js";
+import { endpoints } from "@/services/endpoints.js";
+import { request } from "@/services/api.js";
 import { normalizeHandover } from "@/utils/apiResponse.js";
 
 export const handoverService = {

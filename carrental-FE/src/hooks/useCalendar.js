@@ -1,5 +1,5 @@
-import { endpoints } from "@/shared/api/endpoints.js";
-import { fetchAllPages } from "@/shared/api/client.js";
+import { endpoints } from "@/services/endpoints.js";
+import { fetchAllPages } from "@/services/api.js";
 import { normalizeOrder } from "@/utils/apiResponse.js";
 import { carService } from "@/hooks/useVehicles.js";
 import { slotService } from "@/hooks/useAvailability.js";

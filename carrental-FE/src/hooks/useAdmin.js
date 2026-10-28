@@ -1,11 +1,11 @@
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { adminOrderService, rentalService } from "@/hooks/useBookings.js";
-import { endpoints } from "@/shared/api/endpoints.js";
+import { endpoints } from "@/services/endpoints.js";
 import { toLocalIso } from "@/utils/datetime.js";
 import { toNumber } from "@/utils/labels.js";
 import { currentUserId } from "@/utils/session.js";
-import { fetchAllPages, request, toPage } from "@/shared/api/client.js";
+import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { normalizeCar, normalizeOrder } from "@/utils/apiResponse.js";
 import { getCustomer, getCustomerKyc, listCustomers, updateCustomerStatus } from "@/hooks/useAccount.js";
 import { adminPayoutService } from "@/hooks/usePayouts.js";

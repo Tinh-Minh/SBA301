@@ -1,7 +1,7 @@
-import { endpoints } from "@/shared/api/endpoints.js";
+import { endpoints } from "@/services/endpoints.js";
 import { sumAmounts } from "@/utils/owner.js";
 import { currentUserId } from "@/utils/session.js";
-import { fetchAllPages, request, toPage } from "@/shared/api/client.js";
+import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { carFromOrder, normalizeOrder, normalizePayout } from "@/utils/apiResponse.js";
 import { bankAccountService } from "@/hooks/useAccount.js";
 import { loadCarsById } from "@/hooks/useBookings.js";

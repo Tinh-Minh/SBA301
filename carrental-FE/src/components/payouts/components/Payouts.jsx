@@ -6,7 +6,7 @@ import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, paymentMethodLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
 import { calculatePayout } from "@/utils/owner.js";
-import { request, toPage } from "@/shared/api/client.js";
+import { request, toPage } from "@/services/api.js";
 import { adminOrderService, adminPayoutService } from "@/hooks/useAdmin.js";
 
 export const tabs = [{ id: "payouts", label: "Chi trả chủ xe" }, { id: "transactions", label: "Giao dịch thanh toán" }];

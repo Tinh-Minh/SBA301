@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { endpoints } from "@/shared/api/endpoints.js";
-import { ApiError, request, toPage } from "@/shared/api/client.js";
+import { endpoints } from "@/services/endpoints.js";
+import { ApiError, request, toPage } from "@/services/api.js";
 import { normalizeBankAccount } from "@/utils/apiResponse.js";
 import { toLocalDate } from "@/utils/datetime.js";
 
