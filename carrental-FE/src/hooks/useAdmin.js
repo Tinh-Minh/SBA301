@@ -8,7 +8,7 @@ import { currentUserId } from "@/utils/session.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { normalizeCar, normalizeOrder } from "@/utils/apiResponse.js";
 import { getCustomer, getCustomerKyc, listCustomers, updateCustomerStatus } from "@/hooks/useAccount.js";
-import { adminPayoutService } from "@/hooks/usePayouts.js";
+import { adminPayoutService } from "@/services/payoutService.js";
 
 const pageOf = async (path, query, map = (item) => item) => {
     const result = toPage(await request(path, { query }));
