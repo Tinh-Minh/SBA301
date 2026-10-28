@@ -1,9 +1,7 @@
-import { endpoints } from "@/services/endpoints.js";
-import { request, toPage } from "@/services/api.js";
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { carService } from "@/services/vehicleService.js";
+import { carService, getOwnerCounts } from "@/services/vehicleService.js";
 
 export function useOwnerCars() {
     const resource = useApiQuery(["owner", "vehicles"], carService.listMine);
@@ -20,14 +18,8 @@ export function useOwnerCar(id) {
     return { ...resource, save };
 }
 
-/** Đếm số xe (GET /api/cars/my-cars) và yêu cầu chờ duyệt (GET /api/orders/my-cars?status=PENDING). */
+/** Số xe và số yêu cầu chờ duyệt của chủ xe. */
 export function useOwnerCounts() {
-    const { data } = useApiQuery(["owner", "counts"], async () => {
-        const [cars, pending] = await Promise.all([
-            request(endpoints.cars.myCars, { query: { page: 0, size: 1 } }).then(toPage).catch(() => null),
-            request(endpoints.orders.myCars, { query: { status: "PENDING", page: 0, size: 1 } }).then(toPage).catch(() => null),
-        ]);
-        return { cars: cars?.totalElements ?? null, pending: pending?.totalElements ?? null };
-    });
+    const { data } = useApiQuery(["owner", "counts"], getOwnerCounts);
     return data ?? { cars: null, pending: null };
 }

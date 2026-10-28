@@ -1,24 +1,7 @@
-import { endpoints } from "@/services/endpoints.js";
-import { request } from "@/services/api.js";
-import { clearSession, readSession, saveSession, subscribeSession } from "@/utils/session.js";
+import { authenticate, registerAccount } from "@/services/authService.js";
+import { clearSession, readSession, subscribeSession } from "@/utils/session.js";
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-
-/** POST /api/auth/login — backend chỉ nhận email + mật khẩu. */
-export async function authenticate({ email, password }) {
-    const token = await request(endpoints.auth.login, { method: "POST", auth: false, json: { email: email.trim(), password } });
-    return saveSession(token);
-}
-
-/** POST /api/auth/register → trả về hồ sơ khách hàng vừa tạo. */
-export function registerAccount({ fullName, email, phone, password }) {
-    return request(endpoints.auth.register, {
-        method: "POST",
-        auth: false,
-        json: { fullName: fullName.trim(), email: email.trim(), phone: phone.trim().replace(/\s+/g, ""), password },
-    });
-}
-
 
 export function endSession() {
     clearSession();

@@ -1,9 +1,7 @@
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { rentalService } from "@/services/bookingService.js";
-import { endpoints } from "@/services/endpoints.js";
-import { request, toPage } from "@/services/api.js";
-import { disputeService } from "@/services/adminService.js";
+import { adminOrderDetailService, disputeService } from "@/services/adminService.js";
 
 export function useOrderDisputes(orderId) {
     const load = useCallback(async () => {
@@ -20,8 +18,8 @@ export function useOrderDisputes(orderId) {
 export function useAdminOrderDetail(orderId) {
     const load = useCallback(async () => {
         const [logs, transactions] = await Promise.all([
-            request(endpoints.orders.byIdLogs(orderId)).catch(() => []),
-            request(endpoints.transactions.list, { query: { orderId: orderId, size: 50 } }).then(toPage).then(page => page.content).catch(() => []),
+            adminOrderDetailService.logs(orderId),
+            adminOrderDetailService.transactions(orderId),
         ]);
         return { logs: Array.isArray(logs) ? logs : [], transactions };
     }, [orderId]);

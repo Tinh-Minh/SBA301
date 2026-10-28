@@ -6,7 +6,7 @@ import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney, paymentMethodLabels, transactionStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
 import { calculatePayout } from "@/utils/owner.js";
-import { request, toPage } from "@/services/api.js";
+import { transactionService } from "@/services/paymentService.js";
 import { adminOrderService, adminPayoutService } from "@/services/adminService.js";
 
 export const tabs = [{ id: "payouts", label: "Chi trả chủ xe" }, { id: "transactions", label: "Giao dịch thanh toán" }];
@@ -110,7 +110,7 @@ function ProcessPayout({ payout, onClose, onDone }) {
 export function Transactions() {
     const [page, setPage] = useState(0);
     const [status, setStatus] = useState("");
-    const load = useCallback(async () => toPage(await request("/api/transactions", { query: { status: status || undefined, page, size: 20, sort: "id,desc" } })), [page, status]);
+    const load = useCallback(async () => transactionService.listPage({ status: status || undefined, page, size: 20, sort: "id,desc" }), [page, status]);
     const list = useApiQuery(["admin", "transactions", { status, page }], load);
     const rows = list.data?.content ?? [];
     return <>

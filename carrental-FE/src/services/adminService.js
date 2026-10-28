@@ -157,3 +157,9 @@ export async function getAdminBadges() {
     ]);
     return { kyc, cars, disputes, payouts };
 }
+
+/** Lịch sử và giao dịch của một đơn cho màn chi tiết đơn (admin). */
+export const adminOrderDetailService = {
+    logs: (orderId) => request(endpoints.orders.byIdLogs(orderId)).catch(() => []),
+    transactions: (orderId) => request(endpoints.transactions.list, { query: { orderId: orderId, size: 50 } }).then(toPage).then(page => page.content).catch(() => []),
+};

@@ -86,3 +86,12 @@ export const carService = {
     },
     getPublic: getCar,
 };
+
+/** Đếm số xe (GET /api/cars/my-cars) và yêu cầu chờ duyệt (GET /api/orders/my-cars?status=PENDING). */
+export async function getOwnerCounts() {
+    const [cars, pending] = await Promise.all([
+        request(endpoints.cars.myCars, { query: { page: 0, size: 1 } }).then(toPage).catch(() => null),
+        request(endpoints.orders.myCars, { query: { status: "PENDING", page: 0, size: 1 } }).then(toPage).catch(() => null),
+    ]);
+    return { cars: cars?.totalElements ?? null, pending: pending?.totalElements ?? null };
+}
