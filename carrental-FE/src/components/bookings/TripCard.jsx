@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { PayoutMath } from "@/components/owner/OwnerScreen.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
+import { handoverEnergyLabel, handoverEnergyName } from "@/utils/labels.js";
 import { findHandover, formatRentalPeriod, handoverTypeMeta, isHandoverConfirmed, nextHandoverType, orderStatusMeta } from "@/utils/owner.js";
 import { OrderExtraFeesSection } from "@/components/bookings/OrderExtraFeesSection.jsx";
 
@@ -31,7 +32,8 @@ export function TripCard({ item, busy, error, onCreate, onConfirm }) {
     const [odometer, setOdometer] = useState(pickup ? String(pickup.odometerKm) : "");
     const [fuel, setFuel] = useState(pickup ? String(pickup.fuelPercent) : "100");
     const [note, setNote] = useState("");
-    const fuelLabel = car.fuelType === "ELECTRIC" ? "Pin" : "Nhiên liệu";
+    const fuelName = handoverEnergyName(car.fuelType);
+    const fuelLabel = handoverEnergyLabel(car.fuelType);
     function submit() {
         if (!next)
             return;
@@ -56,13 +58,13 @@ export function TripCard({ item, busy, error, onCreate, onConfirm }) {
         </div>
         <p className="text-sm text-muted-gray">{car.pickupAddress}</p>
         <div className="grid gap-2 sm:grid-cols-2">
-          <HandoverLine type="PICKUP" done={isHandoverConfirmed(pickup)} detail={pickup ? `${pickup.odometerKm.toLocaleString("vi-VN")} km • ${fuelLabel} ${pickup.fuelPercent}%` : "Chưa lập"}/>
-          <HandoverLine type="RETURN" done={isHandoverConfirmed(returned)} detail={returned ? `${returned.odometerKm.toLocaleString("vi-VN")} km • ${fuelLabel} ${returned.fuelPercent}%` : "Chưa lập"}/>
+          <HandoverLine type="PICKUP" done={isHandoverConfirmed(pickup)} detail={pickup ? `${pickup.odometerKm.toLocaleString("vi-VN")} km • ${fuelName} ${pickup.fuelPercent}%` : "Chưa lập"}/>
+          <HandoverLine type="RETURN" done={isHandoverConfirmed(returned)} detail={returned ? `${returned.odometerKm.toLocaleString("vi-VN")} km • ${fuelName} ${returned.fuelPercent}%` : "Chưa lập"}/>
         </div>
-        {pickup && !returned ? <p className="text-sm text-charcoal">{fuelLabel} lúc nhận: {pickup.fuelPercent}% • ODO {pickup.odometerKm.toLocaleString("vi-VN")} km{pickup.conditionNote ? ` • ${pickup.conditionNote}` : ""}</p> : null}
+        {pickup && !returned ? <p className="text-sm text-charcoal">{fuelName} lúc nhận: {pickup.fuelPercent}% • ODO {pickup.odometerKm.toLocaleString("vi-VN")} km{pickup.conditionNote ? ` • ${pickup.conditionNote}` : ""}</p> : null}
         {waitingOnRenter ? <p className="text-sm font-semibold text-charcoal">Biên bản {next === "PICKUP" ? "C10-A" : "C10-B"} đã lưu. Đang chờ khách thuê xác nhận.</p> : null}
         {waitingOnOwner ? <div className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-status-amber-bg p-3">
-          <p className="text-sm font-semibold text-charcoal">Khách thuê đã lập biên bản {next === "PICKUP" ? "C10-A" : "C10-B"}: ODO {draft.odometerKm.toLocaleString("vi-VN")} km • {fuelLabel} {draft.fuelPercent}%{draft.conditionNote ? ` • ${draft.conditionNote}` : ""}</p>
+          <p className="text-sm font-semibold text-charcoal">Khách thuê đã lập biên bản {next === "PICKUP" ? "C10-A" : "C10-B"}: ODO {draft.odometerKm.toLocaleString("vi-VN")} km • {fuelName} {draft.fuelPercent}%{draft.conditionNote ? ` • ${draft.conditionNote}` : ""}</p>
           <button type="button" disabled={busy} onClick={() => onConfirm(draft.id)} className="inline-flex w-fit items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white disabled:opacity-60"><Icon name="task_alt" className="text-[18px]"/>Xác nhận biên bản</button>
           {error ? <p className="text-sm text-on-error-container">{error.message}</p> : null}
         </div> : null}
@@ -75,7 +77,7 @@ export function TripCard({ item, busy, error, onCreate, onConfirm }) {
             <label className="text-xs font-semibold text-charcoal">ODO (km)
               <input inputMode="numeric" value={odometer} onChange={event => setOdometer(event.target.value)} className="mt-1 w-full rounded-lg border border-card-border px-2 py-1.5 font-normal"/>
             </label>
-            <label className="text-xs font-semibold text-charcoal">{fuelLabel} %
+            <label className="text-xs font-semibold text-charcoal">{fuelLabel}
               <input inputMode="numeric" value={fuel} onChange={event => setFuel(event.target.value)} className="mt-1 w-full rounded-lg border border-card-border px-2 py-1.5 font-normal"/>
             </label>
             <label className="text-xs font-semibold text-charcoal sm:col-span-1">Ghi chú

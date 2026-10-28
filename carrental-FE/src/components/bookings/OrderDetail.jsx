@@ -9,7 +9,7 @@ import { LivePage, LiveState, Pill, Primary, fieldClass } from "@/components/Liv
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { findHandover, isHandoverConfirmed, nextHandoverType } from "@/utils/owner.js";
-import { formatMoney, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/utils/labels.js";
+import { formatMoney, handoverEnergyLabel, handoverEnergyName, handoverTypeLabels, orderStatusLabels, orderStatusTone, paymentStatusLabels, rentalTypeLabels } from "@/utils/labels.js";
 import { useHandoverActions } from "@/hooks/useHandovers.js";
 import { OrderExtraFeesSection } from "@/components/bookings/OrderExtraFeesSection.jsx";
 
@@ -28,7 +28,8 @@ function Detail({ orderId, justCreated }) {
     const { createHandover, confirmHandover } = useHandoverActions(reload, orderId);
     if (!detail.data)
         return <LiveState loading={detail.loading} error={detail.error} label="đơn thuê" onRetry={reload}/>;
-    const { order, handovers, logs } = detail.data;
+    const { order, handovers, logs, car } = detail.data;
+    const fuelType = car?.fuelType;
     const next = nextHandoverType(handovers);
     const draft = next ? findHandover(handovers, next) : null;
     const waitingForMe = draft && draft.ownerConfirmedAt && !draft.renterConfirmedAt;
@@ -74,16 +75,16 @@ function Detail({ orderId, justCreated }) {
             const item = findHandover(handovers, type);
             return <li key={type} className="rounded-xl bg-[#F7F7F5] p-3">
           <b>{handoverTypeLabels[type]}</b> • {item ? (isHandoverConfirmed(item) ? "Hai bên đã xác nhận" : "Đang chờ bên còn lại") : "Chưa lập"}
-          {item ? <span className="block text-xs text-[#666666]">ODO {item.odometerKm.toLocaleString("vi-VN")} km • {item.fuelPercent}% {item.conditionNote ? `• ${item.conditionNote}` : ""}</span> : null}
+          {item ? <span className="block text-xs text-[#666666]">ODO {item.odometerKm.toLocaleString("vi-VN")} km • {handoverEnergyName(fuelType)} {item.fuelPercent}% {item.conditionNote ? `• ${item.conditionNote}` : ""}</span> : null}
         </li>;
         })}
       </ul>
       {waitingForMe ? <div className="mt-3 rounded-xl border border-amber-200 bg-[#FFFBEB] p-3 text-sm">
-        <p>Chủ xe đã lập biên bản {handoverTypeLabels[next]}. Kiểm tra số km và mức nhiên liệu rồi xác nhận.</p>
+        <p>Chủ xe đã lập biên bản {handoverTypeLabels[next]}. Kiểm tra số km và {fuelType === "ELECTRIC" ? "mức pin" : fuelType === "GASOLINE" || fuelType === "DIESEL" ? "mức nhiên liệu" : "mức nhiên liệu và pin"} rồi xác nhận.</p>
         <button type="button" disabled={confirmHandover.running} onClick={() => void confirmHandover.run(draft.id)} className="mt-2 rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white disabled:opacity-60">Xác nhận biên bản</button>
       </div> : null}
       {waitingForOwner ? <p className="mt-3 text-sm text-[#666666]">Đã gửi biên bản {handoverTypeLabels[next]}. Đang chờ chủ xe xác nhận.</p> : null}
-      {next && !draft ? <HandoverForm type={next} busy={createHandover.running} error={createHandover.error} onCreate={input => void createHandover.run(input)}/> : null}
+      {next && !draft ? <HandoverForm type={next} fuelType={fuelType} busy={createHandover.running} error={createHandover.error} onCreate={input => void createHandover.run(input)}/> : null}
       {confirmHandover.error ? <p className="mt-2 text-sm text-[#B91C1C]">{confirmHandover.error.message}</p> : null}
       <p className="mt-3 text-xs text-[#666666]">Biên bản nhận xe chỉ lập được từ 60 phút trước giờ nhận. Nếu bị từ chối, hãy kiểm tra lại thời điểm.</p>
     </section>
@@ -112,7 +113,7 @@ function CancelBox({ busy, error, onCancel }) {
   </form>;
 }
 
-function HandoverForm({ type, busy, error, onCreate }) {
+function HandoverForm({ type, fuelType, busy, error, onCreate }) {
     const [odometerKm, setOdo] = useState("");
     const [fuelPercent, setFuel] = useState("100");
     const [conditionNote, setNote] = useState("");
@@ -124,7 +125,7 @@ function HandoverForm({ type, busy, error, onCreate }) {
     <h3 className="text-sm font-bold">Lập biên bản {handoverTypeLabels[type]}</h3>
     <div className="grid gap-2 sm:grid-cols-2">
       <label className="text-xs font-semibold text-[#666666]">Số km ODO<input required type="number" min="0" value={odometerKm} onChange={event => setOdo(event.target.value)} className={`${fieldClass} mt-1`}/></label>
-      <label className="text-xs font-semibold text-[#666666]">Nhiên liệu / pin %<input required type="number" min="0" max="100" value={fuelPercent} onChange={event => setFuel(event.target.value)} className={`${fieldClass} mt-1`}/></label>
+      <label className="text-xs font-semibold text-[#666666]">{handoverEnergyLabel(fuelType)}<input required type="number" min="0" max="100" value={fuelPercent} onChange={event => setFuel(event.target.value)} className={`${fieldClass} mt-1`}/></label>
     </div>
     <input value={conditionNote} onChange={event => setNote(event.target.value)} placeholder="Tình trạng xe" className={fieldClass}/>
     <input value={imageUrl} onChange={event => setImage(event.target.value)} placeholder="Đường dẫn ảnh (https://...), không bắt buộc" className={fieldClass}/>

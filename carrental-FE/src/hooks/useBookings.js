@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { rentalService, rentalGroups } from "@/services/bookingService.js";
+import { carService } from "@/services/vehicleService.js";
 
 export function useBookingDetail(orderId) {
     const load = useCallback(async () => {
@@ -9,7 +10,8 @@ export function useBookingDetail(orderId) {
             rentalService.handovers(orderId).catch(() => []),
             rentalService.logs(orderId).catch(() => []),
         ]);
-        return { order, handovers, logs: Array.isArray(logs) ? logs : [] };
+        const car = order?.carId ? await carService.getPublic(order.carId).catch(() => null) : null;
+        return { order, handovers, logs: Array.isArray(logs) ? logs : [], car };
     }, [orderId]);
     const detail = useApiQuery(["bookings", "detail", orderId], load);
     return detail;

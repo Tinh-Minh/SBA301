@@ -55,7 +55,7 @@ export function Confirm() {
       </dl>
       <form className="grid gap-3" onSubmit={event => { event.preventDefault(); setVoucherQuery(voucher.trim()); }}>
         <label className="text-xs font-semibold text-[#666666]">Mã voucher
-          <span className="mt-1 flex gap-2"><input value={voucher} onChange={event => setVoucher(event.target.value.toUpperCase())} className={fieldClass} placeholder="Để trống nếu không dùng"/><button type="submit" className="rounded-xl border border-[#E9E9E7] px-4 text-sm font-bold">Áp dụng</button></span>
+          <span className="mt-1 flex gap-2"><input value={voucher} onChange={event => setVoucher(event.target.value.toUpperCase())} className={`${fieldClass} min-w-0 flex-1`} placeholder="Để trống nếu không dùng"/><button type="submit" className="inline-flex shrink-0 items-center whitespace-nowrap rounded-xl border border-[#E9E9E7] px-4 text-sm font-bold">Áp dụng</button></span>
         </label>
       </form>
       <label className="text-xs font-semibold text-[#666666]">Ghi chú cho chủ xe

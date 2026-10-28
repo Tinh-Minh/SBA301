@@ -19,6 +19,24 @@ export const carTypeLabels = {
     OTHER: "Khác",
 };
 export const fuelTypeLabels = { GASOLINE: "Xăng", DIESEL: "Dầu", ELECTRIC: "Điện", HYBRID: "Hybrid" };
+
+/** Nhãn ô nhập trên biên bản bàn giao. Xe xăng/dầu ghi nhiên liệu, xe điện ghi pin. */
+export function handoverEnergyLabel(fuelType) {
+    if (fuelType === "ELECTRIC")
+        return "Pin (%)";
+    if (fuelType === "GASOLINE" || fuelType === "DIESEL")
+        return "Nhiên liệu (%)";
+    return "Nhiên liệu / pin %";
+}
+
+/** Tên ngắn khi hiển thị mức đã ghi, kèm số phần trăm phía sau. */
+export function handoverEnergyName(fuelType) {
+    if (fuelType === "ELECTRIC")
+        return "Pin";
+    if (fuelType === "GASOLINE" || fuelType === "DIESEL")
+        return "Nhiên liệu";
+    return "Nhiên liệu / pin";
+}
 export const transmissionLabels = { AUTOMATIC: "Số tự động", MANUAL: "Số sàn" };
 export const rentalTypeLabels = { HOURLY: "Theo giờ", DAILY: "Theo ngày", BOTH: "Giờ & ngày" };
 export const orderStatusLabels = {
