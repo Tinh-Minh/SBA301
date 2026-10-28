@@ -11,7 +11,7 @@ import { OwnerCrumb } from "@/components/owner/OwnerScreen.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { calculatePlatformFee, formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
-import { carService } from "@/hooks/useVehicles.js";
+import { carService } from "@/services/vehicleService.js";
 import { useAuth } from "@/hooks/useAuth.js";
 import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, amenities, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/components/vehicles/VehicleRegistrationSteps.jsx";
 

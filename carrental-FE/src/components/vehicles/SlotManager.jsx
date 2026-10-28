@@ -1,4 +1,5 @@
-import { slotService, useCarSlots } from "@/hooks/useAvailability.js";
+import { slotService } from "@/services/slotService.js";
+import { useCarSlots } from "@/hooks/useAvailability.js";
 import { Link } from "react-router";
 import { useState } from "react";
 import { DateTimeField } from "@/components/DateField.jsx";

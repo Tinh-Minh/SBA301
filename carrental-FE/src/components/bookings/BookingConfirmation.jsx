@@ -6,9 +6,9 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { carName, formatMoney, rentalTypeLabels } from "@/utils/labels.js";
-import { carService } from "@/hooks/useVehicles.js";
+import { carService } from "@/services/vehicleService.js";
 import { rentalService } from "@/services/bookingService.js";
-import { slotService } from "@/hooks/useAvailability.js";
+import { slotService } from "@/services/slotService.js";
 
 export function Confirm() {
     const [params] = useSearchParams();

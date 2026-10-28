@@ -8,9 +8,9 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime, hoursBetween, parseQueryDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/utils/labels.js";
-import { carService } from "@/hooks/useVehicles.js";
+import { carService } from "@/services/vehicleService.js";
 import { rentalService } from "@/services/bookingService.js";
-import { slotService } from "@/hooks/useAvailability.js";
+import { slotService } from "@/services/slotService.js";
 
 export function Detail({ carId }) {
     const [params] = useSearchParams();

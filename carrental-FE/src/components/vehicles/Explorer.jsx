@@ -5,7 +5,7 @@ import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatDateTime, parseQueryDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/utils/labels.js";
-import { slotService } from "@/hooks/useAvailability.js";
+import { slotService } from "@/services/slotService.js";
 
 const carTypes = ["", "SEDAN", "SUV", "HATCHBACK", "MPV", "PICKUP", "LUXURY", "OTHER"];
 

@@ -4,10 +4,10 @@ import { readSession } from "@/utils/session.js";
 import { fetchAllPages } from "@/services/api.js";
 import { normalizePayout } from "@/utils/apiResponse.js";
 import { bankAccountService } from "@/hooks/useAccount.js";
-import { carService } from "@/hooks/useVehicles.js";
+import { carService } from "@/services/vehicleService.js";
 import { toOwnerViews } from "@/services/bookingService.js";
 import { toPayoutRows } from "@/hooks/usePayouts.js";
-import { slotService } from "@/hooks/useAvailability.js";
+import { slotService } from "@/services/slotService.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 
 function buildActivities(views) {
