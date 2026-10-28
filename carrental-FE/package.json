@@ -8,7 +8,8 @@
     "build": "vite build",
     "start": "vite preview --host 0.0.0.0",
     "test": "playwright test",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hookform/resolvers": "^6.0.0",
@@ -26,6 +27,7 @@
     "@vitejs/plugin-react": "6.1.2",
     "postcss": "8.5.30",
     "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
     "vite": "8.3.4"
   },
   "engines": {
