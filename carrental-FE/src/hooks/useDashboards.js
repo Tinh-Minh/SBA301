@@ -5,7 +5,7 @@ import { fetchAllPages } from "@/services/api.js";
 import { normalizePayout } from "@/utils/apiResponse.js";
 import { bankAccountService } from "@/hooks/useAccount.js";
 import { carService } from "@/hooks/useVehicles.js";
-import { toOwnerViews } from "@/hooks/useBookings.js";
+import { toOwnerViews } from "@/services/bookingService.js";
 import { toPayoutRows } from "@/hooks/usePayouts.js";
 import { slotService } from "@/hooks/useAvailability.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";

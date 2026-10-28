@@ -7,7 +7,7 @@ import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { carName, formatMoney, rentalTypeLabels } from "@/utils/labels.js";
 import { carService } from "@/hooks/useVehicles.js";
-import { rentalService } from "@/hooks/useBookings.js";
+import { rentalService } from "@/services/bookingService.js";
 import { slotService } from "@/hooks/useAvailability.js";
 
 export function Confirm() {

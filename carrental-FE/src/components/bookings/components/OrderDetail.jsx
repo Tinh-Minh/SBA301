@@ -1,5 +1,6 @@
 import { DetailItem } from "@/components/DetailItem.jsx";
-import { rentalService, useBookingDetail } from "@/hooks/useBookings.js";
+import { rentalService } from "@/services/bookingService.js";
+import { useBookingDetail } from "@/hooks/useBookings.js";
 import { Link } from "react-router";
 import { useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";

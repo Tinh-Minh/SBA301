@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { currentUserId } from "@/utils/session.js";
-import { rentalService } from "@/hooks/useBookings.js";
+import { rentalService } from "@/services/bookingService.js";
 import { endpoints } from "@/services/endpoints.js";
 
 import { request, toPage } from "@/services/api.js";

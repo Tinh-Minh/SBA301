@@ -4,7 +4,7 @@ import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/ow
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { useHandoverActions } from "@/hooks/useHandovers.js";
-import { orderService } from "@/hooks/useBookings.js";
+import { orderService } from "@/services/bookingService.js";
 import { TripCard, filters, tripGroup } from "@/components/bookings/components/TripCard.jsx";
 
 export default function OwnerTrips() {

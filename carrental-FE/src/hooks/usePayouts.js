@@ -4,7 +4,7 @@ import { currentUserId } from "@/utils/session.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { carFromOrder, normalizeOrder, normalizePayout } from "@/utils/apiResponse.js";
 import { bankAccountService } from "@/hooks/useAccount.js";
-import { loadCarsById } from "@/hooks/useBookings.js";
+import { loadCarsById } from "@/services/bookingService.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 
 /** Ghép payout với đơn thuê và xe để hiển thị sao kê. */

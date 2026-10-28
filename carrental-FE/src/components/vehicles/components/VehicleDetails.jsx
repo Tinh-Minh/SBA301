@@ -9,7 +9,7 @@ import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDateTime, hoursBetween, parseQueryDateTime, toInputDateTime } from "@/utils/datetime.js";
 import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, rentalTypeLabels, transmissionLabels } from "@/utils/labels.js";
 import { carService } from "@/hooks/useVehicles.js";
-import { rentalService } from "@/hooks/useBookings.js";
+import { rentalService } from "@/services/bookingService.js";
 import { slotService } from "@/hooks/useAvailability.js";
 
 export function Detail({ carId }) {

@@ -4,7 +4,7 @@ import { FilterBar, OwnerCrumb, OwnerHeading, OwnerState } from "@/components/ow
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { ownerRoutes } from "@/routes/paths.js";
-import { orderService } from "@/hooks/useBookings.js";
+import { orderService } from "@/services/bookingService.js";
 import { RequestCard, filters } from "@/components/bookings/components/RequestCard.jsx";
 
 export default function OwnerRequests() {

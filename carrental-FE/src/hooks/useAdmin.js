@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
-import { adminOrderService, rentalService } from "@/hooks/useBookings.js";
+import { adminOrderService, rentalService } from "@/services/bookingService.js";
 import { endpoints } from "@/services/endpoints.js";
 import { toLocalIso } from "@/utils/datetime.js";
 import { toNumber } from "@/utils/labels.js";
