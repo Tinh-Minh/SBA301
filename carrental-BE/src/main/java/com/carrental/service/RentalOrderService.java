@@ -63,6 +63,18 @@ public interface RentalOrderService {
      */
     boolean expireOrder(Long orderId);
 
+    /**
+     * Id các đơn CONFIRMED chưa thanh toán đã quá hạn thanh toán (dùng cho job hết hạn).
+     * Rỗng khi app.order.require-payment-before-pickup tắt, vì khi đó đơn không bắt buộc trả trước.
+     */
+    List<Long> findOverduePaymentOrderIds();
+
+    /**
+     * Hệ thống huỷ một đơn CONFIRMED quá hạn thanh toán: CONFIRMED -> CANCELLED, trả lượt voucher,
+     * giải phóng lịch xe, ghi log CANCEL (actor NULL). Trả về false nếu đơn đã thanh toán hoặc chưa quá hạn.
+     */
+    boolean cancelOverduePaymentOrder(Long orderId);
+
     /** Lịch sử thao tác của đơn theo thứ tự thời gian; quyền xem như {@link #getOrder(Long)}. */
     List<ActionLogResponse> getOrderLogs(Long orderId);
 }

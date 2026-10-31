@@ -56,9 +56,26 @@ class OrderExpirationSchedulerTest {
     @Test
     void noOverdueOrdersDoesNothing() {
         when(rentalOrderService.findOverduePendingOrderIds()).thenReturn(List.of());
+        when(rentalOrderService.findOverduePaymentOrderIds()).thenReturn(List.of());
 
         scheduler.expireOverdueOrders();
 
         verify(rentalOrderService, never()).expireOrder(org.mockito.ArgumentMatchers.anyLong());
+        verify(rentalOrderService, never()).cancelOverduePaymentOrder(org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void overduePaymentOrdersAreCancelledEvenIfOneFails() {
+        when(rentalOrderService.findOverduePendingOrderIds()).thenReturn(List.of());
+        when(rentalOrderService.findOverduePaymentOrderIds()).thenReturn(List.of(7L, 8L));
+        // Người thuê vừa thanh toán đúng lúc job chạy -> lỗi sửa đồng thời
+        when(rentalOrderService.cancelOverduePaymentOrder(7L))
+                .thenThrow(new ObjectOptimisticLockingFailureException("RentalOrder", 7L));
+        when(rentalOrderService.cancelOverduePaymentOrder(8L)).thenReturn(true);
+
+        scheduler.expireOverdueOrders();
+
+        verify(rentalOrderService).cancelOverduePaymentOrder(7L);
+        verify(rentalOrderService).cancelOverduePaymentOrder(8L);
     }
 }

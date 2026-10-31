@@ -309,6 +309,59 @@ class RentalOrderFlowIntegrationTest {
     }
 
     @Test
+    void overdueUnpaidConfirmedOrder_isCancelledBySystem() throws Exception {
+        Long orderId = createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", "GIAM10");
+        as(ownerId, put("/api/orders/" + orderId + "/confirm"))
+                .andExpect(jsonPath("$.data.expiresAt").value("2026-11-01T08:30:00"));
+
+        orderProperties.setRequirePaymentBeforePickup(true);
+        try {
+            assertThat(rentalOrderService.findOverduePaymentOrderIds()).isEmpty();
+            clock.setTo(LocalDateTime.of(2026, 11, 1, 8, 31));
+            assertThat(rentalOrderService.findOverduePaymentOrderIds()).containsExactly(orderId);
+            assertThat(rentalOrderService.cancelOverduePaymentOrder(orderId)).isTrue();
+            assertThat(rentalOrderService.cancelOverduePaymentOrder(orderId)).isFalse();
+        } finally {
+            orderProperties.setRequirePaymentBeforePickup(false);
+        }
+
+        assertOrderStatus(orderId, OrderStatus.CANCELLED);
+        assertThat(voucherUsedCount()).isZero();
+        as(renterId, get("/api/orders/" + orderId))
+                .andExpect(jsonPath("$.data.cancelReason").value("Quá hạn thanh toán"));
+        as(renterId, get("/api/orders/" + orderId + "/logs"))
+                .andExpect(jsonPath("$.data[2].action").value("CANCEL"))
+                .andExpect(jsonPath("$.data[2].actorId").doesNotExist())
+                .andExpect(jsonPath("$.data[2].actorName").value("Hệ thống"));
+        // Lịch xe được trả lại cho người khác đặt
+        createOrder(otherRenterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", null);
+    }
+
+    @Test
+    void paidOrUnenforcedOrders_areNotCancelledForPayment() throws Exception {
+        Long paidId = createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", null);
+        Long unpaidId = createOrder(otherRenterId, "HOURLY", "2026-11-04T08:00:00", "2026-11-04T14:00:00", null);
+        as(ownerId, put("/api/orders/" + paidId + "/confirm")).andExpect(status().isOk());
+        as(ownerId, put("/api/orders/" + unpaidId + "/confirm")).andExpect(status().isOk());
+        tx.executeWithoutResult(s -> rentalOrderRepository.findById(paidId).orElseThrow()
+                .setPaymentStatus(PaymentStatus.PAID));
+        clock.setTo(LocalDateTime.of(2026, 11, 1, 9, 0));
+
+        // Cờ tắt: không bắt buộc trả trước nên không huỷ đơn nào
+        assertThat(rentalOrderService.findOverduePaymentOrderIds()).isEmpty();
+        assertThat(rentalOrderService.cancelOverduePaymentOrder(unpaidId)).isFalse();
+
+        orderProperties.setRequirePaymentBeforePickup(true);
+        try {
+            assertThat(rentalOrderService.findOverduePaymentOrderIds()).containsExactly(unpaidId);
+            assertThat(rentalOrderService.cancelOverduePaymentOrder(paidId)).isFalse();
+        } finally {
+            orderProperties.setRequirePaymentBeforePickup(false);
+        }
+        assertOrderStatus(paidId, OrderStatus.CONFIRMED);
+    }
+
+    @Test
     void paymentDeadline_isCappedAtPickupTime() throws Exception {
         clock.setTo(LocalDateTime.of(2026, 11, 1, 23, 50));
         Long orderId = createOrder(renterId, "HOURLY", "2026-11-02T00:00:00", "2026-11-02T04:00:00", null);

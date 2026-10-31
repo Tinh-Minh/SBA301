@@ -277,6 +277,43 @@ public class RentalOrderServiceImpl implements RentalOrderService {
         });
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public List<Long> findOverduePaymentOrderIds() {
+        if (!orderProperties.isRequirePaymentBeforePickup()) {
+            return List.of();
+        }
+        return run("tìm đơn quá hạn thanh toán", null, () -> rentalOrderRepository
+                .findByStatusAndPaymentStatusAndExpiresAtBefore(
+                        OrderStatus.CONFIRMED, PaymentStatus.UNPAID, LocalDateTime.now(clock))
+                .stream().map(RentalOrder::getId).toList());
+    }
+
+    @Override
+    @Transactional
+    public boolean cancelOverduePaymentOrder(Long orderId) {
+        return run("huỷ đơn quá hạn thanh toán", orderId, () -> {
+            RentalOrder order = findOrder(orderId);
+            LocalDateTime now = LocalDateTime.now(clock);
+            // Kiểm tra lại: người thuê có thể vừa thanh toán xong, hoặc job chạy chồng lần trước.
+            if (!orderProperties.isRequirePaymentBeforePickup()
+                    || order.getStatus() != OrderStatus.CONFIRMED
+                    || order.getPaymentStatus() != PaymentStatus.UNPAID
+                    || order.getExpiresAt() == null || order.getExpiresAt().isAfter(now)) {
+                return false;
+            }
+            log.info("Huỷ đơn quá hạn thanh toán id={}", orderId);
+            OrderStatus from = changeStatus(order, OrderStatus.CANCELLED);
+            order.setCancelledAt(now);
+            order.setCancelReason("Quá hạn thanh toán");
+            releaseVoucher(order);
+            rentalOrderRepository.saveAndFlush(order);
+            actionLogService.log(order, null, OrderAction.CANCEL, from, OrderStatus.CANCELLED,
+                    "Người thuê không thanh toán trước " + order.getExpiresAt());
+            return true;
+        });
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /**
