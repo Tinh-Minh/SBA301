@@ -7,13 +7,17 @@ Bảng phụ trách: `rental_orders`, `action_logs`, `order_handovers`, `handove
 ```
 PENDING ──chủ xe xác nhận──> CONFIRMED ──biên bản PICKUP đủ 2 bên──> ONGOING ──biên bản RETURN đủ 2 bên──> COMPLETED
    │                             │
-   ├─chủ xe từ chối──> REJECTED  └─huỷ (người thuê/chủ xe/admin)──> CANCELLED
-   ├─huỷ──> CANCELLED
+   ├─chủ xe từ chối──> REJECTED  ├─huỷ (người thuê/chủ xe/admin)──> CANCELLED
+   ├─huỷ──> CANCELLED            └─chưa thanh toán khi quá hạn thanh toán (job mỗi phút)──> CANCELLED
    └─quá hạn xác nhận (job mỗi phút)──> EXPIRED
 ```
 
 - Mỗi lần đổi trạng thái / lập / xác nhận biên bản đều ghi `action_logs` (actor NULL = hệ thống).
-- Hạn xác nhận `expires_at` = min(tạo đơn + `app.order.confirm-timeout-minutes`, giờ nhận xe).
+- `expires_at` có hai nghĩa theo trạng thái:
+  - PENDING: hạn chủ xe xác nhận = min(tạo đơn + `app.order.confirm-timeout-minutes`, giờ nhận xe).
+  - CONFIRMED: hạn người thuê thanh toán, đặt lại lúc xác nhận = min(xác nhận + `app.order.payment-timeout-minutes`, giờ nhận xe).
+- Bắt buộc thanh toán trước khi nhận xe (`app.order.require-payment-before-pickup=true`): biên bản PICKUP chỉ lập được khi `payment_status = PAID`;
+  đơn CONFIRMED còn UNPAID khi quá hạn thanh toán bị job huỷ (lý do "Quá hạn thanh toán", log CANCEL do hệ thống), trả lượt voucher và lịch xe.
 - Chống trùng lịch: service kiểm tra trước, DB còn `EXCLUDE rental_orders_no_overlap` (lỗi được trả về 409).
 
 ## Tính tiền
@@ -73,7 +77,8 @@ Danh tính người dùng lấy từ JWT qua `CurrentUserService` (Function 1). 
 
 ## Việc còn mở (cần thống nhất với nhóm)
 
-- Function 4: bật `app.order.require-payment-before-pickup` khi luồng thanh toán ổn định; hoàn tiền/cọc khi đơn đã thanh toán bị huỷ, từ chối hoặc hết hạn.
+- Function 4: hoàn tiền/cọc khi đơn đã thanh toán bị huỷ; đánh dấu FAILED các giao dịch PENDING khi đơn bị huỷ hoặc hết hạn. Chi tiết trong `docs/F4_SUA_LOI_TIEN.md`.
+- Chính sách huỷ đơn đã thanh toán (huỷ trước bao lâu thì hoàn bao nhiêu): F3 gọi hàm hoàn tiền của F4 trong `cancelOrder` khi nhóm chốt chính sách.
 - Function 1: đưa quy tắc voucher (còn hạn, đơn tối thiểu, lượt dùng, giới hạn mỗi người) về một hàm bên VoucherService.
 - Biên bản lập xong mà bên kia không xác nhận, hoặc đơn CONFIRMED quá giờ trả mà chưa nhận xe: cần quy tắc hết hạn hoặc cho admin xử lý.
 - `GET /api/orders/{id}/logs` và `/handovers` trả danh sách không phân trang (mỗi đơn chỉ vài dòng); cần nhóm chấp nhận ngoại lệ hoặc thêm phân trang.
@@ -82,9 +87,10 @@ Danh tính người dùng lấy từ JWT qua `CurrentUserService` (Function 1). 
 
 ```
 app.order.confirm-timeout-minutes=1440
+app.order.payment-timeout-minutes=30
 app.order.commission-rate=10.00
 app.order.pickup-early-minutes=60
-app.order.require-payment-before-pickup=false   # bật khi Function 4 cập nhật payment_status
+app.order.require-payment-before-pickup=true    # test để false cho các luồng cũ; test riêng bật lại
 app.order.expire-check-ms=60000
 # app.scheduling.enabled mặc định true; test đặt false để tắt job
 ```
@@ -92,4 +98,4 @@ app.order.expire-check-ms=60000
 ## Test
 
 `./mvnw test` chạy trên H2 trong bộ nhớ (`src/test/resources/application.properties`), không đụng DB Supabase chung.
-Test F3: `PricingServiceImplTest` (tính giá, voucher), `enums/OrderStatusTest` (luật trạng thái), `controller/RentalOrderFlowIntegrationTest` (luồng API, phân quyền, hết hạn, không N+1).
+Test F3: `PricingServiceImplTest` (tính giá, voucher), `enums/OrderStatusTest` (luật trạng thái), `controller/RentalOrderFlowIntegrationTest` (luồng API, phân quyền, hết hạn xác nhận, hạn và huỷ do quá hạn thanh toán, không N+1), `scheduling/OrderExpirationSchedulerTest` (job), `config/OrderPropertiesTest` (cấu hình bắt buộc thanh toán).
