@@ -26,6 +26,9 @@ public class OrderProperties {
     /** Cho phép nhận xe sớm hơn giờ đặt bao nhiêu phút. */
     private long pickupEarlyMinutes = 60;
 
-    /** Bật khi Function 4 đã cập nhật payment_status: bắt buộc thanh toán trước khi nhận xe. */
-    private boolean requirePaymentBeforePickup = false;
+    /**
+     * Bắt buộc đơn đã thanh toán (payment_status = PAID) mới được lập biên bản nhận xe, và đơn CONFIRMED
+     * quá hạn thanh toán bị huỷ. Tắt thì người thuê nhận xe không cần trả tiền và chủ xe vẫn được chi trả.
+     */
+    private boolean requirePaymentBeforePickup = true;
 }
