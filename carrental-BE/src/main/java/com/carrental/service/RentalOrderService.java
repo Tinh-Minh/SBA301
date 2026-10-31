@@ -39,7 +39,10 @@ public interface RentalOrderService {
     /** Toàn bộ đơn; chỉ admin (kiểm tra bằng @PreAuthorize ở controller). */
     PageResponse<OrderResponse> getAllOrders(OrderStatus status, Pageable pageable);
 
-    /** Chủ xe xác nhận đơn PENDING còn trong hạn: PENDING -> CONFIRMED, ghi log CONFIRM. */
+    /**
+     * Chủ xe xác nhận đơn PENDING còn trong hạn: PENDING -> CONFIRMED, đặt lại expiresAt thành hạn thanh toán
+     * = min(bây giờ + app.order.payment-timeout-minutes, giờ nhận xe), ghi log CONFIRM.
+     */
     OrderResponse confirmOrder(Long orderId, String note);
 
     /** Chủ xe từ chối đơn PENDING (bắt buộc lý do): PENDING -> REJECTED, trả lượt voucher, ghi log REJECT. */

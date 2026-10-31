@@ -298,6 +298,25 @@ class RentalOrderFlowIntegrationTest {
         as(ownerId, put("/api/orders/" + orderId + "/confirm")).andExpect(status().isConflict());
     }
 
+    @Test
+    void confirm_resetsDeadlineToPaymentDeadline() throws Exception {
+        Long orderId = createOrder(renterId, "HOURLY", "2026-11-03T08:00:00", "2026-11-03T14:00:00", null);
+        // Chủ xe xác nhận sát hạn xác nhận (2026-11-02 08:00): người thuê vẫn có đủ 30 phút để thanh toán
+        clock.setTo(LocalDateTime.of(2026, 11, 2, 7, 59));
+        as(ownerId, put("/api/orders/" + orderId + "/confirm"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.expiresAt").value("2026-11-02T08:29:00"));
+    }
+
+    @Test
+    void paymentDeadline_isCappedAtPickupTime() throws Exception {
+        clock.setTo(LocalDateTime.of(2026, 11, 1, 23, 50));
+        Long orderId = createOrder(renterId, "HOURLY", "2026-11-02T00:00:00", "2026-11-02T04:00:00", null);
+        as(ownerId, put("/api/orders/" + orderId + "/confirm"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.expiresAt").value("2026-11-02T00:00:00"));
+    }
+
     // ===================================================================== quyền & dữ liệu vào
 
     @Test

@@ -17,6 +17,9 @@ public class OrderProperties {
     /** Chủ xe có bao nhiêu phút để xác nhận đơn (không vượt quá giờ nhận xe). */
     private long confirmTimeoutMinutes = 1440;
 
+    /** Người thuê có bao nhiêu phút để thanh toán sau khi chủ xe xác nhận (không vượt quá giờ nhận xe). */
+    private long paymentTimeoutMinutes = 30;
+
     /** % hoa hồng nền tảng chụp vào đơn lúc tạo. */
     private BigDecimal commissionRate = new BigDecimal("10.00");
 

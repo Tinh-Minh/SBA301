@@ -95,10 +95,7 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             }
 
             LocalDateTime now = LocalDateTime.now(clock);
-            LocalDateTime deadline = now.plusMinutes(orderProperties.getConfirmTimeoutMinutes());
-            if (deadline.isAfter(request.getStartTime())) {
-                deadline = request.getStartTime();
-            }
+            LocalDateTime deadline = deadline(now, orderProperties.getConfirmTimeoutMinutes(), request.getStartTime());
 
             RentalOrder order = RentalOrder.builder()
                     .orderCode(OrderCodeGenerator.generate(now))
@@ -196,6 +193,8 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             }
             OrderStatus from = changeStatus(order, OrderStatus.CONFIRMED);
             order.setConfirmedAt(now);
+            // Từ đây expiresAt là hạn thanh toán, không còn là hạn xác nhận.
+            order.setExpiresAt(deadline(now, orderProperties.getPaymentTimeoutMinutes(), order.getStartTime()));
             rentalOrderRepository.saveAndFlush(order);
             actionLogService.log(order, user, OrderAction.CONFIRM, from, OrderStatus.CONFIRMED, note);
             return OrderResponse.from(order);
@@ -315,6 +314,12 @@ public class RentalOrderServiceImpl implements RentalOrderService {
             throw new AppException(HttpStatus.FORBIDDEN, "Chỉ chủ xe mới được " + action + " đơn");
         }
         return order;
+    }
+
+    /** Hạn = bây giờ + số phút, nhưng không quá giờ nhận xe. */
+    private static LocalDateTime deadline(LocalDateTime now, long minutes, LocalDateTime startTime) {
+        LocalDateTime deadline = now.plusMinutes(minutes);
+        return deadline.isAfter(startTime) ? startTime : deadline;
     }
 
     private void releaseVoucher(RentalOrder order) {
