@@ -56,11 +56,12 @@ function Detail({ orderId, justCreated }) {
         <DetailItem term="Tổng thanh toán" value={formatMoney(order.totalAmount)}/>
         <DetailItem term="Tiền cọc" value={formatMoney(order.depositAmount)}/>
         {order.expiresAt && order.status === "PENDING" ? <DetailItem term="Hết hạn duyệt" value={formatDateTime(order.expiresAt)}/> : null}
+        {order.expiresAt && order.status === "CONFIRMED" && order.paymentStatus === "UNPAID" ? <DetailItem term="Hạn thanh toán" value={formatDateTime(order.expiresAt)}/> : null}
       </dl>
       {order.note ? <p className="mt-3 rounded-xl bg-[#F7F7F5] p-3 text-sm">Ghi chú: {order.note}</p> : null}
       {order.cancelReason ? <p className="mt-3 rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Lý do: {order.cancelReason}</p> : null}
       <div className="mt-4 flex flex-wrap gap-2">
-        {order.paymentStatus === "UNPAID" && (order.status === "CONFIRMED" || order.status === "ONGOING") ? <Link to={`/payment?orderId=${order.id}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thanh toán</Link> : null}
+        {order.paymentStatus === "UNPAID" && order.status === "CONFIRMED" ? <Link to={`/payment?orderId=${order.id}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thanh toán</Link> : null}
         {order.status === "COMPLETED" ? <Link to={`/reviews?orderId=${order.id}`} className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold">Đánh giá</Link> : null}
         {order.status === "ONGOING" || order.status === "COMPLETED" ? <Link to={`/disputes?orderId=${order.id}`} className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold">Khiếu nại</Link> : null}
       </div>
