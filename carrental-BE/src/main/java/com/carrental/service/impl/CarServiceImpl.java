@@ -16,6 +16,7 @@ import com.carrental.entity.CarImage;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
+import com.carrental.enums.ListingStatus;
 import com.carrental.enums.VerificationStatus;
 import com.carrental.exception.AppException;
 import com.carrental.repository.CarDocumentRepository;
@@ -36,6 +37,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +69,18 @@ public class CarServiceImpl implements CarService {
             }
 
             car.setOwner(owner);
+
+            // Tự động điền thông tin liên hệ từ chủ xe nếu không nhập
+            if (car.getContactName() == null || car.getContactName().isBlank()) {
+                car.setContactName(owner.getFullName());
+            }
+            if (car.getContactPhone() == null || car.getContactPhone().isBlank()) {
+                car.setContactPhone(owner.getPhone());
+            }
+            if (car.getContactZalo() == null || car.getContactZalo().isBlank()) {
+                car.setContactZalo(owner.getPhone());
+            }
+
             Car savedCar = carRepository.saveAndFlush(car);
             return CarResponse.from(savedCar, List.of(), List.of());
         } catch (AppException e) {
@@ -140,13 +154,28 @@ public class CarServiceImpl implements CarService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<CarSummaryResponse> getMyCars(CarStatus status, Pageable pageable) {
-        log.info("Get my cars status={}", status);
+        return getMyCars(status, null, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CarSummaryResponse> getMyCars(CarStatus status, ListingStatus listingStatus, Pageable pageable) {
+        log.info("Get my cars status={}, listingStatus={}", status, listingStatus);
         try {
             Customer owner = currentUserService.getCurrentUser();
-            Page<Car> carPage = status != null
-                    ? carRepository.findAllByOwnerIdAndStatus(owner.getId(), status, pageable)
-                    : carRepository.findAllByOwnerId(owner.getId(), pageable);
+            Specification<Car> spec = (root, query, cb) -> {
+                List<Predicate> ps = new ArrayList<>();
+                ps.add(cb.equal(root.get("owner").get("id"), owner.getId()));
+                if (status != null) {
+                    ps.add(cb.equal(root.get("status"), status));
+                }
+                if (listingStatus != null) {
+                    ps.add(cb.equal(root.get("listingStatus"), listingStatus));
+                }
+                return cb.and(ps.toArray(new Predicate[0]));
+            };
 
+            Page<Car> carPage = carRepository.findAll(spec, pageable);
             return toPageSummaryBatch(carPage, CarSummaryResponse::from);
         } catch (AppException e) {
             throw e;
@@ -209,11 +238,37 @@ public class CarServiceImpl implements CarService {
             Integer seats,
             Pageable pageable
     ) {
-        log.info("Search cars city={}, carType={}, brand={}, seats={}", city, carType, brand, seats);
+        return searchCars(city, carType, brand, seats, null, null, null, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CarSummaryResponse> searchCars(
+            String city,
+            CarType carType,
+            String brand,
+            Integer seats,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            ListingStatus listingStatus,
+            Pageable pageable
+    ) {
+        log.info("Search cars city={}, carType={}, brand={}, seats={}, minPrice={}, maxPrice={}, listingStatus={}",
+                city, carType, brand, seats, minPrice, maxPrice, listingStatus);
         try {
             Specification<Car> spec = (root, query, cb) -> {
                 List<Predicate> ps = new ArrayList<>();
                 ps.add(cb.equal(root.get("status"), CarStatus.ACTIVE));
+
+                if (listingStatus != null) {
+                    ps.add(cb.equal(root.get("listingStatus"), listingStatus));
+                } else {
+                    // Mặc định hiển thị xe đang LISTED hoặc tương thích xe ACTIVE
+                    ps.add(cb.or(
+                            cb.equal(root.get("listingStatus"), ListingStatus.LISTED),
+                            cb.isNull(root.get("listingStatus"))
+                    ));
+                }
 
                 if (city != null && !city.isBlank()) {
                     ps.add(cb.like(cb.lower(root.get("city")), "%" + city.trim().toLowerCase() + "%"));
@@ -226,6 +281,18 @@ public class CarServiceImpl implements CarService {
                 }
                 if (seats != null) {
                     ps.add(cb.greaterThanOrEqualTo(root.get("seats"), seats));
+                }
+                if (minPrice != null) {
+                    ps.add(cb.or(
+                            cb.greaterThanOrEqualTo(root.get("rentalPricePerDay"), minPrice),
+                            cb.greaterThanOrEqualTo(root.get("pricePerDay"), minPrice)
+                    ));
+                }
+                if (maxPrice != null) {
+                    ps.add(cb.or(
+                            cb.lessThanOrEqualTo(root.get("rentalPricePerDay"), maxPrice),
+                            cb.lessThanOrEqualTo(root.get("pricePerDay"), maxPrice)
+                    ));
                 }
                 return cb.and(ps.toArray(new Predicate[0]));
             };

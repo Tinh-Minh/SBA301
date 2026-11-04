@@ -8,6 +8,7 @@ const numberOrNull = (value) => (value === "" || value === null || value === und
 
 /** Trường dùng chung giữa CarCreateRequest và CarUpdateRequest (PUT ghi đè toàn bộ). */
 function carPayload(draft) {
+    const dayPrice = numberOrNull(draft.rentalPricePerDay ?? draft.pricePerDay);
     return {
         brand: draft.brand?.trim(),
         model: draft.model?.trim(),
@@ -24,9 +25,14 @@ function carPayload(draft) {
         pickupAddress: draft.pickupAddress?.trim(),
         latitude: numberOrNull(draft.latitude),
         longitude: numberOrNull(draft.longitude),
-        pricePerHour: Number(draft.pricePerHour),
-        pricePerDay: Number(draft.pricePerDay),
-        depositAmount: numberOrNull(draft.depositAmount),
+        rentalPricePerDay: dayPrice,
+        rentalPricePerMonth: numberOrNull(draft.rentalPricePerMonth),
+        contactName: nullable(draft.contactName?.trim?.() ?? draft.contactName),
+        contactPhone: nullable(draft.contactPhone?.trim?.() ?? draft.contactPhone),
+        contactZalo: nullable(draft.contactZalo?.trim?.() ?? draft.contactZalo),
+        pricePerHour: numberOrNull(draft.pricePerHour) ?? 0,
+        pricePerDay: dayPrice ?? 0,
+        depositAmount: numberOrNull(draft.depositAmount) ?? 0,
         kmLimitPerDay: numberOrNull(draft.kmLimitPerDay),
         extraKmFee: numberOrNull(draft.extraKmFee),
     };
@@ -51,8 +57,8 @@ export const carService = {
         const details = await Promise.all(summaries.map(summary => getCar(summary.id).catch(() => normalizeCar(summary))));
         return details;
     },
-    async listMineSummary(status) {
-        return toPage(await request(endpoints.cars.myCars, { query: { status, page: 0, size: 100 } }));
+    async listMineSummary(status, listingStatus) {
+        return toPage(await request(endpoints.cars.myCars, { query: { status, listingStatus, page: 0, size: 100 } }));
     },
     async getById(id) {
         return getCar(id);
@@ -79,19 +85,16 @@ export const carService = {
     /** POST /api/cars/{id}/documents { docType, fileUrl, expiresAt } */
     addDocument: (id, { docType, fileUrl, expiresAt }) => request(endpoints.cars.byIdDocuments(id), { method: "POST", json: { docType, fileUrl, expiresAt: expiresAt || null } }),
     listDocuments: (id) => request(endpoints.cars.byIdDocuments(id)),
-    /** GET /api/cars/search — tìm xe đang ACTIVE (không theo lịch trống). */
-    async search({ city, carType, brand, seats, page = 0, size = 12, sortBy = "createdAt", direction = "DESC" } = {}) {
-        const result = toPage(await request(endpoints.cars.search, { query: { city, carType, brand, seats, page, size, sortBy, direction } }));
+    /** GET /api/cars/search — tìm xe đang ACTIVE và LISTED. */
+    async search({ city, carType, brand, seats, minPrice, maxPrice, listingStatus, page = 0, size = 12, sortBy = "createdAt", direction = "DESC" } = {}) {
+        const result = toPage(await request(endpoints.cars.search, { query: { city, carType, brand, seats, minPrice, maxPrice, listingStatus, page, size, sortBy, direction } }));
         return { ...result, content: result.content.map(normalizeCar) };
     },
     getPublic: getCar,
 };
 
-/** Đếm số xe (GET /api/cars/my-cars) và yêu cầu chờ duyệt (GET /api/orders/my-cars?status=PENDING). */
+/** Đếm số xe (GET /api/cars/my-cars). */
 export async function getOwnerCounts() {
-    const [cars, pending] = await Promise.all([
-        request(endpoints.cars.myCars, { query: { page: 0, size: 1 } }).then(toPage).catch(() => null),
-        request(endpoints.orders.myCars, { query: { status: "PENDING", page: 0, size: 1 } }).then(toPage).catch(() => null),
-    ]);
-    return { cars: cars?.totalElements ?? null, pending: pending?.totalElements ?? null };
+    const cars = await request(endpoints.cars.myCars, { query: { page: 0, size: 1 } }).then(toPage).catch(() => null);
+    return { cars: cars?.totalElements ?? null, pending: 0 };
 }

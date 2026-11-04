@@ -6,6 +6,7 @@ import com.carrental.entity.CarImage;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.enums.FuelType;
+import com.carrental.enums.ListingStatus;
 import com.carrental.enums.Transmission;
 
 import java.math.BigDecimal;
@@ -34,12 +35,19 @@ public record CarResponse(
         String pickupAddress,
         BigDecimal latitude,
         BigDecimal longitude,
+        BigDecimal rentalPricePerDay,
+        BigDecimal rentalPricePerMonth,
+        String contactName,
+        String contactPhone,
+        String contactZalo,
+        CarStatus status,
+        ListingStatus listingStatus,
+        Long currentSubscriptionId,
         BigDecimal pricePerHour,
         BigDecimal pricePerDay,
         BigDecimal depositAmount,
         Integer kmLimitPerDay,
         BigDecimal extraKmFee,
-        CarStatus status,
         List<CarImageResponse> images,
         List<CarDocumentResponse> documents,
         LocalDateTime createdAt,
@@ -55,7 +63,7 @@ public record CarResponse(
         return build(car, driverId, car.getLicensePlate(), images, documents);
     }
 
-    // Bản công khai cho khách vãng lai: ẩn licensePlate, driverId, documents
+    // Bản công khai cho khách xem tin: hiển thị thông tin liên hệ và hình ảnh
     public static CarResponse publicView(Car car, List<CarImage> images) {
         if (car == null) return null;
         return build(car, null, null, images, Collections.emptyList());
@@ -73,6 +81,8 @@ public record CarResponse(
 
         List<CarDocumentResponse> docList = documents == null ? Collections.emptyList() :
                 documents.stream().map(CarDocumentResponse::from).toList();
+
+        BigDecimal dayPrice = car.getRentalPricePerDay() != null ? car.getRentalPricePerDay() : car.getPricePerDay();
 
         return new CarResponse(
                 car.getId(),
@@ -95,12 +105,19 @@ public record CarResponse(
                 car.getPickupAddress(),
                 car.getLatitude(),
                 car.getLongitude(),
+                dayPrice,
+                car.getRentalPricePerMonth(),
+                car.getContactName(),
+                car.getContactPhone(),
+                car.getContactZalo(),
+                car.getStatus(),
+                car.getListingStatus(),
+                car.getCurrentSubscriptionId(),
                 car.getPricePerHour(),
-                car.getPricePerDay(),
+                dayPrice,
                 car.getDepositAmount(),
                 car.getKmLimitPerDay(),
                 car.getExtraKmFee(),
-                car.getStatus(),
                 imgList,
                 docList,
                 car.getCreatedAt(),

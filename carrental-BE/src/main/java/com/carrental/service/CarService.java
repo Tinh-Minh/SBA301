@@ -12,8 +12,10 @@ import com.carrental.dto.response.CarSummaryResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
+import com.carrental.enums.ListingStatus;
 import org.springframework.data.domain.Pageable;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface CarService {
@@ -26,6 +28,8 @@ public interface CarService {
 
     PageResponse<CarSummaryResponse> getMyCars(CarStatus status, Pageable pageable);
 
+    PageResponse<CarSummaryResponse> getMyCars(CarStatus status, ListingStatus listingStatus, Pageable pageable);
+
     PageResponse<CarSummaryResponse> getCarsByStatus(CarStatus status, Pageable pageable);
 
     CarResponse updateCarStatusByOwner(Long carId, CarStatus status);
@@ -35,6 +39,17 @@ public interface CarService {
             CarType carType,
             String brand,
             Integer seats,
+            Pageable pageable
+    );
+
+    PageResponse<CarSummaryResponse> searchCars(
+            String city,
+            CarType carType,
+            String brand,
+            Integer seats,
+            BigDecimal minPrice,
+            BigDecimal maxPrice,
+            ListingStatus listingStatus,
             Pageable pageable
     );
 

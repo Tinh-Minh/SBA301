@@ -78,25 +78,30 @@ public class CarUpdateRequest {
     @DecimalMax(value = "180.0", message = "Kinh độ tối đa là 180")
     private BigDecimal longitude;
 
-    @NotNull(message = "Giá thuê theo giờ không được để trống")
-    @DecimalMin(value = "0", message = "Giá thuê theo giờ phải >= 0")
-    @Digits(integer = 14, fraction = 0, message = "Giá thuê theo giờ không có số lẻ")
-    private BigDecimal pricePerHour;
-
-    @NotNull(message = "Giá thuê theo ngày không được để trống")
+    // Giá tham khảo ngày / tháng
     @DecimalMin(value = "0", message = "Giá thuê theo ngày phải >= 0")
     @Digits(integer = 14, fraction = 0, message = "Giá thuê theo ngày không có số lẻ")
+    private BigDecimal rentalPricePerDay;
+
+    @DecimalMin(value = "0", message = "Giá thuê theo tháng phải >= 0")
+    @Digits(integer = 14, fraction = 0, message = "Giá thuê theo tháng không có số lẻ")
+    private BigDecimal rentalPricePerMonth;
+
+    // Thông tin liên hệ
+    @Size(max = 150, message = "Tên liên hệ tối đa 150 ký tự")
+    private String contactName;
+
+    @Size(max = 20, message = "Số điện thoại liên hệ tối đa 20 ký tự")
+    private String contactPhone;
+
+    @Size(max = 20, message = "Số Zalo liên hệ tối đa 20 ký tự")
+    private String contactZalo;
+
+    // Tương thích backward
+    private BigDecimal pricePerHour;
     private BigDecimal pricePerDay;
-
-    @DecimalMin(value = "0", message = "Tiền cọc phải >= 0")
-    @Digits(integer = 14, fraction = 0, message = "Tiền cọc không có số lẻ")
     private BigDecimal depositAmount;
-
-    @Min(value = 1, message = "Giới hạn km mỗi ngày phải > 0")
     private Integer kmLimitPerDay;
-
-    @DecimalMin(value = "0", message = "Phí vượt km phải >= 0")
-    @Digits(integer = 14, fraction = 0, message = "Phí vượt km không có số lẻ")
     private BigDecimal extraKmFee;
 
     public void applyTo(Car car) {
@@ -109,15 +114,38 @@ public class CarUpdateRequest {
         car.setFuelType(this.fuelType);
         car.setColor(this.color);
         car.setDescription(this.description);
-        car.setFeatures(this.features != null ? this.features : "[]");
+        if (this.features != null) {
+            car.setFeatures(this.features);
+        }
         car.setCity(this.city);
         car.setDistrict(this.district);
         car.setPickupAddress(this.pickupAddress);
         car.setLatitude(this.latitude);
         car.setLongitude(this.longitude);
-        car.setPricePerHour(this.pricePerHour);
-        car.setPricePerDay(this.pricePerDay);
-        car.setDepositAmount(this.depositAmount != null ? this.depositAmount : BigDecimal.ZERO);
+
+        BigDecimal dayPrice = this.rentalPricePerDay != null ? this.rentalPricePerDay : this.pricePerDay;
+        if (dayPrice != null) {
+            car.setRentalPricePerDay(dayPrice);
+            car.setPricePerDay(dayPrice);
+        }
+        if (this.rentalPricePerMonth != null) {
+            car.setRentalPricePerMonth(this.rentalPricePerMonth);
+        }
+        if (this.contactName != null) {
+            car.setContactName(this.contactName);
+        }
+        if (this.contactPhone != null) {
+            car.setContactPhone(this.contactPhone);
+        }
+        if (this.contactZalo != null) {
+            car.setContactZalo(this.contactZalo);
+        }
+        if (this.pricePerHour != null) {
+            car.setPricePerHour(this.pricePerHour);
+        }
+        if (this.depositAmount != null) {
+            car.setDepositAmount(this.depositAmount);
+        }
         car.setKmLimitPerDay(this.kmLimitPerDay);
         car.setExtraKmFee(this.extraKmFee);
     }

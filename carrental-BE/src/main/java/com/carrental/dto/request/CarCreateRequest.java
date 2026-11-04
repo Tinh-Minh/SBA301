@@ -4,6 +4,7 @@ import com.carrental.entity.Car;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.enums.FuelType;
+import com.carrental.enums.ListingStatus;
 import com.carrental.enums.Transmission;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -86,29 +87,34 @@ public class CarCreateRequest {
     @DecimalMax(value = "180.0", message = "Kinh độ tối đa là 180")
     private BigDecimal longitude;
 
-    @NotNull(message = "Giá thuê theo giờ không được để trống")
-    @DecimalMin(value = "0", message = "Giá thuê theo giờ phải >= 0")
-    @Digits(integer = 14, fraction = 0, message = "Giá thuê theo giờ không có số lẻ")
-    private BigDecimal pricePerHour;
-
-    @NotNull(message = "Giá thuê theo ngày không được để trống")
+    // Giá tham khảo ngày / tháng
     @DecimalMin(value = "0", message = "Giá thuê theo ngày phải >= 0")
     @Digits(integer = 14, fraction = 0, message = "Giá thuê theo ngày không có số lẻ")
+    private BigDecimal rentalPricePerDay;
+
+    @DecimalMin(value = "0", message = "Giá thuê theo tháng phải >= 0")
+    @Digits(integer = 14, fraction = 0, message = "Giá thuê theo tháng không có số lẻ")
+    private BigDecimal rentalPricePerMonth;
+
+    // Thông tin liên hệ công khai
+    @Size(max = 150, message = "Tên liên hệ tối đa 150 ký tự")
+    private String contactName;
+
+    @Size(max = 20, message = "Số điện thoại liên hệ tối đa 20 ký tự")
+    private String contactPhone;
+
+    @Size(max = 20, message = "Số Zalo liên hệ tối đa 20 ký tự")
+    private String contactZalo;
+
+    // Trường tương thích backward-compatibility
+    private BigDecimal pricePerHour;
     private BigDecimal pricePerDay;
-
-    @DecimalMin(value = "0", message = "Tiền cọc phải >= 0")
-    @Digits(integer = 14, fraction = 0, message = "Tiền cọc không có số lẻ")
-    @Builder.Default
-    private BigDecimal depositAmount = BigDecimal.ZERO;
-
-    @Min(value = 1, message = "Giới hạn km mỗi ngày phải > 0")
+    private BigDecimal depositAmount;
     private Integer kmLimitPerDay;
-
-    @DecimalMin(value = "0", message = "Phí vượt km phải >= 0")
-    @Digits(integer = 14, fraction = 0, message = "Phí vượt km không có số lẻ")
     private BigDecimal extraKmFee;
 
     public Car toEntity() {
+        BigDecimal dayPrice = this.rentalPricePerDay != null ? this.rentalPricePerDay : this.pricePerDay;
         return Car.builder()
                 .licensePlate(this.licensePlate != null ? this.licensePlate.trim().toUpperCase(Locale.ROOT) : null)
                 .brand(this.brand)
@@ -126,12 +132,18 @@ public class CarCreateRequest {
                 .pickupAddress(this.pickupAddress)
                 .latitude(this.latitude)
                 .longitude(this.longitude)
-                .pricePerHour(this.pricePerHour)
-                .pricePerDay(this.pricePerDay)
+                .rentalPricePerDay(dayPrice)
+                .rentalPricePerMonth(this.rentalPricePerMonth)
+                .contactName(this.contactName)
+                .contactPhone(this.contactPhone)
+                .contactZalo(this.contactZalo)
+                .pricePerHour(this.pricePerHour != null ? this.pricePerHour : BigDecimal.ZERO)
+                .pricePerDay(dayPrice != null ? dayPrice : BigDecimal.ZERO)
                 .depositAmount(this.depositAmount != null ? this.depositAmount : BigDecimal.ZERO)
                 .kmLimitPerDay(this.kmLimitPerDay)
                 .extraKmFee(this.extraKmFee)
                 .status(CarStatus.PENDING_APPROVAL)
+                .listingStatus(ListingStatus.UNLISTED)
                 .build();
     }
 }
