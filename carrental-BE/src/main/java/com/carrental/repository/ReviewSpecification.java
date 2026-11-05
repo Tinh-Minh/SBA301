@@ -9,15 +9,15 @@ import java.util.List;
 
 public class ReviewSpecification {
 
-    public static Specification<Review> filter(Long orderId, Long revieweeId) {
+    public static Specification<Review> filter(Long carId, Long customerId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (orderId != null) {
-                predicates.add(cb.equal(root.get("order").get("id"), orderId));
+            if (carId != null) {
+                predicates.add(cb.equal(root.get("car").get("id"), carId));
             }
-            if (revieweeId != null) {
-                predicates.add(cb.equal(root.get("reviewee").get("id"), revieweeId));
+            if (customerId != null) {
+                predicates.add(cb.equal(root.get("customer").get("id"), customerId));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

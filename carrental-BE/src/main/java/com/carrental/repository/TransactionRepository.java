@@ -21,7 +21,7 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
 
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
+    @EntityGraph(attributePaths = {"subscription"})
     @Override
     Optional<Transaction> findById(Long id);
 
@@ -29,47 +29,28 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
      * Khóa dòng giao dịch (Pessimistic Write Lock) để tránh race condition khi VNPay IPN và Return URL gọi đồng thời.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
+    @EntityGraph(attributePaths = {"subscription"})
     @Query("select t from Transaction t where t.id = :id")
     Optional<Transaction> findByIdForUpdate(@Param("id") Long id);
 
     /**
-     * Magic methods kiểm tra xem đơn hàng đã có giao dịch thành công của loại tương ứng chưa (Idempotency check).
+     * Kiểm tra xem gói đăng ký đã có giao dịch thành công chưa.
      */
-    boolean existsByOrderIdAndTransactionTypeAndStatus(Long orderId, TransactionType transactionType, TransactionStatus status);
+    boolean existsBySubscriptionIdAndTransactionTypeAndStatus(Long subscriptionId, TransactionType transactionType, TransactionStatus status);
 
     /**
-     * Lấy giao dịch PENDING mới nhất của đơn hàng để lấy lại link thanh toán thay vì tạo trùng lặp.
+     * Lấy giao dịch PENDING mới nhất của gói đăng ký để lấy lại link thanh toán thay vì tạo trùng lặp.
      */
-    Optional<Transaction> findFirstByOrderIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
-            Long orderId, TransactionType transactionType, TransactionStatus status);
+    Optional<Transaction> findFirstBySubscriptionIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
+            Long subscriptionId, TransactionType transactionType, TransactionStatus status);
 
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
-    Page<Transaction> findByOrderId(Long orderId, Pageable pageable);
+    @EntityGraph(attributePaths = {"subscription"})
+    Page<Transaction> findBySubscriptionId(Long subscriptionId, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
-    Page<Transaction> findByTransactionType(TransactionType transactionType, Pageable pageable);
+    @EntityGraph(attributePaths = {"subscription"})
+    List<Transaction> findBySubscriptionId(Long subscriptionId);
 
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
-    Page<Transaction> findByStatus(TransactionStatus status, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
-    Page<Transaction> findByOrderIdAndStatus(Long orderId, TransactionStatus status, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
-    Page<Transaction> findByOrderIdAndTransactionType(Long orderId, TransactionType transactionType, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
-    Page<Transaction> findByOrderIdAndTransactionTypeAndStatus(
-            Long orderId, TransactionType transactionType, TransactionStatus status, Pageable pageable);
-
-    List<Transaction> findByOrderId(Long orderId);
-
-    List<Transaction> findByRefundOfId(Long refundOfId);
-
-    List<Transaction> findByExtraFeeId(Long extraFeeId);
-
-    @EntityGraph(attributePaths = {"order", "refundOf", "extraFee"})
+    @EntityGraph(attributePaths = {"subscription"})
     @Override
     Page<Transaction> findAll(Specification<Transaction> spec, Pageable pageable);
 }

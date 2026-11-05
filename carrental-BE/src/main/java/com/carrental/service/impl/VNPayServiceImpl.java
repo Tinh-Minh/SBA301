@@ -71,7 +71,7 @@ public class VNPayServiceImpl implements VNPayService {
             vnpParams.put("vnp_BankCode", bankCode);
         }
         vnpParams.put("vnp_TxnRef", txnRef);
-        vnpParams.put("vnp_OrderInfo", "Thanh toan don hang ORD-" + (transaction.getOrder() != null ? transaction.getOrder().getOrderCode() : transaction.getId()));
+        vnpParams.put("vnp_OrderInfo", "Thanh toan goi tin SUB-" + (transaction.getSubscription() != null ? transaction.getSubscription().getId() : transaction.getId()));
         vnpParams.put("vnp_OrderType", "other");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());

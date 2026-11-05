@@ -7,22 +7,18 @@ import static org.mockito.Mockito.mock;
 import com.carrental.config.DocumentProperties;
 import com.carrental.config.CustomerProperties;
 import com.carrental.controller.AuthController;
-import com.carrental.controller.BankAccountController;
 import com.carrental.controller.CustomerController;
 import com.carrental.controller.DriverController;
 import com.carrental.controller.HealthController;
 import com.carrental.controller.UserDocumentController;
 import com.carrental.controller.VoucherController;
 import com.carrental.service.AuthService;
-import com.carrental.service.BankAccountService;
 import com.carrental.service.CustomerService;
 import com.carrental.service.DriverService;
 import com.carrental.service.KycService;
 import com.carrental.service.UserDocumentService;
 import com.carrental.service.VoucherService;
 import com.carrental.web.UserDocumentMultipartReader;
-import com.carrental.dto.request.bankaccount.CreateBankAccountRequest;
-import com.carrental.dto.request.bankaccount.BankAccountListQuery;
 import com.carrental.dto.request.auth.LoginRequest;
 import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
@@ -48,7 +44,6 @@ import com.carrental.dto.response.TokenResponse;
 import com.carrental.dto.response.UserDocumentDetailResponse;
 import com.carrental.dto.response.UserDocumentReviewResponse;
 import com.carrental.dto.response.UserDocumentSummaryResponse;
-import com.carrental.dto.response.BankAccountResponse;
 import com.carrental.dto.response.VoucherResponse;
 import com.carrental.enums.VoucherWindowState;
 import com.carrental.enums.CustomerStatus;
@@ -121,7 +116,7 @@ class Function1OpenApiContractTest {
         Map<String, Set<String>> actualConsumes = new java.util.HashMap<>();
         mappings.getHandlerMethods().forEach((mapping, handler) -> {
             if (!handler.getBeanType().getPackageName().equals("com.carrental.controller")) return;
-            if (!Set.of(AuthController.class, BankAccountController.class, CustomerController.class,
+            if (!Set.of(AuthController.class, CustomerController.class,
                     DriverController.class, HealthController.class, UserDocumentController.class,
                     VoucherController.class).contains(handler.getBeanType())) return;
             Set<String> pathsForMapping = mapping.getPathPatternsCondition().getPatternValues();
@@ -152,8 +147,6 @@ class Function1OpenApiContractTest {
         assertThat(paths.path("/api/auth/register").path("post").path("security")).isEmpty();
         assertThat(paths.path("/api/auth/login").path("post").path("security")).isEmpty();
         assertThat(paths.path("/api/drivers").path("post").has("requestBody")).isFalse();
-        assertThat(paths.path("/api/bank-accounts/{id}/default").path("patch").has("requestBody")).isFalse();
-        assertThat(paths.path("/api/bank-accounts/{id}").path("delete").has("requestBody")).isFalse();
         assertThat(paths.path("/api/user-documents/{id}/files/{side}").path("get")
                 .path("responses").path("200").path("content").has("image/jpeg")).isTrue();
         assertThat(paths.path("/api/user-documents/{id}/files/{side}").path("get")
@@ -183,7 +176,6 @@ class Function1OpenApiContractTest {
                 Map.entry("CustomerStatus", ChangeCustomerStatusRequest.class),
                 Map.entry("DocumentReviewRequest", ReviewUserDocumentRequest.class),
                 Map.entry("DriverStatusRequest", ChangeDriverStatusRequest.class),
-                Map.entry("BankAccountRequest", CreateBankAccountRequest.class),
                 Map.entry("VoucherCreate", CreateVoucherRequest.class),
                 Map.entry("VoucherUpdate", UpdateVoucherAdminRequest.class),
                 Map.entry("VoucherStatusRequest", ChangeVoucherStatusRequest.class));
@@ -206,7 +198,6 @@ class Function1OpenApiContractTest {
                 "/api/customers", Map.entry(CustomerListQuery.class, "ALLOWED_PARAMETERS"),
                 "/api/user-documents", Map.entry(UserDocumentListQuery.class, "ALLOWED"),
                 "/api/drivers", Map.entry(DriverListQuery.class, "ALLOWED_PARAMETERS"),
-                "/api/bank-accounts", Map.entry(BankAccountListQuery.class, "ALLOWED"),
                 "/api/vouchers", Map.entry(VoucherListQuery.class, "ALLOWED"));
         for (var entry : queryParserSets.entrySet()) {
             Set<String> documented = new HashSet<>();
@@ -349,7 +340,6 @@ class Function1OpenApiContractTest {
                 Map.entry("DocumentReview", UserDocumentReviewResponse.class),
                 Map.entry("Driver", DriverResponse.class),
                 Map.entry("Eligibility", DriverEligibilityResponse.class),
-                Map.entry("BankAccount", BankAccountResponse.class),
                 Map.entry("Voucher", VoucherResponse.class),
                 Map.entry("Page", PageResponse.class),
                 Map.entry("Health", HealthResponse.class),
@@ -623,11 +613,9 @@ class Function1OpenApiContractTest {
         @Bean DriverController driverController() {
             return new DriverController(mock(DriverService.class), new com.carrental.config.CustomerProperties());
         }
-        @Bean BankAccountController bankAccountController() {
-            return new BankAccountController(mock(BankAccountService.class), new com.carrental.config.CustomerProperties());
-        }
         @Bean VoucherController voucherController() {
             return new VoucherController(mock(VoucherService.class), new com.carrental.config.CustomerProperties());
         }
     }
 }
+

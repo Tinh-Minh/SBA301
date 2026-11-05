@@ -1,8 +1,6 @@
 package com.carrental.enums;
 
 public enum TransactionType {
-    DEPOSIT,
-    RENTAL_PAYMENT,
-    EXTRA_FEE,
+    PACKAGE_PAYMENT,
     REFUND
 }

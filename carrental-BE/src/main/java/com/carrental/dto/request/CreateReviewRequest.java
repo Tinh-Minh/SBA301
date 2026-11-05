@@ -1,7 +1,7 @@
 package com.carrental.dto.request;
 
+import com.carrental.entity.Car;
 import com.carrental.entity.Customer;
-import com.carrental.entity.RentalOrder;
 import com.carrental.entity.Review;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -12,13 +12,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class CreateReviewRequest {
-    @NotNull(message = "Mã đơn hàng không được để trống")
-    private Long orderId;
 
-    private Long reviewerId;
-
-    @NotNull(message = "Mã người được đánh giá không được để trống")
-    private Long revieweeId;
+    @NotNull(message = "Mã xe không được để trống")
+    private Long carId;
 
     @NotNull(message = "Số sao đánh giá không được để trống")
     @Min(value = 1, message = "Số sao tối thiểu là 1")
@@ -27,15 +23,10 @@ public class CreateReviewRequest {
 
     private String comment;
 
-    public Review toEntity() {
-        return toEntity(null, null, null);
-    }
-
-    public Review toEntity(RentalOrder order, Customer reviewer, Customer reviewee) {
+    public Review toEntity(Car car, Customer customer) {
         Review review = new Review();
-        review.setOrder(order);
-        review.setReviewer(reviewer);
-        review.setReviewee(reviewee);
+        review.setCar(car);
+        review.setCustomer(customer);
         review.setRating(this.rating);
         review.setComment(this.comment);
         return review;

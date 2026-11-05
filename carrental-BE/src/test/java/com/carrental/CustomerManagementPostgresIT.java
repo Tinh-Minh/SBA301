@@ -12,7 +12,6 @@ import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.service.ActionLogService;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
@@ -90,11 +89,10 @@ class CustomerManagementPostgresIT {
     @Autowired private PasswordEncoder passwordEncoder;
     @MockitoSpyBean private Clock clock;
     @MockitoSpyBean private CustomerRepository customers;
-    @MockitoSpyBean private ActionLogService actionLogService;
 
     @BeforeEach
     void cleanIsolatedFixtureRows() {
-        Mockito.reset(clock, customers, actionLogService);
+        Mockito.reset(clock, customers);
         jdbc.update("delete from customers");
     }
 
@@ -826,3 +824,4 @@ class CustomerManagementPostgresIT {
         for (IThrowableProxy suppressed : throwable.getSuppressed()) appendThrowable(rendered, suppressed);
     }
 }
+

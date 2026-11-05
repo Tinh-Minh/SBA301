@@ -9,8 +9,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecificationExecutor<Review> {
-    Page<Review> findByOrderId(Long orderId, Pageable pageable);
-    Page<Review> findByRevieweeId(Long revieweeId, Pageable pageable);
-    Page<Review> findByReviewerId(Long reviewerId, Pageable pageable);
-    boolean existsByOrderIdAndReviewerId(Long orderId, Long reviewerId);
+    Page<Review> findByCarId(Long carId, Pageable pageable);
+    Page<Review> findByCustomerId(Long customerId, Pageable pageable);
+    boolean existsByCarIdAndCustomerId(Long carId, Long customerId);
 }

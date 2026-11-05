@@ -1,17 +1,21 @@
 package com.carrental.event;
 
-import com.carrental.entity.ExtraFee;
-import com.carrental.entity.RentalOrder;
+import com.carrental.entity.Car;
+import com.carrental.entity.CarSubscription;
 import com.carrental.entity.Transaction;
-import com.carrental.enums.ExtraFeeStatus;
+import com.carrental.enums.ListingStatus;
 import com.carrental.enums.PaymentStatus;
+import com.carrental.enums.SubscriptionStatus;
+import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.TransactionType;
-import com.carrental.repository.ExtraFeeRepository;
-import com.carrental.repository.RentalOrderRepository;
+import com.carrental.repository.CarRepository;
+import com.carrental.repository.CarSubscriptionRepository;
+import com.carrental.util.TimeUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -20,34 +24,40 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class PaymentEventListener {
 
-    private final RentalOrderRepository rentalOrderRepository;
-    private final ExtraFeeRepository extraFeeRepository;
+    private final CarSubscriptionRepository carSubscriptionRepository;
+    private final CarRepository carRepository;
 
     @EventListener
+    @Transactional
     public void onPaymentCompleted(PaymentCompletedEvent event) {
         Transaction transaction = event.transaction();
-        if (transaction == null) return;
+        if (transaction == null || transaction.getStatus() != TransactionStatus.SUCCESS) return;
 
         log.info("Xử lý PaymentCompletedEvent cho transaction id={}, type={}",
                 transaction.getId(), transaction.getTransactionType());
 
-        RentalOrder order = transaction.getOrder();
-        if (order != null) {
-            if (transaction.getTransactionType() == TransactionType.RENTAL_PAYMENT) {
-                if (order.getPaymentStatus() != PaymentStatus.PAID) {
-                    order.setPaymentStatus(PaymentStatus.PAID);
-                    rentalOrderRepository.save(order);
-                    log.info("Cập nhật order id={} sang trạng thái PAID", order.getId());
-                }
-            }
-        }
+        if (transaction.getTransactionType() == TransactionType.PACKAGE_PAYMENT) {
+            CarSubscription subscription = transaction.getSubscription();
+            if (subscription != null && subscription.getStatus() != SubscriptionStatus.ACTIVE) {
+                LocalDateTime now = TimeUtil.nowVn();
+                int durationDays = (subscription.getListingPackage() != null && subscription.getListingPackage().getDurationDays() != null)
+                        ? subscription.getListingPackage().getDurationDays()
+                        : 30;
 
-        if (transaction.getExtraFee() != null || transaction.getTransactionType() == TransactionType.EXTRA_FEE) {
-            ExtraFee extraFee = transaction.getExtraFee();
-            if (extraFee != null && extraFee.getStatus() != ExtraFeeStatus.PAID) {
-                extraFee.setStatus(ExtraFeeStatus.PAID);
-                extraFeeRepository.save(extraFee);
-                log.info("Cập nhật extraFee id={} sang trạng thái PAID", extraFee.getId());
+                subscription.setPaymentStatus(PaymentStatus.PAID);
+                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                subscription.setStartDate(now);
+                subscription.setEndDate(now.plusDays(durationDays));
+                subscription.setActivatedAt(now);
+                carSubscriptionRepository.save(subscription);
+                log.info("Kích hoạt gói thành công cho subscriptionId={}, hiệu lực đến {}", subscription.getId(), subscription.getEndDate());
+
+                Car car = subscription.getCar();
+                if (car != null) {
+                    car.setListingStatus(ListingStatus.LISTED);
+                    carRepository.save(car);
+                    log.info("Chuyển trạng thái xe carId={} sang LISTED", car.getId());
+                }
             }
         }
     }

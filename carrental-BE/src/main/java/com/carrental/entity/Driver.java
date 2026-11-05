@@ -3,10 +3,6 @@ package com.carrental.entity;
 import com.carrental.enums.DriverStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "drivers")
@@ -26,4 +22,10 @@ public class Driver extends BaseEntity {
     @Builder.Default
     private DriverStatus status = DriverStatus.PENDING;
 
+    @Column(name = "experience_years")
+    @Builder.Default
+    private Integer experienceYears = 1;
+
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
 }

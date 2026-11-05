@@ -25,21 +25,19 @@ public class ReviewController {
         return ApiResponse.ok("Gửi đánh giá thành công", reviewService.createReview(request));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<ReviewResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(reviewService.getById(id));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<ReviewResponse>> getPaged(
-            @RequestParam(required = false) Long orderId,
-            @RequestParam(required = false) Long revieweeId,
+            @RequestParam(required = false) Long carId,
+            @RequestParam(required = false) Long customerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,desc") String sort) {
         Pageable pageable = PageRequestFactory.of(page, size, sort);
-        return ApiResponse.ok(reviewService.getPaged(orderId, revieweeId, pageable));
+        return ApiResponse.ok(reviewService.getPaged(carId, customerId, pageable));
     }
 }

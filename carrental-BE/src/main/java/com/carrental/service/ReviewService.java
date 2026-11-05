@@ -11,5 +11,5 @@ public interface ReviewService {
 
     ReviewResponse getById(Long id);
 
-    PageResponse<ReviewResponse> getPaged(Long orderId, Long revieweeId, Pageable pageable);
+    PageResponse<ReviewResponse> getPaged(Long carId, Long customerId, Pageable pageable);
 }

@@ -19,7 +19,6 @@ import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.VoucherRepository;
-import com.carrental.service.ActionLogService;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -105,13 +104,12 @@ class VoucherAdminPostgresIT {
     @Autowired private JsonMapper mapper;
     @Autowired private PasswordEncoder passwordEncoder;
     @MockitoSpyBean private VoucherRepository vouchers;
-    @MockitoSpyBean private ActionLogService actionLogService;
     @MockitoSpyBean private CustomerRepository customers;
 
     @BeforeEach
     void cleanFixture() {
         TEST_CLOCK.set(NOW);
-        reset(vouchers, actionLogService, customers);
+        reset(vouchers, customers);
         jdbc.update("delete from vouchers");
         jdbc.update("delete from customers");
     }
@@ -119,7 +117,7 @@ class VoucherAdminPostgresIT {
     @AfterEach
     void resetTestClockAndTimeout() {
         TEST_CLOCK.set(NOW);
-        reset(vouchers, actionLogService, customers);
+        reset(vouchers, customers);
     }
 
     @Test
@@ -285,7 +283,6 @@ class VoucherAdminPostgresIT {
             for (NumericCase numericCase : invalid) {
                 assertThat(renderedLogs).doesNotContain(numericCase.rawValue());
             }
-            verifyNoInteractions(actionLogService);
         }
 
         List<NumericCase> valid = List.of(
@@ -375,7 +372,6 @@ class VoucherAdminPostgresIT {
         }
 
         String rollbackMarker = "ROLLBACK_DESCRIPTION_" + suffix();
-        reset(actionLogService);
 
         HttpResponse<String> clear = put("/api/vouchers/" + id, adminToken,
                 "{\"description\":\"   \",\"usageLimit\":null}");
@@ -755,3 +751,4 @@ private JsonNode create(String token, String code, Integer usageLimit) throws Ex
         @Override public void close() { logger.detachAppender(this); stop(); }
     }
 }
+

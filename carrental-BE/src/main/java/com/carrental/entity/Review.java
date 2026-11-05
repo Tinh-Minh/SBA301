@@ -20,16 +20,12 @@ public class Review {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
-    private RentalOrder order;
+    @JoinColumn(name = "car_id", nullable = false)
+    private Car car;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewer_id", nullable = false)
-    private Customer reviewer;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reviewee_id", nullable = false)
-    private Customer reviewee;
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
 
     @Column(name = "rating", nullable = false)
     private Integer rating;

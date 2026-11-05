@@ -9,11 +9,11 @@ public final class TransactionSpecification {
 
     private TransactionSpecification() {}
 
-    public static Specification<Transaction> filter(Long orderId, String transactionType, String status) {
+    public static Specification<Transaction> filter(Long subscriptionId, String transactionType, String status) {
         Specification<Transaction> spec = (root, query, cb) -> cb.conjunction();
 
-        if (orderId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("order").get("id"), orderId));
+        if (subscriptionId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("subscription").get("id"), subscriptionId));
         }
 
         if (transactionType != null && !transactionType.isBlank()) {

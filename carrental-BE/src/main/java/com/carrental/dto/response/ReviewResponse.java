@@ -6,26 +6,28 @@ import java.time.LocalDateTime;
 
 public record ReviewResponse(
         Long id,
-        Long orderId,
-        String orderCode,
-        Long reviewerId,
-        String reviewerName,
-        Long revieweeId,
-        String revieweeName,
+        Long carId,
+        String carName,
+        Long customerId,
+        String customerName,
         Integer rating,
         String comment,
         LocalDateTime createdAt
 ) {
     public static ReviewResponse from(Review r) {
         if (r == null) return null;
+        String carName = null;
+        if (r.getCar() != null) {
+            carName = (r.getCar().getBrand() != null ? r.getCar().getBrand() + " " : "")
+                    + (r.getCar().getModel() != null ? r.getCar().getModel() : "");
+            carName = carName.trim();
+        }
         return new ReviewResponse(
                 r.getId(),
-                r.getOrder() != null ? r.getOrder().getId() : null,
-                r.getOrder() != null ? r.getOrder().getOrderCode() : null,
-                r.getReviewer() != null ? r.getReviewer().getId() : null,
-                r.getReviewer() != null ? r.getReviewer().getFullName() : null,
-                r.getReviewee() != null ? r.getReviewee().getId() : null,
-                r.getReviewee() != null ? r.getReviewee().getFullName() : null,
+                r.getCar() != null ? r.getCar().getId() : null,
+                carName,
+                r.getCustomer() != null ? r.getCustomer().getId() : null,
+                r.getCustomer() != null ? r.getCustomer().getFullName() : null,
                 r.getRating(),
                 r.getComment(),
                 r.getCreatedAt()
