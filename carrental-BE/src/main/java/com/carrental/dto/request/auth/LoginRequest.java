@@ -4,6 +4,7 @@ import com.carrental.validation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import tools.jackson.databind.JsonNode;
 
@@ -12,6 +13,7 @@ public final class LoginRequest {
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không hợp lệ")
     @Size(max = 150, message = "Email tối đa 150 ký tự")
+    @JsonAlias({"emailOrPhone"})
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
