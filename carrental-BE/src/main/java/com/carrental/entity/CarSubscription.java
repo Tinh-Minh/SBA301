@@ -4,6 +4,8 @@ import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -15,7 +17,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CarSubscription extends BaseEntity {
+public class CarSubscription {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "subscription_code", nullable = false, unique = true, length = 50)
     private String subscriptionCode;
@@ -36,11 +42,18 @@ public class CarSubscription extends BaseEntity {
     @JoinColumn(name = "voucher_id")
     private Voucher voucher;
 
-    @Column(name = "total_amount", nullable = false)
+    @Column(name = "package_price", nullable = false, precision = 14, scale = 0)
+    private BigDecimal packagePrice;
+
+    @Column(name = "discount_amount", nullable = false, precision = 14, scale = 0)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Column(name = "total_amount", nullable = false, precision = 14, scale = 0)
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private SubscriptionStatus status = SubscriptionStatus.PENDING_PAYMENT;
 
@@ -57,4 +70,12 @@ public class CarSubscription extends BaseEntity {
 
     @Column(name = "activated_at")
     private LocalDateTime activatedAt;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }
