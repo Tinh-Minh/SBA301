@@ -1,6 +1,7 @@
 package com.carrental.service;
 
 import com.carrental.dto.request.CreateReviewRequest;
+import com.carrental.dto.response.CarReviewSummaryResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.ReviewResponse;
 import org.springframework.data.domain.Pageable;
@@ -11,5 +12,7 @@ public interface ReviewService {
 
     ReviewResponse getById(Long id);
 
-    PageResponse<ReviewResponse> getPaged(Long orderId, Long revieweeId, Pageable pageable);
+    CarReviewSummaryResponse getReviewsByCarId(Long carId);
+
+    PageResponse<ReviewResponse> getPagedReviews(Long carId, Long customerId, Pageable pageable);
 }

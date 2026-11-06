@@ -71,7 +71,8 @@ public class VNPayServiceImpl implements VNPayService {
             vnpParams.put("vnp_BankCode", bankCode);
         }
         vnpParams.put("vnp_TxnRef", txnRef);
-        vnpParams.put("vnp_OrderInfo", "Thanh toan don hang ORD-" + (transaction.getOrder() != null ? transaction.getOrder().getOrderCode() : transaction.getId()));
+        String subCode = transaction.getSubscription() != null ? transaction.getSubscription().getSubscriptionCode() : String.valueOf(transaction.getId());
+        vnpParams.put("vnp_OrderInfo", "Thanh toan goi cuoc " + subCode);
         vnpParams.put("vnp_OrderType", "other");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
@@ -112,7 +113,7 @@ public class VNPayServiceImpl implements VNPayService {
         Long transactionId = extractTransactionId(txnRef);
 
         // Khóa pessimistic lock để ngăn race condition giữa Return URL và IPN
-        Transaction transaction = transactionRepository.findByIdForUpdate(transactionId)
+        Transaction transaction = transactionRepository.findWithLockingById(transactionId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch từ vnp_TxnRef=" + txnRef));
 
         String responseCode = queryParams.get("vnp_ResponseCode");
@@ -166,7 +167,7 @@ public class VNPayServiceImpl implements VNPayService {
             Long transactionId = extractTransactionId(txnRef);
 
             // Khóa pessimistic lock để đảm bảo tính tuần tự khi IPN và Return cùng tới
-            Optional<Transaction> opt = transactionRepository.findByIdForUpdate(transactionId);
+            Optional<Transaction> opt = transactionRepository.findWithLockingById(transactionId);
             if (opt.isEmpty()) {
                 response.put("RspCode", "01");
                 response.put("Message", "Order not found");

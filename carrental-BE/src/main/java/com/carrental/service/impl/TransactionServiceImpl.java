@@ -1,23 +1,21 @@
 package com.carrental.service.impl;
 
-import com.carrental.dto.request.CreateDepositRequest;
-import com.carrental.dto.request.CreatePaymentRequest;
-import com.carrental.dto.request.RefundRequest;
+import com.carrental.dto.request.PackagePaymentRequest;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.TransactionResponse;
-import com.carrental.entity.RentalOrder;
+import com.carrental.entity.CarSubscription;
+import com.carrental.entity.Customer;
 import com.carrental.entity.Transaction;
-import com.carrental.enums.OrderStatus;
 import com.carrental.enums.PaymentMethod;
-import com.carrental.enums.PaymentStatus;
+import com.carrental.enums.SubscriptionPaymentStatus;
+import com.carrental.enums.SubscriptionStatus;
 import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.TransactionType;
 import com.carrental.event.PaymentCompletedEvent;
 import com.carrental.exception.AppException;
-import com.carrental.repository.RentalOrderRepository;
+import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.repository.TransactionRepository;
-import com.carrental.repository.TransactionSpecification;
-import com.carrental.util.OrderAccess;
+import com.carrental.service.CurrentUserService;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
 import com.carrental.util.TimeUtil;
@@ -31,13 +29,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -45,246 +39,144 @@ import java.util.UUID;
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
-    private final RentalOrderRepository rentalOrderRepository;
+    private final CarSubscriptionRepository carSubscriptionRepository;
     private final VNPayService vnPayService;
     private final ApplicationEventPublisher eventPublisher;
-    private final OrderAccess orderAccess;
+    private final CurrentUserService currentUserService;
 
     @Override
     @Transactional
-    public TransactionResponse createDeposit(CreateDepositRequest request) {
-        log.info("Tạo giao dịch đặt cọc orderId={}, amount={}", request.getOrderId(), request.getAmount());
-        try {
-            RentalOrder order = findOrderOrThrow(request.getOrderId());
-            orderAccess.requireRenter(order);
-            if (order.getStatus() != OrderStatus.CONFIRMED) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể đặt cọc cho đơn đã được chủ xe xác nhận");
-            }
-            if (order.getExpiresAt() != null && TimeUtil.nowVn().isAfter(order.getExpiresAt())) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã quá thời hạn thanh toán/đặt cọc");
-            }
-            // Magic method check: kiểm tra đơn đã có giao dịch đặt cọc thành công chưa
-            if (transactionRepository.existsByOrderIdAndTransactionTypeAndStatus(
-                    order.getId(), TransactionType.DEPOSIT, TransactionStatus.SUCCESS)) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã được đặt cọc thành công trước đó");
-            }
+    public TransactionResponse createPackagePayment(PackagePaymentRequest request, HttpServletRequest servletRequest) {
+        log.info("Khởi tạo thanh toán gói subscriptionId={}, method={}", request.getSubscriptionId(), request.getMethod());
 
-            BigDecimal expectedDeposit = order.getDepositAmount();
-            if (expectedDeposit == null || expectedDeposit.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê không yêu cầu tiền đặt cọc");
-            }
-            Transaction transaction = request.toEntity(order, expectedDeposit);
+        Customer current = currentUserService.getCurrentUser();
+        CarSubscription subscription = carSubscriptionRepository.findById(request.getSubscriptionId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy gói subscription id=" + request.getSubscriptionId()));
 
-            Transaction saved = transactionRepository.save(transaction);
-            log.info("Tạo giao dịch đặt cọc thành công id={}", saved.getId());
-
-            String paymentUrl = null;
-            if (saved.getMethod() == PaymentMethod.VNPAY) {
-                try {
-                    paymentUrl = vnPayService.createPaymentUrl(saved.getId(), null, getCurrentHttpRequest());
-                } catch (Exception ex) {
-                    log.warn("Không thể sinh VNPay paymentUrl cho giao dịch cọc id={}: {}", saved.getId(), ex.getMessage());
-                }
-            }
-
-            return TransactionResponse.from(saved, paymentUrl);
-        } catch (AppException e) {
-            log.warn("Tạo giao dịch đặt cọc thất bại orderId={}: {}", request.getOrderId(), e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Lỗi không mong muốn khi tạo giao dịch đặt cọc orderId={}", request.getOrderId(), e);
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể tạo giao dịch đặt cọc");
+        if (!subscription.getCustomer().getId().equals(current.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ chủ xe sở hữu gói đăng ký mới được thực hiện thanh toán");
         }
+
+        if (subscription.getStatus() == SubscriptionStatus.ACTIVE || subscription.getPaymentStatus() == SubscriptionPaymentStatus.PAID) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Gói đăng tin này đã được thanh toán và kích hoạt");
+        }
+
+        if (subscription.getStatus() == SubscriptionStatus.CANCELLED) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Gói đăng tin này đã bị hủy");
+        }
+
+        if (subscription.getTotalAmount() == null || subscription.getTotalAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán của gói không hợp lệ");
+        }
+
+        // Kiểm tra xem đã có giao dịch PENDING nào trước đó chưa
+        Optional<Transaction> existingPending = transactionRepository
+                .findFirstBySubscriptionIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
+                        subscription.getId(), TransactionType.PACKAGE_PAYMENT, TransactionStatus.PENDING);
+
+        Transaction transaction;
+        if (existingPending.isPresent() && existingPending.get().getMethod() == request.getMethod()) {
+            transaction = existingPending.get();
+        } else {
+            transaction = Transaction.builder()
+                    .subscription(subscription)
+                    .transactionType(TransactionType.PACKAGE_PAYMENT)
+                    .amount(subscription.getTotalAmount())
+                    .method(request.getMethod())
+                    .status(TransactionStatus.PENDING)
+                    .build();
+            transaction = transactionRepository.save(transaction);
+        }
+
+        String paymentUrl = null;
+        if (request.getMethod() == PaymentMethod.VNPAY) {
+            paymentUrl = vnPayService.createPaymentUrl(transaction.getId(), request.getBankCode(), servletRequest);
+        }
+
+        return TransactionResponse.from(transaction, paymentUrl);
     }
 
     @Override
-    @Transactional
-    public TransactionResponse createPayment(CreatePaymentRequest request) {
-        log.info("Tạo giao dịch thanh toán đơn thuê orderId={}, amount={}", request.getOrderId(), request.getAmount());
-        try {
-            RentalOrder order = findOrderOrThrow(request.getOrderId());
-            orderAccess.requireRenter(order);
-            if (order.getStatus() != OrderStatus.CONFIRMED) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể thanh toán cho đơn đã được chủ xe xác nhận");
-            }
-            if (order.getPaymentStatus() == PaymentStatus.PAID) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã được thanh toán");
-            }
-            if (order.getExpiresAt() != null && TimeUtil.nowVn().isAfter(order.getExpiresAt())) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã quá thời hạn thanh toán");
-            }
-            // Magic method check: kiểm tra đơn đã có giao dịch thanh toán thành công chưa
-            if (transactionRepository.existsByOrderIdAndTransactionTypeAndStatus(
-                    order.getId(), TransactionType.RENTAL_PAYMENT, TransactionStatus.SUCCESS)) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê đã được thanh toán thành công trước đó");
-            }
+    @Transactional(readOnly = true)
+    public String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request) {
+        Transaction transaction = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + transactionId));
 
-            BigDecimal expectedTotal = order.getTotalAmount();
-            if (expectedTotal == null || expectedTotal.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Số tiền thanh toán đơn thuê không hợp lệ");
-            }
-            Transaction transaction = request.toEntity(order, expectedTotal);
+        validateOwnerAccess(transaction);
 
-            Transaction saved = transactionRepository.save(transaction);
-            log.info("Tạo giao dịch thanh toán thành công id={}", saved.getId());
-
-            String paymentUrl = null;
-            if (saved.getMethod() == PaymentMethod.VNPAY) {
-                try {
-                    paymentUrl = vnPayService.createPaymentUrl(saved.getId(), null, getCurrentHttpRequest());
-                } catch (Exception ex) {
-                    log.warn("Không thể sinh VNPay paymentUrl cho giao dịch thanh toán id={}: {}", saved.getId(), ex.getMessage());
-                }
-            }
-
-            return TransactionResponse.from(saved, paymentUrl);
-        } catch (AppException e) {
-            log.warn("Tạo giao dịch thanh toán thất bại orderId={}: {}", request.getOrderId(), e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Lỗi không mong muốn khi tạo giao dịch thanh toán orderId={}", request.getOrderId(), e);
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể tạo giao dịch thanh toán");
+        if (transaction.getStatus() != TransactionStatus.PENDING) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Giao dịch không ở trạng thái chờ thanh toán");
         }
-    }
 
-    @Override
-    @Transactional
-    public TransactionResponse refund(RefundRequest request) {
-        log.info("Hoàn tiền cho giao dịch id={}, amount={}", request.getParentTransactionId(), request.getAmount());
-        try {
-            Transaction parent = findTransactionOrThrow(request.getParentTransactionId());
-            if (parent.getStatus() != TransactionStatus.SUCCESS) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể hoàn tiền cho giao dịch đã thành công (SUCCESS)");
-            }
-            if (parent.getTransactionType() == TransactionType.REFUND) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Không thể hoàn tiền cho giao dịch loại hoàn tiền");
-            }
-
-            // Kiểm tra tổng số tiền đã hoàn trước đó trong DB
-            BigDecimal alreadyRefunded = transactionRepository.findByRefundOfId(parent.getId()).stream()
-                    .filter(t -> t.getStatus() == TransactionStatus.SUCCESS)
-                    .map(Transaction::getAmount)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-            BigDecimal maxRefundable = parent.getAmount().subtract(alreadyRefunded);
-            if (maxRefundable.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new AppException(HttpStatus.BAD_REQUEST,
-                        "Giao dịch gốc đã được hoàn trả toàn bộ số tiền (" + parent.getAmount() + " VND)");
-            }
-
-            BigDecimal refundAmount = request.getAmount();
-            if (refundAmount == null || refundAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                refundAmount = maxRefundable;
-            } else if (refundAmount.compareTo(maxRefundable) > 0) {
-                throw new AppException(HttpStatus.BAD_REQUEST,
-                        "Số tiền hoàn (" + refundAmount + " VND) vượt quá số tiền còn lại có thể hoàn (" + maxRefundable + " VND)");
-            }
-            request.setAmount(refundAmount);
-
-            Transaction refundTx = request.toEntity(parent, refundAmount);
-
-            RentalOrder order = parent.getOrder();
-            if (order != null && alreadyRefunded.add(refundAmount).compareTo(parent.getAmount()) >= 0) {
-                order.setPaymentStatus(PaymentStatus.REFUNDED);
-                rentalOrderRepository.save(order);
-            }
-
-            Transaction saved = transactionRepository.save(refundTx);
-            log.info("Hoàn tiền thành công refundTxId={}, parentId={}", saved.getId(), parent.getId());
-            return TransactionResponse.from(saved);
-        } catch (AppException e) {
-            log.warn("Hoàn tiền thất bại parentId={}: {}", request.getParentTransactionId(), e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            log.error("Lỗi không mong muốn khi hoàn tiền parentId={}", request.getParentTransactionId(), e);
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể thực hiện hoàn tiền");
-        }
+        return vnPayService.createPaymentUrl(transactionId, bankCode, request);
     }
 
     @Override
     @Transactional(readOnly = true)
     public TransactionResponse getById(Long id) {
-        Transaction transaction = findTransactionOrThrow(id);
-        orderAccess.requireParty(transaction.getOrder());
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + id));
+        validateAccess(transaction);
         return TransactionResponse.from(transaction);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<TransactionResponse> getPaged(Long orderId, String transactionType, String status, Pageable pageable) {
-        if (orderId != null) {
-            orderAccess.requireParty(findOrderOrThrow(orderId));
-        } else {
-            orderAccess.requireAdmin();
+    public PageResponse<TransactionResponse> getPaged(Long subscriptionId, String transactionType, String status, Pageable pageable) {
+        Customer current = currentUserService.getCurrentUser();
+        Specification<Transaction> spec = buildFilterSpecification(subscriptionId, transactionType, status);
+
+        if (!currentUserService.isAdmin(current)) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("subscription").get("customer").get("id"), current.getId()));
         }
-        Specification<Transaction> spec = TransactionSpecification.filter(orderId, transactionType, status);
+
         Page<Transaction> page = transactionRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(TransactionResponse::from));
     }
 
-    @org.springframework.beans.factory.annotation.Value("${app.payment.simulate-gateway-enabled:false}")
-    private boolean simulateGatewayEnabled;
+    private Specification<Transaction> buildFilterSpecification(Long subscriptionId, String transactionType, String status) {
+        Specification<Transaction> spec = (root, query, cb) -> cb.conjunction();
 
-    @Override
-    @Transactional
-    public String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request) {
-        Transaction transaction = findTransactionOrThrow(transactionId);
-        orderAccess.requireRenter(transaction.getOrder());
-        HttpServletRequest req = request != null ? request : getCurrentHttpRequest();
-        return vnPayService.createPaymentUrl(transactionId, bankCode, req);
+        if (subscriptionId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("subscription").get("id"), subscriptionId));
+        }
+
+        if (transactionType != null && !transactionType.isBlank()) {
+            try {
+                TransactionType type = TransactionType.valueOf(transactionType.toUpperCase());
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("transactionType"), type));
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        if (status != null && !status.isBlank()) {
+            try {
+                TransactionStatus txStatus = TransactionStatus.valueOf(status.toUpperCase());
+                spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), txStatus));
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        return spec;
     }
 
-    @Override
-    @Transactional
-    public TransactionResponse simulateGateway(Long id, com.carrental.dto.request.SimulateGatewayRequest request) {
-        if (!simulateGatewayEnabled) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Tính năng giả lập cổng thanh toán không được kích hoạt");
-        }
-        Transaction transaction = findTransactionOrThrow(id);
-        orderAccess.requireParty(transaction.getOrder());
+    private boolean isTransactionOwner(Transaction transaction, Customer customer) {
+        return transaction != null &&
+               transaction.getSubscription() != null &&
+               transaction.getSubscription().getCustomer() != null &&
+               transaction.getSubscription().getCustomer().getId().equals(customer.getId());
+    }
 
-        if (transaction.getStatus() != TransactionStatus.PENDING) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Giao dịch không ở trạng thái PENDING");
-        }
-
-        boolean success = request == null || request.getSimulateSuccess() == null || Boolean.TRUE.equals(request.getSimulateSuccess());
-        String providerRef = (request != null && request.getProviderRef() != null && !request.getProviderRef().isBlank())
-                ? request.getProviderRef()
-                : "SIM-" + System.currentTimeMillis();
-
-        if (success) {
-            transaction.setStatus(TransactionStatus.SUCCESS);
-            transaction.setPaidAt(TimeUtil.nowVn());
-            transaction.setProviderRef(providerRef);
-            Transaction saved = transactionRepository.save(transaction);
-            eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
-            log.info("Giả lập cổng thanh toán thành công id={}, providerRef={}", saved.getId(), providerRef);
-            return TransactionResponse.from(saved);
-        } else {
-            transaction.setStatus(TransactionStatus.FAILED);
-            transaction.setProviderRef(providerRef);
-            Transaction saved = transactionRepository.save(transaction);
-            log.info("Giả lập cổng thanh toán thất bại id={}, providerRef={}", saved.getId(), providerRef);
-            return TransactionResponse.from(saved);
+    private void validateOwnerAccess(Transaction transaction) {
+        Customer current = currentUserService.getCurrentUser();
+        if (!isTransactionOwner(transaction, current)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ chủ xe sở hữu giao dịch này mới có quyền");
         }
     }
 
-    private HttpServletRequest getCurrentHttpRequest() {
-        try {
-            ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-            return attributes != null ? attributes.getRequest() : null;
-        } catch (Exception e) {
-            return null;
+    private void validateAccess(Transaction transaction) {
+        Customer current = currentUserService.getCurrentUser();
+        if (currentUserService.isAdmin(current) || isTransactionOwner(transaction, current)) {
+            return;
         }
-    }
-
-    private Transaction findTransactionOrThrow(Long id) {
-        return transactionRepository.findById(id)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch với id=" + id));
-    }
-
-    private RentalOrder findOrderOrThrow(Long orderId) {
-        return rentalOrderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn thuê với id=" + orderId));
+        throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập giao dịch này");
     }
 }

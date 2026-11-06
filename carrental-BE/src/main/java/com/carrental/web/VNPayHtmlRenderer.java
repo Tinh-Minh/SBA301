@@ -55,7 +55,7 @@ public final class VNPayHtmlRenderer {
                 isSuccess ? "Thanh toán thành công!" : "Thanh toán không thành công",
                 isSuccess ? "Giao dịch thanh toán qua cổng VNPay Sandbox đã hoàn tất." : "Giao dịch đã bị huỷ hoặc có lỗi xảy ra.",
                 response.id(),
-                response.orderCode() != null ? response.orderCode() : "N/A",
+                response.subscriptionCode() != null ? response.subscriptionCode() : "N/A",
                 response.transactionType(),
                 String.format("%,d", response.amount() != null ? response.amount().longValue() : 0),
                 params.getOrDefault("vnp_BankCode", "NCB"),

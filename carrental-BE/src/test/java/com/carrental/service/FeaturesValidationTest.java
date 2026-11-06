@@ -1,48 +1,20 @@
 package com.carrental.service;
 
-import com.carrental.dto.request.CreateDepositRequest;
-import com.carrental.dto.request.CreateDisputeRequest;
-import com.carrental.dto.request.CreatePaymentRequest;
-import com.carrental.dto.request.CreatePayoutRequest;
 import com.carrental.dto.request.CreateReviewRequest;
-import com.carrental.dto.request.PayExtraFeeRequest;
-import com.carrental.dto.request.RefundRequest;
-import com.carrental.dto.request.ResolveDisputeRequest;
-import com.carrental.dto.response.DisputeResponse;
-import com.carrental.dto.response.ExtraFeeResponse;
-import com.carrental.dto.response.PayoutResponse;
+import com.carrental.dto.request.PackagePaymentRequest;
+import com.carrental.dto.response.CarReviewSummaryResponse;
+import com.carrental.dto.response.RevenueDashboardResponse;
 import com.carrental.dto.response.ReviewResponse;
 import com.carrental.dto.response.TransactionResponse;
-import com.carrental.entity.Car;
-import com.carrental.entity.Customer;
-import com.carrental.entity.Dispute;
-import com.carrental.entity.ExtraFee;
-import com.carrental.entity.RentalOrder;
-import com.carrental.entity.Review;
-import com.carrental.entity.Transaction;
-import com.carrental.enums.ExtraFeeStatus;
-import com.carrental.enums.OrderStatus;
-import com.carrental.enums.PaymentMethod;
-import com.carrental.enums.PaymentStatus;
-import com.carrental.enums.PayoutStatus;
-import com.carrental.enums.TransactionStatus;
-import com.carrental.enums.TransactionType;
+import com.carrental.entity.*;
+import com.carrental.enums.*;
+import com.carrental.event.PaymentCompletedEvent;
 import com.carrental.exception.AppException;
-import com.carrental.repository.BankAccountRepository;
-import com.carrental.repository.CustomerRepository;
-import com.carrental.repository.DisputeEvidenceRepository;
-import com.carrental.repository.DisputeRepository;
-import com.carrental.repository.ExtraFeeRepository;
-import com.carrental.repository.PayoutRepository;
-import com.carrental.repository.RentalOrderRepository;
-import com.carrental.repository.ReviewRepository;
-import com.carrental.repository.TransactionRepository;
-import com.carrental.service.impl.DisputeServiceImpl;
-import com.carrental.service.impl.ExtraFeeServiceImpl;
-import com.carrental.service.impl.PayoutServiceImpl;
+import com.carrental.repository.*;
+import com.carrental.service.impl.DashboardServiceImpl;
 import com.carrental.service.impl.ReviewServiceImpl;
 import com.carrental.service.impl.TransactionServiceImpl;
-import com.carrental.util.OrderAccess;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -53,7 +25,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
-import java.util.Collections;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,312 +37,203 @@ import static org.mockito.Mockito.*;
 class FeaturesValidationTest {
 
     @Mock private TransactionRepository transactionRepository;
-    @Mock private RentalOrderRepository rentalOrderRepository;
-    @Mock private CustomerRepository customerRepository;
-    @Mock private BankAccountRepository bankAccountRepository;
-    @Mock private PayoutRepository payoutRepository;
-    @Mock private ExtraFeeRepository extraFeeRepository;
-    @Mock private DisputeRepository disputeRepository;
-    @Mock private DisputeEvidenceRepository disputeEvidenceRepository;
+    @Mock private CarSubscriptionRepository carSubscriptionRepository;
+    @Mock private CarRepository carRepository;
+    @Mock private ListingPackageRepository listingPackageRepository;
     @Mock private ReviewRepository reviewRepository;
     @Mock private VNPayService vnPayService;
     @Mock private ApplicationEventPublisher eventPublisher;
-    @Mock private OrderAccess orderAccess;
+    @Mock private CurrentUserService currentUserService;
+    @Mock private HttpServletRequest servletRequest;
 
     private TransactionServiceImpl transactionService;
-    private PayoutServiceImpl payoutService;
-    private ExtraFeeServiceImpl extraFeeService;
-    private DisputeServiceImpl disputeService;
     private ReviewServiceImpl reviewService;
+    private DashboardServiceImpl dashboardService;
 
-    private Customer renter;
     private Customer owner;
+    private Customer customer;
     private Car car;
-    private RentalOrder order;
+    private ListingPackage pkg;
+    private CarSubscription subscription;
 
     @BeforeEach
     void setUp() {
         transactionService = new TransactionServiceImpl(
-                transactionRepository, rentalOrderRepository, vnPayService, eventPublisher, orderAccess);
+                transactionRepository, carSubscriptionRepository, vnPayService, eventPublisher, currentUserService);
+        reviewService = new ReviewServiceImpl(reviewRepository, carRepository, currentUserService);
+        dashboardService = new DashboardServiceImpl(transactionRepository, carRepository, listingPackageRepository);
 
-        payoutService = new PayoutServiceImpl(
-                payoutRepository, rentalOrderRepository, customerRepository, bankAccountRepository, orderAccess);
+        owner = Customer.builder().fullName("Nguyễn Văn Chủ").email("owner@test.com").phone("0901111111").role(Role.CUSTOMER).build();
+        owner.setId(1L);
 
-        extraFeeService = new ExtraFeeServiceImpl(
-                extraFeeRepository, rentalOrderRepository, transactionRepository,
-                customerRepository, vnPayService, orderAccess);
+        customer = Customer.builder().fullName("Trần Khách Hàng").email("customer@test.com").phone("0902222222").role(Role.CUSTOMER).build();
+        customer.setId(2L);
 
-        disputeService = new DisputeServiceImpl(
-                disputeRepository, disputeEvidenceRepository, rentalOrderRepository,
-                customerRepository, extraFeeRepository, transactionRepository, transactionService, orderAccess);
+        car = Car.builder().owner(owner).licensePlate("51F-99999").brand("Toyota").model("Camry").build();
+        car.setId(10L);
 
-        reviewService = new ReviewServiceImpl(
-                reviewRepository, rentalOrderRepository, customerRepository, orderAccess);
+        pkg = ListingPackage.builder().name("Gói Tiêu Chuẩn (30 Ngày)").code("PKG_STANDARD").price(BigDecimal.valueOf(180000)).durationDays(30).priorityLevel(2).build();
+        pkg.setId(100L);
 
-        renter = Customer.builder().fullName("Nguyễn Văn Thuê").build();
-        renter.setId(10L);
-
-        owner = Customer.builder().fullName("Trần Thị Chủ").build();
-        owner.setId(20L);
-
-        car = Car.builder().owner(owner).brand("Toyota").model("Vios").build();
-        car.setId(100L);
-
-        order = RentalOrder.builder()
-                .customer(renter)
+        subscription = CarSubscription.builder()
+                .subscriptionCode("SUB-20261105-001")
+                .customer(owner)
                 .car(car)
-                .status(OrderStatus.CONFIRMED)
-                .paymentStatus(PaymentStatus.UNPAID)
-                .depositAmount(new BigDecimal("500000"))
-                .totalAmount(new BigDecimal("2000000"))
-                .commissionRate(new BigDecimal("10.00"))
+                .listingPackage(pkg)
+                .packagePrice(BigDecimal.valueOf(180000))
+                .discountAmount(BigDecimal.ZERO)
+                .totalAmount(BigDecimal.valueOf(180000))
+                .status(SubscriptionStatus.PENDING_PAYMENT)
+                .paymentStatus(SubscriptionPaymentStatus.UNPAID)
                 .build();
-        order.setId(1L);
+        subscription.setId(200L);
     }
 
-    // ==========================================
-    // 1. TRANSACTION FEATURE TESTS
-    // ==========================================
-
     @Test
-    @DisplayName("Transaction: createDeposit derives amount strictly from order.getDepositAmount()")
-    void testCreateDepositAmountDerivedFromDb() {
-        CreateDepositRequest request = new CreateDepositRequest();
-        request.setOrderId(1L);
-        request.setAmount(new BigDecimal("1")); // Client tries to pay 1 VND
+    @DisplayName("F4 - Tạo giao dịch thanh toán gói qua VNPay trả về paymentUrl")
+    void testCreatePackagePayment_VNPay() {
+        when(currentUserService.getCurrentUser()).thenReturn(owner);
+        when(carSubscriptionRepository.findById(200L)).thenReturn(Optional.of(subscription));
+        when(transactionRepository.findFirstBySubscriptionIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
+                any(), any(), any())).thenReturn(Optional.empty());
 
-        when(rentalOrderRepository.findById(1L)).thenReturn(Optional.of(order));
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> {
-            Transaction t = i.getArgument(0);
-            t.setId(101L);
-            return t;
-        });
+        Transaction savedTx = Transaction.builder()
+                .subscription(subscription)
+                .transactionType(TransactionType.PACKAGE_PAYMENT)
+                .amount(BigDecimal.valueOf(180000))
+                .method(PaymentMethod.VNPAY)
+                .status(TransactionStatus.PENDING)
+                .build();
+        savedTx.setId(500L);
 
-        TransactionResponse response = transactionService.createDeposit(request);
+        when(transactionRepository.save(any(Transaction.class))).thenReturn(savedTx);
+        when(vnPayService.createPaymentUrl(eq(500L), any(), any())).thenReturn("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?test=1");
+
+        PackagePaymentRequest request = PackagePaymentRequest.builder()
+                .subscriptionId(200L)
+                .method(PaymentMethod.VNPAY)
+                .bankCode("NCB")
+                .build();
+
+        TransactionResponse response = transactionService.createPackagePayment(request, servletRequest);
 
         assertNotNull(response);
-        assertEquals(new BigDecimal("500000"), response.amount(), "Số tiền cọc phải lấy 500.000 từ DB, bỏ qua 1đ từ client");
+        assertEquals(500L, response.id());
+        assertEquals("PENDING", response.status());
+        assertNotNull(response.paymentUrl());
+        assertTrue(response.paymentUrl().contains("vnpayment.vn"));
+        verify(transactionRepository).save(any(Transaction.class));
     }
 
     @Test
-    @DisplayName("Transaction: createPayment rejects if order status is not CONFIRMED")
-    void testCreatePaymentRejectsIfNotConfirmed() {
-        order.setStatus(OrderStatus.PENDING);
-        CreatePaymentRequest request = new CreatePaymentRequest();
-        request.setOrderId(1L);
+    @DisplayName("F4 - Người không phải chủ xe sở hữu gói đăng ký bị chặn thanh toán")
+    void testCreatePackagePayment_NotOwnerForbidden() {
+        Customer otherUser = Customer.builder().fullName("Người dùng khác").email("other@test.com").phone("0900000001").role(Role.CUSTOMER).build();
+        otherUser.setId(99L);
 
-        when(rentalOrderRepository.findById(1L)).thenReturn(Optional.of(order));
+        when(currentUserService.getCurrentUser()).thenReturn(otherUser);
+        when(carSubscriptionRepository.findById(200L)).thenReturn(Optional.of(subscription));
 
-        AppException ex = assertThrows(AppException.class, () -> transactionService.createPayment(request));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        assertTrue(ex.getMessage().contains("Chỉ có thể thanh toán cho đơn đã được chủ xe xác nhận"));
-    }
-
-    @Test
-    @DisplayName("Transaction: refund prevents refunding on a REFUND transaction")
-    void testRefundRejectsOnRefundTransaction() {
-        Transaction refundTx = Transaction.builder()
-                .transactionType(TransactionType.REFUND)
-                .status(TransactionStatus.SUCCESS)
+        PackagePaymentRequest request = PackagePaymentRequest.builder()
+                .subscriptionId(200L)
+                .method(PaymentMethod.VNPAY)
                 .build();
-        refundTx.setId(50L);
 
-        when(transactionRepository.findById(50L)).thenReturn(Optional.of(refundTx));
-
-        RefundRequest request = RefundRequest.of(50L, new BigDecimal("100000"), "test");
-        AppException ex = assertThrows(AppException.class, () -> transactionService.refund(request));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        assertTrue(ex.getMessage().contains("Không thể hoàn tiền cho giao dịch loại hoàn tiền"));
+        AppException ex = assertThrows(AppException.class, () -> transactionService.createPackagePayment(request, servletRequest));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertTrue(ex.getMessage().contains("sở hữu"));
     }
 
     @Test
-    @DisplayName("Transaction: partial refund does not mark order as REFUNDED until 100% refunded")
-    void testPartialRefundDoesNotMarkOrderRefunded() {
-        Transaction parentTx = Transaction.builder()
-                .order(order)
-                .transactionType(TransactionType.RENTAL_PAYMENT)
-                .status(TransactionStatus.SUCCESS)
-                .amount(new BigDecimal("1000000"))
+    @DisplayName("F4 - Người dùng gửi đánh giá 5 sao cho xe thành công")
+    void testCreateReview_Success() {
+        when(currentUserService.getCurrentUser()).thenReturn(customer);
+        when(carRepository.findById(10L)).thenReturn(Optional.of(car));
+        when(reviewRepository.existsByCarIdAndCustomerId(10L, 2L)).thenReturn(false);
+
+        Review savedReview = Review.builder()
+                .car(car)
+                .customer(customer)
+                .rating(5)
+                .comment("Xe chạy rất êm, chủ xe nhiệt tình!")
+                .createdAt(LocalDateTime.now())
                 .build();
-        parentTx.setId(60L);
+        savedReview.setId(1L);
 
-        when(transactionRepository.findById(60L)).thenReturn(Optional.of(parentTx));
-        when(transactionRepository.findByRefundOfId(60L)).thenReturn(Collections.emptyList());
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> {
-            Transaction t = i.getArgument(0);
-            t.setId(61L);
-            return t;
-        });
+        when(reviewRepository.save(any(Review.class))).thenReturn(savedReview);
 
-        RefundRequest request = RefundRequest.of(60L, new BigDecimal("300000"), "Hoàn một phần");
-        transactionService.refund(request);
-
-        assertNotEquals(PaymentStatus.REFUNDED, order.getPaymentStatus(), "Hoàn 300k/1tr không được đánh dấu đơn REFUNDED");
-        verify(rentalOrderRepository, never()).save(order);
-    }
-
-    // ==========================================
-    // 2. PAYOUT FEATURE TESTS
-    // ==========================================
-
-    @Test
-    @DisplayName("Payout: calculates gross, fee, net strictly from order totalAmount and commissionRate")
-    void testCreatePayoutCalculatesFromDb() {
-        order.setStatus(OrderStatus.COMPLETED); // COMPLETED
-        order.setTotalAmount(new BigDecimal("1000000"));
-        order.setCommissionRate(new BigDecimal("10.00")); // 10%
-
-        CreatePayoutRequest request = new CreatePayoutRequest();
-        request.setOrderId(1L);
-
-        when(rentalOrderRepository.findById(1L)).thenReturn(Optional.of(order));
-        when(payoutRepository.findByOrderId(1L)).thenReturn(Optional.empty());
-        when(bankAccountRepository.findByCustomerIdAndIsDefaultTrue(owner.getId())).thenReturn(Optional.empty());
-        when(bankAccountRepository.findAllByCustomerIdOrderByCreatedAtDesc(owner.getId())).thenReturn(Collections.emptyList());
-        when(payoutRepository.save(any())).thenAnswer(i -> {
-            com.carrental.entity.Payout p = i.getArgument(0);
-            p.setId(201L);
-            return p;
-        });
-
-        PayoutResponse response = payoutService.createPayout(request);
-
-        assertNotNull(response);
-        assertEquals(new BigDecimal("1000000"), response.grossAmount());
-        assertEquals(new BigDecimal("100000"), response.platformFee(), "Phí sàn 10% của 1.000.000 phải là 100.000");
-        assertEquals(new BigDecimal("900000"), response.netAmount(), "Thực nhận phải là 900.000");
-    }
-
-    @Test
-    @DisplayName("Payout: rejects if order is not COMPLETED")
-    void testCreatePayoutRejectsIfNotCompleted() {
-        order.setStatus(OrderStatus.CONFIRMED);
-        CreatePayoutRequest request = new CreatePayoutRequest();
-        request.setOrderId(1L);
-
-        when(rentalOrderRepository.findById(1L)).thenReturn(Optional.of(order));
-
-        AppException ex = assertThrows(AppException.class, () -> payoutService.createPayout(request));
-        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        assertTrue(ex.getMessage().contains("Chỉ có thể tạo chi trả cho đơn thuê đã hoàn thành"));
-    }
-
-    // ==========================================
-    // 3. EXTRA FEE FEATURE TESTS
-    // ==========================================
-
-    @Test
-    @DisplayName("ExtraFee: CASH payment requires car owner confirmation")
-    void testPayExtraFeeCashRequiresOwner() {
-        ExtraFee fee = ExtraFee.builder()
-                .order(order)
-                .amount(new BigDecimal("150000"))
-                .status(ExtraFeeStatus.PENDING)
+        CreateReviewRequest request = CreateReviewRequest.builder()
+                .carId(10L)
+                .rating(5)
+                .comment("Xe chạy rất êm, chủ xe nhiệt tình!")
                 .build();
-        fee.setId(301L);
-
-        when(extraFeeRepository.findById(301L)).thenReturn(Optional.of(fee));
-        when(extraFeeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-
-        PayExtraFeeRequest req = new PayExtraFeeRequest();
-        req.setMethod("DIRECT"); // CASH
-
-        ExtraFeeResponse response = extraFeeService.payExtraFee(301L, req);
-
-        verify(orderAccess).requireOwner(order);
-        assertEquals("PAID", response.status());
-    }
-
-    // ==========================================
-    // 4. DISPUTE FEATURE TESTS
-    // ==========================================
-
-    @Test
-    @DisplayName("Dispute: resolveDispute with RESOLVED triggers automatic refund")
-    void testResolveDisputeTriggersRefund() {
-        Dispute dispute = Dispute.builder()
-                .order(order)
-                .raisedBy(renter)
-                .status(com.carrental.enums.DisputeStatus.OPEN)
-                .build();
-        dispute.setId(401L);
-
-        Transaction successTx = Transaction.builder()
-                .order(order)
-                .transactionType(TransactionType.RENTAL_PAYMENT)
-                .status(TransactionStatus.SUCCESS)
-                .amount(new BigDecimal("2000000"))
-                .build();
-        successTx.setId(402L);
-
-        when(disputeRepository.findById(401L)).thenReturn(Optional.of(dispute));
-        when(orderAccess.requireUser()).thenReturn(owner);
-        when(disputeRepository.save(any())).thenAnswer(i -> i.getArgument(0));
-        when(transactionRepository.findByOrderId(order.getId())).thenReturn(List.of(successTx));
-        when(transactionRepository.findById(402L)).thenReturn(Optional.of(successTx));
-        when(transactionRepository.findByRefundOfId(402L)).thenReturn(Collections.emptyList());
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArgument(0));
-
-        ResolveDisputeRequest req = new ResolveDisputeRequest();
-        req.setStatus("RESOLVED");
-        req.setApprovedAmount(new BigDecimal("200000"));
-        req.setResolutionNote("Đồng ý hoàn 200k");
-
-        DisputeResponse response = disputeService.resolveDispute(401L, req);
-
-        assertNotNull(response);
-        verify(transactionRepository, atLeastOnce()).save(any(Transaction.class));
-    }
-
-    // ==========================================
-    // 5. REVIEW FEATURE TESTS
-    // ==========================================
-
-    @Test
-    @DisplayName("Review: createReview validates reviewee is the opposite party")
-    void testCreateReviewValidatesOppositeParty() {
-        order.setStatus(OrderStatus.COMPLETED);
-
-        when(rentalOrderRepository.findById(1L)).thenReturn(Optional.of(order));
-        when(orderAccess.requireUser()).thenReturn(renter);
-        when(orderAccess.isRenter(order, renter)).thenReturn(true);
-        when(customerRepository.findById(owner.getId())).thenReturn(Optional.of(owner));
-        when(reviewRepository.existsByOrderIdAndReviewerId(1L, renter.getId())).thenReturn(false);
-        when(reviewRepository.save(any())).thenAnswer(i -> {
-            Review r = i.getArgument(0);
-            r.setId(501L);
-            return r;
-        });
-
-        CreateReviewRequest request = new CreateReviewRequest();
-        request.setOrderId(1L);
-        request.setRevieweeId(owner.getId()); // đúng chủ xe
-        request.setRating(5);
-        request.setComment("Xe chạy rất êm, chủ xe nhiệt tình!");
 
         ReviewResponse response = reviewService.createReview(request);
 
         assertNotNull(response);
         assertEquals(5, response.rating());
-        assertEquals("Xe chạy rất êm, chủ xe nhiệt tình!", response.comment());
+        assertEquals(10L, response.carId());
+        assertEquals("Trần Khách Hàng", response.customerName());
+        verify(reviewRepository).save(any(Review.class));
     }
 
     @Test
-    @DisplayName("Review: createReview rejects self review")
-    void testCreateReviewRejectsSelfReview() {
-        order.setStatus(OrderStatus.COMPLETED);
+    @DisplayName("F4 - Chủ xe không thể tự đánh giá xe của chính mình")
+    void testCreateReview_CannotReviewOwnCar() {
+        when(currentUserService.getCurrentUser()).thenReturn(owner);
+        when(carRepository.findById(10L)).thenReturn(Optional.of(car));
 
-        // Trường hợp hy hữu người thuê tự review chính mình
-        when(rentalOrderRepository.findById(1L)).thenReturn(Optional.of(order));
-        when(orderAccess.requireUser()).thenReturn(renter);
-        when(orderAccess.isRenter(order, renter)).thenReturn(true);
-
-        CreateReviewRequest request = new CreateReviewRequest();
-        request.setOrderId(1L);
-        request.setRevieweeId(renter.getId()); // Cố tình truyền người nhận là chính mình
+        CreateReviewRequest request = CreateReviewRequest.builder()
+                .carId(10L)
+                .rating(5)
+                .comment("Xe của tôi rất tốt")
+                .build();
 
         AppException ex = assertThrows(AppException.class, () -> reviewService.createReview(request));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
-        assertTrue(ex.getMessage().contains("Người được đánh giá phải là bên còn lại của đơn"));
+        assertTrue(ex.getMessage().contains("tự đánh giá"));
+    }
+
+    @Test
+    @DisplayName("F4 - Xem tóm tắt đánh giá xe kèm điểm trung bình")
+    void testGetReviewsByCarId() {
+        when(carRepository.existsById(10L)).thenReturn(true);
+        Review r1 = Review.builder().car(car).customer(customer).rating(5).comment("Tuyệt vời").build();
+        Review r2 = Review.builder().car(car).customer(customer).rating(4).comment("Khá tốt").build();
+
+        when(reviewRepository.findByCarIdOrderByCreatedAtDesc(10L)).thenReturn(List.of(r1, r2));
+        when(reviewRepository.getAverageRatingByCarId(10L)).thenReturn(4.5);
+
+        CarReviewSummaryResponse summary = reviewService.getReviewsByCarId(10L);
+
+        assertNotNull(summary);
+        assertEquals(10L, summary.carId());
+        assertEquals(4.5, summary.averageRating());
+        assertEquals(2, summary.totalReviews());
+        assertEquals(2, summary.reviews().size());
+    }
+
+    @Test
+    @DisplayName("F4 - Admin Dashboard tổng hợp doanh thu và số lượng gói đã bán")
+    void testGetRevenueDashboard() {
+        when(transactionRepository.sumTotalRevenue()).thenReturn(BigDecimal.valueOf(1200000));
+        when(carRepository.countByListingStatus(ListingStatus.LISTED)).thenReturn(8L);
+        when(transactionRepository.countByStatusAndTransactionType(TransactionStatus.SUCCESS, TransactionType.PACKAGE_PAYMENT)).thenReturn(15L);
+        when(listingPackageRepository.findAll()).thenReturn(List.of(pkg));
+
+        List<Object[]> statRows = new java.util.ArrayList<>();
+        statRows.add(new Object[]{100L, "Gói Tiêu Chuẩn (30 Ngày)", "PKG_STANDARD", 15L, BigDecimal.valueOf(1200000)});
+        when(transactionRepository.findPackageRevenueStats()).thenReturn(statRows);
+        when(transactionRepository.findTop10ByStatusOrderByCreatedAtDesc(TransactionStatus.SUCCESS)).thenReturn(List.of());
+
+        RevenueDashboardResponse dashboard = dashboardService.getRevenueDashboard();
+
+        assertNotNull(dashboard);
+        assertEquals(BigDecimal.valueOf(1200000), dashboard.totalRevenue());
+        assertEquals(8L, dashboard.activeListingsCount());
+        assertEquals(15L, dashboard.totalPackagesSold());
+        assertEquals("Gói Tiêu Chuẩn (30 Ngày)", dashboard.bestSellingPackageName());
+        assertEquals(1, dashboard.packageStats().size());
+        assertEquals(15L, dashboard.packageStats().get(0).countSold());
     }
 }

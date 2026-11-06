@@ -27,4 +27,6 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
 
     @EntityGraph(attributePaths = {"owner", "driver"})
     Optional<Car> findWithOwnerById(Long id);
+
+    long countByListingStatus(com.carrental.enums.ListingStatus listingStatus);
 }
