@@ -19,7 +19,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasRole('CUSTOMER')")
     @PostMapping("/api/reviews")
     public ApiResponse<ReviewResponse> createReview(@Valid @RequestBody CreateReviewRequest request) {
         return ApiResponse.ok("Gửi đánh giá thành công", reviewService.createReview(request));
@@ -43,6 +43,6 @@ public class ReviewController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,desc") String sort) {
         Pageable pageable = PageRequestFactory.of(page, size, sort);
-        return ApiResponse.ok(reviewService.getPagedReviews(carId, customerId, pageable));
+        return ApiResponse.ok(reviewService.getPaged(carId, customerId, pageable));
     }
 }

@@ -88,7 +88,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ReviewResponse> getPagedReviews(Long carId, Long customerId, Pageable pageable) {
+    public PageResponse<ReviewResponse> getPaged(Long carId, Long customerId, Pageable pageable) {
         Specification<Review> spec = buildFilterSpecification(carId, customerId);
         Page<Review> page = reviewRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(ReviewResponse::from));

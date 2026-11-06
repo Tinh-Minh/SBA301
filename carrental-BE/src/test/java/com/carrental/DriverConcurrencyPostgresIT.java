@@ -14,7 +14,6 @@ import com.carrental.enums.Role;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.enums.VerificationStatus;
 import com.carrental.enums.DocumentType;
-import com.carrental.service.ActionLogService;
 import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.web.RequestTraceFilter;
@@ -112,14 +111,13 @@ class DriverConcurrencyPostgresIT {
     @Autowired private JsonMapper mapper;
     @Autowired private PrivateDocumentStorage storage;
     @Autowired private PlatformTransactionManager realTransactionManager;
-    @MockitoSpyBean private ActionLogService actionLogService;
     @MockitoSpyBean private CustomerRepository customers;
     @MockitoSpyBean private PlatformTransactionManager transactionManager;
 
     @AfterEach
     void resetHooksAndClock() {
         TEST_CLOCK.set(Instant.parse("2026-10-14T03:00:00Z"));
-        reset(actionLogService, customers, transactionManager);
+        reset(customers, transactionManager);
     }
 
     @AfterAll
@@ -402,7 +400,7 @@ private void stubCommitBarrier(long ownerId, String ownerStatus, Long driverId,
     private record Account(long id, String email) { }
 
     private static final class SafeLogCapture implements AutoCloseable {
-        private final Logger logger = (Logger) LoggerFactory.getLogger("com.carrental.service.impl.ActionLogServiceImpl");
+        private final Logger logger = (Logger) LoggerFactory.getLogger("com.carrental.service.impl.DriverServiceImpl");
         private final CapturingAppender appender = new CapturingAppender();
         private SafeLogCapture() {
             appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
@@ -421,3 +419,4 @@ private void stubCommitBarrier(long ownerId, String ownerStatus, Long driverId,
         @Override protected void append(ILoggingEvent event) { events.add(event); }
     }
 }
+

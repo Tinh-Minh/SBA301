@@ -10,6 +10,10 @@ public interface TransactionService {
 
     TransactionResponse createPackagePayment(PackagePaymentRequest request, HttpServletRequest servletRequest);
 
+    default TransactionResponse createPackagePayment(PackagePaymentRequest request) {
+        return createPackagePayment(request, null);
+    }
+
     TransactionResponse getById(Long id);
 
     PageResponse<TransactionResponse> getPaged(Long subscriptionId, String transactionType, String status, Pageable pageable);

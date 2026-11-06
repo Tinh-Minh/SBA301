@@ -5,11 +5,8 @@ import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "customers")
@@ -41,6 +38,12 @@ public class Customer extends BaseEntity {
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
 
+    @Column(name = "zalo_phone", length = 20)
+    private String zaloPhone;
+
+    @Column(name = "contact_note", length = 255)
+    private String contactNote;
+
     @Column(name = "email_verified", nullable = false)
     @Builder.Default
     private Boolean emailVerified = false;
@@ -59,5 +62,4 @@ public class Customer extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private CustomerStatus status = CustomerStatus.ACTIVE;
-
 }

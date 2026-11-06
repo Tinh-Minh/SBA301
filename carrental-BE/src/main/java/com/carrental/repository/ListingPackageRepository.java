@@ -12,4 +12,3 @@ public interface ListingPackageRepository extends JpaRepository<ListingPackage, 
     Optional<ListingPackage> findByCode(String code);
     List<ListingPackage> findAllByIsActiveTrueOrderByPriorityLevelDesc();
 }
-

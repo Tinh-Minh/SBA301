@@ -26,18 +26,20 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer"})
     Optional<Transaction> findWithLockingById(Long id);
 
-    // Magic Method (Spring Data Derived Query)
+    default Optional<Transaction> findByIdForUpdate(Long id) {
+        return findWithLockingById(id);
+    }
+
+    boolean existsBySubscriptionIdAndTransactionTypeAndStatus(Long subscriptionId, TransactionType transactionType, TransactionStatus status);
+
     Optional<Transaction> findFirstBySubscriptionIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
             Long subscriptionId, TransactionType transactionType, TransactionStatus status);
 
-    // Magic Method (Spring Data Derived Query)
     @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer"})
     List<Transaction> findTop10ByStatusOrderByCreatedAtDesc(TransactionStatus status);
 
-    // Magic Method (Spring Data Derived Query)
     long countByStatusAndTransactionType(TransactionStatus status, TransactionType transactionType);
 
-    // Explicit @Query methods
     @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.status = 'SUCCESS' AND t.transactionType = 'PACKAGE_PAYMENT'")
     BigDecimal sumTotalRevenue();
 

@@ -9,9 +9,11 @@ public record TransactionResponse(
         Long id,
         Long subscriptionId,
         String subscriptionCode,
-        String packageName,
+        Long carId,
         String carLicensePlate,
         String carBrandModel,
+        String carName,
+        String packageName,
         String transactionType,
         BigDecimal amount,
         String method,
@@ -29,25 +31,33 @@ public record TransactionResponse(
         if (t == null) return null;
         Long subId = t.getSubscription() != null ? t.getSubscription().getId() : null;
         String subCode = t.getSubscription() != null ? t.getSubscription().getSubscriptionCode() : null;
+        Long carId = (t.getSubscription() != null && t.getSubscription().getCar() != null)
+                ? t.getSubscription().getCar().getId() : null;
         String pkgName = null;
         String licensePlate = null;
         String carBrandModel = null;
+        String carName = null;
         if (t.getSubscription() != null) {
             if (t.getSubscription().getListingPackage() != null) {
                 pkgName = t.getSubscription().getListingPackage().getName();
             }
             if (t.getSubscription().getCar() != null) {
-                licensePlate = t.getSubscription().getCar().getLicensePlate();
-                carBrandModel = t.getSubscription().getCar().getBrand() + " " + t.getSubscription().getCar().getModel();
+                var car = t.getSubscription().getCar();
+                licensePlate = car.getLicensePlate();
+                carBrandModel = ((car.getBrand() != null ? car.getBrand() + " " : "")
+                        + (car.getModel() != null ? car.getModel() : "")).trim();
+                carName = carBrandModel;
             }
         }
         return new TransactionResponse(
                 t.getId(),
                 subId,
                 subCode,
-                pkgName,
+                carId,
                 licensePlate,
                 carBrandModel,
+                carName,
+                pkgName,
                 t.getTransactionType() != null ? t.getTransactionType().name() : null,
                 t.getAmount(),
                 t.getMethod() != null ? t.getMethod().name() : null,

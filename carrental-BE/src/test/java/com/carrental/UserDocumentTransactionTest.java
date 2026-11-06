@@ -23,7 +23,6 @@ import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.impl.UserDocumentServiceImpl;
-import com.carrental.service.ActionLogService;
 import com.carrental.service.KycService;
 import com.carrental.storage.LocalPrivateDocumentStorage;
 import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
@@ -194,3 +193,4 @@ class UserDocumentTransactionTest {
         }
     }
 }
+

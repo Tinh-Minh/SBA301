@@ -14,5 +14,9 @@ public interface ReviewService {
 
     CarReviewSummaryResponse getReviewsByCarId(Long carId);
 
-    PageResponse<ReviewResponse> getPagedReviews(Long carId, Long customerId, Pageable pageable);
+    PageResponse<ReviewResponse> getPaged(Long carId, Long customerId, Pageable pageable);
+
+    default PageResponse<ReviewResponse> getPagedReviews(Long carId, Long customerId, Pageable pageable) {
+        return getPaged(carId, customerId, pageable);
+    }
 }

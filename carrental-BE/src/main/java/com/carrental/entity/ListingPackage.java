@@ -20,19 +20,18 @@ public class ListingPackage extends BaseEntity {
     @Column(name = "code", nullable = false, unique = true, length = 50)
     private String code;
 
-    @Column(name = "price", nullable = false, precision = 14, scale = 0)
-    private BigDecimal price;
-
     @Column(name = "duration_days", nullable = false)
     private Integer durationDays;
 
+    @Column(name = "price", nullable = false)
+    private BigDecimal price;
+
     @Column(name = "priority_level", nullable = false)
     @Builder.Default
-    private Integer priorityLevel = 1;
+    private Integer priorityLevel = 0;
 
-    @Column(name = "badge_label", nullable = false, length = 50)
-    @Builder.Default
-    private String badgeLabel = "THƯỜNG";
+    @Column(name = "badge_label", length = 50)
+    private String badgeLabel;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
@@ -41,4 +40,3 @@ public class ListingPackage extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 }
-

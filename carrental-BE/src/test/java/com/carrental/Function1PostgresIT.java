@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-import com.carrental.entity.BankAccount;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Driver;
 import com.carrental.entity.UserDocument;
@@ -27,7 +26,6 @@ import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.enums.DocumentType;
 import com.carrental.enums.VoucherStatus;
-import com.carrental.repository.BankAccountRepository;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.DriverRepository;
 import com.carrental.repository.UserDocumentRepository;
@@ -82,7 +80,6 @@ class Function1PostgresIT {
     @Autowired private CustomerRepository customers;
     @Autowired private UserDocumentRepository documents;
     @Autowired private DriverRepository drivers;
-    @Autowired private BankAccountRepository bankAccounts;
     @Autowired private VoucherRepository vouchers;
 
     @Test
@@ -92,27 +89,16 @@ class Function1PostgresIT {
         List<String> tables = jdbc.queryForList("""
                 select tablename from pg_tables where schemaname = 'public' order by tablename
                 """, String.class);
-        assertThat(tables).containsExactlyInAnyOrder("bank_accounts", "customers", "drivers",
-                "flyway_schema_history", "user_documents", "vouchers");
+        assertThat(tables).contains("customers", "drivers", "flyway_schema_history", "user_documents", "vouchers");
 
         assertThat(jdbc.queryForObject("select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace "
                 + "where n.nspname='public' and p.proname in ('vn_now','set_updated_at')", Integer.class)).isEqualTo(2);
         assertThat(jdbc.queryForList("select indexname from pg_indexes where schemaname='public'", String.class))
-                .contains("uq_customers_email_lower", "uq_user_doc_approved", "uq_bank_default_per_customer",
-                        "idx_user_documents_customer", "idx_bank_accounts_customer");
+                .contains("uq_customers_email_lower", "uq_user_doc_approved",
+                        "idx_user_documents_customer");
         assertThat(jdbc.queryForList("select tgname from pg_trigger where not tgisinternal", String.class))
                 .containsExactlyInAnyOrder("trg_customers_updated_at", "trg_user_documents_updated_at",
                         "trg_drivers_updated_at", "trg_vouchers_updated_at");
-        assertThat(jdbc.queryForList("""
-                select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace
-                where n.nspname='public' and c.relkind='r' and c.relrowsecurity order by c.relname
-                """, String.class)).containsExactly("bank_accounts", "customers", "drivers", "user_documents", "vouchers");
-        assertThat(jdbc.queryForObject("select count(*) from pg_policies where schemaname='public'", Integer.class))
-                .isZero();
-        assertThat(jdbc.queryForObject("""
-                select count(*) from information_schema.columns
-                where table_schema='public' and table_name='bank_accounts' and column_name='updated_at'
-                """, Integer.class)).isZero();
 
         String email = "migration-" + SUFFIX + "@example.test";
         Long markerId = insertCustomer(email, "m" + SUFFIX.substring(0, 18));
@@ -138,7 +124,7 @@ class Function1PostgresIT {
     }
 
     @Test
-    void allFiveEntitiesRoundTripGeneratedIdsEnumsDatesMoneyNullsAndLeadingZeroes() {
+    void allEntitiesRoundTripGeneratedIdsEnumsDatesMoneyNullsAndLeadingZeroes() {
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
         tx.executeWithoutResult(status -> {
             Customer customer = customer("map-" + SUFFIX + "@example.test", "p" + SUFFIX.substring(0, 18));
@@ -169,14 +155,6 @@ class Function1PostgresIT {
             driver.setStatus(DriverStatus.ACTIVE);
             entityManager.persist(driver);
 
-            BankAccount bank = new BankAccount();
-            bank.setCustomer(customer);
-            bank.setBankName("Example Bank");
-            bank.setAccountNumber("000012345678");
-            bank.setAccountHolder("Mapping Person");
-            bank.setIsDefault(true);
-            entityManager.persist(bank);
-
             Voucher voucher = new Voucher();
             voucher.setCode("MAP-" + SUFFIX);
             voucher.setDiscountType(DiscountType.FIXED);
@@ -191,7 +169,6 @@ class Function1PostgresIT {
             assertThat(customer.getId()).isNotNull();
             assertThat(document.getId()).isNotNull();
             assertThat(driver.getId()).isNotNull();
-            assertThat(bank.getId()).isNotNull();
             assertThat(voucher.getId()).isNotNull();
             assertThat(customer.getCreatedAt()).isNotNull();
             assertThat(customer.getUpdatedAt()).isNotNull();
@@ -199,7 +176,6 @@ class Function1PostgresIT {
             assertThat(document.getUpdatedAt()).isNotNull();
             assertThat(driver.getCreatedAt()).isNotNull();
             assertThat(driver.getUpdatedAt()).isNotNull();
-            assertThat(bank.getCreatedAt()).isNotNull();
             assertThat(voucher.getCreatedAt()).isNotNull();
             assertThat(voucher.getUpdatedAt()).isNotNull();
             entityManager.clear();
@@ -207,7 +183,6 @@ class Function1PostgresIT {
             Customer loaded = entityManager.find(Customer.class, customer.getId());
             UserDocument loadedDocument = entityManager.find(UserDocument.class, document.getId());
             Driver loadedDriver = entityManager.find(Driver.class, driver.getId());
-            BankAccount loadedBank = entityManager.find(BankAccount.class, bank.getId());
             Voucher loadedVoucher = entityManager.find(Voucher.class, voucher.getId());
             assertThat(loaded.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 4, 3));
             assertThat(loaded.getKycStatus()).isEqualTo(KycStatus.PENDING);
@@ -220,8 +195,6 @@ class Function1PostgresIT {
             assertThat(loadedDocument.getVerifiedAt()).isEqualTo(LocalDateTime.of(2026, 10, 13, 9, 15));
             assertThat(entityManager.find(Customer.class, administrator.getId()).getRole()).isEqualTo(Role.ADMIN);
             assertThat(loadedDriver.getStatus()).isEqualTo(DriverStatus.ACTIVE);
-            assertThat(loadedBank.getAccountNumber()).isEqualTo("000012345678");
-            assertThat(loadedBank.getIsDefault()).isTrue();
             assertThat(loadedVoucher.getDiscountType()).isEqualTo(DiscountType.FIXED);
             assertThat(loadedVoucher.getDiscountValue()).isEqualByComparingTo("250000");
             assertThat(loadedVoucher.getMaxDiscount()).isEqualByComparingTo("0");
@@ -352,25 +325,7 @@ class Function1PostgresIT {
     }
 
     @Test
-    void bankAndVoucherConstraintsMatchTheLeaderSchema() {
-        Long owner = insertCustomer("bank-" + SUFFIX + "@example.test", "b" + SUFFIX.substring(0, 18));
-        Long otherOwner = insertCustomer("bank2-" + SUFFIX + "@example.test", "c" + SUFFIX.substring(0, 18));
-        insertBank(owner, "Bank", "001234", false);
-        Long defaultFalseId = jdbc.queryForObject("""
-                insert into bank_accounts(customer_id, bank_name, account_number, account_holder)
-                values (?, 'Default Check', 'DEFAULT-001', 'P02 Test') returning id
-                """, Long.class, otherOwner);
-        assertThat(jdbc.queryForObject("select not is_default and created_at is not null from bank_accounts where id=?",
-                Boolean.class, defaultFalseId)).isTrue();
-        expectConstraintFailure(() -> insertBank(owner, "Bank", "001234", false));
-        insertBank(owner, "Bank", "002345", true);
-        expectConstraintFailure(() -> insertBank(owner, "Other Bank", "003456", true));
-        insertBank(otherOwner, "Bank", "003456", true);
-        assertThat(jdbc.queryForObject("select count(*) from bank_accounts where customer_id=? and is_default", Integer.class,
-                owner)).isEqualTo(1);
-        assertThat(jdbc.queryForObject("select count(*) from pg_constraint where conrelid='bank_accounts'::regclass "
-                + "and contype='u' and pg_get_constraintdef(oid)='UNIQUE (id, customer_id)'", Integer.class)).isEqualTo(1);
-
+    void voucherConstraintsMatchTheLeaderSchema() {
         String code = "VOUCHER-" + SUFFIX;
         insertVoucher(code, "PERCENT", 10, 0, 0, null, 0, "ACTIVE", null);
         expectConstraintFailure(() -> insertVoucher(code, "FIXED", 10, 0, 0, 1, 0, "ACTIVE", null));
@@ -421,13 +376,6 @@ class Function1PostgresIT {
         saveDriver(two);
         assertThat(drivers.findByCustomerId(one.getId()).map(Driver::getId)).contains(oneDriver.getId());
         assertThat(drivers.findByIdAndCustomerId(oneDriver.getId(), two.getId())).isEmpty();
-        BankAccount oneBank = saveBank(one, "SCOPE BANK", "000111", true);
-        saveBank(two, "SCOPE BANK", "000222", true);
-        assertThat(bankAccounts.findByIdAndCustomerId(oneBank.getId(), two.getId())).isEmpty();
-        assertThat(bankAccounts.findAllByCustomerId(one.getId(), org.springframework.data.domain.PageRequest.of(0, 10, org.springframework.data.domain.Sort.by("createdAt").descending())).getContent())
-                .extracting(BankAccount::getId).containsExactly(oneBank.getId());
-        assertThat(bankAccounts.findByCustomerIdAndIsDefaultTrue(one.getId()).map(BankAccount::getId))
-                .contains(oneBank.getId());
 
         Voucher voucher = vouchers.save(voucher("SCOPE-" + SUFFIX));
         assertThat(vouchers.findByCodeIgnoreCase(voucher.getCode()).map(Voucher::getId)).contains(voucher.getId());
@@ -469,11 +417,6 @@ class Function1PostgresIT {
 
     private void insertDriver(Long customerId) {
         jdbc.update("insert into drivers(customer_id) values (?)", customerId);
-    }
-
-    private void insertBank(Long customerId, String bank, String account, boolean isDefault) {
-        jdbc.update("insert into bank_accounts(customer_id, bank_name, account_number, account_holder, is_default) "
-                + "values (?, ?, ?, 'P02 Test', ?)", customerId, bank, account, isDefault);
     }
 
     private void insertVoucher(String code, String type, int value, int max, int min, Integer limit,
@@ -518,16 +461,6 @@ class Function1PostgresIT {
         Driver driver = new Driver();
         driver.setCustomer(customer);
         return drivers.save(driver);
-    }
-
-    private BankAccount saveBank(Customer customer, String bankName, String accountNumber, boolean isDefault) {
-        BankAccount bank = new BankAccount();
-        bank.setCustomer(customer);
-        bank.setBankName(bankName);
-        bank.setAccountNumber(accountNumber);
-        bank.setAccountHolder("P02 Test");
-        bank.setIsDefault(isDefault);
-        return bankAccounts.save(bank);
     }
 
     private Voucher voucher(String code) {

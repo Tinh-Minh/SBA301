@@ -24,7 +24,6 @@ import com.carrental.enums.DocumentType;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
-import com.carrental.service.ActionLogService;
 import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentReceipt;
 import com.carrental.storage.PrivateDocumentStorage;
@@ -131,12 +130,11 @@ class UserDocumentReviewPostgresIT {
     @MockitoSpyBean private UserDocumentRepository documents;
     @MockitoSpyBean private PrivateDocumentStorage storage;
     @MockitoSpyBean private CustomerRepository customers;
-    @MockitoSpyBean private ActionLogService actionLogService;
 
     @AfterEach
     void resetTestHooksAndClock() {
         TEST_CLOCK.set(Instant.now());
-        reset(transactionManager, documents, storage, customers, actionLogService);
+        reset(transactionManager, documents, storage, customers);
     }
 
     @AfterAll
@@ -1127,3 +1125,4 @@ class UserDocumentReviewPostgresIT {
         @Override public void close() { root.detachAppender(this); stop(); }
     }
 }
+

@@ -132,8 +132,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * Lớp phòng thủ cuối của DB: EXCLUDE chống trùng lịch (SQLSTATE 23P01),
-     * CHECK/trigger (23514), khóa ngoại (23503), unique (23505).
+     * Lớp phòng thủ cuối của DB: CHECK/trigger (23514), khóa ngoại (23503), unique (23505).
      */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
@@ -150,18 +149,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String detail = rootMessage(ex);
         log.warn("Data integrity failure traceId={} exceptionType={} detail={}",
                 RequestTraceFilter.currentTraceId(), ex.getClass().getSimpleName(), detail);
-        if (detail.contains("rental_orders_no_overlap") || detail.contains("car_slots_no_overlap")) {
-            return build(HttpStatus.CONFLICT, "SCHEDULE_OVERLAP", "Khung thời gian này đã có người đặt");
-        }
-        if (detail.contains("bank_account_id") || detail.contains("payouts")) {
-            return build(HttpStatus.BAD_REQUEST, "PAYOUT_BANK_ACCOUNT_REQUIRED", "Khoản chi trả phải có tài khoản ngân hàng hợp lệ của người nhận");
-        }
         return build(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION", "Dữ liệu vi phạm ràng buộc");
     }
 
     private boolean isFunction1Request(HttpServletRequest request) {
         String path = request.getServletPath();
-        return List.of("auth", "customers", "drivers", "user-documents", "bank-accounts", "vouchers").stream()
+        return List.of("auth", "customers", "drivers", "user-documents", "vouchers").stream()
                 .anyMatch(resource -> path.equals("/api/" + resource) || path.startsWith("/api/" + resource + "/"));
     }
 

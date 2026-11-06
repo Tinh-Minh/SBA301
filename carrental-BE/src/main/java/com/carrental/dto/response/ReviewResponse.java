@@ -9,6 +9,7 @@ public record ReviewResponse(
         Long carId,
         String carLicensePlate,
         String carBrandModel,
+        String carName,
         Long customerId,
         String customerName,
         String customerAvatar,
@@ -21,6 +22,7 @@ public record ReviewResponse(
         Long carId = r.getCar() != null ? r.getCar().getId() : null;
         String licensePlate = r.getCar() != null ? r.getCar().getLicensePlate() : null;
         String carBrandModel = r.getCar() != null ? (r.getCar().getBrand() + " " + r.getCar().getModel()) : null;
+        String carName = carBrandModel != null ? carBrandModel.trim() : null;
         Long customerId = r.getCustomer() != null ? r.getCustomer().getId() : null;
         String customerName = r.getCustomer() != null ? r.getCustomer().getFullName() : null;
         String customerAvatar = r.getCustomer() != null ? r.getCustomer().getAvatarUrl() : null;
@@ -30,6 +32,7 @@ public record ReviewResponse(
                 carId,
                 licensePlate,
                 carBrandModel,
+                carName,
                 customerId,
                 customerName,
                 customerAvatar,

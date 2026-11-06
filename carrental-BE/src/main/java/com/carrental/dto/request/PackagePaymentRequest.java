@@ -13,12 +13,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PackagePaymentRequest {
 
-    @NotNull(message = "subscriptionId không được để trống")
+    @NotNull(message = "Mã đăng ký gói (subscriptionId) không được để trống")
     private Long subscriptionId;
 
     @NotNull(message = "Phương thức thanh toán không được để trống")
-    private PaymentMethod method;
+    @Builder.Default
+    private PaymentMethod method = PaymentMethod.VNPAY;
 
     private String bankCode;
 }
-

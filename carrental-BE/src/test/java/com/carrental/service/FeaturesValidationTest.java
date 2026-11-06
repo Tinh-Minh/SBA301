@@ -59,7 +59,7 @@ class FeaturesValidationTest {
     @BeforeEach
     void setUp() {
         transactionService = new TransactionServiceImpl(
-                transactionRepository, carSubscriptionRepository, vnPayService, eventPublisher, currentUserService);
+                transactionRepository, carSubscriptionRepository, vnPayService, currentUserService);
         reviewService = new ReviewServiceImpl(reviewRepository, carRepository, currentUserService);
         dashboardService = new DashboardServiceImpl(transactionRepository, carRepository, listingPackageRepository);
 
@@ -80,11 +80,9 @@ class FeaturesValidationTest {
                 .customer(owner)
                 .car(car)
                 .listingPackage(pkg)
-                .packagePrice(BigDecimal.valueOf(180000))
-                .discountAmount(BigDecimal.ZERO)
                 .totalAmount(BigDecimal.valueOf(180000))
                 .status(SubscriptionStatus.PENDING_PAYMENT)
-                .paymentStatus(SubscriptionPaymentStatus.UNPAID)
+                .paymentStatus(PaymentStatus.UNPAID)
                 .build();
         subscription.setId(200L);
     }

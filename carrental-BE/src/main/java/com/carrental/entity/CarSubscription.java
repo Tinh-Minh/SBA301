@@ -1,6 +1,6 @@
 package com.carrental.entity;
 
-import com.carrental.enums.SubscriptionPaymentStatus;
+import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -36,25 +36,18 @@ public class CarSubscription extends BaseEntity {
     @JoinColumn(name = "voucher_id")
     private Voucher voucher;
 
-    @Column(name = "package_price", nullable = false, precision = 14, scale = 0)
-    private BigDecimal packagePrice;
-
-    @Column(name = "discount_amount", nullable = false, precision = 14, scale = 0)
-    @Builder.Default
-    private BigDecimal discountAmount = BigDecimal.ZERO;
-
-    @Column(name = "total_amount", nullable = false, precision = 14, scale = 0)
+    @Column(name = "total_amount", nullable = false)
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(nullable = false, length = 20)
     @Builder.Default
     private SubscriptionStatus status = SubscriptionStatus.PENDING_PAYMENT;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false, length = 20)
     @Builder.Default
-    private SubscriptionPaymentStatus paymentStatus = SubscriptionPaymentStatus.UNPAID;
+    private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
@@ -65,4 +58,3 @@ public class CarSubscription extends BaseEntity {
     @Column(name = "activated_at")
     private LocalDateTime activatedAt;
 }
-

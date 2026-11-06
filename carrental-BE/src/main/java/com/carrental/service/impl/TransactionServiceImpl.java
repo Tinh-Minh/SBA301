@@ -7,22 +7,19 @@ import com.carrental.entity.CarSubscription;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Transaction;
 import com.carrental.enums.PaymentMethod;
-import com.carrental.enums.SubscriptionPaymentStatus;
+import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.SubscriptionStatus;
 import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.TransactionType;
-import com.carrental.event.PaymentCompletedEvent;
 import com.carrental.exception.AppException;
 import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.repository.TransactionRepository;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
-import com.carrental.util.TimeUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,7 +38,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final TransactionRepository transactionRepository;
     private final CarSubscriptionRepository carSubscriptionRepository;
     private final VNPayService vnPayService;
-    private final ApplicationEventPublisher eventPublisher;
     private final CurrentUserService currentUserService;
 
     @Override
@@ -57,7 +53,7 @@ public class TransactionServiceImpl implements TransactionService {
             throw new AppException(HttpStatus.FORBIDDEN, "Chỉ chủ xe sở hữu gói đăng ký mới được thực hiện thanh toán");
         }
 
-        if (subscription.getStatus() == SubscriptionStatus.ACTIVE || subscription.getPaymentStatus() == SubscriptionPaymentStatus.PAID) {
+        if (subscription.getStatus() == SubscriptionStatus.ACTIVE || subscription.getPaymentStatus() == PaymentStatus.PAID) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Gói đăng tin này đã được thanh toán và kích hoạt");
         }
 
@@ -105,10 +101,10 @@ public class TransactionServiceImpl implements TransactionService {
         validateOwnerAccess(transaction);
 
         if (transaction.getStatus() != TransactionStatus.PENDING) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Giao dịch không ở trạng thái chờ thanh toán");
+            throw new AppException(HttpStatus.BAD_REQUEST, "Giao dịch không ở trạng thái chờ thanh toán (PENDING)");
         }
 
-        return vnPayService.createPaymentUrl(transactionId, bankCode, request);
+        return vnPayService.createPaymentUrl(transaction.getId(), bankCode, request);
     }
 
     @Override
