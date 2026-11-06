@@ -29,6 +29,8 @@ public enum ErrorCode {
     BANK_DEFAULT_CONFLICT(HttpStatus.CONFLICT, "Tài khoản mặc định đã thay đổi đồng thời"),
     VOUCHER_CODE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Mã voucher đã tồn tại"),
     VOUCHER_USAGE_LIMIT_CONFLICT(HttpStatus.CONFLICT, "Giới hạn sử dụng thấp hơn số lượt hiện tại"),
+    LISTING_PACKAGE_CODE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Mã gói đăng tin đã tồn tại"),
+    LISTING_PACKAGE_DURATION_IN_USE(HttpStatus.CONFLICT, "Không thể đổi thời hạn của gói đã được sử dụng"),
     DEPENDENCY_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ phụ thuộc tạm thời không khả dụng"),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Đã xảy ra lỗi hệ thống");
 

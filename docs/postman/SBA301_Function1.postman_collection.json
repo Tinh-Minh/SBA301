@@ -38,7 +38,7 @@
                   "  c.set('p11_requestId', pm.variables.replaceIn('{{$guid}}'));",
                   "  c.set('p11_initialized','true');",
                   "  c.set('p11_customerEmail','p11.'+runId+'.customer@example.test'); c.set('p11_peerEmail','p11.'+runId+'.peer@example.test');",
-                  "  c.set('p11_customerPhone','09'+digits.slice(0,10)); c.set('p11_peerPhone','08'+digits.slice(1,11));",
+                  "  c.set('p11_customerPhone','09'+digits.slice(0,8)); c.set('p11_peerPhone','08'+digits.slice(1,9));",
                   "  c.set('p11_bankNumberOne','00'+runId.slice(0,24)+'01'); c.set('p11_bankNumberTwo','00'+runId.slice(0,24)+'02'); c.set('p11_bankNumberThree','00'+runId.slice(0,24)+'03');",
                   "  c.set('p11_customerPassword','C4rRental!'+runId.slice(0,12)); c.set('p11_peerPassword','P33rRental!'+runId.slice(0,12));",
                   "  c.set('p11_customerName','P11 Customer '+runId.slice(0,8)); c.set('p11_peerName','P11 Peer '+runId.slice(0,8));",

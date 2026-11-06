@@ -30,8 +30,8 @@ export const getMyProfile = () => request(endpoints.customers.me);
 /** GET /api/customers/me/kyc */
 export const getMyKyc = () => request(endpoints.customers.meKyc);
 
-/** PATCH /api/customers/me — fullName, dateOfBirth, address, email, phone, avatarUrl. */
-export function updateMyProfile({ fullName, dateOfBirth, address, email, phone, avatarUrl }) {
+/** PUT /api/customers/me — profile and listing contact fields. */
+export function updateMyProfile({ fullName, dateOfBirth, address, email, phone, avatarUrl, zaloPhone, contactNote }) {
     const json = {};
     if (fullName !== undefined)
         json.fullName = fullName;
@@ -45,7 +45,11 @@ export function updateMyProfile({ fullName, dateOfBirth, address, email, phone, 
         json.phone = phone.trim().replace(/\s+/g, "");
     if (avatarUrl !== undefined)
         json.avatarUrl = avatarUrl?.trim() ? avatarUrl.trim() : null;
-    return request(endpoints.customers.me, { method: "PATCH", json });
+    if (zaloPhone !== undefined)
+        json.zaloPhone = zaloPhone?.trim() ? zaloPhone.trim() : null;
+    if (contactNote !== undefined)
+        json.contactNote = contactNote?.trim() ? contactNote.trim() : null;
+    return request(endpoints.customers.me, { method: "PUT", json });
 }
 
 /** ADMIN: GET /api/customers?status&kycStatus&keyword&page&size&sort */

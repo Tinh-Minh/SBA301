@@ -41,7 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class CustomerServiceImpl implements CustomerService {
 
-    private static final Pattern PHONE = Pattern.compile("^(?:\\+84|0)[0-9]{8,14}$");
+    private static final Pattern PHONE = Pattern.compile("^0[0-9]{9}$");
+
     private static final char LIKE_ESCAPE = '\\';
 
     private final CustomerRepository customers;
@@ -81,6 +82,8 @@ public class CustomerServiceImpl implements CustomerService {
         String email = request.emailWasProvided() ? normalizedEmail(request.getEmail()) : null;
         String phone = request.phoneWasProvided() ? normalizedPhone(request.getPhone()) : null;
         String avatarUrl = request.avatarUrlWasProvided() ? normalizedAvatar(request.getAvatarUrl()) : null;
+        String zaloPhone = request.zaloPhoneWasProvided() ? normalizedZaloPhone(request.getZaloPhone()) : null;
+        String contactNote = request.contactNoteWasProvided() ? normalizedContactNote(request.getContactNote()) : null;
 
         if (request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail())) {
             customers.findByEmailIgnoreCase(email)
@@ -93,7 +96,8 @@ public class CustomerServiceImpl implements CustomerService {
                     .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
         }
 
-        boolean changed = applyProfileUpdate(customer, request, fullName, dateOfBirth, address, email, phone, avatarUrl);
+        boolean changed = applyProfileUpdate(customer, request, fullName, dateOfBirth, address, email, phone,
+                avatarUrl, zaloPhone, contactNote);
         if (changed) {
             customers.flush();
             // The database trigger is authoritative for updated_at; reload it after the write.
@@ -237,6 +241,20 @@ public class CustomerServiceImpl implements CustomerService {
         return avatar;
     }
 
+    private String normalizedZaloPhone(String value) {
+        if (value == null) return null;
+        String normalized = value.strip();
+        if (normalized.length() > 20) throw fieldError("zaloPhone", "Số Zalo tối đa 20 ký tự");
+        return normalized.isEmpty() ? null : normalized;
+    }
+
+    private String normalizedContactNote(String value) {
+        if (value == null) return null;
+        String normalized = value.strip();
+        if (normalized.length() > 255) throw fieldError("contactNote", "Ghi chú liên hệ tối đa 255 ký tự");
+        return normalized.isEmpty() ? null : normalized;
+    }
+
     private String validateStatusRequest(ChangeCustomerStatusRequest request) {
         if (request == null || !request.statusWasProvided() || !request.reasonWasProvided() || request.getStatus() == null) {
             throw new AppException(ErrorCode.INVALID_REQUEST);
@@ -257,7 +275,8 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private static boolean applyProfileUpdate(Customer customer, UpdateProfileRequest request, String fullName,
-            LocalDate dateOfBirth, String address, String email, String phone, String avatarUrl) {
+            LocalDate dateOfBirth, String address, String email, String phone, String avatarUrl,
+            String zaloPhone, String contactNote) {
         boolean changed = false;
         if (request.fullNameWasProvided() && !Objects.equals(fullName, customer.getFullName())) {
             customer.setFullName(fullName);
@@ -282,6 +301,14 @@ public class CustomerServiceImpl implements CustomerService {
         }
         if (request.avatarUrlWasProvided() && !Objects.equals(avatarUrl, customer.getAvatarUrl())) {
             customer.setAvatarUrl(avatarUrl);
+            changed = true;
+        }
+        if (request.zaloPhoneWasProvided() && !Objects.equals(zaloPhone, customer.getZaloPhone())) {
+            customer.setZaloPhone(zaloPhone);
+            changed = true;
+        }
+        if (request.contactNoteWasProvided() && !Objects.equals(contactNote, customer.getContactNote())) {
+            customer.setContactNote(contactNote);
             changed = true;
         }
         return changed;

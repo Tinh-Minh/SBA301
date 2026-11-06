@@ -156,19 +156,29 @@ class Function1WorkflowPostgresIT {
             assertThat(json(health).path("data").path("status").asText()).isEqualTo("UP");
             JsonNode own = json(assertSuccess(send("GET", "/api/customers/me", customerToken, null), 200)).path("data");
             assertFields(own, "id", "fullName", "email", "phone", "dateOfBirth", "address", "avatarUrl",
-                    "emailVerified", "kycStatus", "role", "status", "createdAt", "updatedAt");
+                    "zaloPhone", "contactNote", "emailVerified", "kycStatus", "role", "status", "createdAt", "updatedAt");
             assertThat(own.path("id").asLong()).isEqualTo(customer.id());
             assertThat(own.path("role").asText()).isEqualTo("CUSTOMER");
             assertThat(own.path("status").asText()).isEqualTo("ACTIVE");
             assertThat(own.path("kycStatus").asText()).isEqualTo("NONE");
 
-            JsonNode profile = json(assertSuccess(send("PATCH", "/api/customers/me", customerToken,
-                    "{\"fullName\":\"P10 Profile Updated\",\"dateOfBirth\":\"1990-01-02\",\"address\":\"Synthetic address\"}"), 200)).path("data");
+            JsonNode profile = json(assertSuccess(send("PUT", "/api/customers/me", customerToken,
+                    "{\"fullName\":\"P10 Profile Updated\",\"dateOfBirth\":\"1990-01-02\",\"address\":\"Synthetic address\",\"zaloPhone\":\"0901234567\",\"contactNote\":\"Call after 5pm\"}"), 200)).path("data");
             assertFields(profile, "id", "fullName", "email", "phone", "dateOfBirth", "address", "avatarUrl",
-                    "emailVerified", "kycStatus", "role", "status", "createdAt", "updatedAt");
+                    "zaloPhone", "contactNote", "emailVerified", "kycStatus", "role", "status", "createdAt", "updatedAt");
             assertThat(profile.path("fullName").asText()).isEqualTo("P10 Profile Updated");
+            assertThat(profile.path("zaloPhone").asText()).isEqualTo("0901234567");
+            assertThat(profile.path("contactNote").asText()).isEqualTo("Call after 5pm");
             assertThat(jdbc.queryForObject("select full_name from customers where id=?", String.class, customer.id()))
                     .isEqualTo("P10 Profile Updated");
+            assertThat(jdbc.queryForObject("select zalo_phone from customers where id=?", String.class, customer.id()))
+                    .isEqualTo("0901234567");
+            assertThat(jdbc.queryForObject("select contact_note from customers where id=?", String.class, customer.id()))
+                    .isEqualTo("Call after 5pm");
+
+            JsonNode patchedProfile = json(assertSuccess(send("PATCH", "/api/customers/me", customerToken,
+                    "{\"contactNote\":null}"), 200)).path("data");
+            assertThat(patchedProfile.path("contactNote").isNull()).isTrue();
 
             assertError(send("PATCH", "/api/customers/me", customerToken, "{\"fullName\":null}"),
                     400, "VALIDATION_ERROR");
@@ -285,6 +295,13 @@ class Function1WorkflowPostgresIT {
             long bankOneId = bankOne.path("id").asLong();
             assertThat(bankOne.path("isDefault").asBoolean()).isFalse();
             assertThat(bankOne.path("accountNumberMasked").asText()).doesNotContain(fullAccountNumber);
+            HttpResponse<String> duplicateBank = send("POST", "/api/bank-accounts", customerToken,
+                    "{\"bankName\":\"P10 Synthetic Bank\",\"accountNumber\":\"" + fullAccountNumber
+                            + "\",\"accountHolder\":\"P10 Synthetic Owner\"}");
+            assertError(duplicateBank, 409, "BANK_ACCOUNT_ALREADY_EXISTS");
+            assertThat(duplicateBank.body()).doesNotContain(fullAccountNumber);
+            assertThat(jdbc.queryForObject("select count(*) from bank_accounts where customer_id=?", Integer.class,
+                    customer.id())).isEqualTo(1);
             String bankTwoNumber = "0020" + suffix.substring(0, 12);
             JsonNode bankTwo = json(assertSuccess(send("POST", "/api/bank-accounts", customerToken,
                     "{\"bankName\":\"P10 Synthetic Bank\",\"accountNumber\":\"" + bankTwoNumber
@@ -303,6 +320,10 @@ class Function1WorkflowPostgresIT {
             assertSuccess(send("DELETE", "/api/bank-accounts/" + bankOneId, customerToken, null), 200);
             assertThat(jdbc.queryForObject("select count(*) from bank_accounts where customer_id=? and is_default", Integer.class,
                     customer.id())).isZero();
+            JsonNode bankPage = json(assertSuccess(send("GET", "/api/bank-accounts?page=0&size=20", customerToken, null), 200))
+                    .path("data");
+            assertThat(bankPage.path("content").size()).isEqualTo(2);
+            assertThat(bankPage.path("content").toString()).doesNotContain(fullAccountNumber, bankTwoNumber);
             assertError(send("GET", "/api/bank-accounts/" + bankTwoId, peerToken, null), 404, "RESOURCE_NOT_FOUND");
             assertError(send("GET", "/api/bank-accounts/" + bankTwoId, adminToken, null), 404, "RESOURCE_NOT_FOUND");
 
@@ -469,11 +490,11 @@ class Function1WorkflowPostgresIT {
                     .isEqualTo("VERIFIED");
 
             List<String> captured = logs.messages();
-            assertThat(captured).anyMatch(line -> line.contains("action=document-review"));
-            assertThat(captured).anyMatch(line -> line.contains("action=driver-status"));
-            assertThat(captured).anyMatch(line -> line.contains("action=bank-account-create"));
-            assertThat(captured.stream().filter(line -> line.contains("action=bank-account-default")).count()).isEqualTo(1);
-            assertThat(captured).anyMatch(line -> line.contains("action=voucher-create"));
+            assertThat(captured).anyMatch(line -> line.contains("document-review actorId="));
+            assertThat(captured).anyMatch(line -> line.contains("driver-change actorId="));
+            assertThat(captured).anyMatch(line -> line.contains("bank-account-create ownerId="));
+            assertThat(captured.stream().filter(line -> line.contains("bank-account-default ownerId=")).count()).isEqualTo(1);
+            assertThat(captured).anyMatch(line -> line.contains("voucher-create actorId="));
             assertThat(captured).noneMatch(line -> line.contains(customerToken) || line.contains(peerToken)
                     || line.contains(adminToken) || line.contains(privateMarker) || line.contains(fullAccountNumber)
                     || line.contains(bankTwoNumber) || line.contains("P10-PASSPORT-" + suffix)

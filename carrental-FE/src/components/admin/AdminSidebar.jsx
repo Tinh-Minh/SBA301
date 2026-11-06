@@ -18,7 +18,8 @@ export function AdminSidebar({ user, path, navigation, homeHref, badges }) {
       {navigation.map(item => {
             const selected = item.href === homeHref ? path === item.href : path.startsWith(item.href);
             const count = item.badgeKey ? badges[item.badgeKey] : 0;
-            return <Link key={item.href} to={item.href} aria-current={selected ? "page" : undefined} className={`flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-sm transition-all ${selected ? "bg-[#FC6C26] font-semibold text-white shadow-sm" : "font-medium text-[#292929] hover:bg-[#F7F7F5]"}`}>
+            const selectedClass = selected ? item.href === "/admin/packages" ? "bg-[#B9430C] font-semibold text-white shadow-sm" : "bg-[#FC6C26] font-semibold text-white shadow-sm" : "font-medium text-[#292929] hover:bg-[#F7F7F5]";
+            return <Link key={item.href} to={item.href} aria-current={selected ? "page" : undefined} className={`flex items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-sm transition-all ${selectedClass}`}>
           <span className="flex min-w-0 items-center gap-2.5">
             <Icon name={item.icon} className={`text-[19px] ${selected ? "text-white" : "text-[#666666]"}`}/>
             <span className="whitespace-nowrap">{item.label}</span>

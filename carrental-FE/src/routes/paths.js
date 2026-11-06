@@ -1,6 +1,7 @@
 export const pageTitles = {
     "": "Mở lối mọi hành trình",
     "pricing": "Cách tính giá thuê xe",
+    "packages": "Gói đăng tin",
     "explore": "Khám phá xe",
     "cars/vinfast-vf8-plus-2024": "VinFast VF 8 Plus",
     "login": "Đăng nhập",
@@ -58,6 +59,7 @@ export const adminRoutes = {
     users: "/admin/users",
     vehicles: "/admin/vehicles",
     vouchers: "/admin/vouchers",
+    packages: "/admin/packages",
     orders: "/admin/orders",
     payouts: "/admin/payouts",
     disputes: "/admin/disputes",

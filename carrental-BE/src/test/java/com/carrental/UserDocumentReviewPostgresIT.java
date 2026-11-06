@@ -546,8 +546,8 @@ class UserDocumentReviewPostgresIT {
             String status = mapper.readTree(winner.body()).path("data").path("document").path("verifyStatus").asText();
             String expectedKyc = status.equals("APPROVED") ? "VERIFIED" : "REJECTED";
             assertThat(jdbc.queryForObject("select kyc_status from customers where id=?", String.class, owner.id())).isEqualTo(expectedKyc);
-            assertThat(logs.rendered()).contains("action=document-review").doesNotContain("concurrent decision", owner.email());
-            assertThat(logs.events().stream().filter(event -> event.getFormattedMessage().contains("action=document-review")).count())
+            assertThat(logs.rendered()).contains("document-review actorId=").doesNotContain("concurrent decision", owner.email());
+            assertThat(logs.events().stream().filter(event -> event.getFormattedMessage().contains("document-review actorId=")).count())
                     .isEqualTo(1);
         }
         System.out.println("P06_REVIEW_RACE sameDocument=one200_one409 successLog=1 lostUpdate=false");
@@ -784,14 +784,13 @@ class UserDocumentReviewPostgresIT {
                 assertThat(mapper.readTree(current.body()).path("data").path("kycStatus").asText()).isEqualTo("PENDING");
                 String reviewTrace = reviewed.headers().firstValue(RequestTraceFilter.HEADER_NAME).orElseThrow();
                 List<ILoggingEvent> committedReviewEvents = logs.events().stream()
-                        .filter(event -> event.getFormattedMessage().contains("action=document-review "))
-                        .filter(event -> event.getFormattedMessage().contains("traceId=" + reviewTrace))
+                        .filter(event -> event.getFormattedMessage().contains("document-review actorId="))
+                        .filter(event -> reviewTrace.equals(event.getMDCPropertyMap().get("traceId")))
                         .toList();
                 assertThat(committedReviewEvents).hasSize(1);
                 assertThat(committedReviewEvents.get(0).getFormattedMessage())
                         .contains("ownerId=" + owner.id(), "documentId=" + existing.id(),
-                                "oldStatus=PENDING", "newStatus=REJECTED", "oldKyc=NONE", "newKyc=PENDING",
-                                "reasonProvided=true");
+                                "PENDING -> REJECTED", "kyc NONE -> PENDING", "reasonProvided=true");
                 assertThat(logs.rendered()).doesNotContain(privateReason, submittedNumber, oldNumber,
                         owner.email(), owner.name(), PRIVATE_ROOT.toString(), existing.front(), existing.back(), newFront);
                 System.out.println("P06_REVIEW_UPLOAD_DB_CONTENTION upload=201_PENDING review=200_REJECTED "

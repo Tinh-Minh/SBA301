@@ -25,8 +25,7 @@ public final class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Số điện thoại không được để trống")
-    @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự")
-    @Pattern(regexp = "^(?:\\+84|0)[0-9]{8,14}$", message = "Số điện thoại không đúng định dạng")
+    @Pattern(regexp = "^0[0-9]{9}$", message = "Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0")
     private String phone;
 
     @NotBlank(message = "Mật khẩu không được để trống")

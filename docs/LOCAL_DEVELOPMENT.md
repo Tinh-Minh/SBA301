@@ -113,3 +113,14 @@ Invoke-WebRequest 'http://127.0.0.1:8080/api/health' | Select-Object StatusCode,
 ```
 
 The endpoint returns HTTP 200 and `data.status=UP`; it reports that the web application is running. Schema validation is a separate startup check. It does not mean that security, storage, or other services are healthy.
+
+## F1new update — 2026-11-06
+
+This section records the current profile/package/voucher update. The existing guide above remains the source for earlier P01–P10 runtime and test setup.
+
+- `PUT /api/customers/me` updates supplied profile fields, including `zaloPhone` (20 characters maximum) and `contactNote` (255 maximum). Omitted fields remain unchanged. Existing `PATCH` clients remain supported.
+- `GET /api/packages` is public and returns active packages by descending priority. Admins can list all packages, including inactive, with `GET /api/admin/packages`; create and update with `POST /api/admin/packages` and `PUT /api/admin/packages/{id}`. Hide a package with `isActive=false`; there is no delete endpoint.
+- `GET /api/vouchers` remains the existing ADMIN management list. The customer catalog preserves `GET /api/vouchers/available?packageId=...` because it is already used by the frontend and needs a package price to decide eligibility. It checks active status, time window, minimum package amount, global quota, and per-user quota. Pending subscriptions reserve one per-user use; cancelled and refunded subscriptions do not. A purchase flow must recheck quotas transactionally.
+- For this update, `sqlnew.md` is used as the code/test contract only. Its SQL was not executed; production migrations and `docs/reference/` were not changed. PostgreSQL test-only fixture SQL lives under `src/test/resources/db/migration/it-support` and is intended for disposable Testcontainers databases only.
+- The current build's `clean verify` runs Failsafe tests. If Docker/Testcontainers is unavailable, use `-DskipITs` only to verify the unit/contract portion; report PostgreSQL integration as SKIPPED. Do not connect these tests to the shared Supabase database.
+- This scope does not perform payment or create `car_subscription` rows.

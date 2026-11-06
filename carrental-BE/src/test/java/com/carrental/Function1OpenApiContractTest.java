@@ -7,17 +7,23 @@ import static org.mockito.Mockito.mock;
 import com.carrental.config.DocumentProperties;
 import com.carrental.config.CustomerProperties;
 import com.carrental.controller.AuthController;
+import com.carrental.controller.BankAccountController;
 import com.carrental.controller.CustomerController;
 import com.carrental.controller.DriverController;
 import com.carrental.controller.HealthController;
+import com.carrental.controller.ListingPackageController;
 import com.carrental.controller.UserDocumentController;
 import com.carrental.controller.VoucherController;
+import com.carrental.controller.VoucherCatalogController;
 import com.carrental.service.AuthService;
+import com.carrental.service.BankAccountService;
 import com.carrental.service.CustomerService;
 import com.carrental.service.DriverService;
 import com.carrental.service.KycService;
+import com.carrental.service.ListingPackageService;
 import com.carrental.service.UserDocumentService;
 import com.carrental.service.VoucherService;
+import com.carrental.service.VoucherCatalogService;
 import com.carrental.web.UserDocumentMultipartReader;
 import com.carrental.dto.request.auth.LoginRequest;
 import com.carrental.dto.request.auth.ChangePasswordRequest;
@@ -28,10 +34,12 @@ import com.carrental.dto.request.customer.UpdateProfileRequest;
 import com.carrental.dto.request.document.ReviewUserDocumentRequest;
 import com.carrental.dto.request.document.UserDocumentListQuery;
 import com.carrental.dto.request.driver.ChangeDriverStatusRequest;
+import com.carrental.dto.request.bankaccount.CreateBankAccountRequest;
 import com.carrental.dto.request.voucher.ChangeVoucherStatusRequest;
 import com.carrental.dto.request.voucher.CreateVoucherRequest;
 import com.carrental.dto.request.voucher.UpdateVoucherAdminRequest;
 import com.carrental.dto.response.CustomerAdminResponse;
+import com.carrental.dto.response.BankAccountResponse;
 import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.CustomerSummaryResponse;
 import com.carrental.dto.response.DriverEligibilityResponse;
@@ -39,12 +47,16 @@ import com.carrental.dto.response.DriverResponse;
 import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.dto.response.HealthResponse;
 import com.carrental.dto.response.KycSummaryResponse;
+import com.carrental.dto.response.ListingPackageResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.TokenResponse;
 import com.carrental.dto.response.UserDocumentDetailResponse;
 import com.carrental.dto.response.UserDocumentReviewResponse;
 import com.carrental.dto.response.UserDocumentSummaryResponse;
 import com.carrental.dto.response.VoucherResponse;
+import com.carrental.dto.response.VoucherCatalogResponse;
+import com.carrental.dto.request.listingpackage.ListingPackageCreateRequest;
+import com.carrental.dto.request.listingpackage.ListingPackageUpdateRequest;
 import com.carrental.enums.VoucherWindowState;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
@@ -91,6 +103,19 @@ class Function1OpenApiContractTest {
     private final JsonMapper mapper = JsonMapper.builder().build();
 
     @Test
+    void bankAccountRequestDefaultsMakeDefaultToFalseAndStripsPayeeText() throws Exception {
+        CreateBankAccountRequest request = mapper.readValue(
+                "{\"bankName\":\"  Synthetic Bank  \",\"accountNumber\":\" 001234 \","
+                        + "\"accountHolder\":\" Synthetic Owner \"}",
+                CreateBankAccountRequest.class);
+
+        assertThat(request.makeDefault()).isFalse();
+        assertThat(request.normalizedBankName()).isEqualTo("Synthetic Bank");
+        assertThat(request.normalizedAccountNumber()).isEqualTo("001234");
+        assertThat(request.normalizedAccountHolder()).isEqualTo("Synthetic Owner");
+    }
+
+    @Test
     void staticOpenApiParitiesWithActualMvcMethodsAndDeclaresTheRuntimeContract() throws Exception {
         JsonNode root = mapper.readTree(Files.readString(SPEC));
         assertThat(root.path("openapi").asText()).isEqualTo("3.1.0");
@@ -116,9 +141,10 @@ class Function1OpenApiContractTest {
         Map<String, Set<String>> actualConsumes = new java.util.HashMap<>();
         mappings.getHandlerMethods().forEach((mapping, handler) -> {
             if (!handler.getBeanType().getPackageName().equals("com.carrental.controller")) return;
-            if (!Set.of(AuthController.class, CustomerController.class,
+            if (!Set.of(AuthController.class, BankAccountController.class, CustomerController.class,
                     DriverController.class, HealthController.class, UserDocumentController.class,
-                    VoucherController.class).contains(handler.getBeanType())) return;
+                    VoucherController.class, ListingPackageController.class,
+                    VoucherCatalogController.class).contains(handler.getBeanType())) return;
             Set<String> pathsForMapping = mapping.getPathPatternsCondition().getPatternValues();
             Set<RequestMethod> methods = mapping.getMethodsCondition().getMethods();
             Set<String> consumes = mapping.getConsumesCondition().getConsumableMediaTypes().stream()
@@ -129,8 +155,9 @@ class Function1OpenApiContractTest {
                 actualConsumes.put(key, consumes);
             }));
         });
+        // Every documented Function 1 route must have a live Spring MVC handler.
         assertThat(documented).containsExactlyInAnyOrderElementsOf(actual);
-        assertThat(actual).hasSize(33);
+        assertThat(actual).hasSize(40);
         actual.forEach(key -> {
             String[] pair = key.split(" ", 2);
             JsonNode operation = paths.path(pair[1]).path(pair[0].toLowerCase(java.util.Locale.ROOT));
@@ -151,6 +178,13 @@ class Function1OpenApiContractTest {
                 .path("responses").path("200").path("content").has("image/jpeg")).isTrue();
         assertThat(paths.path("/api/user-documents/{id}/files/{side}").path("get")
                 .path("responses").path("200").path("content").has("image/png")).isTrue();
+        assertThat(paths.path("/api/customers/me").has("put")).isTrue();
+        assertThat(paths.path("/api/customers/me").has("patch")).isTrue();
+        assertThat(paths.path("/api/packages").path("get").isMissingNode()).isFalse();
+        assertThat(paths.path("/api/admin/packages").has("post")).isTrue();
+        assertThat(paths.path("/api/admin/packages/{id}").has("put")).isTrue();
+        assertThat(paths.path("/api/vouchers/available").path("get").path("parameters").toString())
+                .contains("packageId");
         assertThat(paths.path("/api/vouchers").path("post").path("x-required-roles").toString()).contains("ADMIN");
         assertThat(root.path("components").path("schemas").path("RegisterRequest").path("required").toString())
                 .contains("fullName", "email", "phone", "password");
@@ -187,6 +221,16 @@ class Function1OpenApiContractTest {
                     .as("OpenAPI request fields reflect bean allowlist %s", schemaName)
                     .containsExactlyInAnyOrderElementsOf(beanPropertyNames(dtoType));
         });
+        Map<String, Class<?>> packageRequestRecords = Map.of(
+                "ListingPackageCreateRequest", ListingPackageCreateRequest.class,
+                "ListingPackageUpdateRequest", ListingPackageUpdateRequest.class,
+                "BankAccountRequest", CreateBankAccountRequest.class);
+        packageRequestRecords.forEach((schemaName, recordType) -> {
+            assertThat(schemas.path(schemaName).path("additionalProperties").asBoolean()).isFalse();
+            assertThat(objectPropertyNames(schemas.path(schemaName)))
+                    .as("package request fields reflect %s record components", schemaName)
+                    .containsExactlyInAnyOrderElementsOf(recordComponentNames(recordType));
+        });
         Set<String> multipartFields = new HashSet<>(staticStringSet(UserDocumentMultipartReader.class, "SCALARS"));
         multipartFields.addAll(staticStringSet(UserDocumentMultipartReader.class, "FILES"));
         assertThat(schemas.path("DocumentUpload").path("additionalProperties").asBoolean()).isFalse();
@@ -198,6 +242,7 @@ class Function1OpenApiContractTest {
                 "/api/customers", Map.entry(CustomerListQuery.class, "ALLOWED_PARAMETERS"),
                 "/api/user-documents", Map.entry(UserDocumentListQuery.class, "ALLOWED"),
                 "/api/drivers", Map.entry(DriverListQuery.class, "ALLOWED_PARAMETERS"),
+                "/api/bank-accounts", Map.entry(BankAccountController.class, "LIST_PARAMETERS"),
                 "/api/vouchers", Map.entry(VoucherListQuery.class, "ALLOWED"));
         for (var entry : queryParserSets.entrySet()) {
             Set<String> documented = new HashSet<>();
@@ -270,6 +315,13 @@ class Function1OpenApiContractTest {
     void requestSchemasEncodeKnownValidationAndConditionalRules() throws Exception {
         JsonNode root = mapper.readTree(Files.readString(SPEC));
         JsonNode schemas = root.path("components").path("schemas");
+        for (String schemaName : List.of("RegisterRequest", "ProfilePatch")) {
+            JsonNode phone = schemas.path(schemaName).path("properties").path("phone");
+            assertThat(phone.path("pattern").asText()).isEqualTo("^0[0-9]{9}$");
+            assertThat(schemaAccepts(root, phone, mapper.readTree("\"0978042331\""))).isTrue();
+            assertThat(schemaAccepts(root, phone, mapper.readTree("\"097804233\""))).isFalse();
+            assertThat(schemaAccepts(root, phone, mapper.readTree("\"+84978042331\""))).isFalse();
+        }
         assertSchema(root, schemas.path("ProfilePatch"), "{\"address\":\"" + "A".repeat(300) + "\"}", true);
         assertSchema(root, schemas.path("ProfilePatch"), "{\"address\":\"x\"}", true);
         assertSchema(root, schemas.path("ProfilePatch"), "{\"dateOfBirth\":null,\"address\":null}", true);
@@ -339,13 +391,16 @@ class Function1OpenApiContractTest {
                 Map.entry("Document", UserDocumentDetailResponse.class),
                 Map.entry("DocumentReview", UserDocumentReviewResponse.class),
                 Map.entry("Driver", DriverResponse.class),
+                Map.entry("BankAccount", BankAccountResponse.class),
                 Map.entry("Eligibility", DriverEligibilityResponse.class),
                 Map.entry("Voucher", VoucherResponse.class),
                 Map.entry("Page", PageResponse.class),
                 Map.entry("Health", HealthResponse.class),
                 Map.entry("CustomerAdmin", CustomerAdminResponse.class),
                 Map.entry("CustomerSummary", CustomerSummaryResponse.class),
-                Map.entry("DocumentSummary", UserDocumentSummaryResponse.class));
+                Map.entry("DocumentSummary", UserDocumentSummaryResponse.class),
+                Map.entry("ListingPackage", ListingPackageResponse.class),
+                Map.entry("VoucherCatalog", VoucherCatalogResponse.class));
         records.forEach((schemaName, recordType) -> {
             Set<String> serializedNames = recordComponentNames(recordType);
             assertThat(objectPropertyNames(schemas.path(schemaName)))
@@ -601,6 +656,9 @@ class Function1OpenApiContractTest {
     @org.springframework.web.servlet.config.annotation.EnableWebMvc
     static class MvcConfiguration {
         @Bean AuthController authController() { return new AuthController(mock(AuthService.class)); }
+        @Bean BankAccountController bankAccountController() {
+            return new BankAccountController(mock(BankAccountService.class), new CustomerProperties());
+        }
         @Bean HealthController healthController() { return new HealthController(); }
         @Bean CustomerController customerController() {
             return new CustomerController(mock(CustomerService.class), new com.carrental.config.CustomerProperties(),
@@ -615,6 +673,12 @@ class Function1OpenApiContractTest {
         }
         @Bean VoucherController voucherController() {
             return new VoucherController(mock(VoucherService.class), new com.carrental.config.CustomerProperties());
+        }
+        @Bean ListingPackageController listingPackageController() {
+            return new ListingPackageController(mock(ListingPackageService.class));
+        }
+        @Bean VoucherCatalogController voucherCatalogController() {
+            return new VoucherCatalogController(mock(VoucherCatalogService.class));
         }
     }
 }

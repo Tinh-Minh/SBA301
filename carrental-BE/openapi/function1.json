@@ -682,6 +682,30 @@
             }
           }
         }
+      },
+      "put": {
+        "operationId": "customers_me_put",
+        "summary": "Update own profile fields, including Zalo and contact note.",
+        "description": "Omitted fields remain unchanged. PATCH remains supported for existing clients.",
+        "tags": ["customers"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProfilePatch" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated profile",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } }
+          },
+          "400": { "description": "Validation or request error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorEnvelope" } } } },
+          "401": { "description": "Authentication required" }
+        },
+        "x-required-roles": ["CUSTOMER", "ADMIN"],
+        "x-response-cache": "no-store; traceId equals X-Request-ID."
       }
     },
     "/api/customers/me/kyc": {
@@ -5287,6 +5311,81 @@
         ]
       }
     },
+    "/api/packages": {
+      "get": {
+        "operationId": "packages_public_list",
+        "summary": "List active listing packages.",
+        "tags": ["listing-packages"],
+        "responses": {
+          "200": {
+            "description": "Active packages sorted by priority.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/SuccessEnvelope" },
+                    { "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/ListingPackage" } } } }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/api/admin/packages": {
+      "get": {
+        "operationId": "packages_admin_list",
+        "summary": "List all listing packages, including hidden packages.",
+        "tags": ["listing-packages"],
+        "responses": { "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } },
+        "x-required-roles": ["ADMIN"]
+      },
+      "post": {
+        "operationId": "packages_admin_create",
+        "summary": "Create a listing package.",
+        "tags": ["listing-packages"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListingPackageCreateRequest" } } } },
+        "responses": { "201": { "description": "Created", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } },
+        "x-required-roles": ["ADMIN"]
+      }
+    },
+    "/api/admin/packages/{id}": {
+      "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }],
+      "get": {
+        "operationId": "packages_admin_get",
+        "summary": "Read one listing package.",
+        "tags": ["listing-packages"],
+        "responses": { "200": { "description": "Success", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } },
+        "x-required-roles": ["ADMIN"]
+      },
+      "put": {
+        "operationId": "packages_admin_update",
+        "summary": "Update a listing package; code is immutable.",
+        "tags": ["listing-packages"],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ListingPackageUpdateRequest" } } } },
+        "responses": { "200": { "description": "Updated", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SuccessEnvelope" } } } } },
+        "x-required-roles": ["ADMIN"]
+      }
+    },
+    "/api/vouchers/available": {
+      "get": {
+        "operationId": "vouchers_customer_available_for_package",
+        "summary": "List currently usable voucher candidates for an active package.",
+        "description": "Preserves the existing customer catalog route and filters active status, current time window, package min_order_amount, remaining global quota, and per-user quota. Pending subscriptions reserve a per-user use; cancelled and refunded subscriptions do not. Purchase must revalidate both quotas atomically.",
+        "tags": ["vouchers"],
+        "parameters": [{ "name": "packageId", "in": "query", "required": true, "schema": { "$ref": "#/components/schemas/Id" } }],
+        "responses": {
+          "200": {
+            "description": "Voucher candidates; usage counters are omitted.",
+            "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/SuccessEnvelope" }, { "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/VoucherCatalog" } } } } ] } } }
+          },
+          "401": { "description": "Authentication required" },
+          "404": { "description": "No active package with the supplied id" }
+        }
+      }
+    },
     "/api/vouchers": {
       "post": {
         "operationId": "vouchers_admin_create",
@@ -6726,6 +6825,14 @@
               "null"
             ]
           },
+          "zaloPhone": {
+            "type": ["string", "null"],
+            "maxLength": 20
+          },
+          "contactNote": {
+            "type": ["string", "null"],
+            "maxLength": 255
+          },
           "emailVerified": {
             "type": "boolean"
           }
@@ -6738,6 +6845,8 @@
           "dateOfBirth",
           "address",
           "avatarUrl",
+          "zaloPhone",
+          "contactNote",
           "emailVerified",
           "kycStatus",
           "role",
@@ -7269,10 +7378,10 @@
           },
           "phone": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 20,
-            "pattern": "\\S",
-            "description": "Trimmed on binding, nonblank, max 20 Java UTF-16 code units at runtime."
+            "minLength": 10,
+            "maxLength": 10,
+            "pattern": "^0[0-9]{9}$",
+            "description": "Exactly 10 digits, starting with 0. Trimmed on binding before validation."
           },
           "password": {
             "type": "string",
@@ -7344,10 +7453,10 @@
           },
           "phone": {
             "type": "string",
-            "minLength": 1,
-            "maxLength": 20,
-            "pattern": "\\S",
-            "description": "Trimmed on binding, nonblank, max 20 Java UTF-16 code units at runtime."
+            "minLength": 10,
+            "maxLength": 10,
+            "pattern": "^0[0-9]{9}$",
+            "description": "Exactly 10 digits, starting with 0. Trimmed on binding before validation."
           },
           "avatarUrl": {
             "type": [
@@ -7356,9 +7465,82 @@
             ],
             "maxLength": 500,
             "description": "Null or blank clears; other values are stripped and limited to 500 UTF-16 code units."
+          },
+          "zaloPhone": {
+            "type": ["string", "null"],
+            "maxLength": 20,
+            "description": "Null or blank clears; values are stripped and limited to 20 UTF-16 code units."
+          },
+          "contactNote": {
+            "type": ["string", "null"],
+            "maxLength": 255,
+            "description": "Null or blank clears; values are stripped and limited to 255 UTF-16 code units."
           }
         },
-        "description": "Omitted fields are unchanged. fullName must be non-null/nonblank when present. dateOfBirth and address accept null to clear. Runtime strips text before validation; fullName/address limits use Java String.length() UTF-16 code units after strip, while JSON Schema maxLength counts Unicode code points and cannot model strip semantics exactly. Future dateOfBirth is rejected using the configured Clock. email and phone must be non-null and unique when supplied. Changing email resets emailVerified to false. avatarUrl accepts null to clear."
+        "description": "Omitted fields are unchanged. fullName must be non-null/nonblank when present. dateOfBirth, address, avatarUrl, zaloPhone and contactNote accept null to clear. Runtime strips text before validation; text length limits use Java String.length() UTF-16 code units after strip. Future dateOfBirth is rejected using the configured Clock. email and phone must be non-null and unique when supplied. Changing email resets emailVerified to false."
+      },
+      "ListingPackage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "code", "price", "durationDays", "priorityLevel", "badgeLabel", "description", "isActive", "createdAt", "updatedAt"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/Id" },
+          "name": { "type": "string", "maxLength": 100 },
+          "code": { "type": "string", "maxLength": 50 },
+          "price": { "type": "integer", "minimum": 0, "maximum": 99999999999999 },
+          "durationDays": { "type": "integer", "minimum": 1 },
+          "priorityLevel": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "badgeLabel": { "type": "string", "maxLength": 50 },
+          "description": { "type": ["string", "null"] },
+          "isActive": { "type": "boolean" },
+          "createdAt": { "type": "string", "format": "local-date-time" },
+          "updatedAt": { "type": "string", "format": "local-date-time" }
+        }
+      },
+      "ListingPackageCreateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "code", "price", "durationDays", "priorityLevel"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "code": { "type": "string", "minLength": 1, "maxLength": 50, "pattern": "^[A-Za-z0-9_-]+$" },
+          "price": { "type": "integer", "minimum": 0, "maximum": 99999999999999 },
+          "durationDays": { "type": "integer", "minimum": 1 },
+          "priorityLevel": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "badgeLabel": { "type": ["string", "null"], "maxLength": 50 },
+          "description": { "type": ["string", "null"] },
+          "isActive": { "type": ["boolean", "null"] }
+        }
+      },
+      "ListingPackageUpdateRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "price", "durationDays", "priorityLevel", "isActive"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "price": { "type": "integer", "minimum": 0, "maximum": 99999999999999 },
+          "durationDays": { "type": "integer", "minimum": 1 },
+          "priorityLevel": { "type": "integer", "minimum": 1, "maximum": 3 },
+          "badgeLabel": { "type": ["string", "null"], "maxLength": 50 },
+          "description": { "type": ["string", "null"] },
+          "isActive": { "type": "boolean" }
+        }
+      },
+      "VoucherCatalog": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "code", "description", "discountType", "discountValue", "maxDiscount", "minOrderAmount", "startAt", "endAt"],
+        "properties": {
+          "id": { "$ref": "#/components/schemas/Id" },
+          "code": { "type": "string" },
+          "description": { "type": ["string", "null"] },
+          "discountType": { "type": "string", "enum": ["PERCENT", "FIXED"] },
+          "discountValue": { "type": "integer", "minimum": 1 },
+          "maxDiscount": { "type": ["integer", "null"] },
+          "minOrderAmount": { "type": "integer", "minimum": 0 },
+          "startAt": { "type": "string", "format": "local-date-time" },
+          "endAt": { "type": "string", "format": "local-date-time" }
+        }
       },
       "CustomerStatus": {
         "type": "object",

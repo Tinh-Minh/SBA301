@@ -48,6 +48,8 @@ spring.sql.init.mode=never
 
 **App không tự tạo/sửa/xóa bảng Supabase hoặc chạy lại baseline.** Thiếu bảng/cột/type/trigger/quyền thì đối chiếu với leader bằng [bảng59 trường](22_ENTITY_SCHEMA_FIELD_MAP.md). Không bật `ddl-auto=update` theo ví dụ quickstart vì dự án đã có schema leader. File migration F1 hiện có phục vụ database test trống; không áp dụng nó lên Supabase đã có dữ liệu.
 
+Runtime giữ `spring.sql.init.mode=never`; ứng dụng không nạp `seed_data.sql` hoặc `seed_values.sql`. Các file seed legacy có lệnh phá hủy schema/bảng và không được chạy trên Supabase của nhóm. Schema/seed hiện tại do leader quản lý ngoài runtime ứng dụng.
+
 SQL leader có RLS. Database role trong JDBC phải có quyền phù hợp với mô hình backend của nhóm. Spring JWT CUSTOMER/ADMIN không tự biến thành Supabase `auth.uid()` hoặc PostgreSQL roles. Lỗi permission/RLS cần leader kiểm tra grant/policy/role; không tắt RLS hay tự tạo policy để app chạy qua. Audit hiện tại **chưa kết nối Supabase thật**, vì credentials bạn chưa điền.
 
 ## 4. JWT, storage, CORS, ADMIN

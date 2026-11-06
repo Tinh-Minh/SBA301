@@ -172,7 +172,7 @@
   button,select,summary { cursor:pointer; }
   button,input,select,textarea { font-family:inherit; }
   input,select,textarea { accent-color:rgb(var(--color-brand-accent)); }
-  :focus-visible { outline:2px solid rgb(var(--color-brand-accent));outline-offset:3px; }
+  :focus-visible { outline:2px solid #B9430C;outline-offset:3px; }
   h1,h2,h3 { text-wrap:balance; }
   img { max-width:100%; }
   .material-symbols-outlined { font-size:24px; }

@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController
 @RequestMapping(path = "/api/customers", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -56,6 +57,14 @@ public class CustomerController {
 
     @PatchMapping(path = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateMe(
+            @AuthenticationPrincipal CurrentAccount account,
+            @RequestBody UpdateProfileRequest request) {
+        return ok(customerService.updateMe(account, request));
+    }
+
+    /** PUT is the current Function 1 contract; PATCH remains for existing clients. */
+    @PutMapping(path = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> replaceMeFields(
             @AuthenticationPrincipal CurrentAccount account,
             @RequestBody UpdateProfileRequest request) {
         return ok(customerService.updateMe(account, request));
