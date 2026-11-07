@@ -106,15 +106,7 @@ public class CarCreateRequest {
     @Size(max = 20, message = "Số Zalo liên hệ tối đa 20 ký tự")
     private String contactZalo;
 
-    // Trường tương thích backward-compatibility
-    private BigDecimal pricePerHour;
-    private BigDecimal pricePerDay;
-    private BigDecimal depositAmount;
-    private Integer kmLimitPerDay;
-    private BigDecimal extraKmFee;
-
     public Car toEntity() {
-        BigDecimal dayPrice = this.rentalPricePerDay != null ? this.rentalPricePerDay : this.pricePerDay;
         return Car.builder()
                 .licensePlate(this.licensePlate != null ? this.licensePlate.trim().toUpperCase(Locale.ROOT) : null)
                 .brand(this.brand)
@@ -132,16 +124,11 @@ public class CarCreateRequest {
                 .pickupAddress(this.pickupAddress)
                 .latitude(this.latitude)
                 .longitude(this.longitude)
-                .rentalPricePerDay(dayPrice)
+                .rentalPricePerDay(this.rentalPricePerDay)
                 .rentalPricePerMonth(this.rentalPricePerMonth)
                 .contactName(this.contactName)
                 .contactPhone(this.contactPhone)
                 .contactZalo(this.contactZalo)
-                .pricePerHour(this.pricePerHour != null ? this.pricePerHour : BigDecimal.ZERO)
-                .pricePerDay(dayPrice != null ? dayPrice : BigDecimal.ZERO)
-                .depositAmount(this.depositAmount != null ? this.depositAmount : BigDecimal.ZERO)
-                .kmLimitPerDay(this.kmLimitPerDay)
-                .extraKmFee(this.extraKmFee)
                 .status(CarStatus.PENDING_APPROVAL)
                 .listingStatus(ListingStatus.UNLISTED)
                 .build();

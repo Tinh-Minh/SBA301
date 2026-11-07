@@ -175,11 +175,6 @@ CREATE TABLE cars (
                          CHECK (listing_status IN ('UNLISTED', 'LISTED', 'EXPIRED')),
                          
     current_subscription_id BIGINT,   -- GÃ³i Ä‘Äƒng tin Ä‘ang Ã¡p dá»¥ng gáº§n nháº¥t
-    price_per_hour          NUMERIC(14,0) DEFAULT 0,
-    price_per_day           NUMERIC(14,0) DEFAULT 0,
-    deposit_amount          NUMERIC(14,0) DEFAULT 0,
-    km_limit_per_day        INT,
-    extra_km_fee            NUMERIC(14,0),
     created_at              TIMESTAMP    NOT NULL DEFAULT vn_now(),
     updated_at           TIMESTAMP    NOT NULL DEFAULT vn_now()
 );

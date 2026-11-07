@@ -283,16 +283,10 @@ public class CarServiceImpl implements CarService {
                     ps.add(cb.greaterThanOrEqualTo(root.get("seats"), seats));
                 }
                 if (minPrice != null) {
-                    ps.add(cb.or(
-                            cb.greaterThanOrEqualTo(root.get("rentalPricePerDay"), minPrice),
-                            cb.greaterThanOrEqualTo(root.get("pricePerDay"), minPrice)
-                    ));
+                    ps.add(cb.greaterThanOrEqualTo(root.get("rentalPricePerDay"), minPrice));
                 }
                 if (maxPrice != null) {
-                    ps.add(cb.or(
-                            cb.lessThanOrEqualTo(root.get("rentalPricePerDay"), maxPrice),
-                            cb.lessThanOrEqualTo(root.get("pricePerDay"), maxPrice)
-                    ));
+                    ps.add(cb.lessThanOrEqualTo(root.get("rentalPricePerDay"), maxPrice));
                 }
                 return cb.and(ps.toArray(new Predicate[0]));
             };

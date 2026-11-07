@@ -114,23 +114,4 @@ public class Car extends BaseEntity {
     // Gói subscription đang áp dụng gần nhất
     @Column(name = "current_subscription_id")
     private Long currentSubscriptionId;
-
-    // Trường tương thích backward-compatibility (nếu còn dùng)
-    @Column(name = "price_per_hour", precision = 14, scale = 0)
-    @Builder.Default
-    private BigDecimal pricePerHour = BigDecimal.ZERO;
-
-    @Column(name = "price_per_day", precision = 14, scale = 0)
-    @Builder.Default
-    private BigDecimal pricePerDay = BigDecimal.ZERO;
-
-    @Column(name = "deposit_amount", precision = 14, scale = 0)
-    @Builder.Default
-    private BigDecimal depositAmount = BigDecimal.ZERO;
-
-    @Column(name = "km_limit_per_day")
-    private Integer kmLimitPerDay;
-
-    @Column(name = "extra_km_fee", precision = 14, scale = 0)
-    private BigDecimal extraKmFee;
 }
