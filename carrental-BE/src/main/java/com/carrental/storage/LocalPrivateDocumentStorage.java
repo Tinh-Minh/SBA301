@@ -125,13 +125,23 @@ public final class LocalPrivateDocumentStorage implements PrivateDocumentStorage
     }
 
     private Path storageRoot(String configured) {
-        if (configured == null || configured.isBlank()) throw new IllegalStateException("Private storage root is required");
-        Path path = Path.of(configured).normalize().toAbsolutePath();
-        if (Files.isSymbolicLink(path)) {
+        Path basePath = Path.of(System.getProperty("user.dir", ".")).toAbsolutePath().normalize();
+        Path targetPath;
+        if (configured == null || configured.isBlank()) {
+            targetPath = basePath.resolve("storage/private-documents");
+        } else {
+            Path raw = Path.of(configured).normalize();
+            targetPath = raw.isAbsolute() ? raw : basePath.resolve(raw);
+        }
+        targetPath = targetPath.toAbsolutePath().normalize();
+        if (Files.isSymbolicLink(targetPath)) {
             throw new IllegalStateException("Private storage cannot be a symbolic link");
         }
-        try { return Files.createDirectories(path).toRealPath(); }
-        catch (IOException exception) { throw new IllegalStateException("Private storage is unavailable", exception); }
+        try {
+            return Files.createDirectories(targetPath).toRealPath();
+        } catch (IOException exception) {
+            throw new IllegalStateException("Private storage is unavailable: " + targetPath, exception);
+        }
     }
 
     private Path safePath(String locator) {
