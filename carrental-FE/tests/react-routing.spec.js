@@ -48,7 +48,7 @@ test("aliases preserve query strings and hashes, including dynamic IDs", async (
   await page.goto("/xe/42?slotId=7");
   await expect(page).toHaveURL(/\/cars\/42\?slotId=7$/);
   await page.goto("/don-thue/42?created=1");
-  await expect(page).toHaveURL(/\/orders\/42\?created=1$/);
+  await expect(page).toHaveURL(/\/owner\/subscriptions\?created=1$/);
 });
 
 test("React links and browser history navigate without reloading the document", async ({ page }) => {

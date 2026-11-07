@@ -4,6 +4,7 @@ const customer = { id: 1, fullName: "Structure Customer", email: "structure@exam
 const car = { id: 42, ownerId: 1, brand: "Structure", model: "SUV", licensePlate: "51K-12345", manufactureYear: 2024, seats: 7, carType: "SUV", transmission: "AUTOMATIC", fuelType: "ELECTRIC", city: "HCM", pickupAddress: "Test pickup", status: "ACTIVE", pricePerDay: 1000000, pricePerHour: 100000, depositAmount: 0, images: [], features: "[]" };
 const order = { id: 7, orderCode: "STRUCTURE-007", carId: 42, carName: "Structure SUV", customerId: 1, customerName: customer.fullName, ownerId: 1, ownerName: "Structure Owner", licensePlate: car.licensePlate, rentalType: "DAILY", status: "CONFIRMED", paymentStatus: "UNPAID", unitPrice: 1000000, quantity: 2, rentalAmount: 2000000, totalAmount: 2000000, commissionRate: 10, startTime: "2026-10-25T08:00:00", endTime: "2026-10-27T08:00:00", createdAt: "2026-10-24T08:00:00", expiresAt: "2099-10-25T08:00:00" };
 const payout = { id: 3, orderId: 7, recipientId: 1, recipientName: customer.fullName, orderCode: order.orderCode, grossAmount: 2000000, platformFee: 200000, netAmount: 1800000, status: "PENDING", createdAt: order.createdAt };
+const subscription = { id: 9, subscriptionCode: "SUB-20261107-0009", customerId: 1, customerName: customer.fullName, carId: 42, carName: "Structure SUV", licensePlate: "51K-12345", packageId: 2, packageName: "Gói Tiêu Chuẩn", totalAmount: 180000, status: "ACTIVE", paymentStatus: "PAID", startDate: null, endDate: null, daysRemaining: 18 };
 const pageOf = content => ({ content, totalElements: content.length, totalPages: 1, number: 0, size: 50 });
 
 async function backend(page) {
@@ -21,6 +22,8 @@ async function backend(page) {
       case "/api/cars/my-cars": case "/api/admin/cars": data = pageOf([car]); break;
       case "/api/cars/42/documents": case "/api/orders/7/handovers": case "/api/orders/7/logs": data = []; break;
       case "/api/orders/7": data = order; break;
+      case "/api/subscriptions/my-subscriptions": case "/api/admin/subscriptions": data = pageOf([subscription]); break;
+      case "/api/subscriptions/packages": data = []; break;
       case "/api/orders": case "/api/orders/my-rentals": case "/api/orders/my-cars": data = pageOf([order, { ...order, id: 8, orderCode: "STRUCTURE-008", status: "PENDING" }]); break;
       case "/api/bank-accounts": data = pageOf([{ id: 2, bankName: "Structure Bank", accountHolder: customer.fullName, accountNumberMasked: "******1234", isDefault: true }]); break;
       case "/api/drivers/me": data = { id: 1, status: "ACTIVE", createdAt: order.createdAt }; break;
@@ -59,7 +62,7 @@ test("booking, payment, review, and dispute features render loaded order data", 
 
 test("owner features render loaded vehicles, requests, trips, calendar, and payouts", async ({ page }) => {
   const errors = await backend(page);
-  for (const path of ["/owner/dashboard", "/owner/vehicles", "/owner/requests", "/owner/trips", "/owner/calendar", "/owner/payouts"]) {
+  for (const path of ["/owner/dashboard", "/owner/vehicles", "/owner/subscriptions", "/owner/subscriptions/new", "/owner/calendar", "/owner/payouts"]) {
     await visit(page, path, path.endsWith("/payouts") ? "Structure Bank" : "Structure SUV");
   }
   expect(errors).toEqual([]);
@@ -67,7 +70,7 @@ test("owner features render loaded vehicles, requests, trips, calendar, and payo
 
 test("admin features render loaded users, cars, orders, dashboard, and payouts", async ({ page }) => {
   const errors = await backend(page);
-  for (const [path, text] of [["/admin/dashboard", "STRUCTURE-007"], ["/admin/users", customer.email], ["/admin/vehicles", "Structure SUV"], ["/admin/orders", "STRUCTURE-007"], ["/admin/payouts", "STRUCTURE-007"]]) {
+  for (const [path, text] of [["/admin/dashboard", "STRUCTURE-007"], ["/admin/users", customer.email], ["/admin/vehicles", "Structure SUV"], ["/admin/subscriptions", subscription.subscriptionCode], ["/admin/payouts", "STRUCTURE-007"]]) {
     await visit(page, path, text);
   }
   expect(errors).toEqual([]);
