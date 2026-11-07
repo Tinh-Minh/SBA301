@@ -12,7 +12,7 @@ export default function Home() {
         <main>
             <section className="journey-hero" data-car-stop="hero" id="journey-hero">
                 <div className="journey-hero-top"><span>CarDB / Kết nối người thuê và chủ xe</span><span>TP. Hồ Chí Minh, Việt Nam</span></div>
-                <h1><span className="journey-title-line journey-title-line--first">CHỌN CHIẾC XE.</span><span className="journey-title-line journey-title-line--second">MỞ HÀNH TRÌNH.</span></h1>
+                <h1><span className="journey-title-line journey-title-line--first">CẦM LÁI.</span><span className="journey-title-line journey-title-line--second">MỞ LỐI.</span></h1>
                 <div className="journey-hero-bottom"><p>Hãy khiến hành trình<br />mang dấu ấn của bạn.</p><a href="#journey-search">Cuộn để khởi hành <span aria-hidden="true">↓</span></a></div>
             </section>
             <section className="journey-search" data-car-stop="search" id="journey-search">

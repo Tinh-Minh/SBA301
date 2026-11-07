@@ -9,7 +9,7 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-canvas canvas { display:block;width:100%;height:100%; }
 .journey-hero { container-type:inline-size;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 65%,#fff,#ededdf 75%); }
 .journey-hero-top { display:flex;justify-content:space-between;font-size:11px;color:#7b7b71; }
-.journey-hero h1 { z-index:1;position:relative;margin:clamp(14px,3dvh,34px) 0 0;font-size:clamp(2rem,min(9.5cqi,16dvh),10rem);font-weight:900;letter-spacing:-.025em;word-spacing:.04em;line-height:1.1; }
+.journey-hero h1 { z-index:1;position:relative;margin:clamp(14px,3dvh,34px) 0 0;font-size:clamp(2rem,min(15cqi,18dvh),12rem);font-weight:900;letter-spacing:-.025em;word-spacing:.04em;line-height:1.1; }
 .journey-hero h1 .journey-title-line--second { padding-left:18vw;color:#c7c7bb; }
 .journey-hero-bottom { position:relative;z-index:6;margin-top:auto;display:flex;justify-content:space-between;align-items:end;gap:20px; }
 .journey-hero-bottom p { font-size:clamp(12px,1.3vw,18px);line-height:1.35;font-weight:500; }
@@ -126,7 +126,7 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
  .journey-listing-filters button { padding:6px 12px; }.journey-listing > img,.journey-listing-no-image { height:12dvh; }.journey-listing-body { gap:6px;padding:10px; }
  .home-journey-page main > [data-car-stop] { padding:18px 24px; }
  .journey-hero-top span:last-child { display:none; }.journey-hero-top { font-size:9px; }
- .journey-hero h1 { font-size:clamp(1.25rem,min(10cqi,8dvh),3.75rem);margin-top:20px; }.journey-hero h1 .journey-title-line--second { padding-left:6vw; }
+ .journey-hero h1 { font-size:clamp(2rem,min(20cqi,12dvh),5.5rem);margin-top:20px; }.journey-hero h1 .journey-title-line--second { padding-left:6vw; }
  .journey-hero-bottom p { font-size:11px; }.journey-hero-bottom a { gap:8px;font-size:10px; }.journey-hero-bottom a span { height:28px;width:28px;font-size:16px; }
  .journey-copy,.journey-drive > .journey-copy { max-width:100%; }
  .journey-copy h2,.journey-steps .journey-copy h2,.journey-faq h2 { font-size:clamp(1.35rem,min(9cqi,5dvh),2.25rem); }
