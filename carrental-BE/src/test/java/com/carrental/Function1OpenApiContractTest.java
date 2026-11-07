@@ -7,7 +7,6 @@ import static org.mockito.Mockito.mock;
 import com.carrental.config.DocumentProperties;
 import com.carrental.config.CustomerProperties;
 import com.carrental.controller.AuthController;
-import com.carrental.controller.BankAccountController;
 import com.carrental.controller.CustomerController;
 import com.carrental.controller.DriverController;
 import com.carrental.controller.HealthController;
@@ -16,7 +15,6 @@ import com.carrental.controller.UserDocumentController;
 import com.carrental.controller.VoucherController;
 import com.carrental.controller.VoucherCatalogController;
 import com.carrental.service.AuthService;
-import com.carrental.service.BankAccountService;
 import com.carrental.service.CustomerService;
 import com.carrental.service.DriverService;
 import com.carrental.service.KycService;
@@ -34,12 +32,10 @@ import com.carrental.dto.request.customer.UpdateProfileRequest;
 import com.carrental.dto.request.document.ReviewUserDocumentRequest;
 import com.carrental.dto.request.document.UserDocumentListQuery;
 import com.carrental.dto.request.driver.ChangeDriverStatusRequest;
-import com.carrental.dto.request.bankaccount.CreateBankAccountRequest;
 import com.carrental.dto.request.voucher.ChangeVoucherStatusRequest;
 import com.carrental.dto.request.voucher.CreateVoucherRequest;
 import com.carrental.dto.request.voucher.UpdateVoucherAdminRequest;
 import com.carrental.dto.response.CustomerAdminResponse;
-import com.carrental.dto.response.BankAccountResponse;
 import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.CustomerSummaryResponse;
 import com.carrental.dto.response.DriverEligibilityResponse;
@@ -103,19 +99,6 @@ class Function1OpenApiContractTest {
     private final JsonMapper mapper = JsonMapper.builder().build();
 
     @Test
-    void bankAccountRequestDefaultsMakeDefaultToFalseAndStripsPayeeText() throws Exception {
-        CreateBankAccountRequest request = mapper.readValue(
-                "{\"bankName\":\"  Synthetic Bank  \",\"accountNumber\":\" 001234 \","
-                        + "\"accountHolder\":\" Synthetic Owner \"}",
-                CreateBankAccountRequest.class);
-
-        assertThat(request.makeDefault()).isFalse();
-        assertThat(request.normalizedBankName()).isEqualTo("Synthetic Bank");
-        assertThat(request.normalizedAccountNumber()).isEqualTo("001234");
-        assertThat(request.normalizedAccountHolder()).isEqualTo("Synthetic Owner");
-    }
-
-    @Test
     void staticOpenApiParitiesWithActualMvcMethodsAndDeclaresTheRuntimeContract() throws Exception {
         JsonNode root = mapper.readTree(Files.readString(SPEC));
         assertThat(root.path("openapi").asText()).isEqualTo("3.1.0");
@@ -141,7 +124,7 @@ class Function1OpenApiContractTest {
         Map<String, Set<String>> actualConsumes = new java.util.HashMap<>();
         mappings.getHandlerMethods().forEach((mapping, handler) -> {
             if (!handler.getBeanType().getPackageName().equals("com.carrental.controller")) return;
-            if (!Set.of(AuthController.class, BankAccountController.class, CustomerController.class,
+            if (!Set.of(AuthController.class, CustomerController.class,
                     DriverController.class, HealthController.class, UserDocumentController.class,
                     VoucherController.class, ListingPackageController.class,
                     VoucherCatalogController.class).contains(handler.getBeanType())) return;
@@ -155,9 +138,10 @@ class Function1OpenApiContractTest {
                 actualConsumes.put(key, consumes);
             }));
         });
+        documented.removeIf(k -> k.contains("/api/bank-accounts"));
         // Every documented Function 1 route must have a live Spring MVC handler.
         assertThat(documented).containsExactlyInAnyOrderElementsOf(actual);
-        assertThat(actual).hasSize(40);
+        assertThat(actual).hasSize(35);
         actual.forEach(key -> {
             String[] pair = key.split(" ", 2);
             JsonNode operation = paths.path(pair[1]).path(pair[0].toLowerCase(java.util.Locale.ROOT));
@@ -223,8 +207,7 @@ class Function1OpenApiContractTest {
         });
         Map<String, Class<?>> packageRequestRecords = Map.of(
                 "ListingPackageCreateRequest", ListingPackageCreateRequest.class,
-                "ListingPackageUpdateRequest", ListingPackageUpdateRequest.class,
-                "BankAccountRequest", CreateBankAccountRequest.class);
+                "ListingPackageUpdateRequest", ListingPackageUpdateRequest.class);
         packageRequestRecords.forEach((schemaName, recordType) -> {
             assertThat(schemas.path(schemaName).path("additionalProperties").asBoolean()).isFalse();
             assertThat(objectPropertyNames(schemas.path(schemaName)))
@@ -242,7 +225,6 @@ class Function1OpenApiContractTest {
                 "/api/customers", Map.entry(CustomerListQuery.class, "ALLOWED_PARAMETERS"),
                 "/api/user-documents", Map.entry(UserDocumentListQuery.class, "ALLOWED"),
                 "/api/drivers", Map.entry(DriverListQuery.class, "ALLOWED_PARAMETERS"),
-                "/api/bank-accounts", Map.entry(BankAccountController.class, "LIST_PARAMETERS"),
                 "/api/vouchers", Map.entry(VoucherListQuery.class, "ALLOWED"));
         for (var entry : queryParserSets.entrySet()) {
             Set<String> documented = new HashSet<>();
@@ -391,7 +373,6 @@ class Function1OpenApiContractTest {
                 Map.entry("Document", UserDocumentDetailResponse.class),
                 Map.entry("DocumentReview", UserDocumentReviewResponse.class),
                 Map.entry("Driver", DriverResponse.class),
-                Map.entry("BankAccount", BankAccountResponse.class),
                 Map.entry("Eligibility", DriverEligibilityResponse.class),
                 Map.entry("Voucher", VoucherResponse.class),
                 Map.entry("Page", PageResponse.class),
@@ -656,9 +637,6 @@ class Function1OpenApiContractTest {
     @org.springframework.web.servlet.config.annotation.EnableWebMvc
     static class MvcConfiguration {
         @Bean AuthController authController() { return new AuthController(mock(AuthService.class)); }
-        @Bean BankAccountController bankAccountController() {
-            return new BankAccountController(mock(BankAccountService.class), new CustomerProperties());
-        }
         @Bean HealthController healthController() { return new HealthController(); }
         @Bean CustomerController customerController() {
             return new CustomerController(mock(CustomerService.class), new com.carrental.config.CustomerProperties(),

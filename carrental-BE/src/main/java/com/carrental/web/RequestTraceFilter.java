@@ -35,12 +35,6 @@ public class RequestTraceFilter extends OncePerRequestFilter {
                 rejectRequest(response, traceId);
                 return;
             }
-            if (isBankAccountBodylessCommand(request)
-                    && (request.getQueryString() != null || request.getInputStream().read() != -1)) {
-                // Run before Spring's multipart resolver so it cannot consume a body before the route guard.
-                rejectRequest(response, traceId);
-                return;
-            }
             filterChain.doFilter(request, response);
         } finally {
             MDC.remove(MDC_KEY);
@@ -53,13 +47,6 @@ public class RequestTraceFilter extends OncePerRequestFilter {
 
     private boolean isDriverCreate(HttpServletRequest request) {
         return "POST".equals(request.getMethod()) && "/api/drivers".equals(request.getServletPath());
-    }
-
-    private boolean isBankAccountBodylessCommand(HttpServletRequest request) {
-        String path = request.getServletPath();
-        if ("PATCH".equals(request.getMethod())) return path.matches("/api/bank-accounts/[^/]+/default");
-        if ("DELETE".equals(request.getMethod())) return path.matches("/api/bank-accounts/[^/]+");
-        return false;
     }
 
     private void rejectRequest(HttpServletResponse response, String traceId) throws IOException {
