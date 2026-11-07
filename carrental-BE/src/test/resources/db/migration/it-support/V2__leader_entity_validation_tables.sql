@@ -245,7 +245,7 @@ CREATE TABLE payouts (
     created_at                TIMESTAMP    NOT NULL DEFAULT vn_now(),
     updated_at                TIMESTAMP    NOT NULL DEFAULT vn_now(),
     -- tài khoản ngân hàng phải thuộc đúng người nhận
-    FOREIGN KEY (bank_account_id, recipient_id) REFERENCES bank_accounts (id, customer_id),
+    -- FOREIGN KEY (bank_account_id, recipient_id) REFERENCES bank_accounts (id, customer_id),
     -- khoản chi trả đã PAID thì bắt buộc có tài khoản nhận tiền
     CHECK (status <> 'PAID' OR bank_account_id IS NOT NULL)
 );

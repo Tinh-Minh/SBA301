@@ -68,19 +68,6 @@ CREATE TABLE public.drivers (
     updated_at      TIMESTAMP    NOT NULL DEFAULT public.vn_now()
 );
 
-CREATE TABLE public.bank_accounts (
-    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    customer_id     BIGINT       NOT NULL REFERENCES public.customers(id) ON DELETE CASCADE,
-    bank_name       VARCHAR(100) NOT NULL,
-    account_number  VARCHAR(30)  NOT NULL,
-    account_holder  VARCHAR(150) NOT NULL,
-    is_default      BOOLEAN      NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMP    NOT NULL DEFAULT public.vn_now(),
-    UNIQUE (customer_id, bank_name, account_number),
-    UNIQUE (id, customer_id)
-);
-CREATE UNIQUE INDEX uq_bank_default_per_customer ON public.bank_accounts (customer_id) WHERE is_default;
-
 CREATE TABLE public.vouchers (
     id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code             VARCHAR(50)  NOT NULL UNIQUE,
@@ -116,10 +103,8 @@ CREATE TRIGGER trg_vouchers_updated_at
     FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 CREATE INDEX idx_user_documents_customer ON public.user_documents (customer_id);
-CREATE INDEX idx_bank_accounts_customer ON public.bank_accounts (customer_id);
 
 ALTER TABLE public.customers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.drivers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.bank_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;

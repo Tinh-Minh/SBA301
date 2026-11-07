@@ -82,7 +82,7 @@ public record CarResponse(
         List<CarDocumentResponse> docList = documents == null ? Collections.emptyList() :
                 documents.stream().map(CarDocumentResponse::from).toList();
 
-        BigDecimal dayPrice = car.getRentalPricePerDay() != null ? car.getRentalPricePerDay() : car.getPricePerDay();
+        BigDecimal dayPrice = car.getRentalPricePerDay() != null ? car.getRentalPricePerDay() : BigDecimal.ZERO;
 
         return new CarResponse(
                 car.getId(),
