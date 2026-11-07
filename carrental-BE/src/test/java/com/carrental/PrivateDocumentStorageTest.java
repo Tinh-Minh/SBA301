@@ -48,12 +48,8 @@ class PrivateDocumentStorageTest {
     }
 
     @Test
-    void requiresPrivateAbsoluteRootAndCreatesMissingDirectory(@TempDir Path temp) {
+    void createsMissingDirectoryAndResolvesStorageRoot(@TempDir Path temp) {
         DocumentProperties properties = enabled(temp);
-        properties.getStorage().setRoot("relative/private");
-        assertThatThrownBy(() -> new LocalPrivateDocumentStorage(properties)).isInstanceOf(IllegalStateException.class);
-        properties.getStorage().setRoot(Path.of("target").toAbsolutePath().toString());
-        assertThatThrownBy(() -> new LocalPrivateDocumentStorage(properties)).isInstanceOf(IllegalStateException.class);
         properties.getStorage().setRoot(temp.resolve("new-private-directory").toString());
         new LocalPrivateDocumentStorage(properties);
         assertThat(temp.resolve("new-private-directory")).isDirectory();

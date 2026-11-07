@@ -115,6 +115,9 @@ public final class LocalPrivateDocumentStorage implements PrivateDocumentStorage
                 if (pixels > properties.getUpload().getMaxImagePixels()) {
                     throw new AppException(ErrorCode.PAYLOAD_TOO_LARGE);
                 }
+                AtomicBoolean warning = new AtomicBoolean();
+                reader.addIIOReadWarningListener((source, message) -> warning.set(true));
+                if (reader.read(0) == null || warning.get()) throw new AppException(ErrorCode.VALIDATION_ERROR);
                 return format;
             } finally {
                 reader.dispose();
