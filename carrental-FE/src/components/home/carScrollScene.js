@@ -170,9 +170,6 @@ export function createCarScrollScene(host, { onReady, onError, reducedMotion }) 
         customer.materials.forEach(material => { material.opacity = current.customer; });
         customer.person.position.x = -2.1;
         customer.update(time, current.customer, reducedMotion);
-        customer.arms.forEach((arm, index) => {
-            arm.rotation.x = -(index % 2 ? 0.5 : 0.15) + Math.sin(current.distance * 0.7 + index) * 0.12;
-        });
         const lightsActive = lights?.update(time, Math.abs(travelSpeed));
         const smokeAlive = exhaust.update(dt, Math.abs(travelSpeed), pivot, loaded && !reducedMotion);
         road.update(pivot, current.overhead, current.distance, current.depart);

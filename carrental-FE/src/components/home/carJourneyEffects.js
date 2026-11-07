@@ -30,11 +30,11 @@ function createPerson(jacketColor, skinColor) {
     const jacket = new THREE.MeshStandardMaterial({ color: jacketColor, roughness: 0.85 });
     const trousers = new THREE.MeshStandardMaterial({ color: 0x252a30, roughness: 0.9 });
     const dark = new THREE.MeshStandardMaterial({ color: 0x191b1f, roughness: 0.65 });
-    function capsule(material, radius, length, x, y, z) {
+    function capsule(material, radius, length, x, y, z, parent = person) {
         const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(radius, length, 5, 10), material);
         mesh.position.set(x, y, z);
         mesh.castShadow = true;
-        person.add(mesh);
+        parent.add(mesh);
         return mesh;
     }
     capsule(jacket, 0.16, 0.36, 0, 1.12, 0).scale.z = 0.78;
@@ -42,11 +42,22 @@ function createPerson(jacketColor, skinColor) {
     const hair = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8, 0, Math.PI * 2, 0, Math.PI * 0.6), dark);
     hair.position.set(0, 1.66, 0);
     person.add(hair);
-    const arms = [-1, 1].map(side => capsule(jacket, 0.064, 0.39, side * 0.22, 1.06, 0));
-    arms.forEach((arm, index) => { arm.rotation.z = index ? 0.12 : -0.12; });
+    const arms = [-1, 1].map(side => {
+        const shoulder = new THREE.Group();
+        shoulder.position.set(side * 0.205, 1.31, 0);
+        shoulder.rotation.z = side * 0.10;
+        person.add(shoulder);
+        capsule(jacket, 0.06, 0.18, 0, -0.15, 0, shoulder);
+        const elbow = new THREE.Group();
+        elbow.position.y = -0.28;
+        elbow.rotation.x = -0.12;
+        shoulder.add(elbow);
+        capsule(jacket, 0.052, 0.16, 0, -0.13, 0, elbow);
+        capsule(skin, 0.05, 0.025, 0, -0.29, 0, elbow);
+        return { shoulder, elbow, side };
+    });
     const legs = [-1, 1].map(side => capsule(trousers, 0.075, 0.59, side * 0.095, 0.47, 0));
     [-1, 1].forEach(side => {
-        capsule(skin, 0.055, 0.04, side * 0.23, 0.77, 0);
         const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.11, 0.28), dark);
         shoe.position.set(side * 0.095, 0.08, 0.06);
         shoe.castShadow = true;
@@ -97,13 +108,20 @@ export function createCustomer() {
     second.person.position.x = 0.52;
     first.person.rotation.y = Math.PI / 2;
     second.person.rotation.y = -Math.PI / 2;
-    first.arms[1].rotation.x = -0.65;
-    second.arms[0].rotation.x = -0.45;
     conversation.add(first.person, second.person);
     conversation.position.set(-2.1, 0, 0.1);
     return {
         person: conversation,
         update(time, weight, reducedMotion) {
+            [first, second].forEach((participant, index) => {
+                const speaking = !reducedMotion && Math.floor(time / 2200) % 2 === index;
+                const gesture = speaking ? 0.5 + Math.sin(time / 420) * 0.5 : 0;
+                participant.arms.forEach(({ shoulder, elbow, side }, armIndex) => {
+                    shoulder.rotation.z = side * (0.10 + gesture * 0.04);
+                    shoulder.rotation.x = -0.06 - gesture * (armIndex === 0 ? 0.18 : 0.08);
+                    elbow.rotation.x = -0.12 - gesture * (armIndex === 0 ? 0.30 : 0.12);
+                });
+            });
             bubbles.forEach((bubble, index) => {
                 const speaking = reducedMotion || Math.floor(time / 2200) % 2 === index;
                 bubble.material.opacity = weight * (speaking ? 1 : 0.25);
@@ -111,7 +129,6 @@ export function createCustomer() {
                 bubble.position.y = 2.10 + (reducedMotion ? 0 : Math.sin(time / 500 + index * Math.PI) * 0.035);
             });
         },
-        arms: [...first.arms, ...second.arms],
         legs: [...first.legs, ...second.legs],
         materials: [...first.materials, ...second.materials],
     };
