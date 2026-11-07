@@ -40,7 +40,9 @@ class PrivateDocumentStorageTest {
         Path marker = outside.resolve("outside.txt");
         Files.writeString(marker, "untouched");
         assertError(() -> storage.open("private-local:../../outside.txt"), ErrorCode.INTERNAL_ERROR);
-        assertError(() -> storage.delete(new PrivateDocumentReceipt("private-local:../../outside.txt", UUID.randomUUID())), ErrorCode.INTERNAL_ERROR);
+        assertError(
+                () -> storage.delete(new PrivateDocumentReceipt("private-local:../../outside.txt", UUID.randomUUID())),
+                ErrorCode.INTERNAL_ERROR);
         storage.delete(receipt);
         storage.delete(receipt);
         assertError(() -> storage.open(receipt.locator()), ErrorCode.RESOURCE_NOT_FOUND);
@@ -60,25 +62,34 @@ class PrivateDocumentStorageTest {
         LocalPrivateDocumentStorage storage = new LocalPrivateDocumentStorage(enabled(root));
         byte[] png = image(4, 3, "png");
         byte[] jpeg = image(4, 3, "jpeg");
-        assertThat(storage.open(storage.store(new UploadedDocumentImage("front.png", "image/png", png)).locator()).format())
+        assertThat(storage.open(storage.store(new UploadedDocumentImage("front.png", "image/png", png)).locator())
+                .format())
                 .isEqualTo(DocumentImageFormat.PNG);
-        assertThat(storage.open(storage.store(new UploadedDocumentImage("front.jpg", "image/jpeg", jpeg)).locator()).format())
+        assertThat(storage.open(storage.store(new UploadedDocumentImage("front.jpg", "image/jpeg", jpeg)).locator())
+                .format())
                 .isEqualTo(DocumentImageFormat.JPEG);
-        assertError(() -> storage.store(new UploadedDocumentImage("fake.jpg", "image/jpeg", png)), ErrorCode.UNSUPPORTED_MEDIA_TYPE);
-        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "text/plain", png)), ErrorCode.UNSUPPORTED_MEDIA_TYPE);
-        assertError(() -> storage.store(new UploadedDocumentImage("../../front.png", "image/png", png)), ErrorCode.VALIDATION_ERROR);
-        assertError(() -> storage.store(new UploadedDocumentImage("front.jpg", "image/jpeg", new byte[]{1,2,3,4})), ErrorCode.UNSUPPORTED_MEDIA_TYPE);
+        assertError(() -> storage.store(new UploadedDocumentImage("fake.jpg", "image/jpeg", png)),
+                ErrorCode.UNSUPPORTED_MEDIA_TYPE);
+        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "text/plain", png)),
+                ErrorCode.UNSUPPORTED_MEDIA_TYPE);
+        assertError(() -> storage.store(new UploadedDocumentImage("../../front.png", "image/png", png)),
+                ErrorCode.VALIDATION_ERROR);
+        assertError(
+                () -> storage.store(new UploadedDocumentImage("front.jpg", "image/jpeg", new byte[] { 1, 2, 3, 4 })),
+                ErrorCode.UNSUPPORTED_MEDIA_TYPE);
     }
 
     @Test
     void rejectsEmptyTruncatedAndCorruptStoredImages(@TempDir Path root) throws Exception {
         LocalPrivateDocumentStorage storage = new LocalPrivateDocumentStorage(enabled(root));
-        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", new byte[0])), ErrorCode.VALIDATION_ERROR);
+        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", new byte[0])),
+                ErrorCode.VALIDATION_ERROR);
         byte[] png = image(16, 12, "png");
         byte[] truncated = java.util.Arrays.copyOf(png, png.length / 2);
-        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", truncated)), ErrorCode.VALIDATION_ERROR);
+        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", truncated)),
+                ErrorCode.VALIDATION_ERROR);
         var receipt = storage.store(new UploadedDocumentImage("front.png", "image/png", png));
-        Files.write(root.resolve(receipt.locator().substring("private-local:".length())), new byte[]{1,2,3});
+        Files.write(root.resolve(receipt.locator().substring("private-local:".length())), new byte[] { 1, 2, 3 });
         assertError(() -> storage.open(receipt.locator()), ErrorCode.INTERNAL_ERROR);
     }
 
@@ -88,8 +99,11 @@ class PrivateDocumentStorageTest {
         DocumentProperties properties = enabled(root);
         properties.getUpload().setMaxFileSize(DataSize.ofBytes(png.length - 1));
         LocalPrivateDocumentStorage storage = new LocalPrivateDocumentStorage(properties);
-        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", png)), ErrorCode.PAYLOAD_TOO_LARGE);
-        try (var files = Files.list(root)) { assertThat(files.count()).isZero(); }
+        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", png)),
+                ErrorCode.PAYLOAD_TOO_LARGE);
+        try (var files = Files.list(root)) {
+            assertThat(files.count()).isZero();
+        }
     }
 
     @Test
@@ -98,7 +112,8 @@ class PrivateDocumentStorageTest {
         properties.getUpload().setMaxImagePixels(8);
         LocalPrivateDocumentStorage storage = new LocalPrivateDocumentStorage(properties);
         byte[] png = image(3, 3, "png");
-        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", png)), ErrorCode.PAYLOAD_TOO_LARGE);
+        assertError(() -> storage.store(new UploadedDocumentImage("front.png", "image/png", png)),
+                ErrorCode.PAYLOAD_TOO_LARGE);
     }
 
     private static DocumentProperties enabled(Path root) {
@@ -107,13 +122,15 @@ class PrivateDocumentStorageTest {
         p.getStorage().setRoot(root.toString());
         return p;
     }
+
     private static byte[] image(int width, int height, String format) throws Exception {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         ImageIO.write(new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB), format, bytes);
         return bytes.toByteArray();
     }
+
     private static void assertError(Runnable action, ErrorCode code) {
         assertThatThrownBy(action::run).isInstanceOf(AppException.class)
-                .extracting(e -> ((AppException)e).errorCode()).isEqualTo(code);
+                .extracting(e -> ((AppException) e).errorCode()).isEqualTo(code);
     }
 }

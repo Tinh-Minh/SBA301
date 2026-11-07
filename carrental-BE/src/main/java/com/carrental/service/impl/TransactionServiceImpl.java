@@ -27,18 +27,46 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.carrental.event.PaymentCompletedEvent;
+import com.carrental.util.TimeUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
+
 import java.math.BigDecimal;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final CarSubscriptionRepository carSubscriptionRepository;
     private final VNPayService vnPayService;
     private final CurrentUserService currentUserService;
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    public TransactionServiceImpl(
+            TransactionRepository transactionRepository,
+            CarSubscriptionRepository carSubscriptionRepository,
+            VNPayService vnPayService,
+            CurrentUserService currentUserService,
+            ApplicationEventPublisher eventPublisher) {
+        this.transactionRepository = transactionRepository;
+        this.carSubscriptionRepository = carSubscriptionRepository;
+        this.vnPayService = vnPayService;
+        this.currentUserService = currentUserService;
+        this.eventPublisher = eventPublisher;
+    }
+
+    public TransactionServiceImpl(
+            TransactionRepository transactionRepository,
+            CarSubscriptionRepository carSubscriptionRepository,
+            VNPayService vnPayService,
+            CurrentUserService currentUserService) {
+        this(transactionRepository, carSubscriptionRepository, vnPayService, currentUserService, null);
+    }
 
     @Override
     @Transactional
@@ -114,6 +142,28 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + id));
         validateAccess(transaction);
         return TransactionResponse.from(transaction);
+    }
+
+    @Override
+    @Transactional
+    public TransactionResponse simulateGateway(Long id) {
+        Transaction transaction = transactionRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + id));
+        validateAccess(transaction);
+
+        if (transaction.getStatus() == TransactionStatus.SUCCESS) {
+            return TransactionResponse.from(transaction);
+        }
+
+        transaction.setStatus(TransactionStatus.SUCCESS);
+        transaction.setPaidAt(TimeUtil.nowVn());
+        transaction.setProviderRef("SIMULATED_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase());
+        Transaction saved = transactionRepository.save(transaction);
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
+        }
+        log.info("Giả lập thanh toán thành công cho transaction id={}, providerRef={}", saved.getId(), saved.getProviderRef());
+        return TransactionResponse.from(saved);
     }
 
     @Override

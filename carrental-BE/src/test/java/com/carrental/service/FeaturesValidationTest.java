@@ -143,6 +143,31 @@ class FeaturesValidationTest {
     }
 
     @Test
+    @DisplayName("F4 - Giả lập thanh toán thành công (Simulate Gateway)")
+    void testSimulateGateway_Success() {
+        Transaction tx = Transaction.builder()
+                .subscription(subscription)
+                .transactionType(TransactionType.PACKAGE_PAYMENT)
+                .amount(BigDecimal.valueOf(180000))
+                .method(PaymentMethod.VNPAY)
+                .status(TransactionStatus.PENDING)
+                .build();
+        tx.setId(500L);
+
+        when(currentUserService.getCurrentUser()).thenReturn(owner);
+        when(transactionRepository.findById(500L)).thenReturn(Optional.of(tx));
+        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        TransactionResponse response = transactionService.simulateGateway(500L);
+
+        assertNotNull(response);
+        assertEquals("SUCCESS", response.status());
+        assertNotNull(response.providerRef());
+        assertTrue(response.providerRef().startsWith("SIMULATED_"));
+        verify(transactionRepository).save(any(Transaction.class));
+    }
+
+    @Test
     @DisplayName("F4 - Người dùng gửi đánh giá 5 sao cho xe thành công")
     void testCreateReview_Success() {
         when(currentUserService.getCurrentUser()).thenReturn(customer);
