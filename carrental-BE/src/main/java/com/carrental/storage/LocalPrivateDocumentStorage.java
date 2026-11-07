@@ -108,15 +108,17 @@ public final class LocalPrivateDocumentStorage implements PrivateDocumentStorage
                 };
                 int width = reader.getWidth(0), height = reader.getHeight(0);
                 if (width <= 0 || height <= 0 || width > properties.getUpload().getMaxImageDimension()
-                        || height > properties.getUpload().getMaxImageDimension()
-                        || (long) width * height > properties.getUpload().getMaxImagePixels()) {
+                        || height > properties.getUpload().getMaxImageDimension()) {
+                    throw new AppException(ErrorCode.VALIDATION_ERROR);
+                }
+                long pixels = Math.multiplyExact((long) width, (long) height);
+                if (pixels > properties.getUpload().getMaxImagePixels()) {
                     throw new AppException(ErrorCode.PAYLOAD_TOO_LARGE);
                 }
-                AtomicBoolean warning = new AtomicBoolean();
-                reader.addIIOReadWarningListener((source, message) -> warning.set(true));
-                if (reader.read(0) == null || warning.get()) throw new AppException(ErrorCode.VALIDATION_ERROR);
                 return format;
-            } finally { reader.dispose(); }
+            } finally {
+                reader.dispose();
+            }
         } catch (IOException exception) {
             throw new AppException(ErrorCode.VALIDATION_ERROR);
         }
@@ -124,10 +126,9 @@ public final class LocalPrivateDocumentStorage implements PrivateDocumentStorage
 
     private Path storageRoot(String configured) {
         if (configured == null || configured.isBlank()) throw new IllegalStateException("Private storage root is required");
-        Path path = Path.of(configured).normalize();
-        if (!path.isAbsolute() || Files.isSymbolicLink(path)
-                || path.startsWith(Path.of("").toAbsolutePath().normalize())) {
-            throw new IllegalStateException("Private storage must be an absolute directory outside the application working directory");
+        Path path = Path.of(configured).normalize().toAbsolutePath();
+        if (Files.isSymbolicLink(path)) {
+            throw new IllegalStateException("Private storage cannot be a symbolic link");
         }
         try { return Files.createDirectories(path).toRealPath(); }
         catch (IOException exception) { throw new IllegalStateException("Private storage is unavailable", exception); }

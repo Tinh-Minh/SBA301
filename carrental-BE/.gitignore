@@ -18,3 +18,6 @@ application-local.properties
 
 # External local signing keys are provisioned separately from the application.
 /config/keys/
+
+# Local file storage for private documents/images
+/storage/
