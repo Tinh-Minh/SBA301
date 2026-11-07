@@ -66,7 +66,7 @@ public record CarSummaryResponse(
                 car.getContactZalo(),
                 car.getStatus(),
                 car.getListingStatus(),
-                car.getPricePerHour(),
+                BigDecimal.ZERO,
                 dayPrice,
                 primaryImageUrl
         );

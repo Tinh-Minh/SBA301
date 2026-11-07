@@ -41,7 +41,7 @@ public class CarController {
     private final CarService carService;
 
     private static final Set<String> ALLOWED_CAR_SORT_FIELDS = Set.of(
-            "createdAt", "rentalPricePerDay", "rentalPricePerMonth", "pricePerHour", "pricePerDay", "brand", "seats"
+            "createdAt", "rentalPricePerDay", "rentalPricePerMonth", "brand", "seats"
     );
 
     // Khách vãng lai xem chi tiết xe (ẩn biển số, giấy tờ; chủ xe/admin xem đầy đủ)

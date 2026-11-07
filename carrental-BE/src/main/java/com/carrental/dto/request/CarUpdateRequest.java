@@ -97,13 +97,6 @@ public class CarUpdateRequest {
     @Size(max = 20, message = "Số Zalo liên hệ tối đa 20 ký tự")
     private String contactZalo;
 
-    // Tương thích backward
-    private BigDecimal pricePerHour;
-    private BigDecimal pricePerDay;
-    private BigDecimal depositAmount;
-    private Integer kmLimitPerDay;
-    private BigDecimal extraKmFee;
-
     public void applyTo(Car car) {
         car.setBrand(this.brand);
         car.setModel(this.model);
@@ -123,10 +116,8 @@ public class CarUpdateRequest {
         car.setLatitude(this.latitude);
         car.setLongitude(this.longitude);
 
-        BigDecimal dayPrice = this.rentalPricePerDay != null ? this.rentalPricePerDay : this.pricePerDay;
-        if (dayPrice != null) {
-            car.setRentalPricePerDay(dayPrice);
-            car.setPricePerDay(dayPrice);
+        if (this.rentalPricePerDay != null) {
+            car.setRentalPricePerDay(this.rentalPricePerDay);
         }
         if (this.rentalPricePerMonth != null) {
             car.setRentalPricePerMonth(this.rentalPricePerMonth);
@@ -140,13 +131,5 @@ public class CarUpdateRequest {
         if (this.contactZalo != null) {
             car.setContactZalo(this.contactZalo);
         }
-        if (this.pricePerHour != null) {
-            car.setPricePerHour(this.pricePerHour);
-        }
-        if (this.depositAmount != null) {
-            car.setDepositAmount(this.depositAmount);
-        }
-        car.setKmLimitPerDay(this.kmLimitPerDay);
-        car.setExtraKmFee(this.extraKmFee);
     }
 }
