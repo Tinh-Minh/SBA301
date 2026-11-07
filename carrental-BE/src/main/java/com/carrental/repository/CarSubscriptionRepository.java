@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -22,6 +24,7 @@ public interface CarSubscriptionRepository extends JpaRepository<CarSubscription
 
     List<CarSubscription> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
 
+    @EntityGraph(attributePaths = {"customer", "car", "listingPackage", "voucher"})
     Page<CarSubscription> findAllByCustomerId(Long customerId, Pageable pageable);
 
     List<CarSubscription> findByCarIdOrderByCreatedAtDesc(Long carId);
@@ -33,6 +36,17 @@ public interface CarSubscriptionRepository extends JpaRepository<CarSubscription
     List<CarSubscription> findByStatusAndEndDateBefore(SubscriptionStatus status, LocalDateTime dateTime);
 
     boolean existsByCarIdAndStatus(Long carId, SubscriptionStatus status);
+
+    /** Toàn bộ gói cho admin, lọc trạng thái nếu có (nạp sẵn quan hệ, tránh N+1). */
+    @EntityGraph(attributePaths = {"customer", "car", "listingPackage", "voucher"})
+    @Query("select s from CarSubscription s where (:status is null or s.status = :status)")
+    Page<CarSubscription> search(@Param("status") SubscriptionStatus status, Pageable pageable);
+
+    /** Các gói chờ thanh toán đã tạo quá lâu (job tự huỷ). */
+    List<CarSubscription> findByStatusAndCreatedAtBefore(SubscriptionStatus status, LocalDateTime time);
+
+    /** Số lần một khách đã dùng voucher (không tính các gói đã huỷ). */
+    long countByVoucherIdAndCustomerIdAndStatusNot(Long voucherId, Long customerId, SubscriptionStatus status);
 
     long countByStatus(SubscriptionStatus status);
 
