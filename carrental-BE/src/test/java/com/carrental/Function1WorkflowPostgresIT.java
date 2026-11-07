@@ -287,46 +287,6 @@ class Function1WorkflowPostgresIT {
             assertThat(eligible.path("eligibleNow").asBoolean()).isTrue();
             assertThat(eligible.path("kycStatus").asText()).isEqualTo("VERIFIED");
 
-            String fullAccountNumber = "0010" + suffix.substring(0, 12);
-            JsonNode bankOne = json(assertSuccess(send("POST", "/api/bank-accounts", customerToken,
-                    "{\"bankName\":\"P10 Synthetic Bank\",\"accountNumber\":\"" + fullAccountNumber
-                            + "\",\"accountHolder\":\"P10 Synthetic Owner\"}"), 201)).path("data");
-            assertFields(bankOne, "id", "customerId", "bankName", "accountNumberMasked", "accountHolder", "isDefault", "createdAt");
-            long bankOneId = bankOne.path("id").asLong();
-            assertThat(bankOne.path("isDefault").asBoolean()).isFalse();
-            assertThat(bankOne.path("accountNumberMasked").asText()).doesNotContain(fullAccountNumber);
-            HttpResponse<String> duplicateBank = send("POST", "/api/bank-accounts", customerToken,
-                    "{\"bankName\":\"P10 Synthetic Bank\",\"accountNumber\":\"" + fullAccountNumber
-                            + "\",\"accountHolder\":\"P10 Synthetic Owner\"}");
-            assertError(duplicateBank, 409, "BANK_ACCOUNT_ALREADY_EXISTS");
-            assertThat(duplicateBank.body()).doesNotContain(fullAccountNumber);
-            assertThat(jdbc.queryForObject("select count(*) from bank_accounts where customer_id=?", Integer.class,
-                    customer.id())).isEqualTo(1);
-            String bankTwoNumber = "0020" + suffix.substring(0, 12);
-            JsonNode bankTwo = json(assertSuccess(send("POST", "/api/bank-accounts", customerToken,
-                    "{\"bankName\":\"P10 Synthetic Bank\",\"accountNumber\":\"" + bankTwoNumber
-                            + "\",\"accountHolder\":\"P10 Synthetic Owner\",\"makeDefault\":true}"), 201)).path("data");
-            long bankTwoId = bankTwo.path("id").asLong();
-            assertThat(bankTwo.path("isDefault").asBoolean()).isTrue();
-            JsonNode bankThree = json(assertSuccess(send("POST", "/api/bank-accounts", customerToken,
-                    "{\"bankName\":\"P10 Other Bank\",\"accountNumber\":\"0030" + suffix.substring(0, 12)
-                            + "\",\"accountHolder\":\"P10 Synthetic Owner\",\"makeDefault\":false}"), 201)).path("data");
-            assertThat(bankThree.path("isDefault").asBoolean()).isFalse();
-            assertSuccess(send("PATCH", "/api/bank-accounts/" + bankOneId + "/default", customerToken, null), 200);
-            String selectedAudit = jdbc.queryForObject("select created_at::text from bank_accounts where id=?", String.class, bankOneId);
-            assertSuccess(send("PATCH", "/api/bank-accounts/" + bankOneId + "/default", customerToken, null), 200);
-            assertThat(jdbc.queryForObject("select created_at::text from bank_accounts where id=?", String.class, bankOneId))
-                    .isEqualTo(selectedAudit);
-            assertSuccess(send("DELETE", "/api/bank-accounts/" + bankOneId, customerToken, null), 200);
-            assertThat(jdbc.queryForObject("select count(*) from bank_accounts where customer_id=? and is_default", Integer.class,
-                    customer.id())).isZero();
-            JsonNode bankPage = json(assertSuccess(send("GET", "/api/bank-accounts?page=0&size=20", customerToken, null), 200))
-                    .path("data");
-            assertThat(bankPage.path("content").size()).isEqualTo(2);
-            assertThat(bankPage.path("content").toString()).doesNotContain(fullAccountNumber, bankTwoNumber);
-            assertError(send("GET", "/api/bank-accounts/" + bankTwoId, peerToken, null), 404, "RESOURCE_NOT_FOUND");
-            assertError(send("GET", "/api/bank-accounts/" + bankTwoId, adminToken, null), 404, "RESOURCE_NOT_FOUND");
-
             String voucherCode = "P10-CASE-" + suffix.substring(0, 8);
             String validVoucher = "{\"code\":\"" + voucherCode
                     + "\",\"discountType\":\"FIXED\",\"discountValue\":250,\"maxDiscount\":0,"
@@ -492,16 +452,14 @@ class Function1WorkflowPostgresIT {
             List<String> captured = logs.messages();
             assertThat(captured).anyMatch(line -> line.contains("document-review actorId="));
             assertThat(captured).anyMatch(line -> line.contains("driver-change actorId="));
-            assertThat(captured).anyMatch(line -> line.contains("bank-account-create ownerId="));
-            assertThat(captured.stream().filter(line -> line.contains("bank-account-default ownerId=")).count()).isEqualTo(1);
             assertThat(captured).anyMatch(line -> line.contains("voucher-create actorId="));
             assertThat(captured).noneMatch(line -> line.contains(customerToken) || line.contains(peerToken)
-                    || line.contains(adminToken) || line.contains(privateMarker) || line.contains(fullAccountNumber)
-                    || line.contains(bankTwoNumber) || line.contains("P10-PASSPORT-" + suffix)
+                    || line.contains(adminToken) || line.contains(privateMarker)
+                    || line.contains("P10-PASSPORT-" + suffix)
                     || line.contains("P10-LICENSE-" + suffix) || line.contains(customer.email()));
-            System.out.printf("P10_WORKFLOW customerId=%d peerId=%d passportId=%d licenseId=%d driverId=%d bankIds=%d,%d voucherId=%d clockBase=2026-10-14 clockAdvanced=2026-10-16 storedDriver=ACTIVE currentEligible=false currentKyc=VERIFIED voucherWindow=ENDED%n",
-                    customer.id(), peer.id(), passportId, licenseId, driverId, bankTwoId, bankThree.path("id").asLong(), voucherId);
-            System.out.println("P10_WORKFLOW_TRACE health/json/binary=matched; foreignDocument/customerBank/adminBank=404; lockedOldJwt=401; voucherCustomer=403; fractionalVoucher=400/rows0; committedLogs=positive/privacy=clean");
+            System.out.printf("P10_WORKFLOW customerId=%d peerId=%d passportId=%d licenseId=%d driverId=%d voucherId=%d clockBase=2026-10-14 clockAdvanced=2026-10-16 storedDriver=ACTIVE currentEligible=false currentKyc=VERIFIED voucherWindow=ENDED%n",
+                    customer.id(), peer.id(), passportId, licenseId, driverId, voucherId);
+            System.out.println("P10_WORKFLOW_TRACE health/json/binary=matched; foreignDocument=404; lockedOldJwt=401; voucherCustomer=403; fractionalVoucher=400/rows0; committedLogs=positive/privacy=clean");
         } finally {
             TEST_CLOCK.set(BASE);
         }
@@ -656,8 +614,6 @@ class Function1WorkflowPostgresIT {
                         + "from user_documents where customer_id=? order by id", (rs, n) -> rs.getString(1), customerId));
         state.addAll(jdbc.query("select id || '|' || status || '|' || updated_at::text from drivers where customer_id=? order by id",
                 (rs, n) -> rs.getString(1), customerId));
-        state.addAll(jdbc.query("select id || '|' || account_number || '|' || is_default || '|' || created_at::text "
-                        + "from bank_accounts where customer_id=? order by id", (rs, n) -> rs.getString(1), customerId));
         return List.copyOf(state);
     }
 

@@ -47,7 +47,7 @@ public record CarSummaryResponse(
     }
 
     private static CarSummaryResponse build(Car car, String licensePlate, String primaryImageUrl) {
-        BigDecimal dayPrice = car.getRentalPricePerDay() != null ? car.getRentalPricePerDay() : car.getPricePerDay();
+        BigDecimal dayPrice = car.getRentalPricePerDay() != null ? car.getRentalPricePerDay() : BigDecimal.ZERO;
         return new CarSummaryResponse(
                 car.getId(),
                 licensePlate,
