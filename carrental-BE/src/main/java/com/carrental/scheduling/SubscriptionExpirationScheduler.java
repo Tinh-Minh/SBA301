@@ -1,58 +1,51 @@
 package com.carrental.scheduling;
 
-import com.carrental.entity.Car;
-import com.carrental.entity.CarSubscription;
-import com.carrental.enums.ListingStatus;
-import com.carrental.enums.SubscriptionStatus;
-import com.carrental.repository.CarRepository;
-import com.carrental.repository.CarSubscriptionRepository;
-import com.carrental.util.TimeUtil;
+import com.carrental.service.CarSubscriptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.function.Predicate;
 
+/**
+ * Mỗi đầu giờ dọn gói quá hạn: gói ACTIVE qua end_date sang EXPIRED (tạm ẩn tin),
+ * gói PENDING_PAYMENT quá hạn thanh toán sang CANCELLED.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SubscriptionExpirationScheduler {
 
-    private final CarSubscriptionRepository carSubscriptionRepository;
-    private final CarRepository carRepository;
+    private final CarSubscriptionService subscriptionService;
 
-    /**
-     * Quét và xử lý các gói tin đăng đã hết hạn mỗi 60 giây.
-     */
-    @Scheduled(fixedDelay = 60000)
-    @Transactional
-    public void expireSubscriptions() {
-        LocalDateTime now = TimeUtil.nowVn();
-        List<CarSubscription> expiredSubs = carSubscriptionRepository.findByStatusAndEndDateBefore(SubscriptionStatus.ACTIVE, now);
-
-        if (expiredSubs.isEmpty()) {
-            return;
+    @Scheduled(cron = "0 0 * * * *")
+    public void scanAndExpireSubscriptions() {
+        int expired = processEach(subscriptionService.findExpiredSubscriptionIds(),
+                subscriptionService::expireSubscription, "chuyển sang EXPIRED");
+        if (expired > 0) {
+            log.info("Đã chuyển {} gói đăng tin hết hạn sang EXPIRED", expired);
         }
+        int cancelled = processEach(subscriptionService.findOverduePendingIds(),
+                subscriptionService::cancelOverduePending, "huỷ do quá hạn thanh toán");
+        if (cancelled > 0) {
+            log.info("Đã huỷ {} gói đăng tin quá hạn thanh toán", cancelled);
+        }
+    }
 
-        log.info("Tìm thấy {} gói đăng tin đã hết hạn cần xử lý", expiredSubs.size());
-
-        for (CarSubscription sub : expiredSubs) {
-            sub.setStatus(SubscriptionStatus.EXPIRED);
-            carSubscriptionRepository.save(sub);
-
-            Car car = sub.getCar();
-            if (car != null) {
-                // Kiểm tra xem xe này có gói nào khác còn ACTIVE không
-                boolean hasOtherActiveSub = carSubscriptionRepository.existsByCarIdAndStatus(car.getId(), SubscriptionStatus.ACTIVE);
-                if (!hasOtherActiveSub) {
-                    car.setListingStatus(ListingStatus.EXPIRED);
-                    carRepository.save(car);
-                    log.info("Chuyển trạng thái tin đăng xe carId={} sang EXPIRED do gói đăng ký id={} hết hạn", car.getId(), sub.getId());
+    private int processEach(List<Long> ids, Predicate<Long> action, String actionName) {
+        int done = 0;
+        for (Long id : ids) {
+            // Mỗi gói một transaction riêng: một gói lỗi không làm hỏng cả lô; gói đó được xét lại ở lần chạy sau.
+            try {
+                if (action.test(id)) {
+                    done++;
                 }
+            } catch (RuntimeException ex) {
+                log.warn("Không thể {} gói {}: {}", actionName, id, ex.getMessage());
             }
         }
+        return done;
     }
 }

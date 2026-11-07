@@ -21,10 +21,6 @@ export function EditCarRoute({ Screen }) {
     const carId = Number(id);
     return Number.isSafeInteger(carId) && carId > 0 ? <Screen carId={carId} /> : <NotFoundPage />;
 }
-export function OrderRoute({ Screen }) {
-    const { id } = useParams();
-    return <Screen orderId={id} />;
-}
 
 export function page(path, element, title = pageTitles[path]) {
     return {

@@ -1,7 +1,7 @@
 import { lazy } from "react";
 const AdminDashboardPage = lazy(() => import("@/pages/dashboards/AdminDashboardPage.jsx"));
 const AdminDisputesPage = lazy(() => import("@/pages/disputes/AdminDisputesPage.jsx"));
-const AdminOrdersPage = lazy(() => import("@/pages/bookings/AdminOrdersPage.jsx"));
+const AdminSubscriptionsPage = lazy(() => import("@/pages/subscriptions/AdminSubscriptionsPage.jsx"));
 const AdminPayoutsPage = lazy(() => import("@/pages/payouts/AdminPayoutsPage.jsx"));
 const AdminUsersPage = lazy(() => import("@/pages/account/AdminUsersPage.jsx"));
 const AdminVehiclesPage = lazy(() => import("@/pages/vehicles/AdminVehiclesPage.jsx"));
@@ -22,8 +22,8 @@ const adminNavigation = [
     { code: "A02", href: adminRoutes.users, label: "Người dùng & KYC", icon: "verified_user", badgeKey: "kyc", badgeSuffix: "chờ", badgeTone: "warning" },
     { code: "A03", href: adminRoutes.vehicles, label: "Duyệt xe", icon: "directions_car", badgeKey: "cars", badgeSuffix: "xe", badgeTone: "warning" },
     { code: "A04", href: adminRoutes.vouchers, label: "Voucher", icon: "confirmation_number" },
-    { code: "A08", href: adminRoutes.packages, label: "Gói đăng tin", icon: "sell" },
-    { code: "A05", href: adminRoutes.orders, label: "Đơn thuê", icon: "receipt_long" },
+    { code: "A05", href: adminRoutes.subscriptions, label: "Quản lý Đăng tin", icon: "workspace_premium" },
+    { code: "A08", href: adminRoutes.packages, label: "Cấu hình Gói cước", icon: "sell" },
     { code: "A06", href: adminRoutes.payouts, label: "Giao dịch & Chi trả", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
     { code: "A07", href: adminRoutes.disputes, label: "Tranh chấp", icon: "gavel", badgeKey: "disputes", badgeSuffix: "hồ sơ", badgeTone: "danger" },
 ];
@@ -43,7 +43,8 @@ export const adminPages = [
     page("admin", <AliasRedirect to="/admin/dashboard" />),
     page("admin/dashboard", <AdminDashboardPage />, "Tổng quan quản trị"),
     page("admin/disputes", <AdminDisputesPage />, "Tranh chấp & Khiếu nại"),
-    page("admin/orders", <AdminOrdersPage />, "Đơn thuê toàn hệ thống"),
+    page("admin/orders", <AliasRedirect to="/admin/subscriptions" />),
+    page("admin/subscriptions", <AdminSubscriptionsPage />, "Gói đăng tin toàn hệ thống"),
     page("admin/payouts", <AdminPayoutsPage />, "Giao dịch & Chi trả"),
     page("admin/users", <AdminUsersPage />, "Người dùng & KYC"),
     page("admin/vehicles", <AdminVehiclesPage />, "Duyệt xe"),

@@ -49,6 +49,8 @@ export const ownerRoutes = {
     vehicleNew: "/owner/vehicles/new",
     vehicleEdit: (id) => `/owner/vehicles/edit/${id}`,
     calendar: "/owner/calendar",
+    subscriptions: "/owner/subscriptions",
+    subscriptionNew: "/owner/subscriptions/new",
     requests: "/owner/requests",
     trips: "/owner/trips",
     payouts: "/owner/payouts",
@@ -61,6 +63,7 @@ export const adminRoutes = {
     vouchers: "/admin/vouchers",
     packages: "/admin/packages",
     orders: "/admin/orders",
+    subscriptions: "/admin/subscriptions",
     payouts: "/admin/payouts",
     disputes: "/admin/disputes",
 };
