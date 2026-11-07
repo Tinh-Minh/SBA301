@@ -19,4 +19,6 @@ public interface TransactionService {
     PageResponse<TransactionResponse> getPaged(Long subscriptionId, String transactionType, String status, Pageable pageable);
 
     String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
+
+    TransactionResponse simulateGateway(Long transactionId);
 }

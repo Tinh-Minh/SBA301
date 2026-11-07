@@ -48,6 +48,12 @@ public class TransactionController {
     }
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PostMapping("/{id}/simulate-gateway")
+    public ApiResponse<TransactionResponse> simulateGateway(@PathVariable Long id) {
+        return ApiResponse.ok("Giả lập thanh toán thành công", transactionService.simulateGateway(id));
+    }
+
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<TransactionResponse>> getPaged(
             @RequestParam(required = false) Long subscriptionId,
