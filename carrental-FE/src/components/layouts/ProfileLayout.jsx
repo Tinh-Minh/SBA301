@@ -8,8 +8,8 @@ const labels = {
     verification: "Hồ sơ định danh eKYC",
     driver: "Hồ sơ tài xế",
     banks: "Tài khoản ngân hàng",
-    orders: "Quản lý đơn thuê",
-    history: "Lịch sử chuyến đi",
+    reviews: "Đánh giá của tôi",
+    subscriptions: "Gói đăng tin",
 };
 /** Authenticated account screens opt into the profile access guard. */
 export function ProfileLayout({ active, title, description, actions, children, live = false }) {

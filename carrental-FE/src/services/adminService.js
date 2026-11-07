@@ -3,8 +3,8 @@ import { endpoints } from "@/services/endpoints.js";
 import { toLocalIso } from "@/utils/datetime.js";
 import { toNumber } from "@/utils/labels.js";
 import { currentUserId } from "@/utils/session.js";
-import { fetchAllPages, request, toPage } from "@/services/api.js";
-import { normalizeCar, normalizeOrder } from "@/utils/apiResponse.js";
+import { request, toPage } from "@/services/api.js";
+import { normalizeCar } from "@/utils/apiResponse.js";
 import { getCustomer, getCustomerKyc, listCustomers, updateCustomerStatus } from "@/services/accountService.js";
 import { adminPayoutService } from "@/services/payoutService.js";
 
@@ -105,57 +105,44 @@ export const disputeService = {
 
 export { adminOrderService, adminPayoutService };
 
-/** Tổng quan quản trị ghép từ các API danh sách (backend chưa có endpoint thống kê riêng). */
+/** Tổng quan quản trị: doanh thu gói đăng tin + hàng chờ duyệt. */
 export async function getAdminOverview() {
     const safe = (promise, fallback) => promise.catch(() => fallback);
     const emptyPage = { content: [], totalElements: 0 };
-    const [orders, customers, pendingKyc, pendingCars, pendingDocs, openDisputes, pendingPayouts] = await Promise.all([
-        safe(fetchAllPages(endpoints.orders.list, { sortBy: "createdAt", direction: "desc" }).then(list => list.map(normalizeOrder)), []),
+    const [revenue, customers, pendingKyc, pendingCars, pendingDocs, pendingSubscriptions, pendingTransactions] = await Promise.all([
+        safe(request("/api/admin/dashboard/revenue"), null),
         safe(listCustomers({ size: 1 }), emptyPage),
         safe(listCustomers({ kycStatus: "PENDING", size: 5 }), emptyPage),
         safe(adminCarService.list({ status: "PENDING_APPROVAL", size: 5 }), emptyPage),
         safe(adminUserService.listDocuments({ verifyStatus: "PENDING", size: 5 }), emptyPage),
-        safe(disputeService.list({ status: "OPEN", size: 1 }), emptyPage),
-        safe(adminPayoutService.list({ status: "PENDING", size: 1 }), emptyPage),
+        safe(request(endpoints.subscriptions.adminList, { query: { status: "PENDING_PAYMENT", page: 0, size: 5, sortBy: "createdAt", direction: "desc" } }).then(toPage), emptyPage),
+        safe(request(endpoints.transactions.list, { query: { status: "PENDING", page: 0, size: 1 } }).then(toPage), emptyPage),
     ]);
-    const now = new Date();
-    const thisMonth = orders.filter(order => {
-        const created = new Date(order.createdAt);
-        return created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth();
-    });
-    const revenueOrders = orders.filter(order => ["CONFIRMED", "ONGOING", "COMPLETED"].includes(order.status));
-    const gmv = revenueOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const platformFee = revenueOrders.reduce((sum, order) => sum + Math.round(order.rentalAmount * order.commissionRate / 100), 0);
     return {
+        revenue,
         totals: {
-            gmv,
-            platformFee,
-            orders: orders.length,
-            ordersThisMonth: thisMonth.length,
-            ongoing: orders.filter(order => order.status === "ONGOING").length,
             customers: customers.totalElements,
             pendingKyc: pendingKyc.totalElements,
             pendingCars: pendingCars.totalElements,
             pendingDocs: pendingDocs.totalElements,
-            openDisputes: openDisputes.totalElements,
-            pendingPayouts: pendingPayouts.totalElements,
+            pendingSubscriptions: pendingSubscriptions.totalElements,
+            pendingTransactions: pendingTransactions.totalElements,
         },
         pendingKyc: pendingKyc.content,
         pendingCars: pendingCars.content,
-        latestOrders: orders.slice(0, 5),
+        pendingSubscriptions: pendingSubscriptions.content,
     };
 }
 
 /** Badge sidebar quản trị. */
 export async function getAdminBadges() {
     const count = (promise) => promise.then(page => page.totalElements).catch(() => 0);
-    const [kyc, cars, disputes, payouts] = await Promise.all([
+    const [kyc, cars, payouts] = await Promise.all([
         count(adminUserService.listDocuments({ verifyStatus: "PENDING", size: 1 })),
         count(adminCarService.list({ status: "PENDING_APPROVAL", size: 1 })),
-        count(disputeService.list({ status: "OPEN", size: 1 })),
-        count(adminPayoutService.list({ status: "PENDING", size: 1 })),
+        count(request(endpoints.transactions.list, { query: { status: "PENDING", page: 0, size: 1 } }).then(toPage)),
     ]);
-    return { kyc, cars, disputes, payouts };
+    return { kyc, cars, disputes: 0, payouts };
 }
 
 /** Lịch sử và giao dịch của một đơn cho màn chi tiết đơn (admin). */

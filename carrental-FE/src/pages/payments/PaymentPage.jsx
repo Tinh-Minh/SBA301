@@ -2,7 +2,6 @@ import { Link, useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState } from "@/components/LiveUi.jsx";
-import { Pay } from "@/components/payments/PaymentForm.jsx";
 import { transactionService } from "@/services/paymentService.js";
 import { formatMoney } from "@/utils/labels.js";
 
@@ -30,7 +29,7 @@ function VNPayReturnResult({ searchParams }) {
                 <h1 className="text-xl font-bold text-[#B91C1C]">Xác thực thanh toán thất bại</h1>
                 <p className="text-sm text-[#666666]">{error.message || "Không thể xác thực kết quả giao dịch từ VNPay."}</p>
                 <div className="mt-4 flex justify-center gap-3">
-                    <Link to="/my-trips" className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Chuyến xe của tôi</Link>
+                    <Link to="/owner/subscriptions" className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Gói đăng tin của tôi</Link>
                 </div>
             </div>
         );
@@ -52,12 +51,12 @@ function VNPayReturnResult({ searchParams }) {
                         <span className="text-[#666666]">Mã giao dịch:</span>
                         <span className="font-bold">#{result.id}</span>
                     </div>
-                    {result.orderCode && (
+                    {result.subscriptionCode ? (
                         <div className="flex justify-between">
-                            <span className="text-[#666666]">Mã đơn:</span>
-                            <span className="font-bold">{result.orderCode}</span>
+                            <span className="text-[#666666]">Mã gói:</span>
+                            <span className="font-bold">{result.subscriptionCode}</span>
                         </div>
-                    )}
+                    ) : null}
                     {result.amount && (
                         <div className="flex justify-between">
                             <span className="text-[#666666]">Số tiền:</span>
@@ -71,10 +70,10 @@ function VNPayReturnResult({ searchParams }) {
                 </div>
             ) : null}
             <div className="mt-4 flex justify-center gap-3">
-                {result?.orderId ? (
-                    <Link to={`/orders/${result.orderId}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Xem đơn thuê</Link>
+                {result?.subscriptionId ? (
+                    <Link to={`/owner/subscriptions/${result.subscriptionId}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Xem gói đăng tin</Link>
                 ) : null}
-                <Link to="/my-trips" className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold text-[#292929]">Chuyến xe của tôi</Link>
+                <Link to="/owner/subscriptions" className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold text-[#292929]">Gói của tôi</Link>
             </div>
         </div>
     );
@@ -82,7 +81,6 @@ function VNPayReturnResult({ searchParams }) {
 
 export default function PaymentLive() {
     const [searchParams] = useSearchParams();
-    const orderId = searchParams.get("orderId");
     const isVnpayReturn = searchParams.has("vnp_ResponseCode") || searchParams.has("vnp_TxnRef");
 
     return (
@@ -90,10 +88,8 @@ export default function PaymentLive() {
             <RequireAuth title="Đăng nhập để thanh toán">
                 {isVnpayReturn ? (
                     <VNPayReturnResult searchParams={searchParams} />
-                ) : orderId ? (
-                    <Pay orderId={orderId} />
                 ) : (
-                    <p className="text-sm">Thiếu mã đơn. Mở thanh toán từ <Link to="/my-trips" className="font-bold text-[#FC6C26]">chuyến xe của tôi</Link>.</p>
+                    <p className="text-sm">Thanh toán gói đăng tin bắt đầu từ <Link to="/owner/subscriptions" className="font-bold text-[#FC6C26]">gói của tôi</Link>.</p>
                 )}
             </RequireAuth>
         </LivePage>

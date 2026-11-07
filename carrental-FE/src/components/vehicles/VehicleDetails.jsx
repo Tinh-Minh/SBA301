@@ -1,10 +1,18 @@
-import { DetailItem } from "@/components/DetailItem.jsx";
 import { Link } from "react-router";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ConfirmDialog } from "@/components/ConfirmDialog.jsx";
+import { FormErrors } from "@/components/FormErrors.jsx";
 import { LiveState } from "@/components/LiveUi.jsx";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useAuth } from "@/hooks/useAuth.js";
 import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels } from "@/utils/labels.js";
+import { formatDateTime } from "@/utils/datetime.js";
 import { carService } from "@/services/vehicleService.js";
+import { reviewService } from "@/services/reviewService.js";
 
 export function Detail({ carId }) {
     const load = useCallback(async () => {
@@ -29,6 +37,7 @@ function Body({ car }) {
     const zalo = car.contactZalo || car.contactPhone || "";
 
     return (
+        <div className="flex flex-col gap-6">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
             {/* Cột trái: Hình ảnh và thông số xe */}
             <article className="overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
@@ -163,7 +172,49 @@ function Body({ car }) {
                 </div>
             </aside>
         </div>
+        <CarReviews carId={car.id} />
+        </div>
     );
+}
+
+const reviewSchema = z.object({
+    rating: z.coerce.number().int().min(1, "Chọn từ 1 đến 5 sao").max(5, "Tối đa 5 sao"),
+    comment: z.string().max(2000, "Nhận xét tối đa 2000 ký tự"),
+});
+
+function CarReviews({ carId }) {
+    const { loggedIn } = useAuth();
+    const summary = useApiQuery(["reviews", "car", carId], () => reviewService.byCar(carId), { requiresAuth: false });
+    const create = useApiMutation(reviewService.create, summary.reload);
+    const [open, setOpen] = useState(false);
+    const form = useForm({ resolver: zodResolver(reviewSchema), defaultValues: { rating: 5, comment: "" } });
+    const data = summary.data;
+    async function submit(values) {
+        const created = await create.run({ carId, ...values });
+        if (created) {
+            setOpen(false);
+            form.reset({ rating: 5, comment: "" });
+        }
+    }
+    return <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-lg font-bold text-[#292929]">Đánh giá {data ? `• ${Number(data.averageRating || 0).toFixed(1)}/5 (${data.totalReviews})` : ""}</h2>
+      {loggedIn ? <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Viết đánh giá</button> : <Link to={`/login?next=/cars/${carId}`} className="text-sm font-bold text-[#FC6C26]">Đăng nhập để đánh giá</Link>}
+    </div>
+    <LiveState loading={summary.loading && !data} error={summary.error} empty={!!data && !data.reviews?.length} label="đánh giá" onRetry={summary.reload}/>
+    <ul className="mt-3 flex flex-col gap-3">{(data?.reviews ?? []).map(review => <li key={review.id} className="rounded-xl bg-[#F7F7F5] p-3 text-sm">
+      <p className="font-bold">{review.customerName} <span className="text-[#FC6C26]">{review.rating}/5</span></p>
+      <p className="mt-1">{review.comment || "Không có nhận xét"}</p>
+      <p className="mt-1 text-xs text-[#666666]">{formatDateTime(review.createdAt)}</p>
+    </li>)}</ul>
+    <ConfirmDialog open={open} title="Đánh giá xe này" confirmLabel="Gửi đánh giá" busy={create.running} error={create.error?.message} onClose={() => setOpen(false)} onConfirm={form.handleSubmit(submit)}>
+      <form className="flex flex-col gap-3" onSubmit={form.handleSubmit(submit)}>
+        <label className="text-xs font-semibold text-[#666666]">Số sao<select className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("rating")}>{[5, 4, 3, 2, 1].map(star => <option key={star} value={star}>{star} sao</option>)}</select></label>
+        <label className="text-xs font-semibold text-[#666666]">Nhận xét<textarea maxLength={2000} rows={4} className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("comment")}/></label>
+        <FormErrors errors={form.formState.errors}/>
+      </form>
+    </ConfirmDialog>
+  </section>;
 }
 
 function parseFeatures(raw) {

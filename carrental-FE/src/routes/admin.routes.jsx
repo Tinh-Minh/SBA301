@@ -1,6 +1,6 @@
 import { lazy } from "react";
 const AdminDashboardPage = lazy(() => import("@/pages/dashboards/AdminDashboardPage.jsx"));
-const AdminDisputesPage = lazy(() => import("@/pages/disputes/AdminDisputesPage.jsx"));
+const AdminReviewsPage = lazy(() => import("@/pages/reviews/AdminReviewsPage.jsx"));
 const AdminSubscriptionsPage = lazy(() => import("@/pages/subscriptions/AdminSubscriptionsPage.jsx"));
 const AdminPayoutsPage = lazy(() => import("@/pages/payouts/AdminPayoutsPage.jsx"));
 const AdminUsersPage = lazy(() => import("@/pages/account/AdminUsersPage.jsx"));
@@ -24,8 +24,8 @@ const adminNavigation = [
     { code: "A04", href: adminRoutes.vouchers, label: "Voucher", icon: "confirmation_number" },
     { code: "A05", href: adminRoutes.subscriptions, label: "Quản lý Đăng tin", icon: "workspace_premium" },
     { code: "A08", href: adminRoutes.packages, label: "Cấu hình Gói cước", icon: "sell" },
-    { code: "A06", href: adminRoutes.payouts, label: "Giao dịch & Chi trả", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
-    { code: "A07", href: adminRoutes.disputes, label: "Tranh chấp", icon: "gavel", badgeKey: "disputes", badgeSuffix: "hồ sơ", badgeTone: "danger" },
+    { code: "A06", href: adminRoutes.payouts, label: "Giao dịch gói", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
+    { code: "A07", href: "/admin/reviews", label: "Đánh giá xe", icon: "reviews" },
 ];
 
 function AdminContent() {
@@ -42,7 +42,8 @@ export function AdminRoute() {
 export const adminPages = [
     page("admin", <AliasRedirect to="/admin/dashboard" />),
     page("admin/dashboard", <AdminDashboardPage />, "Tổng quan quản trị"),
-    page("admin/disputes", <AdminDisputesPage />, "Tranh chấp & Khiếu nại"),
+    page("admin/disputes", <AliasRedirect to="/admin/reviews" />),
+    page("admin/reviews", <AdminReviewsPage />, "Đánh giá xe"),
     page("admin/orders", <AliasRedirect to="/admin/subscriptions" />),
     page("admin/subscriptions", <AdminSubscriptionsPage />, "Gói đăng tin toàn hệ thống"),
     page("admin/payouts", <AdminPayoutsPage />, "Giao dịch & Chi trả"),

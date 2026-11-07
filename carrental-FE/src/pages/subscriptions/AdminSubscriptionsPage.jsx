@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AdminPageHeader, AdminState, Pager, Tabs } from "@/components/admin/AdminUi.jsx";
+import { ConfirmDialog } from "@/components/ConfirmDialog.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { useAdminSubscriptions } from "@/hooks/useSubscriptions.js";
 import { subscriptionStatusMeta } from "@/services/subscriptionService.js";
@@ -14,6 +15,7 @@ const statusTabs = [
 export default function AdminSubscriptionsPage() {
     const [status, setStatus] = useState("");
     const [page, setPage] = useState(0);
+    const [pending, setPending] = useState(null);
     const { data, loading, error, reload, cancel } = useAdminSubscriptions(status, page);
     const rows = data?.content ?? [];
     return <div className="flex min-w-0 flex-col gap-5">
@@ -35,11 +37,12 @@ export default function AdminSubscriptionsPage() {
             <td className="p-3 font-semibold">{formatMoney(subscription.totalAmount)}</td>
             <td className="p-3">{formatDateTime(subscription.endDate)}</td>
             <td className="p-3"><StatusBadge meta={subscriptionStatusMeta[subscription.status]}/></td>
-            <td className="p-3 text-right">{subscription.status === "ACTIVE" || subscription.status === "PENDING_PAYMENT" ? <button type="button" disabled={cancel.running} onClick={() => void cancel.run(subscription.id)} className="rounded-lg border border-[#EF4444] px-3 py-1.5 text-xs font-bold text-[#EF4444] disabled:opacity-50">Huỷ gói</button> : null}</td>
+            <td className="p-3 text-right">{subscription.status === "ACTIVE" || subscription.status === "PENDING_PAYMENT" ? <button type="button" disabled={cancel.running} onClick={() => setPending(subscription)} className="rounded-lg border border-[#EF4444] px-3 py-1.5 text-xs font-bold text-[#EF4444] disabled:opacity-50">Huỷ gói</button> : null}</td>
           </tr>)}
         </tbody>
       </table>
     </div> : null}
     <Pager page={page} totalPages={data?.totalPages} onPage={setPage}/>
+    <ConfirmDialog open={Boolean(pending)} title="Huỷ gói đăng tin" description={pending?.status === "ACTIVE" ? `Gói ${pending.subscriptionCode} đang hiển thị. Huỷ sẽ ẩn tin của xe ${pending.licensePlate}.` : `Huỷ gói ${pending?.subscriptionCode ?? ""} chưa thanh toán.`} confirmLabel="Huỷ gói" danger busy={cancel.running} error={cancel.error?.message} onClose={() => setPending(null)} onConfirm={async () => { await cancel.run(pending.id); setPending(null); }}/>
   </div>;
 }

@@ -90,6 +90,7 @@ export const endpoints = {
     },
     subscriptions: {
         adminList: "/api/admin/subscriptions",
+        byId: (id) => `/api/subscriptions/${id}`,
         byIdCancel: (id) => `/api/subscriptions/${id}/cancel`,
         list: "/api/subscriptions",
         mine: "/api/subscriptions/my-subscriptions",

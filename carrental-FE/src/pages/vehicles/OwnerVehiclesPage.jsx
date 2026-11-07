@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { useOwnerCars } from "@/hooks/useVehicles.js";
 import { carStatusMeta, carSubtitle, isApprovedCar } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
+import { ConfirmDialog } from "@/components/ConfirmDialog.jsx";
 import { ListingStatusBar } from "@/components/subscriptions/ListingStatusBar.jsx";
 import { useMySubscriptions } from "@/hooks/useSubscriptions.js";
 
@@ -27,11 +28,11 @@ export function matches(car, filter) {
 }
 function statusNote(status) {
     if (status === "ACTIVE")
-        return "Đang mở lịch cho thuê";
+        return "Xe đã duyệt, có thể mua gói để hiển thị trên sàn.";
     if (status === "PENDING_APPROVAL")
         return "Đang được CarDB thẩm định hồ sơ đăng kiểm và bảo hiểm.";
     if (status === "INACTIVE")
-        return "Đang tạm ngưng nhận lịch.";
+        return "Đang tạm ẩn, chưa nhận gói hiển thị mới.";
     return "Hồ sơ bị từ chối, cần cập nhật trước khi niêm yết lại.";
 }
 
@@ -40,6 +41,7 @@ export default function OwnerVehicles() {
     const { data: subscriptions } = useMySubscriptions();
     const [filter, setFilter] = useState("all");
     const [query, setQuery] = useState("");
+    const [pendingCar, setPendingCar] = useState(null);
     const cars = data ?? [];
     const visible = useMemo(() => {
         const keyword = query.trim().toLowerCase();
@@ -54,7 +56,7 @@ export default function OwnerVehicles() {
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
       <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Xe của tôi"/>
-      <OwnerHeading title="Xe của tôi" description={`${counts.all} phương tiện. Quản lý niêm yết, trạng thái và bảng giá cho thuê.`} actions={<Link to={ownerRoutes.vehicleNew} className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-hover">
+      <OwnerHeading title="Xe của tôi" description={`${counts.all} phương tiện. Quản lý hồ sơ xe và trạng thái hiển thị.`} actions={<Link to={ownerRoutes.vehicleNew} className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-hover">
           <Icon name="add" className="text-[18px]"/>
           Đăng xe mới
         </Link>}/>
@@ -99,9 +101,9 @@ export default function OwnerVehicles() {
                 </Link>
                 {car.status === "ACTIVE" ? <Link to={ownerRoutes.calendar} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal hover:border-orange-200 hover:text-brand-accent">
                   <Icon name="calendar_month" className="text-[16px]"/>
-                  Lịch cho thuê
+                  Lịch hiển thị
                 </Link> : null}
-                {car.status === "ACTIVE" || car.status === "INACTIVE" ? <button type="button" disabled={toggleStatus.running} onClick={() => void toggleStatus.run(car)} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-3.5 py-2 text-xs font-bold text-white hover:bg-primary-hover disabled:opacity-60">
+                {car.status === "ACTIVE" || car.status === "INACTIVE" ? <button type="button" disabled={toggleStatus.running} onClick={() => setPendingCar(car)} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-3.5 py-2 text-xs font-bold text-white hover:bg-primary-hover disabled:opacity-60">
                   <Icon name={car.status === "ACTIVE" ? "lock" : "check"} className="text-[16px]"/>
                   {car.status === "ACTIVE" ? "Tạm ngưng niêm yết" : "Bật lại niêm yết"}
                 </button> : null}
@@ -112,9 +114,10 @@ export default function OwnerVehicles() {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-card-border bg-white px-5 py-4 text-sm text-muted-gray">
-        <span className="inline-flex items-center gap-2"><Icon name="directions_car" className="text-[18px] text-charcoal"/> {counts.all} xe đã đăng • {counts.approved} đang cho thuê • {counts.pending} chờ duyệt • {counts.paused} tạm ẩn</span>
+        <span className="inline-flex items-center gap-2"><Icon name="directions_car" className="text-[18px] text-charcoal"/> {counts.all} xe đã đăng • {counts.approved} đã duyệt • {counts.pending} chờ duyệt • {counts.paused} tạm ẩn</span>
         <a href="tel:19008899" className="inline-flex items-center gap-1.5 font-bold text-brand-accent"><Icon name="call" className="text-[16px]"/> 1900 8899 (Phím 2)</a>
       </div>
+      <ConfirmDialog open={Boolean(pendingCar)} title={pendingCar?.status === "ACTIVE" ? "Tạm ẩn xe" : "Bật lại xe"} description={pendingCar ? `${pendingCar.brand} ${pendingCar.model} • ${pendingCar.licensePlate}` : ""} confirmLabel="Xác nhận" busy={toggleStatus.running} error={toggleStatus.error?.message} onClose={() => setPendingCar(null)} onConfirm={async () => { await toggleStatus.run(pendingCar); setPendingCar(null); }}/>
     </> : null}
   </div>;
 }

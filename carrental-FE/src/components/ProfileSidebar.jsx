@@ -9,9 +9,9 @@ const groups = [
             { section: "driver", href: "/account/driver", label: "Hồ sơ tài xế", icon: "badge" },
             { section: "banks", href: "/account/bank", label: "Tài khoản ngân hàng", icon: "account_balance" },
         ] },
-    { title: "Quản lý chuyến đi", links: [
-            { section: "orders", href: "/account/orders", label: "Đơn thuê xe", icon: "directions_car" },
-            { section: "history", href: "/account/history", label: "Lịch sử chuyến đi", icon: "history" },
+    { title: "Tin đăng và đánh giá", links: [
+            { section: "reviews", href: "/my-trips", label: "Đánh giá của tôi", icon: "reviews" },
+            { section: "subscriptions", href: "/owner/subscriptions", label: "Gói đăng tin", icon: "workspace_premium" },
             { section: "owner", href: "/owner/dashboard", label: "Kênh chủ xe", icon: "garage_home" },
         ] },
 ];

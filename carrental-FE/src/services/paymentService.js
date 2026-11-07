@@ -13,6 +13,7 @@ export const transactionService = {
     /** GET /api/transactions/vnpay-return?format=json&vnp_... — xác thực chữ ký VNPay trả về. */
     vnpayReturn: (params) => request(endpoints.transactions.vnpayReturn, { query: { ...params, format: "json" } }),
     /** GET /api/transactions — danh sách giao dịch có phân trang (admin). */
-    listPage: async (query) => toPage(await request("/api/transactions", { query })),
-    listByOrder: async (orderId) => toPage(await request(endpoints.transactions.list, { query: { orderId, size: 50, sort: "id,desc" } })).content,
+    listPage: async (query) => toPage(await request(endpoints.transactions.list, { query })),
+    /** GET /api/transactions — giao dịch gói đăng tin của người đang đăng nhập. */
+    listRecent: async () => toPage(await request(endpoints.transactions.list, { query: { page: 0, size: 50, sort: "id,desc" } })).content,
 };

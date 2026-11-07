@@ -1,104 +1,65 @@
-import { Link } from "react-router";
 import { useMemo, useState } from "react";
-import { Icon } from "@/components/Icon.jsx";
-import { OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
-import { useOwnerCalendar } from "@/hooks/useCalendar.js";
-import { formatVnd } from "@/utils/owner.js";
+import { Link } from "react-router";
+import { OwnerCrumb, OwnerHeading } from "@/components/owner/OwnerScreen.jsx";
+import { LiveState } from "@/components/LiveUi.jsx";
+import { useMySubscriptions } from "@/hooks/useSubscriptions.js";
 import { ownerRoutes } from "@/routes/paths.js";
-import { DayPanel, SlotManager, cellFor, shortPrice, startOfDay, weekdayLabels } from "@/components/vehicles/SlotManager.jsx";
+import { formatDate, parseDate } from "@/utils/datetime.js";
+import { subscriptionStatusMeta } from "@/services/subscriptionService.js";
+import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
+
+function covers(subscription, date) {
+    const start = parseDate(subscription.startDate);
+    const end = parseDate(subscription.endDate);
+    if (!start || !end || subscription.status !== "ACTIVE")
+        return false;
+    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+    const from = new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime();
+    const to = new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime();
+    return day >= from && day <= to;
+}
 
 export default function OwnerCalendar() {
     const today = new Date();
     const [cursor, setCursor] = useState({ year: today.getFullYear(), month: today.getMonth() });
-    const { data, loading, error, reload } = useOwnerCalendar(cursor.year, cursor.month);
-    const cars = data?.cars ?? [];
-    const [carId, setCarId] = useState(null);
-    const selectedCarId = carId ?? cars.find(car => car.status === "ACTIVE")?.id ?? cars[0]?.id ?? null;
-    const [selectedDay, setSelectedDay] = useState(today.getDate());
+    const { data, loading, error, reload } = useMySubscriptions();
+    const subscriptions = data ?? [];
     const grid = useMemo(() => {
         const first = new Date(cursor.year, cursor.month, 1);
         const lead = (first.getDay() + 6) % 7;
-        const daysInMonth = new Date(cursor.year, cursor.month + 1, 0).getDate();
-        const cells = [];
-        for (let index = 0; index < lead; index += 1) {
-            const date = new Date(cursor.year, cursor.month, index - lead + 1);
-            cells.push({ date, inMonth: false });
-        }
-        for (let day = 1; day <= daysInMonth; day += 1)
-            cells.push({ date: new Date(cursor.year, cursor.month, day), inMonth: true });
+        const days = new Date(cursor.year, cursor.month + 1, 0).getDate();
+        const cells = Array.from({ length: lead }, () => null);
+        for (let day = 1; day <= days; day += 1)
+            cells.push(new Date(cursor.year, cursor.month, day));
         while (cells.length % 7 !== 0)
             cells.push(null);
         return cells;
     }, [cursor]);
-    const car = cars.find(item => item.id === selectedCarId);
-    const dayDate = new Date(cursor.year, cursor.month, selectedDay);
-    const dayInfo = car && data ? cellFor(dayDate, car.id, data.slots, data.orders) : null;
-    const monthOrders = data && car ? data.orders.filter(order => order.carId === car.id) : [];
-    const bookedDays = new Set(monthOrders.flatMap(order => {
-        const days = [];
-        const cursorDay = startOfDay(new Date(order.startTime));
-        const end = startOfDay(new Date(order.endTime));
-        while (cursorDay < end && cursorDay.getMonth() === cursor.month && cursorDay.getFullYear() === cursor.year) {
-            days.push(cursorDay.getDate());
-            cursorDay.setDate(cursorDay.getDate() + 1);
-        }
-        return days;
-    }));
-    const openDays = data && car ? grid.filter(cell => cell?.inMonth && cellFor(cell.date, car.id, data.slots, data.orders).kind === "open").length : 0;
-    const fill = openDays + bookedDays.size === 0 ? 0 : Math.round((bookedDays.size / (openDays + bookedDays.size)) * 1000) / 10;
-    function shift(delta) {
-        const next = new Date(cursor.year, cursor.month + delta, 1);
-        setCursor({ year: next.getFullYear(), month: next.getMonth() });
-        setSelectedDay(1);
-    }
+    const label = new Date(cursor.year, cursor.month, 1).toLocaleDateString("vi-VN", { month: "long", year: "numeric" });
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
-      <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Lịch cho thuê" parent={{ href: ownerRoutes.dashboard, label: "Bảng điều khiển" }}/>
-      <OwnerHeading title="Lịch cho thuê xe" description="Khung ngày đang mở, ngày đã có khách và ngày bị khóa theo từng xe."/>
+      <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Lịch hiển thị"/>
+      <OwnerHeading title="Lịch hiển thị tin" description="Những ngày xe đang có gói đăng tin hiệu lực. Lịch khung giờ thuê không còn dùng."/>
     </div>
-    <OwnerState loading={loading && !data} error={error} label="lịch"/>
-    {data && car ? <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-      <section className="rounded-2xl border border-card-border bg-white p-4 shadow-sm sm:p-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex min-w-0 flex-col gap-1 text-xs font-bold uppercase tracking-wide text-muted-gray">
-            Xe đang xem
-            <select value={car.id} onChange={event => setCarId(Number(event.target.value))} className="rounded-xl border border-card-border bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-charcoal">
-              {cars.map(item => <option key={item.id} value={item.id}>{item.brand} {item.model} • {item.licensePlate}</option>)}
-            </select>
-          </label>
-          <div className="flex items-center gap-2">
-            <button type="button" aria-label="Tháng trước" onClick={() => shift(-1)} className="flex size-9 items-center justify-center rounded-xl border border-card-border"><Icon name="chevron_left" className="text-[20px]"/></button>
-            <span className="min-w-36 text-center text-sm font-bold text-charcoal">Tháng {cursor.month + 1} / {cursor.year}</span>
-            <button type="button" aria-label="Tháng sau" onClick={() => shift(1)} className="flex size-9 items-center justify-center rounded-xl border border-card-border"><Icon name="chevron_right" className="text-[20px]"/></button>
-          </div>
-        </div>
-        <div className="mt-4 grid grid-cols-7 gap-1.5 text-center text-[11px] font-bold uppercase tracking-wide text-muted-gray">
-          {weekdayLabels.map(label => <span key={label}>{label}</span>)}
-        </div>
-        <div className="mt-1.5 grid grid-cols-7 gap-1.5">
-          {grid.map((cell, index) => {
-                if (!cell)
-                    return <span key={`pad-${index}`}/>;
-                const info = cell.inMonth ? cellFor(cell.date, car.id, data.slots, data.orders) : null;
-                const selected = cell.inMonth && cell.date.getDate() === selectedDay;
-                const tone = !cell.inMonth ? "text-muted-gray/40" : info?.kind === "booked" ? "border-brand-accent bg-accent-soft text-charcoal" : info?.kind === "locked" ? "border-card-border bg-badge-gray text-muted-gray" : info?.kind === "open" ? "border-emerald-200 bg-status-green-bg text-charcoal" : "border-card-border bg-white text-muted-gray";
-                return <button key={cell.date.toISOString()} type="button" disabled={!cell.inMonth} onClick={() => setSelectedDay(cell.date.getDate())} className={`flex min-h-16 flex-col items-start rounded-xl border p-1.5 text-left sm:min-h-20 sm:p-2 ${tone} ${selected ? "ring-2 ring-brand-accent" : ""}`}>
-              <span className="text-xs font-bold">{cell.date.getDate()}</span>
-              {info?.kind === "open" ? <span className="mt-auto text-[10px] font-semibold text-status-success-ink">{shortPrice(info.slot.pricePerDay)}</span> : null}
-              {info?.kind === "booked" ? <span className="mt-auto truncate text-[10px] font-bold text-brand-accent">#{info.order.id}</span> : null}
-              {info?.kind === "locked" ? <span className="mt-auto text-[10px] font-semibold">Khóa</span> : null}
-            </button>;
-            })}
-        </div>
-        <p className="mt-4 text-xs text-muted-gray">
-          Tỷ lệ lấp đầy tháng: <span className="font-bold text-charcoal">{fill}%</span> • {bookedDays.size} ngày đã có khách
-          {monthOrders.length ? <> • doanh thu thuê {formatVnd(monthOrders.reduce((sum, order) => sum + order.rentalAmount, 0))}</> : null}
-        </p>
-      </section>
-
-      <DayPanel car={car} day={dayDate} info={dayInfo}/>
-    </div> : null}
-    {data && car ? <SlotManager key={car.id} car={car} onChanged={reload}/> : null}
-    {data && !cars.length ? <div className="rounded-2xl border border-card-border bg-white p-6 text-sm text-muted-gray">Bạn chưa có xe nào. <Link to={ownerRoutes.vehicleNew} className="font-bold text-brand-accent">Đăng xe đầu tiên</Link> để mở lịch cho thuê.</div> : null}
+    <LiveState loading={loading && !data} error={error} empty={!!data && subscriptions.length === 0} label="gói đăng tin" onRetry={reload}/>
+    <div className="flex items-center justify-between">
+      <button type="button" onClick={() => setCursor(current => ({ year: current.month === 0 ? current.year - 1 : current.year, month: current.month === 0 ? 11 : current.month - 1 }))} className="rounded-lg border border-[#E9E9E7] px-3 py-1.5 text-sm font-bold">Tháng trước</button>
+      <strong className="capitalize">{label}</strong>
+      <button type="button" onClick={() => setCursor(current => ({ year: current.month === 11 ? current.year + 1 : current.year, month: current.month === 11 ? 0 : current.month + 1 }))} className="rounded-lg border border-[#E9E9E7] px-3 py-1.5 text-sm font-bold">Tháng sau</button>
+    </div>
+    <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-[#666666]">{["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(day => <span key={day}>{day}</span>)}</div>
+    <div className="grid grid-cols-7 gap-1">
+      {grid.map((date, index) => {
+        const listed = date ? subscriptions.filter(item => covers(item, date)) : [];
+        return <div key={index} className={`min-h-16 rounded-lg border p-1 text-xs ${date ? "border-[#E9E9E7] bg-white" : "border-transparent"}`}>
+          {date ? <span className="font-bold">{date.getDate()}</span> : null}
+          {listed.slice(0, 2).map(item => <p key={item.id} className="mt-1 truncate rounded bg-[#FFF2EB] px-1 text-[10px] text-[#9A3412]">{item.licensePlate}</p>)}
+        </div>;
+      })}
+    </div>
+    <ul className="flex flex-col gap-2">{subscriptions.filter(item => item.status === "ACTIVE" || item.status === "PENDING_PAYMENT").map(item => <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#E9E9E7] bg-white p-4 text-sm">
+      <span>{item.carName} • {item.packageName}<span className="block text-xs text-[#666666]">{formatDate(item.startDate)} – {formatDate(item.endDate)}</span></span>
+      <span className="flex items-center gap-2"><StatusBadge meta={subscriptionStatusMeta[item.status]}/><Link to={`${ownerRoutes.subscriptions}/${item.id}`} className="font-bold text-[#FC6C26]">Chi tiết</Link></span>
+    </li>)}</ul>
   </div>;
 }

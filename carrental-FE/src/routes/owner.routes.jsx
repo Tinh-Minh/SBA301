@@ -4,6 +4,7 @@ const OwnerDashboardPage = lazy(() => import("@/pages/dashboards/OwnerDashboardP
 const OwnerPayoutsPage = lazy(() => import("@/pages/payouts/OwnerPayoutsPage.jsx"));
 const BuySubscriptionPage = lazy(() => import("@/pages/subscriptions/BuySubscriptionPage.jsx"));
 const MySubscriptionsPage = lazy(() => import("@/pages/subscriptions/MySubscriptionsPage.jsx"));
+const SubscriptionDetailPage = lazy(() => import("@/pages/subscriptions/SubscriptionDetailPage.jsx"));
 const OwnerVehicleEditPage = lazy(() => import("@/pages/vehicles/OwnerVehicleEditPage.jsx"));
 const OwnerVehicleNewPage = lazy(() => import("@/pages/vehicles/OwnerVehicleNewPage.jsx"));
 const OwnerVehiclesPage = lazy(() => import("@/pages/vehicles/OwnerVehiclesPage.jsx"));
@@ -19,9 +20,9 @@ import { useOwnerCounts } from "@/hooks/useVehicles.js";
 const ownerNavigation = [
     { code: "O01", href: ownerRoutes.dashboard, label: "Tổng quan", icon: "grid_view" },
     { code: "O02", href: ownerRoutes.vehicles, label: "Xe của tôi", icon: "garage_home", badgeKey: "cars" },
-    { code: "O04", href: ownerRoutes.calendar, label: "Lịch cho thuê", icon: "calendar_month" },
+    { code: "O04", href: ownerRoutes.calendar, label: "Lịch hiển thị", icon: "calendar_month" },
     { code: "O05", href: ownerRoutes.subscriptions, label: "Gói đăng tin", icon: "workspace_premium" },
-    { code: "O07", href: ownerRoutes.payouts, label: "Doanh thu & Chi trả", icon: "account_balance_wallet" },
+    { code: "O07", href: ownerRoutes.payouts, label: "Giao dịch gói", icon: "account_balance_wallet" },
 ];
 
 function OwnerContent() {
@@ -37,13 +38,14 @@ export function OwnerRoute() {
 
 export const ownerPages = [
     page("owner", <AliasRedirect to="/owner/dashboard" />),
-    page("owner/calendar", <OwnerCalendarPage />, "Lịch cho thuê"),
+    page("owner/calendar", <OwnerCalendarPage />, "Lịch hiển thị tin"),
     page("owner/dashboard", <OwnerDashboardPage />, "Bảng điều khiển chủ xe"),
-    page("owner/payouts", <OwnerPayoutsPage />, "Doanh thu & Chi trả"),
+    page("owner/payouts", <OwnerPayoutsPage />, "Giao dịch gói đăng tin"),
     page("owner/requests", <AliasRedirect to="/owner/subscriptions" />),
     page("owner/trips", <AliasRedirect to="/owner/subscriptions" />),
     page("owner/subscriptions", <MySubscriptionsPage />, "Gói đăng tin"),
     page("owner/subscriptions/new", <BuySubscriptionPage />, "Mua gói đăng tin"),
+    page("owner/subscriptions/:id", <SubscriptionDetailPage />, "Chi tiết gói đăng tin"),
     page("owner/vehicles", <OwnerVehiclesPage />, "Xe của tôi"),
     page("owner/vehicles/new", <OwnerVehicleNewPage />, "Đăng ký xe mới"),
     page("owner/vehicles/edit/:id", <EditCarRoute Screen={OwnerVehicleEditPage} />, "Chỉnh sửa xe"),

@@ -10,6 +10,8 @@ export const subscriptionService = {
     quote: (input) => request(endpoints.subscriptions.quote, { method: "POST", json: body(input) }),
     /** POST /api/subscriptions */
     create: (input) => request(endpoints.subscriptions.list, { method: "POST", json: body(input) }),
+    /** GET /api/subscriptions/{id} */
+    getById: (id) => request(endpoints.subscriptions.byId(id)),
     /** GET /api/subscriptions/my-subscriptions */
     listMine: () => fetchAllPages(endpoints.subscriptions.mine, { sortBy: "createdAt", direction: "desc" }, { pageSize: 50 }),
     /** PUT /api/subscriptions/{id}/cancel */

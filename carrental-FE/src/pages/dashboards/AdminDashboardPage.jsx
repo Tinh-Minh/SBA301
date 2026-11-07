@@ -5,22 +5,25 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatTrVnd } from "@/utils/owner.js";
 import { adminRoutes } from "@/routes/paths.js";
 import { formatDateTime } from "@/utils/datetime.js";
-import { kycStatusLabels, orderStatusLabels } from "@/utils/labels.js";
+import { kycStatusLabels } from "@/utils/labels.js";
 import { getAdminOverview } from "@/services/adminService.js";
-import { Stat, orderTone } from "@/components/dashboards/DashboardStat.jsx";
+import { Stat } from "@/components/dashboards/DashboardStat.jsx";
+
+const txStatus = { PENDING: "Chờ thanh toán", SUCCESS: "Thành công", FAILED: "Thất bại" };
 
 export default function AdminDashboard() {
     const { data, loading, error, reload } = useApiQuery(["admin", "dashboard"], getAdminOverview);
     const totals = data?.totals;
+    const revenue = data?.revenue;
     return <div className="flex flex-col gap-5">
-    <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Chỉ số vận hành, hồ sơ chờ duyệt và đơn thuê mới nhất lấy trực tiếp từ hệ thống." actions={<button type="button" onClick={reload} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold">Làm mới</button>}/>
+    <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Doanh thu gói đăng tin, hồ sơ chờ duyệt và giao dịch gần nhất." actions={<button type="button" onClick={reload} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold">Làm mới</button>}/>
     <AdminState loading={loading && !data} error={error} label="tổng quan" onRetry={reload}/>
     {totals ? <>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      <Stat label="GMV (đơn đã xác nhận)" value={formatTrVnd(totals.gmv)} hint={`${totals.ordersThisMonth} đơn tạo trong tháng này`}/>
-      <Stat label="Phí nền tảng" value={formatTrVnd(totals.platformFee)} hint="Tính theo hoa hồng trên từng đơn"/>
-      <Stat label="Tổng đơn" value={`${totals.orders} đơn`} hint={`${totals.ongoing} đang lăn bánh`}/>
-      <Stat label="Việc cần xử lý" value={`${totals.pendingDocs + totals.pendingCars + totals.openDisputes + totals.pendingPayouts} mục`} hint={`${totals.pendingDocs} giấy tờ • ${totals.pendingCars} xe • ${totals.openDisputes} khiếu nại • ${totals.pendingPayouts} chi trả`}/>
+      <Stat label="Doanh thu gói" value={formatTrVnd(revenue?.totalRevenue ?? 0)} hint={`${revenue?.totalPackagesSold ?? 0} gói đã bán`}/>
+      <Stat label="Tin đang hiển thị" value={`${revenue?.activeListingsCount ?? 0} tin`} hint={revenue?.bestSellingPackageName ? `Bán chạy: ${revenue.bestSellingPackageName}` : "Chưa có gói bán chạy"}/>
+      <Stat label="Người dùng" value={`${totals.customers} tài khoản`} hint={`${totals.pendingDocs} giấy tờ chờ duyệt`}/>
+      <Stat label="Việc cần xử lý" value={`${totals.pendingDocs + totals.pendingCars + totals.pendingSubscriptions + totals.pendingTransactions} mục`} hint={`${totals.pendingCars} xe • ${totals.pendingSubscriptions} gói chờ trả • ${totals.pendingTransactions} giao dịch chờ`}/>
     </section>
     <section className="grid gap-4 xl:grid-cols-2">
       <article className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
@@ -39,7 +42,7 @@ export default function AdminDashboard() {
               <p className="truncate font-bold text-[#292929]">{car.brand} {car.model}</p>
               <p className="truncate text-xs text-[#666666]">{car.licensePlate} • {car.city}</p>
             </div>
-            <StatusPill tone="warning">Chờ duyệt niêm yết</StatusPill>
+            <StatusPill tone="warning">Chờ duyệt xe</StatusPill>
             <Link to={`${adminRoutes.vehicles}?id=${car.id}`} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Thẩm định xe →</Link>
           </li>)}
           {!data.pendingKyc.length && !data.pendingCars.length ? <li className="text-sm text-[#666666]">Không có hồ sơ nào đang chờ.</li> : null}
@@ -47,20 +50,20 @@ export default function AdminDashboard() {
       </article>
       <article className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-[#292929]">Đơn thuê mới nhất</h2>
-          <Link to={adminRoutes.orders} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Xem tất cả →</Link>
+          <h2 className="text-base font-bold text-[#292929]">Giao dịch gần nhất</h2>
+          <Link to={adminRoutes.payouts} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Xem tất cả →</Link>
         </div>
         <ul className="mt-4 flex flex-col gap-3">
-          {data.latestOrders.map(order => <li key={order.id} className="rounded-xl border border-[#E9E9E7] p-3">
+          {(revenue?.recentTransactions ?? []).map(item => <li key={item.id} className="rounded-xl border border-[#E9E9E7] p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="whitespace-nowrap font-mono text-xs font-bold text-[#FC6C26]">{order.orderCode}</span>
-              <StatusPill tone={orderTone[order.status]}>{orderStatusLabels[order.status] ?? order.status}</StatusPill>
+              <span className="font-mono text-xs font-bold text-[#FC6C26]">#{item.id} • {item.subscriptionCode}</span>
+              <StatusPill tone={item.status === "SUCCESS" ? "success" : item.status === "FAILED" ? "danger" : "warning"}>{txStatus[item.status] ?? item.status}</StatusPill>
             </div>
-            <p className="mt-1 truncate text-sm font-bold text-[#292929]">{order.carName} • {order.licensePlate}</p>
-            <p className="truncate text-xs text-[#666666]">{order.customerName} → {order.ownerName} • {formatDateTime(order.startTime)}</p>
-            <p className="mt-1 whitespace-nowrap text-sm text-[#292929]"><Money amount={order.totalAmount}/> • phí {order.commissionRate}% <Money amount={Math.round(order.rentalAmount * order.commissionRate / 100)}/></p>
+            <p className="mt-1 truncate text-sm font-bold text-[#292929]">{item.packageName} • {item.carName}</p>
+            <p className="text-xs text-[#666666]">{formatDateTime(item.createdAt)}</p>
+            <p className="mt-1 text-sm"><Money amount={item.amount}/></p>
           </li>)}
-          {!data.latestOrders.length ? <li className="text-sm text-[#666666]">Chưa có đơn thuê nào.</li> : null}
+          {!(revenue?.recentTransactions ?? []).length ? <li className="text-sm text-[#666666]">Chưa có giao dịch mua gói.</li> : null}
         </ul>
       </article>
     </section>
