@@ -6,11 +6,16 @@ import org.springframework.data.jpa.repository.Lock;
 import java.util.Optional;
 
 import com.carrental.entity.Voucher;
+import com.carrental.enums.VoucherStatus;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.data.jpa.repository.Query;
 
 public interface VoucherRepository extends JpaRepository<Voucher, Long>, JpaSpecificationExecutor<Voucher> {
 
@@ -30,4 +35,10 @@ public interface VoucherRepository extends JpaRepository<Voucher, Long>, JpaSpec
     int decreaseUsage(@Param("id") Long id);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Voucher> findWithLockById(Long id);
+
+    @Query("select v from Voucher v where v.status = :status and v.startAt <= :now and v.endAt > :now "
+            + "and v.minOrderAmount <= :packagePrice "
+            + "and (v.usageLimit is null or v.usedCount < v.usageLimit) order by v.endAt asc, v.id asc")
+    List<Voucher> findAvailableForPackage(@Param("status") VoucherStatus status,
+            @Param("now") LocalDateTime now, @Param("packagePrice") BigDecimal packagePrice);
 }

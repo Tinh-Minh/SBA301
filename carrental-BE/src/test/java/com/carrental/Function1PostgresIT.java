@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import com.carrental.entity.Customer;
+import com.carrental.entity.BankAccount;
 import com.carrental.entity.Driver;
 import com.carrental.entity.UserDocument;
 import com.carrental.entity.Voucher;
@@ -49,7 +50,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
         "spring.flyway.enabled=true",
-        "spring.flyway.locations=classpath:db/migration/function1",
+        "spring.flyway.locations=classpath:db/migration/function1,classpath:db/migration/it-support",
         "spring.jpa.hibernate.ddl-auto=none",
         "spring.jpa.open-in-view=false"
 })
@@ -83,7 +84,7 @@ class Function1PostgresIT {
     @Autowired private VoucherRepository vouchers;
 
     @Test
-    void baselineMigratesOnlyFunctionOneAndCanBeValidatedTwiceWithoutLosingRows() {
+    void leaderBaselineAndIsolatedSupportMigrateAndCanBeValidatedTwiceWithoutLosingRows() {
         flyway.validate();
 
         List<String> tables = jdbc.queryForList("""
@@ -102,10 +103,13 @@ class Function1PostgresIT {
 
         String email = "migration-" + SUFFIX + "@example.test";
         Long markerId = insertCustomer(email, "m" + SUFFIX.substring(0, 18));
+        int appliedMigrations = jdbc.queryForObject("select count(*) from flyway_schema_history where success",
+                Integer.class);
         flyway.migrate();
         flyway.validate();
         assertThat(jdbc.queryForObject("select count(*) from customers where id=?", Integer.class, markerId)).isEqualTo(1);
-        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success", Integer.class))
+                .isEqualTo(appliedMigrations);
     }
 
     @Test
@@ -165,11 +169,21 @@ class Function1PostgresIT {
             voucher.setUsageLimit(null);
             entityManager.persist(voucher);
 
+            BankAccount bankAccount = new BankAccount();
+            bankAccount.setCustomer(customer);
+            bankAccount.setBankName("Mapping Bank");
+            bankAccount.setAccountNumber("001234567890");
+            bankAccount.setAccountHolder("Mapping Person");
+            bankAccount.setDefault(false);
+            entityManager.persist(bankAccount);
+
             entityManager.flush();
             assertThat(customer.getId()).isNotNull();
             assertThat(document.getId()).isNotNull();
             assertThat(driver.getId()).isNotNull();
             assertThat(voucher.getId()).isNotNull();
+            assertThat(bankAccount.getId()).isNotNull();
+            assertThat(bankAccount.getCreatedAt()).isNotNull();
             assertThat(customer.getCreatedAt()).isNotNull();
             assertThat(customer.getUpdatedAt()).isNotNull();
             assertThat(document.getCreatedAt()).isNotNull();
@@ -184,6 +198,7 @@ class Function1PostgresIT {
             UserDocument loadedDocument = entityManager.find(UserDocument.class, document.getId());
             Driver loadedDriver = entityManager.find(Driver.class, driver.getId());
             Voucher loadedVoucher = entityManager.find(Voucher.class, voucher.getId());
+            BankAccount loadedBankAccount = entityManager.find(BankAccount.class, bankAccount.getId());
             assertThat(loaded.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 4, 3));
             assertThat(loaded.getKycStatus()).isEqualTo(KycStatus.PENDING);
             assertThat(loaded.getRole()).isEqualTo(Role.CUSTOMER);
@@ -203,6 +218,8 @@ class Function1PostgresIT {
             assertThat(loadedVoucher.getPerUserLimit()).isEqualTo(1);
             assertThat(loadedVoucher.getUsedCount()).isZero();
             assertThat(loadedVoucher.getStatus()).isEqualTo(VoucherStatus.ACTIVE);
+            assertThat(loadedBankAccount.getAccountNumber()).isEqualTo("001234567890");
+            assertThat(loadedBankAccount.isDefault()).isFalse();
         });
 
         LocalDateTime historicalTime = LocalDateTime.of(2000, 1, 1, 0, 0);

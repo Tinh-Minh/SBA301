@@ -1,0 +1,134 @@
+{
+  "generatedAt": "2026-11-06T13:39:31.017Z",
+  "checks": [
+    {
+      "name": "Customer A: registered as an active customer",
+      "result": "PASS",
+      "database": "18|CUSTOMER|ACTIVE|NONE"
+    },
+    {
+      "name": "Customer A: authenticated account remains active",
+      "result": "PASS",
+      "database": "CUSTOMER|ACTIVE"
+    },
+    {
+      "name": "Profile: Zalo/contact note persisted without changing name/phone",
+      "result": "PASS",
+      "database": "0905555555|F1 E2E call after 18:00|F1 E2E Customer 838EFD9E4E|0907186379"
+    },
+    {
+      "name": "CITIZEN_ID: upload persisted as PENDING",
+      "result": "PASS",
+      "database": "21|CITIZEN_ID|PENDING"
+    },
+    {
+      "name": "DRIVER_LICENSE: upload persisted as PENDING",
+      "result": "PASS",
+      "database": "22|DRIVER_LICENSE|PENDING"
+    },
+    {
+      "name": "Customer B: registered as an active customer",
+      "result": "PASS",
+      "database": "19|CUSTOMER|ACTIVE|NONE"
+    },
+    {
+      "name": "PASSPORT: upload persisted as PENDING",
+      "result": "PASS",
+      "database": "23|PASSPORT|PENDING"
+    },
+    {
+      "name": "Admin: citizen ID approved and KYC promoted",
+      "result": "PASS",
+      "database": "APPROVED|1|VERIFIED"
+    },
+    {
+      "name": "Admin: driver license approved and stored",
+      "result": "PASS",
+      "database": "DRIVER_LICENSE|APPROVED|B2"
+    },
+    {
+      "name": "Admin: passport rejection and reason persisted",
+      "result": "PASS",
+      "database": "REJECTED|Synthetic E2E document mismatch|REJECTED"
+    },
+    {
+      "name": "Driver: profile persisted as PENDING with approved identity/license",
+      "result": "PASS",
+      "database": "PENDING|VERIFIED|APPROVED"
+    },
+    {
+      "name": "Bank account: leading-zero account number and default persisted",
+      "result": "PASS",
+      "database": "000123456789|true"
+    },
+    {
+      "name": "Bank account: second account stored without replacing current default",
+      "result": "PASS",
+      "database": "2|1"
+    },
+    {
+      "name": "Bank account: default selection switched to ACB",
+      "result": "PASS",
+      "database": "ACB:true,Vietcombank:false"
+    },
+    {
+      "name": "Package: E2E_BASE_838EFD9E4E created in PostgreSQL",
+      "result": "PASS",
+      "database": "true|1|250000"
+    },
+    {
+      "name": "Package: E2E_VIP_838EFD9E4E created in PostgreSQL",
+      "result": "PASS",
+      "database": "true|3|500000"
+    },
+    {
+      "name": "Package: E2E_HIDDEN_838EFD9E4E created in PostgreSQL",
+      "result": "PASS",
+      "database": "false|2|350000"
+    },
+    {
+      "name": "Package: existing plan update persisted",
+      "result": "PASS",
+      "database": "true|2|275000|14|Synthetic package updated from browser"
+    },
+    {
+      "name": "Public packages: active plans shown in priority order, inactive plan hidden",
+      "result": "PASS",
+      "database": "E2E_VIP_838EFD9E4E:3,E2E_BASE_838EFD9E4E:2"
+    },
+    {
+      "name": "Voucher: created active with usage quota",
+      "result": "PASS",
+      "database": "E2E838EFD9E4E|ACTIVE|10|0"
+    },
+    {
+      "name": "Voucher: description and usage quota updated",
+      "result": "PASS",
+      "database": "F1 E2E voucher updated|12"
+    },
+    {
+      "name": "Voucher: inactive status persisted",
+      "result": "PASS",
+      "database": "INACTIVE"
+    },
+    {
+      "name": "Voucher catalog: inactive voucher is excluded",
+      "result": "PASS",
+      "database": "INACTIVE"
+    },
+    {
+      "name": "Voucher: active status restored",
+      "result": "PASS",
+      "database": "ACTIVE"
+    },
+    {
+      "name": "Voucher catalog: package price, active window and customer quota allow safe display",
+      "result": "PASS",
+      "database": "ACTIVE|12|1|300000"
+    },
+    {
+      "name": "Known limitation: simultaneous KYC review race",
+      "result": "SKIPPED_AS_REQUESTED"
+    }
+  ]
+}

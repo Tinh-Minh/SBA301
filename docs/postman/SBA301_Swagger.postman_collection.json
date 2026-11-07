@@ -1,0 +1,162 @@
+{
+  "info": {
+    "_postman_id": "8d0c8649-e56e-4b61-a9bf-7e9bcc8f57d2",
+    "name": "SBA301 Car Rental — Swagger/OpenAPI smoke tests",
+    "description": "Kiểm tra Swagger UI và tài liệu OpenAPI đang được backend phục vụ. Collection này chỉ GET tài liệu, không tạo hoặc sửa dữ liệu. Chọn No Environment hoặc đặt collection variable baseUrl về backend đang chạy.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Swagger UI mở được",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "text/html"
+          }
+        ],
+        "url": "{{baseUrl}}/swagger-ui/index.html",
+        "description": "Public smoke test cho trang Swagger UI. Postman tự follow redirect mặc định."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Swagger UI trả HTTP 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response là HTML của Swagger UI', function () {",
+              "    pm.expect(pm.response.headers.get('Content-Type') || '').to.include('text/html');",
+              "    pm.expect(pm.response.text().toLowerCase()).to.include('swagger-ui');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02. OpenAPI runtime document có đủ 32 API Function 1 và health",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v3/api-docs",
+        "description": "Kiểm tra OpenAPI JSON runtime, phiên bản OpenAPI 3.x và sự hiện diện của mọi method/path trong đặc tả Function 1."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('OpenAPI runtime document trả HTTP 200 JSON', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+              "});",
+              "pm.test('OpenAPI 3.x chứa các API Function 1 hiện có và health', function () {",
+              "    const spec = pm.response.json();",
+              "    pm.expect(spec.openapi).to.be.a('string').and.to.match(/^3\\./);",
+              "    pm.expect(spec.paths).to.be.an('object');",
+              "    const expected = [",
+              "        ['GET', '/api/health'],",
+              "        ['POST', '/api/auth/register'],",
+              "        ['POST', '/api/auth/login'],",
+              "        ['GET', '/api/customers/me'],",
+              "        ['PATCH', '/api/customers/me'],",
+              "        ['PUT', '/api/customers/me'],",
+              "        ['GET', '/api/customers/me/kyc'],",
+              "        ['GET', '/api/customers'],",
+              "        ['GET', '/api/customers/{id}'],",
+              "        ['GET', '/api/customers/{id}/kyc'],",
+              "        ['PATCH', '/api/customers/{id}/status'],",
+              "        ['POST', '/api/user-documents'],",
+              "        ['GET', '/api/user-documents'],",
+              "        ['GET', '/api/user-documents/{id}'],",
+              "        ['GET', '/api/user-documents/{id}/files/{side}'],",
+              "        ['PATCH', '/api/user-documents/{id}/review'],",
+              "        ['POST', '/api/drivers'],",
+              "        ['GET', '/api/drivers'],",
+              "        ['GET', '/api/drivers/me'],",
+              "        ['GET', '/api/drivers/me/eligibility'],",
+              "        ['GET', '/api/drivers/{id}/eligibility'],",
+              "        ['GET', '/api/drivers/{id}'],",
+              "        ['PATCH', '/api/drivers/{id}/status'],",
+              "        ['GET', '/api/packages'],",
+              "        ['GET', '/api/admin/packages'],",
+              "        ['POST', '/api/admin/packages'],",
+              "        ['GET', '/api/admin/packages/{id}'],",
+              "        ['PUT', '/api/admin/packages/{id}'],",
+              "        ['POST', '/api/vouchers'],",
+              "        ['GET', '/api/vouchers'],",
+              "        ['GET', '/api/vouchers/{id}'],",
+              "        ['PUT', '/api/vouchers/{id}'],",
+              "        ['PATCH', '/api/vouchers/{id}/status'],",
+              "        ['GET', '/api/vouchers/available'],",
+              "        ['POST', '/api/auth/change-password']",
+              "    ];",
+              "    pm.expect(expected).to.have.lengthOf(35);",
+              "    expected.forEach(function (operation) {",
+              "        const method = operation[0].toLowerCase();",
+              "        const path = operation[1];",
+              "        pm.expect(spec.paths, 'Missing path ' + path).to.have.property(path);",
+              "        pm.expect(spec.paths[path], 'Missing ' + operation[0] + ' ' + path).to.have.property(method);",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03. Swagger config được phục vụ",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": "{{baseUrl}}/v3/api-docs/swagger-config",
+        "description": "Kiểm tra cấu hình mà Swagger UI dùng để tìm OpenAPI document."
+      },
+      "response": [],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Swagger config trả HTTP 200 JSON', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+              "});",
+              "pm.test('Swagger config trỏ tới OpenAPI document', function () {",
+              "    const config = pm.response.json();",
+              "    const hasDocumentUrl = (typeof config.url === 'string' && config.url.length > 0)",
+              "        || (Array.isArray(config.urls) && config.urls.length > 0);",
+              "    pm.expect(hasDocumentUrl).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

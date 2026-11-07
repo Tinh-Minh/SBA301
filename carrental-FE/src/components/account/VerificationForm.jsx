@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Primary, fieldClass } from "@/components/LiveUi.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { DateField } from "@/components/DateField.jsx";
@@ -11,12 +11,16 @@ export function SubmitForm({ onDone }) {
     const [form, setForm] = useState(empty);
     const [frontImage, setFront] = useState(null);
     const [backImage, setBack] = useState(null);
+    const frontInput = useRef(null);
+    const backInput = useRef(null);
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
     const submit = useApiMutation(async () => {
         await userDocumentService.submit({ ...form, frontImage, backImage });
         setForm(empty);
         setFront(null);
         setBack(null);
+        if (frontInput.current) frontInput.current.value = "";
+        if (backInput.current) backInput.current.value = "";
         onDone();
     });
     return <form className="grid gap-3 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm sm:grid-cols-2" onSubmit={event => { event.preventDefault(); if (!event.currentTarget.reportValidity())
@@ -33,8 +37,8 @@ export function SubmitForm({ onDone }) {
     <label className="text-xs font-semibold text-[#666666]">Ngày cấp<DateField value={form.issueDate} onChange={update("issueDate")} className={`${fieldClass} mt-1`}/></label>
     <label className="text-xs font-semibold text-[#666666]">Ngày hết hạn<DateField value={form.expiresAt} onChange={update("expiresAt")} className={`${fieldClass} mt-1`}/></label>
     {form.docType === "DRIVER_LICENSE" ? <label className="text-xs font-semibold text-[#666666]">Hạng bằng<input required value={form.licenseClass} onChange={update("licenseClass")} placeholder="B2" className={`${fieldClass} mt-1`}/></label> : null}
-    <label className="text-xs font-semibold text-[#666666]">Ảnh mặt trước<input required type="file" accept="image/*" onChange={event => setFront(event.target.files?.[0] ?? null)} className={`${fieldClass} mt-1`}/></label>
-    <label className="text-xs font-semibold text-[#666666]">Ảnh mặt sau<input type="file" accept="image/*" onChange={event => setBack(event.target.files?.[0] ?? null)} className={`${fieldClass} mt-1`}/></label>
+    <label className="text-xs font-semibold text-[#666666]">Ảnh mặt trước<input ref={frontInput} required type="file" accept="image/*" onChange={event => setFront(event.target.files?.[0] ?? null)} className={`${fieldClass} mt-1`}/></label>
+    <label className="text-xs font-semibold text-[#666666]">Ảnh mặt sau<input ref={backInput} type="file" accept="image/*" onChange={event => setBack(event.target.files?.[0] ?? null)} className={`${fieldClass} mt-1`}/></label>
     {submit.error ? <p className="sm:col-span-2 text-sm text-[#B91C1C]">{submit.error.message}</p> : null}
     <div className="sm:col-span-2"><Primary type="submit" disabled={submit.running}>{submit.running ? "Đang gửi…" : "Gửi hồ sơ"}</Primary></div>
   </form>;

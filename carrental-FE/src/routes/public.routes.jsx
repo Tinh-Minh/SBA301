@@ -3,6 +3,7 @@ const CarDetailPage = lazy(() => import("@/pages/vehicles/CarDetailPage.jsx"));
 const ExploreCarsPage = lazy(() => import("@/pages/vehicles/ExploreCarsPage.jsx"));
 const HomePage = lazy(() => import("@/pages/home/HomePage.jsx"));
 const PricingPage = lazy(() => import("@/pages/pricing/PricingPage.jsx"));
+const PackagePricingPage = lazy(() => import("@/pages/pricing/PackagePricingPage.jsx"));
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage.jsx"));
 const BanksAlternativePage = lazy(() => import("@/pages/account/BanksAlternativePage.jsx"));
@@ -14,6 +15,7 @@ import { page, CarRoute } from "@/routes/elements.jsx";
 export const publicPages = [
     page("", <HomePage />),
     page("pricing", <PricingPage />),
+    page("packages", <PackagePricingPage />),
     page("login", <LoginPage />),
     page("register", <RegisterPage />),
     page("design/banks", <BanksAlternativePage />),

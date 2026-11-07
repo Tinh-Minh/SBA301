@@ -16,6 +16,8 @@ public record CustomerProfileResponse(
         LocalDate dateOfBirth,
         String address,
         String avatarUrl,
+        String zaloPhone,
+        String contactNote,
         boolean emailVerified,
         KycStatus kycStatus,
         Role role,
@@ -26,6 +28,7 @@ public record CustomerProfileResponse(
     public static CustomerProfileResponse from(Customer customer) {
         return new CustomerProfileResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
                 customer.getPhone(), customer.getDateOfBirth(), customer.getAddress(), customer.getAvatarUrl(),
+                customer.getZaloPhone(), customer.getContactNote(),
                 customer.getEmailVerified(), customer.getKycStatus(), customer.getRole(), customer.getStatus(),
                 customer.getCreatedAt(), customer.getUpdatedAt());
     }

@@ -1,6 +1,6 @@
 # Cấu trúc dự án và chức năng Function 1
 
-Tài liệu này mô tả **source hiện có** trong `carrental-BE` trên nhánh `feature/function_01`, được rà soát ngày 25/10/2026. Đây là phần backend Function 1 trong dự án nhóm; các class dùng chung với Function 2–4 được đánh dấu riêng, không tính là Entity/nghiệp vụ do Function 1 sở hữu.
+Tài liệu này mô tả **source hiện có** trong `carrental-BE` trên nhánh làm việc `refactor/function1-restore`, tách từ `feature/function_01` tại `cc136a1`. Tại lần rà ngày 25/10/2026, tip mới nhất `origin/full/carrental` (`5933152`) là tổ tiên của nhánh này. Đây là phần backend Function 1 trong dự án nhóm; các class dùng chung với Function 2–4 được đánh dấu riêng, không tính là Entity/nghiệp vụ do Function 1 sở hữu. Phần 9 ghi lại các thay đổi refactor/auth đã có để có thể báo cáo cho Leader.
 
 ## 1. Phạm vi Function 1
 
@@ -339,9 +339,76 @@ Các test nằm trong `carrental-BE/src/test/java/com/carrental/`:
 - Không có Entity/controller/service F1 để tạo xe, slot, đơn thuê, thanh toán, payout, dispute hay review chuyến. Các Entity tương ứng khác trong `entity/` thuộc Function khác.
 - Không có API redeem voucher; `VoucherWindowState` chỉ là trạng thái thời gian trả về cho admin.
 - Không có flow OTP, xác minh email, reset/refresh token, upload avatar, auto-suspend driver hay public URL ảnh giấy tờ.
-- Source hiện tại của `VerificationStatus` vẫn chứa `canTransitionTo` và `validateTransitionTo(AppException)`. Điều này còn lệch với chỉ thị trước đó về enum thuần; cần người review quyết định/chuyển logic nếu chỉ thị đó vẫn áp dụng.
+- `VerificationStatus` vẫn có `canTransitionTo` và `validateTransitionTo(AppException)`. Giữ nguyên vì đây là enum dùng chung và Function 2 đang gọi logic chuyển trạng thái này; không xóa/chuyển nếu chưa kiểm tra consumer ngoài F1.
 - `docs/20_FUNCTION_1_SCOPE_SCHEMA_AUDIT.md` mô tả profile PATCH chỉ có `fullName`, `dateOfBirth`, `address`, trong khi `UpdateProfileRequest` và `CustomerMapper` hiện còn cho phép `email`, `phone`, `avatarUrl`. File này ghi theo source thực tế; cần xác nhận với Leader nếu ba trường bổ sung chưa được chấp thuận.
 - `SecurityConfig` còn giữ lớp cấu hình scheduling có `@EnableScheduling`; `SecurityConfiguration` ở `config/security` cấu hình Spring Security/JWT. Đây là hai lớp khác mục đích.
 - Cấu hình DB/JWT/private storage nằm ở `application.properties` cùng biến môi trường `.env`; SQL baseline ở `db/migration/function1/`. Không đồng nghĩa rằng schema/runtime Supabase thực đã được xác minh trong tài liệu này.
 
 Để review chi tiết từng cột, xem [đối chiếu 59 cột Entity](22_ENTITY_SCHEMA_FIELD_MAP.md). Luồng tuần tự từng API có ở [sơ đồ Function 1](21_FUNCTION_1_FLOWS.md); trạng thái refactor gần nhất ở [báo cáo tinh giản](reports/FUNCTION1_SIMPLIFICATION_2026-10-24.md).
+
+## 9. Báo cáo các thay đổi đã thực hiện
+
+### 9.1. Phạm vi và mốc source
+
+Phần dưới tổng hợp thay đổi Function 1 đã có trong source hiện tại, gồm lượt tinh giản trước đó, Bước 1+2 về xác thực và các chỉnh sửa trên nhánh khôi phục. Đây là mô tả source, không phải đề xuất thay đổi tiếp theo. `cc136a1` là mốc nền của `feature/function_01`; các commit khôi phục hiện gồm `4f7704b` (bỏ tiền tố BCrypt ở seed), `c34efe0` (đưa datasource password ra biến môi trường, tắt bootstrap admin mặc định) và `f5ad4c6` (voucher code không phân biệt hoa thường). Nhánh làm việc chưa push. Báo cáo đầy đủ danh sách file của lượt tinh giản nằm tại [FUNCTION1_SIMPLIFICATION_2026-10-24.md](reports/FUNCTION1_SIMPLIFICATION_2026-10-24.md).
+
+### 9.2. DTO, Mapper và Enum
+
+- Request/Response DTO chỉ giữ dữ liệu API và validation; mapping DTO–Entity được đặt trong `CustomerMapper`, `BankAccountMapper`, `UserDocumentMapper`, `DriverMapper` và `VoucherMapper`.
+- `CustomerMapper` xử lý đăng ký: chuẩn hóa đầu vào, gán `CUSTOMER`, `ACTIVE`, `KYC NONE`, `emailVerified=false`, và nhận mật khẩu đã encode. `AuthServiceImpl` không còn dựng `Customer` bằng chuỗi setter dài.
+- Voucher request chuyển sang POJO với `BigDecimal`, `LocalDateTime` và Jakarta Bean Validation. Ràng buộc liên trường (ví dụ phần trăm giảm tối đa và thời gian kết thúc sau thời gian bắt đầu) được kiểm tra trong service. Cách binding được giới hạn cho các DTO voucher để không làm đổi binding của API khác.
+- Các enum nghiệp vụ F1 như `CustomerStatus`, `DriverStatus`, `VoucherStatus` giữ giá trị trạng thái; kiểm tra chuyển trạng thái nằm trong service. `VerificationStatus` là ngoại lệ có chủ đích vì được Function 2 dùng chung.
+- `DriverMapper` hiện **vẫn còn** trong source và được `DriverServiceImpl` cùng `DriverEligibilityServiceImpl` gọi. Commit `c281ff5` trên nhánh refactor từng thử gộp mapper vào response, nhưng merge hiện tại giữ mapper vì các call site này vẫn sử dụng nó.
+
+### 9.3. Service, Repository và transaction
+
+- Các service Function 1 xử lý theo luồng quyền → nạp dữ liệu → kiểm tra nghiệp vụ → cập nhật/lưu → mapper trả response. Những khối `catch/log/rethrow` lặp được bỏ để exception handler tập trung xử lý.
+- Đăng ký vẫn precheck email/số điện thoại và xử lý unique constraint; lỗi DB không xác định không bị quy chụp thành “trùng tài khoản”. Đăng nhập tra Customer theo email và kiểm tra mật khẩu bằng `PasswordEncoder.matches()`.
+- KYC và driver eligibility lấy evidence qua repository rồi tính hạn CCCD/passport/GPLX trong Java theo `Clock`. Luồng duyệt giấy tờ và tính lại KYC vẫn trong cùng transaction; các guard self-review, quyền ADMIN, account ACTIVE và điều kiện giấy tờ còn hiệu lực vẫn được giữ.
+- Repository ưu tiên derived query và truy vấn dữ liệu cần thiết. Khóa pessimistic chỉ giữ ở các luồng cần bảo vệ invariant đồng thời: tài khoản ngân hàng mặc định theo owner, cập nhật trạng thái admin cuối cùng, nộp/duyệt giấy tờ và cập nhật trạng thái driver/voucher theo dữ liệu liên quan. Không còn khóa đôi tài khoản ngân hàng.
+- Mã voucher được kiểm tra trùng không phân biệt hoa/thường qua `existsByCodeIgnoreCase`; unit test và PostgreSQL integration test kiểm tra trường hợp khác chữ hoa/thường.
+- `UserDocumentServiceImpl` dùng `@Transactional`, không còn `TransactionTemplate`/`TransactionOutcome`. Nếu ghi DB thất bại hoặc transaction rollback, file vừa tạo được dọn theo cơ chế tương ứng; trường hợp commit không xác định không xóa file có thể đang được DB tham chiếu.
+- Logger theo từng loại nghiệp vụ được tập trung qua `ActionLogService`/`ActionLogServiceImpl`. Các quy tắc KYC và eligibility vẫn nằm trong `KycServiceImpl`/`DriverEligibilityServiceImpl`, không tạo thêm package policy riêng.
+
+### 9.4. Storage ảnh giấy tờ
+
+Storage còn hai lớp chính: `PrivateDocumentStorage` và `LocalPrivateDocumentStorage`. Luồng hiện tại giới hạn kích thước, kiểm tra MIME/định dạng ảnh bằng thư viện chuẩn `ImageIO`, tạo tên file UUID, giữ file ngoài public path và trả locator riêng tư. Tải ảnh đi qua endpoint có kiểm tra owner/admin; ảnh không có public URL.
+
+Các helper tự đọc cấu trúc byte JPEG/PNG/CRC, canonical hóa ảnh, dò nested JAR bằng reflection và record dữ liệu trung gian đã được bỏ. Chi tiết về lớp/test bị xóa hoặc thay thế được ghi trong báo cáo tinh giản đã liên kết ở đầu mục 9; các test nghiệp vụ, quyền và rollback vẫn được giữ.
+
+### 9.5. Authentication/JWT và dữ liệu seed
+
+| Khu vực | Hiện trạng sau refactor |
+|---|---|
+| Ký token | HS256; `JwtConfiguration` ký và xác minh cùng thuật toán. Token có `exp` và TTL mặc định 30 phút. |
+| Secret | `app.security.jwt.secret-key=${JWT_SECRET}`; `JwtProperties` yêu cầu ít nhất 32 byte UTF-8. Không có secret production mặc định trong `application.properties`. |
+| Đăng nhập | `AuthServiceImpl` tra Customer qua `CustomerRepository`, kiểm tra trạng thái và `PasswordEncoder.matches()`. Lỗi email/mật khẩu tiếp tục dùng cùng phản hồi công khai để tránh dò tài khoản. |
+| Principal | Converter vẫn nạp Customer/role/status hiện tại từ DB mỗi request; tài khoản `LOCKED` bị chặn. `CurrentAccount` và cấu trúc principal được giữ. |
+| Password encoder | Dùng `BCryptPasswordEncoder` trực tiếp. Giá trị `customers.password_hash` trong seed là BCrypt hash thuần (`$2a$`/`$2b$`/`$2y$`), không còn tiền tố `{bcrypt}`. |
+| Thành phần RSA/DAO cũ | Đã bỏ `JwtKeyLoader`, `JwtKeyMaterial`, `GenerateJwtKeys.java`, `AccountUserDetails`, `CustomerUserDetailsService` và luồng `AuthenticationManager`/DAO provider. Test vẫn giữ ca âm từ chối token RS256. |
+| Cấu hình local | `scripts/setup-supabase.ps1` tạo `JWT_SECRET` local khi biến thiếu, rỗng hoặc còn placeholder; giữ secret không rỗng đã có và không in secret. Nếu secret cũ ngắn hơn 32 byte, script không tự thay, nhưng ứng dụng sẽ từ chối khi khởi động. `.env` dùng tại máy; không ghi giá trị secret vào tài liệu này. |
+| Mật khẩu datasource/bootstrap | `spring.datasource.password=${DB_PASSWORD}`; mật khẩu không còn hard-code trong `application.properties`. `app.security.bootstrap-admin.enabled=false` là mặc định; không commit mật khẩu bootstrap. |
+| Log token | `TokenResponse.toString()` tiếp tục che bearer token. |
+
+`SecurityConfig` được giữ vì chứa `@EnableScheduling`; `SecurityConfiguration` là cấu hình Spring Security/JWT riêng. Các handler lỗi, `AccessGuard`, `CurrentAccount`, `CurrentAccountJwtAuthenticationConverter`, `HeaderCurrentUserServiceImpl` và các API hiện hữu được giữ.
+
+### 9.6. Test và kiểm chứng đã có
+
+| Thời điểm/nhánh | Lệnh | Kết quả đã ghi nhận |
+|---|---|---|
+| Sau sửa assertion Auth, trên `refactor/function1-buoc-2`, trước merge | `.\mvnw.cmd -Ppostgres-it verify` | 82 test mặc định và 108 integration test Failsafe xanh trên 12 lớp test. Đây là kết quả trước merge, không phải lượt chạy sau merge. |
+| Sau merge cục bộ, trên `feature/function_01` tại `cc136a1` | `.\mvnw.cmd clean verify` | 78 test mặc định xanh, 0 failure/error/skip. PostgreSQL IT không được chạy lại sau merge trong lượt xác nhận này. |
+| Nhánh khôi phục sau các commit seed/config/voucher | `.\mvnw.cmd clean verify` | 79 test mặc định xanh, 0 failure/error/skip. Số lượng tăng thêm một unit test cho mã voucher phân biệt hoa/thường. |
+
+Chênh lệch 82 → 78 test mặc định xuất phát từ test chuyên cho helper nội bộ đã bỏ: một test `CustomerStatusLockTest` và bốn test `StorageRootPolicyTest` không còn cơ chế tương ứng. Hai test `DriverEligibilityPolicyTest` được thay bằng hai test ở `DriverEligibilityServiceTest`; bốn test `KycPolicyTest` được thay bằng bốn test ở `KycServiceTest`; hai test `UserDocumentTransactionOutcomeTest` được thay bằng ba test `UserDocumentTransactionTest` (thêm một ca rollback). Vì vậy số ròng giảm 4, không phải do bốn test nghiệp vụ bị bỏ.
+
+Probe đăng nhập seed chạy riêng trên PostgreSQL Testcontainers cô lập bằng BCrypt hash đúng từ `seed_values.sql` và mật khẩu admin đang có trong Postman collection: API trả `401 AUTHENTICATION_FAILED`, vì mật khẩu fixture không khớp hash trong seed. Hash suffix không bị đổi theo yêu cầu 8/8; cần nhóm xác nhận mật khẩu seed đúng trước khi khẳng định tài khoản này đăng nhập được.
+
+### 9.7. Ảnh hưởng tương thích và việc cần làm khi triển khai
+
+- Trong phạm vi refactor Bước 1+2, danh sách route, HTTP method/status, tên trường JSON của API và schema PostgreSQL được giữ nguyên. Không thêm migration.
+- Các commit trên nhánh khôi phục không đổi schema/API. Mật khẩu datasource chuyển sang `DB_PASSWORD`, bootstrap admin tắt mặc định; muốn dùng bootstrap phải bật có chủ đích và cấp cấu hình qua môi trường.
+- Cơ chế token và cách lưu password hash **có thay đổi tương thích dữ liệu**: token RSA cũ không được xác minh bằng cấu hình HS256 mới; các tài khoản seed trong DB đã nạp hash có tiền tố `{bcrypt}` cần reseed hoặc cập nhật theo quy trình được nhóm duyệt.
+- Cần đặt `JWT_SECRET` mới, ngẫu nhiên, ít nhất 32 byte UTF-8 cho từng môi trường. Secret cũ từng nằm trong Git nên phải được thay mới; không gửi secret qua chat hoặc đưa vào commit.
+- Kết quả Testcontainers không thay thế việc xác nhận kết nối với Supabase/database thật của nhóm. Người triển khai cần cấu hình `.env` local và kiểm tra môi trường đích theo runbook trước khi phát hành.
+- Ghi chú còn cần Leader đối chiếu: `docs/20_FUNCTION_1_SCOPE_SCHEMA_AUDIT.md` mô tả PATCH profile ít trường hơn DTO/Mapper hiện tại (`email`, `phone`, `avatarUrl` cũng đang được nhận). Tài liệu này phản ánh source; cần xác nhận phạm vi API mong muốn, không tự sửa endpoint trong lượt tài liệu này.

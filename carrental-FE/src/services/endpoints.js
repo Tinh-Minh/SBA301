@@ -16,6 +16,11 @@ export const endpoints = {
         byIdDefault: (id) => `/api/bank-accounts/${id}/default`,
         list: "/api/bank-accounts",
     },
+    listingPackages: {
+        adminById: (id) => `/api/admin/packages/${id}`,
+        adminList: "/api/admin/packages",
+        publicList: "/api/packages",
+    },
     cars: {
         byId: (id) => `/api/cars/${id}`,
         byIdDocuments: (id) => `/api/cars/${id}/documents`,
@@ -98,6 +103,7 @@ export const endpoints = {
         list: "/api/user-documents",
     },
     vouchers: {
+        available: "/api/vouchers/available",
         byId: (id) => `/api/vouchers/${id}`,
         byIdStatus: (id) => `/api/vouchers/${id}/status`,
         list: "/api/vouchers",

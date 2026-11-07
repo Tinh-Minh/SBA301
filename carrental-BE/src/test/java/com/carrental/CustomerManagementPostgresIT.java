@@ -148,6 +148,9 @@ class CustomerManagementPostgresIT {
         List<String> invalidBodies = new ArrayList<>(List.of(
                 "{}", "null", "[]", "{\"fullName\":null}", "{\"fullName\":123}",
                 "{\"fullName\":\"   \"}",
+                "{\"phone\":\"097804233\"}", "{\"phone\":\"09780423311\"}",
+                "{\"phone\":\"1978042331\"}", "{\"phone\":\"+84978042331\"}",
+                "{\"phone\":\"09ab042331\"}",
                 "{\"address\":true}", "{\"dateOfBirth\":{}}", "{\"dateOfBirth\":\"not-a-date\"}",
                 "{\"fullName\":\"First\",\"fullName\":\"Second\"}",
                 "{\"id\":987654321,\"fullName\":\"SENTINEL_UNKNOWN\"}",
@@ -567,7 +570,7 @@ class CustomerManagementPostgresIT {
             assertThat(a.get(12, TimeUnit.SECONDS).statusCode()).isEqualTo(200);
             assertThat(b.get(12, TimeUnit.SECONDS).statusCode()).isEqualTo(200);
             assertThat(jdbc.queryForObject("select status from customers where id=?", String.class, target.id())).isEqualTo("LOCKED");
-            assertThat(logs.rendered().lines().filter(line -> line.contains("Customer status changed action=customer-status")
+            assertThat(logs.rendered().lines().filter(line -> line.contains("customer-status actorId=")
                     && line.contains("targetId=" + target.id())).count()).isEqualTo(1);
         } finally {
             release.countDown();
@@ -626,9 +629,8 @@ class CustomerManagementPostgresIT {
             assertSuccess(changed, 200);
             String rendered = logs.rendered();
             String traceId = changed.headers().firstValue("X-Request-ID").orElseThrow();
-            assertThat(rendered).contains("Customer status changed action=customer-status traceId=" + traceId,
-                    "actorId=" + admin.id(), "targetId=" + target.id(), "oldStatus=ACTIVE", "newStatus=LOCKED",
-                    "reasonProvided=true", "traceId=" + traceId);
+            assertThat(rendered).contains("customer-status actorId=" + admin.id() + " targetId=" + target.id(),
+                    "ACTIVE -> LOCKED", "reasonProvided=true", "traceId=" + traceId);
             assertThat(rendered).doesNotContain(reason, keyword, admin.email(), admin.phone(), target.email(), target.phone(),
                     admin.fullName(), target.fullName(), "SENTINEL_ADDRESS_" + marker, passwordHash, token);
         }

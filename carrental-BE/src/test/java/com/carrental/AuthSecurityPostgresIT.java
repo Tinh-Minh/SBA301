@@ -72,7 +72,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 class AuthSecurityPostgresIT {
     private static final String SUFFIX = UUID.randomUUID().toString().replace("-", "");
     private static final java.util.concurrent.atomic.AtomicInteger PHONE_SEQUENCE =
-            new java.util.concurrent.atomic.AtomicInteger(100_000_000);
+            new java.util.concurrent.atomic.AtomicInteger();
     private static final String PASSWORD = "  fake-test-password  ";
     private static final String ALLOWED_ORIGIN = "http://localhost:5173";
     private static final HttpClient CLIENT = HttpClient.newHttpClient();
@@ -156,6 +156,24 @@ class AuthSecurityPostgresIT {
         assertThat(error.path("code").asText()).isEqualTo("VALIDATION_ERROR");
         assertThat(error.path("errors").toString()).contains("password");
         assertThat(tooLong.body()).doesNotContain(unicodePassword);
+    }
+
+    @Test
+    void registrationRejectsPhonesUnlessTenDigitsStartingWithZero() throws Exception {
+        List<String> invalidPhones = List.of("097804233", "09780423311", "1978042331", "+84978042331", "09ab042331");
+        for (int index = 0; index < invalidPhones.size(); index++) {
+            String email = email("invalid-phone-" + index);
+            HttpResponse<String> response = post("/api/auth/register",
+                    registerJson("Test", email, invalidPhones.get(index), PASSWORD));
+
+            assertThat(response.statusCode()).isEqualTo(400);
+            JsonNode error = json(response);
+            assertThat(error.path("code").asText()).isEqualTo("VALIDATION_ERROR");
+            assertThat(error.path("errors").toString()).contains("phone");
+            assertThat(jdbc.queryForObject("select count(*) from customers where email=?", Integer.class, email))
+                    .isZero();
+            assertTrace(response, error);
+        }
     }
 
     @Test
@@ -717,7 +735,9 @@ class AuthSecurityPostgresIT {
     }
 
     private String email(String label) { return label + "-" + SUFFIX + "@example.test"; }
-    private String phone(String ignoredPrefix) { return "09" + PHONE_SEQUENCE.getAndIncrement(); }
+    private String phone(String ignoredPrefix) {
+        return "09" + String.format(java.util.Locale.ROOT, "%08d", PHONE_SEQUENCE.incrementAndGet());
+    }
 
     private HttpResponse<String> awaitAndPost(CountDownLatch start, String body) {
         try {

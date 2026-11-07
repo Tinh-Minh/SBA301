@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import tools.jackson.databind.JsonNode;
 
-/** PATCH body that preserves whether each allowlisted field was omitted or explicitly null. */
+/** Profile update body that preserves whether each allowlisted field was omitted or explicitly null. */
 public final class UpdateProfileRequest {
 
     private boolean fullNamePresent;
@@ -13,12 +13,16 @@ public final class UpdateProfileRequest {
     private boolean emailPresent;
     private boolean phonePresent;
     private boolean avatarUrlPresent;
+    private boolean zaloPhonePresent;
+    private boolean contactNotePresent;
     private String fullName;
     private String dateOfBirth;
     private String address;
     private String email;
     private String phone;
     private String avatarUrl;
+    private String zaloPhone;
+    private String contactNote;
 
     @JsonProperty("fullName")
     public void setFullName(JsonNode value) {
@@ -62,6 +66,20 @@ public final class UpdateProfileRequest {
         avatarUrl = strictText(value);
     }
 
+    @JsonProperty("zaloPhone")
+    public void setZaloPhone(JsonNode value) {
+        rejectDuplicate(zaloPhonePresent);
+        zaloPhonePresent = true;
+        zaloPhone = strictText(value);
+    }
+
+    @JsonProperty("contactNote")
+    public void setContactNote(JsonNode value) {
+        rejectDuplicate(contactNotePresent);
+        contactNotePresent = true;
+        contactNote = strictText(value);
+    }
+
     @JsonAnySetter
     public void rejectUnknownField(String ignoredName, JsonNode ignoredValue) {
         throw new IllegalArgumentException("Unknown customer profile field");
@@ -74,16 +92,20 @@ public final class UpdateProfileRequest {
     public boolean emailWasProvided() { return emailPresent; }
     public boolean phoneWasProvided() { return phonePresent; }
     public boolean avatarUrlWasProvided() { return avatarUrlPresent; }
+    public boolean zaloPhoneWasProvided() { return zaloPhonePresent; }
+    public boolean contactNoteWasProvided() { return contactNotePresent; }
     public String getFullName() { return fullName; }
     public String getDateOfBirth() { return dateOfBirth; }
     public String getAddress() { return address; }
     public String getEmail() { return email; }
     public String getPhone() { return phone; }
     public String getAvatarUrl() { return avatarUrl; }
+    public String getZaloPhone() { return zaloPhone; }
+    public String getContactNote() { return contactNote; }
 
     public boolean hasAnyAllowedField() {
         return fullNamePresent || dateOfBirthPresent || addressPresent
-                || emailPresent || phonePresent || avatarUrlPresent;
+                || emailPresent || phonePresent || avatarUrlPresent || zaloPhonePresent || contactNotePresent;
     }
 
     private static String strictText(JsonNode value) {
