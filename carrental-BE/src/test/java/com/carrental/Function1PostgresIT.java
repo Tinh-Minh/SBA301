@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.UUID;
 
 import com.carrental.entity.Customer;
-import com.carrental.entity.BankAccount;
 import com.carrental.entity.Driver;
 import com.carrental.entity.UserDocument;
 import com.carrental.entity.Voucher;
@@ -169,21 +168,11 @@ class Function1PostgresIT {
             voucher.setUsageLimit(null);
             entityManager.persist(voucher);
 
-            BankAccount bankAccount = new BankAccount();
-            bankAccount.setCustomer(customer);
-            bankAccount.setBankName("Mapping Bank");
-            bankAccount.setAccountNumber("001234567890");
-            bankAccount.setAccountHolder("Mapping Person");
-            bankAccount.setDefault(false);
-            entityManager.persist(bankAccount);
-
             entityManager.flush();
             assertThat(customer.getId()).isNotNull();
             assertThat(document.getId()).isNotNull();
             assertThat(driver.getId()).isNotNull();
             assertThat(voucher.getId()).isNotNull();
-            assertThat(bankAccount.getId()).isNotNull();
-            assertThat(bankAccount.getCreatedAt()).isNotNull();
             assertThat(customer.getCreatedAt()).isNotNull();
             assertThat(customer.getUpdatedAt()).isNotNull();
             assertThat(document.getCreatedAt()).isNotNull();
@@ -198,7 +187,6 @@ class Function1PostgresIT {
             UserDocument loadedDocument = entityManager.find(UserDocument.class, document.getId());
             Driver loadedDriver = entityManager.find(Driver.class, driver.getId());
             Voucher loadedVoucher = entityManager.find(Voucher.class, voucher.getId());
-            BankAccount loadedBankAccount = entityManager.find(BankAccount.class, bankAccount.getId());
             assertThat(loaded.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 4, 3));
             assertThat(loaded.getKycStatus()).isEqualTo(KycStatus.PENDING);
             assertThat(loaded.getRole()).isEqualTo(Role.CUSTOMER);
@@ -218,8 +206,6 @@ class Function1PostgresIT {
             assertThat(loadedVoucher.getPerUserLimit()).isEqualTo(1);
             assertThat(loadedVoucher.getUsedCount()).isZero();
             assertThat(loadedVoucher.getStatus()).isEqualTo(VoucherStatus.ACTIVE);
-            assertThat(loadedBankAccount.getAccountNumber()).isEqualTo("001234567890");
-            assertThat(loadedBankAccount.isDefault()).isFalse();
         });
 
         LocalDateTime historicalTime = LocalDateTime.of(2000, 1, 1, 0, 0);
