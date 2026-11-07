@@ -1,38 +1,40 @@
 package com.carrental.dto.request;
 
+import com.carrental.entity.Car;
+import com.carrental.entity.Customer;
 import com.carrental.entity.Review;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
-@Getter
-@Setter
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class CreateReviewRequest {
-    @NotNull(message = "Mã đơn hàng không được để trống")
-    private Long orderId;
 
-    @NotNull(message = "Mã người đánh giá không được để trống")
-    private Long reviewerId;
-
-    @NotNull(message = "Mã người được đánh giá không được để trống")
-    private Long revieweeId;
+    @NotNull(message = "carId không được để trống")
+    private Long carId;
 
     @NotNull(message = "Số sao đánh giá không được để trống")
     @Min(value = 1, message = "Số sao tối thiểu là 1")
     @Max(value = 5, message = "Số sao tối đa là 5")
     private Integer rating;
 
+    @Size(max = 2000, message = "Nội dung nhận xét tối đa 2000 ký tự")
     private String comment;
 
-    public Review toEntity() {
+    public Review toEntity(Car car, Customer customer) {
         Review review = new Review();
+        review.setCar(car);
+        review.setCustomer(customer);
         review.setRating(this.rating);
         review.setComment(this.comment);
-        review.setCreatedAt(LocalDateTime.now());
         return review;
     }
 }

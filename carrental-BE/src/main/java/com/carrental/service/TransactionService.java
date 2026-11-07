@@ -1,24 +1,22 @@
 package com.carrental.service;
 
-import com.carrental.dto.request.CreateDepositRequest;
-import com.carrental.dto.request.CreatePaymentRequest;
-import com.carrental.dto.request.MockPaymentProcessRequest;
-import com.carrental.dto.request.RefundRequest;
+import com.carrental.dto.request.PackagePaymentRequest;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.TransactionResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Pageable;
 
 public interface TransactionService {
 
-    TransactionResponse createDeposit(CreateDepositRequest request);
+    TransactionResponse createPackagePayment(PackagePaymentRequest request, HttpServletRequest servletRequest);
 
-    TransactionResponse createPayment(CreatePaymentRequest request);
-
-    TransactionResponse simulatePaymentGateway(Long transactionId, MockPaymentProcessRequest request);
-
-    TransactionResponse refund(RefundRequest request);
+    default TransactionResponse createPackagePayment(PackagePaymentRequest request) {
+        return createPackagePayment(request, null);
+    }
 
     TransactionResponse getById(Long id);
 
-    PageResponse<TransactionResponse> getPaged(Long orderId, String transactionType, String status, Pageable pageable);
+    PageResponse<TransactionResponse> getPaged(Long subscriptionId, String transactionType, String status, Pageable pageable);
+
+    String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
 }

@@ -1,0 +1,1 @@
+Synthetic negative fixture; this is text, not an image.

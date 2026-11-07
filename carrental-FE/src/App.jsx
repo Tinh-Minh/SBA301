@@ -1,15 +1,4 @@
-import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import AppRoutes from './routes';
+import AppRoutes from "@/routes/index.jsx";
+import { AppProviders } from "@/providers.jsx";
 
-/**
- * Root Application Component
- * Encapsulates Routing, Layouts, and Global Providers
- */
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AppRoutes />
-    </BrowserRouter>
-  );
-}
+export default function App() { return <AppProviders><AppRoutes /></AppProviders>; }

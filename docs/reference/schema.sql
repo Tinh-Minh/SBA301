@@ -1,0 +1,547 @@
+-- =====================================================================
+-- SBA301 - CAR RENTAL MARKETPLACE  |  PostgreSQL schema (v3)
+-- Dựa trên Conceptual ERD của nhóm. Trục chính: CAR_SLOTS.
+-- Viết cho PostgreSQL 15+ (Supabase dùng 15/17).
+--
+-- Quy ước (khớp với BACKEND_CONVENTIONS.md):
+--  * Id: BIGINT identity            -> @GeneratedValue(strategy = IDENTITY)
+--  * Status/Type: VARCHAR + CHECK   -> @Enumerated(EnumType.STRING)
+--                                      (giá trị enum Java phải khớp CHECK ở đây)
+--  * Thời gian: TIMESTAMP (LocalDateTime), lưu theo giờ Việt Nam
+--  * Tiền: NUMERIC(14,0) (VND không có số lẻ) -> BigDecimal
+--  * Bảng người dùng tên "customers" (tránh từ khóa "user")
+--
+-- Chạy trên Supabase: SQL Editor -> dán toàn bộ file -> Run.
+-- Nếu báo lỗi ở btree_gist: Dashboard -> Database -> Extensions -> bật btree_gist rồi chạy lại.
+-- =====================================================================
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;  -- cần cho EXCLUDE (chống trùng lịch)
+
+-- ---------------------------------------------------------------------
+-- 0. HÀM DÙNG CHUNG
+-- ---------------------------------------------------------------------
+-- Giờ hiện tại theo múi giờ Việt Nam (server Supabase chạy giờ UTC,
+-- còn app Java dùng LocalDateTime giờ VN -> phải thống nhất).
+CREATE OR REPLACE FUNCTION vn_now() RETURNS timestamp
+LANGUAGE sql STABLE AS $$ SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh') $$;
+
+-- Tự cập nhật updated_at khi UPDATE (áp dụng ở cuối file cho mọi bảng có cột này)
+CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    NEW.updated_at := vn_now();
+    RETURN NEW;
+END $$;
+
+-- ---------------------------------------------------------------------
+-- 1. NGƯỜI DÙNG
+-- ---------------------------------------------------------------------
+CREATE TABLE customers (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    full_name       VARCHAR(150) NOT NULL,
+    email           VARCHAR(150) NOT NULL,
+    phone           VARCHAR(20)  NOT NULL UNIQUE,
+    password_hash   VARCHAR(255) NOT NULL,
+    date_of_birth   DATE,
+    address         VARCHAR(300),
+    avatar_url      VARCHAR(500),
+    email_verified  BOOLEAN      NOT NULL DEFAULT FALSE,
+    kyc_status      VARCHAR(20)  NOT NULL DEFAULT 'NONE'      -- tóm tắt trạng thái xác minh giấy tờ
+                    CHECK (kyc_status IN ('NONE', 'PENDING', 'VERIFIED', 'REJECTED')),
+    role            VARCHAR(20)  NOT NULL DEFAULT 'CUSTOMER'
+                    CHECK (role IN ('CUSTOMER', 'ADMIN')),
+    status          VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE'
+                    CHECK (status IN ('ACTIVE', 'LOCKED')),
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT vn_now()
+);
+-- Email không phân biệt hoa thường (service nhớ lower-case khi lưu và khi tìm)
+CREATE UNIQUE INDEX uq_customers_email_lower ON customers (lower(email));
+
+-- Giấy tờ của người dùng (CCCD, GPLX...). Thông tin bằng lái (số, hạng, hạn) chỉ lưu ở đây.
+CREATE TABLE user_documents (
+    id                   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id          BIGINT       NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    doc_type             VARCHAR(30)  NOT NULL
+                         CHECK (doc_type IN ('CITIZEN_ID', 'DRIVER_LICENSE', 'PASSPORT')),
+    doc_number           VARCHAR(50)  NOT NULL,
+    full_name_on_doc     VARCHAR(150),                  -- họ tên ghi trên giấy tờ (admin đối chiếu với tài khoản)
+    date_of_birth_on_doc DATE,                          -- ngày sinh ghi trên giấy tờ
+    issue_place          VARCHAR(200),                  -- nơi cấp
+    issue_date           DATE,                          -- ngày cấp
+    expires_at           DATE,
+    license_class        VARCHAR(10),                   -- hạng bằng, chỉ dùng cho DRIVER_LICENSE
+    front_image_url      VARCHAR(500) NOT NULL,
+    back_image_url       VARCHAR(500),
+    verify_status        VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                         CHECK (verify_status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    reject_reason        VARCHAR(500),
+    verified_by          BIGINT       REFERENCES customers(id),   -- admin duyệt
+    verified_at          TIMESTAMP,
+    created_at           TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at           TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    CHECK (issue_date IS NULL OR expires_at IS NULL OR issue_date <= expires_at),
+    CHECK (doc_type <> 'DRIVER_LICENSE' OR license_class IS NOT NULL)
+);
+-- Một số giấy tờ đã được duyệt chỉ thuộc về một tài khoản
+CREATE UNIQUE INDEX uq_user_doc_approved
+    ON user_documents (doc_type, doc_number) WHERE verify_status = 'APPROVED';
+
+-- Hồ sơ tài xế: customer 1 - 0..1 driver.
+-- Thông tin bằng lái nằm ở user_documents (DRIVER_LICENSE). Khi chuyển sang ACTIVE,
+-- service phải kiểm tra khách có bằng lái APPROVED và còn hạn.
+CREATE TABLE drivers (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id     BIGINT       NOT NULL UNIQUE REFERENCES customers(id) ON DELETE CASCADE,
+    status          VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                    CHECK (status IN ('PENDING', 'ACTIVE', 'SUSPENDED')),
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT vn_now()
+);
+
+CREATE TABLE bank_accounts (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id     BIGINT       NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    bank_name       VARCHAR(100) NOT NULL,
+    account_number  VARCHAR(30)  NOT NULL,
+    account_holder  VARCHAR(150) NOT NULL,
+    is_default      BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    UNIQUE (customer_id, bank_name, account_number),
+    UNIQUE (id, customer_id)     -- để payouts chứng minh tài khoản thuộc đúng người nhận
+);
+-- Mỗi người chỉ có một tài khoản mặc định
+CREATE UNIQUE INDEX uq_bank_default_per_customer ON bank_accounts (customer_id) WHERE is_default;
+
+-- ---------------------------------------------------------------------
+-- 2. XE
+-- ---------------------------------------------------------------------
+CREATE TABLE cars (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    owner_id        BIGINT       NOT NULL REFERENCES customers(id),
+    driver_id       BIGINT       UNIQUE REFERENCES drivers(id) ON DELETE SET NULL, -- driver 0..1 - 0..1 car
+    license_plate   VARCHAR(20)  NOT NULL UNIQUE,
+    brand           VARCHAR(50)  NOT NULL,
+    model           VARCHAR(50)  NOT NULL,
+    manufacture_year INT         NOT NULL CHECK (manufacture_year BETWEEN 1990 AND 2100),
+    car_type        VARCHAR(20)  NOT NULL
+                    CHECK (car_type IN ('SEDAN', 'HATCHBACK', 'SUV', 'MPV', 'PICKUP', 'LUXURY', 'OTHER')),
+    seats           INT          NOT NULL CHECK (seats > 0),
+    transmission    VARCHAR(20)  NOT NULL CHECK (transmission IN ('MANUAL', 'AUTOMATIC')),
+    fuel_type       VARCHAR(20)  NOT NULL CHECK (fuel_type IN ('GASOLINE', 'DIESEL', 'ELECTRIC', 'HYBRID')),
+    color           VARCHAR(30),
+    description     TEXT,
+    features        JSONB        NOT NULL DEFAULT '[]'::jsonb,    -- ["GPS","Camera hành trình","Bluetooth"...]
+    city            VARCHAR(100) NOT NULL,                        -- để lọc/tìm kiếm
+    district        VARCHAR(100),
+    pickup_address  VARCHAR(300) NOT NULL,
+    latitude        NUMERIC(9,6),
+    longitude       NUMERIC(9,6),
+    price_per_hour  NUMERIC(14,0) NOT NULL CHECK (price_per_hour >= 0),   -- giá mặc định, slot sẽ chụp lại
+    price_per_day   NUMERIC(14,0) NOT NULL CHECK (price_per_day  >= 0),
+    deposit_amount  NUMERIC(14,0) NOT NULL DEFAULT 0 CHECK (deposit_amount >= 0),
+    km_limit_per_day INT         CHECK (km_limit_per_day > 0),            -- NULL = không giới hạn
+    extra_km_fee    NUMERIC(14,0) CHECK (extra_km_fee >= 0),
+    status          VARCHAR(20)  NOT NULL DEFAULT 'PENDING_APPROVAL'
+                    CHECK (status IN ('PENDING_APPROVAL', 'ACTIVE', 'INACTIVE', 'REJECTED')),
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT vn_now()
+);
+
+CREATE TABLE car_images (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    car_id          BIGINT       NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
+    image_url       VARCHAR(500) NOT NULL,
+    is_primary      BOOLEAN      NOT NULL DEFAULT FALSE,
+    sort_order      INT          NOT NULL DEFAULT 0
+);
+CREATE UNIQUE INDEX uq_car_primary_image ON car_images (car_id) WHERE is_primary;
+
+CREATE TABLE car_documents (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    car_id          BIGINT       NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
+    doc_type        VARCHAR(30)  NOT NULL
+                    CHECK (doc_type IN ('REGISTRATION', 'INSPECTION', 'INSURANCE')),
+    file_url        VARCHAR(500) NOT NULL,
+    expires_at      DATE,
+    verify_status   VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                    CHECK (verify_status IN ('PENDING', 'APPROVED', 'REJECTED')),
+    reject_reason   VARCHAR(500),
+    verified_by     BIGINT       REFERENCES customers(id),
+    verified_at     TIMESTAMP,
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now()
+);
+
+-- ---------------------------------------------------------------------
+-- 3. CAR_SLOTS  (TRỤC CHÍNH)
+-- Slot = khung thời gian chủ xe mở cho thuê. Khách/tài xế đặt một khoảng
+-- con bên trong slot (đặt theo giờ hoặc theo ngày).
+-- Giá được chụp lại từ xe lúc tạo slot để sửa giá xe không làm đổi slot đã đăng.
+-- ---------------------------------------------------------------------
+CREATE TABLE car_slots (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    car_id          BIGINT       NOT NULL REFERENCES cars(id) ON DELETE CASCADE,
+    start_time      TIMESTAMP    NOT NULL,
+    end_time        TIMESTAMP    NOT NULL,
+    price_per_hour  NUMERIC(14,0) NOT NULL CHECK (price_per_hour >= 0),
+    price_per_day   NUMERIC(14,0) NOT NULL CHECK (price_per_day  >= 0),
+    rental_option   VARCHAR(10)  NOT NULL DEFAULT 'BOTH'    -- slot cho thuê theo giờ, theo ngày hay cả hai
+                    CHECK (rental_option IN ('HOURLY', 'DAILY', 'BOTH')),
+    min_rental_hours INT         NOT NULL DEFAULT 1 CHECK (min_rental_hours >= 1),
+    status          VARCHAR(20)  NOT NULL DEFAULT 'OPEN'
+                    CHECK (status IN ('OPEN', 'CLOSED', 'CANCELLED')),
+    version         BIGINT       NOT NULL DEFAULT 0,       -- optimistic locking (@Version)
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    CHECK (end_time > start_time),
+    UNIQUE (id, car_id),  -- để rental_orders tham chiếu cặp (slot, xe)
+    -- Hai slot đang mở của cùng một xe không được chồng thời gian
+    CONSTRAINT car_slots_no_overlap
+        EXCLUDE USING gist (car_id WITH =, tsrange(start_time, end_time) WITH &&)
+        WHERE (status <> 'CANCELLED')
+);
+
+-- ---------------------------------------------------------------------
+-- 4. VOUCHER & ĐƠN THUÊ
+-- ---------------------------------------------------------------------
+CREATE TABLE vouchers (
+    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    code             VARCHAR(50)  NOT NULL UNIQUE,
+    description      VARCHAR(300),
+    discount_type    VARCHAR(10)  NOT NULL CHECK (discount_type IN ('PERCENT', 'FIXED')),
+    discount_value   NUMERIC(14,0) NOT NULL CHECK (discount_value > 0),
+    max_discount     NUMERIC(14,0) CHECK (max_discount >= 0),
+    min_order_amount NUMERIC(14,0) NOT NULL DEFAULT 0 CHECK (min_order_amount >= 0),
+    start_at         TIMESTAMP    NOT NULL,
+    end_at           TIMESTAMP    NOT NULL,
+    usage_limit      INT          CHECK (usage_limit > 0),      -- tổng lượt dùng, NULL = không giới hạn
+    per_user_limit   INT          NOT NULL DEFAULT 1 CHECK (per_user_limit > 0),  -- service đếm qua rental_orders.voucher_id
+    used_count       INT          NOT NULL DEFAULT 0 CHECK (used_count >= 0),
+    status           VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')),
+    created_at       TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at       TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    CHECK (end_at > start_at),
+    CHECK (discount_type <> 'PERCENT' OR discount_value <= 100),
+    CHECK (usage_limit IS NULL OR used_count <= usage_limit)
+);
+
+-- Quy ước tiền của đơn:
+--   rental_amount  = unit_price * quantity
+--   total_amount   = rental_amount - discount_amount   (tiền thuê phải trả)
+--   deposit_amount = tiền cọc, thu riêng, hoàn lại khi trả xe
+--   phí phát sinh nằm ở bảng extra_fees
+CREATE TABLE rental_orders (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_code      VARCHAR(30)  NOT NULL UNIQUE,
+    customer_id     BIGINT       NOT NULL REFERENCES customers(id),   -- người thuê
+    car_id          BIGINT       NOT NULL,
+    car_slot_id     BIGINT       NOT NULL,
+    voucher_id      BIGINT       REFERENCES vouchers(id),
+    rental_type     VARCHAR(10)  NOT NULL CHECK (rental_type IN ('HOURLY', 'DAILY')),
+    start_time      TIMESTAMP    NOT NULL,                              -- giờ đặt
+    end_time        TIMESTAMP    NOT NULL,
+    actual_start_time TIMESTAMP,                                        -- giờ nhận xe thực tế
+    actual_end_time   TIMESTAMP,                                        -- giờ trả xe thực tế (tính phí trễ)
+    unit_price      NUMERIC(14,0) NOT NULL CHECK (unit_price >= 0),     -- giá/giờ hoặc giá/ngày đã chụp
+    quantity        INT          NOT NULL CHECK (quantity > 0),         -- số giờ hoặc số ngày (làm tròn lên)
+    rental_amount   NUMERIC(14,0) NOT NULL CHECK (rental_amount >= 0),
+    discount_amount NUMERIC(14,0) NOT NULL DEFAULT 0 CHECK (discount_amount >= 0),
+    total_amount    NUMERIC(14,0) NOT NULL CHECK (total_amount >= 0),
+    deposit_amount  NUMERIC(14,0) NOT NULL DEFAULT 0 CHECK (deposit_amount >= 0),
+    status          VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                    CHECK (status IN ('PENDING', 'CONFIRMED', 'REJECTED', 'EXPIRED',
+                                      'ONGOING', 'COMPLETED', 'CANCELLED')),
+    payment_status  VARCHAR(20)  NOT NULL DEFAULT 'UNPAID'
+                    CHECK (payment_status IN ('UNPAID', 'PAID', 'REFUNDED')),
+    expires_at      TIMESTAMP,                      -- hạn chủ xe xác nhận / khách thanh toán (đơn PENDING)
+    confirmed_at    TIMESTAMP,
+    cancelled_at    TIMESTAMP,
+    cancelled_by    BIGINT       REFERENCES customers(id),
+    cancel_reason   VARCHAR(500),
+    note            VARCHAR(500),
+    commission_rate NUMERIC(5,2) NOT NULL DEFAULT 10.00     -- % hoa hồng nền tảng, chụp lúc tạo đơn (nhóm chốt số)
+                    CHECK (commission_rate BETWEEN 0 AND 100),
+    version         BIGINT       NOT NULL DEFAULT 0,        -- optimistic locking (@Version)
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    CHECK (end_time > start_time),
+    CHECK (actual_end_time IS NULL OR actual_start_time IS NULL OR actual_end_time >= actual_start_time),
+    CHECK (discount_amount <= rental_amount),
+    CHECK (total_amount = rental_amount - discount_amount),
+    -- slot và xe phải khớp nhau (đơn không thể trỏ slot của xe khác)
+    FOREIGN KEY (car_slot_id, car_id) REFERENCES car_slots (id, car_id),
+    -- Một xe không có hai đơn đang hiệu lực chồng thời gian
+    CONSTRAINT rental_orders_no_overlap
+        EXCLUDE USING gist (car_id WITH =, tsrange(start_time, end_time) WITH &&)
+        WHERE (status IN ('PENDING', 'CONFIRMED', 'ONGOING'))
+);
+
+-- Lịch sử mọi thao tác/chuyển trạng thái của đơn (mỗi đơn có >= 1 dòng, do service ghi)
+CREATE TABLE action_logs (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id        BIGINT       NOT NULL REFERENCES rental_orders(id) ON DELETE CASCADE,
+    actor_id        BIGINT       REFERENCES customers(id),  -- NULL = hệ thống
+    action          VARCHAR(50)  NOT NULL,
+    from_status     VARCHAR(20),
+    to_status       VARCHAR(20),
+    note            VARCHAR(500),
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now()
+);
+
+-- ---------------------------------------------------------------------
+-- 5. BÀN GIAO XE
+-- ---------------------------------------------------------------------
+CREATE TABLE order_handovers (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id        BIGINT       NOT NULL REFERENCES rental_orders(id) ON DELETE CASCADE,
+    handover_type   VARCHAR(10)  NOT NULL CHECK (handover_type IN ('PICKUP', 'RETURN')),
+    odometer_km     INT          CHECK (odometer_km >= 0),
+    fuel_percent    INT          CHECK (fuel_percent BETWEEN 0 AND 100),
+    condition_note  TEXT,
+    handed_at       TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    renter_confirmed_at TIMESTAMP,                       -- người thuê xác nhận biên bản
+    owner_confirmed_at  TIMESTAMP,                       -- chủ xe xác nhận biên bản
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    UNIQUE (id, order_id)
+);
+
+CREATE TABLE handover_images (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    handover_id     BIGINT       NOT NULL REFERENCES order_handovers(id) ON DELETE CASCADE,
+    image_url       VARCHAR(500) NOT NULL,
+    caption         VARCHAR(200)
+);
+
+-- ---------------------------------------------------------------------
+-- 6. PHÍ PHÁT SINH, TRANH CHẤP, GIAO DỊCH, CHI TRẢ
+-- Thứ tự tạo bảng: extra_fees -> disputes -> transactions -> payouts
+-- (mỗi bảng chỉ tham chiếu bảng đã tạo trước đó, không có vòng).
+-- Các khóa ngoại ghép (xxx_id, order_id) bảo đảm bản ghi con và bản ghi cha
+-- cùng thuộc MỘT đơn, tránh gắn nhầm dữ liệu của đơn khác.
+-- ---------------------------------------------------------------------
+CREATE TABLE extra_fees (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id        BIGINT       NOT NULL REFERENCES rental_orders(id) ON DELETE CASCADE,
+    handover_id     BIGINT,                                       -- phí phát sinh từ lần bàn giao nào
+    created_by      BIGINT       REFERENCES customers(id),
+    fee_type        VARCHAR(30)  NOT NULL
+                    CHECK (fee_type IN ('LATE_RETURN', 'FUEL', 'CLEANING', 'DAMAGE', 'TRAFFIC_FINE', 'EXTRA_KM', 'OTHER')),
+    amount          NUMERIC(14,0) NOT NULL CHECK (amount > 0),
+    description     VARCHAR(500),
+    status          VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                    CHECK (status IN ('PENDING', 'PAID', 'DISPUTED', 'WAIVED')),
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    UNIQUE (id, order_id),
+    FOREIGN KEY (handover_id, order_id) REFERENCES order_handovers (id, order_id)
+);
+
+CREATE TABLE disputes (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id        BIGINT       NOT NULL REFERENCES rental_orders(id) ON DELETE CASCADE,
+    extra_fee_id    BIGINT,
+    raised_by       BIGINT       NOT NULL REFERENCES customers(id),
+    reason          VARCHAR(100) NOT NULL,
+    description     TEXT,
+    status          VARCHAR(20)  NOT NULL DEFAULT 'OPEN'
+                    CHECK (status IN ('OPEN', 'IN_REVIEW', 'RESOLVED', 'REJECTED')),
+    resolution_note TEXT,
+    resolved_by     BIGINT       REFERENCES customers(id),
+    resolved_at     TIMESTAMP,
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    UNIQUE (id, order_id),
+    FOREIGN KEY (extra_fee_id, order_id) REFERENCES extra_fees (id, order_id)
+);
+
+CREATE TABLE dispute_evidences (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    dispute_id      BIGINT       NOT NULL REFERENCES disputes(id) ON DELETE CASCADE,
+    uploaded_by     BIGINT       NOT NULL REFERENCES customers(id),
+    file_url        VARCHAR(500) NOT NULL,
+    file_type       VARCHAR(20)  NOT NULL CHECK (file_type IN ('IMAGE', 'VIDEO', 'DOCUMENT')),
+    description     VARCHAR(300),
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now()
+);
+
+CREATE TABLE transactions (
+    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id         BIGINT       NOT NULL REFERENCES rental_orders(id),
+    refund_of_id     BIGINT,                      -- "refund of": giao dịch hoàn tiền trỏ về giao dịch gốc
+    dispute_id       BIGINT,                      -- "refund": hoàn tiền phát sinh từ tranh chấp
+    extra_fee_id     BIGINT,                      -- giao dịch thu phí phát sinh nào
+    transaction_type VARCHAR(20)  NOT NULL
+                     CHECK (transaction_type IN ('DEPOSIT', 'RENTAL_PAYMENT', 'EXTRA_FEE', 'REFUND')),
+    amount           NUMERIC(14,0) NOT NULL CHECK (amount > 0),
+    method           VARCHAR(20)  NOT NULL CHECK (method IN ('BANK_TRANSFER', 'MOMO', 'VNPAY', 'CASH')),
+    status           VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                     CHECK (status IN ('PENDING', 'SUCCESS', 'FAILED')),
+    provider_ref     VARCHAR(100),
+    paid_at          TIMESTAMP,
+    created_at       TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at       TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    UNIQUE (id, order_id),
+    FOREIGN KEY (refund_of_id, order_id) REFERENCES transactions (id, order_id),
+    FOREIGN KEY (dispute_id,   order_id) REFERENCES disputes     (id, order_id),
+    FOREIGN KEY (extra_fee_id, order_id) REFERENCES extra_fees   (id, order_id),
+    CHECK (refund_of_id IS NULL OR transaction_type = 'REFUND'),
+    CHECK (refund_of_id IS NULL OR refund_of_id <> id),
+    CHECK (extra_fee_id IS NULL OR transaction_type IN ('EXTRA_FEE', 'REFUND'))
+);
+
+-- Chi trả cho chủ xe sau khi đơn hoàn tất
+CREATE TABLE payouts (
+    id                        BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id                  BIGINT       NOT NULL REFERENCES rental_orders(id),
+    recipient_id              BIGINT       NOT NULL REFERENCES customers(id),
+    bank_account_id           BIGINT,
+    adjustment_transaction_id BIGINT       REFERENCES transactions(id),  -- "adjustment": khoản điều chỉnh (vd trừ do hoàn tiền)
+    gross_amount              NUMERIC(14,0) NOT NULL CHECK (gross_amount >= 0),
+    platform_fee              NUMERIC(14,0) NOT NULL DEFAULT 0 CHECK (platform_fee >= 0),
+    net_amount                NUMERIC(14,0) NOT NULL CHECK (net_amount >= 0),
+    status                    VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
+                              CHECK (status IN ('PENDING', 'PROCESSING', 'PAID', 'FAILED')),
+    note                      VARCHAR(500),
+    paid_at                   TIMESTAMP,
+    version                   BIGINT       NOT NULL DEFAULT 0,   -- optimistic locking (@Version)
+    created_at                TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    updated_at                TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    -- tài khoản ngân hàng phải thuộc đúng người nhận
+    FOREIGN KEY (bank_account_id, recipient_id) REFERENCES bank_accounts (id, customer_id),
+    -- khoản chi trả đã PAID thì bắt buộc có tài khoản nhận tiền
+    CHECK (status <> 'PAID' OR bank_account_id IS NOT NULL)
+);
+
+-- ---------------------------------------------------------------------
+-- 7. ĐÁNH GIÁ
+-- ---------------------------------------------------------------------
+CREATE TABLE reviews (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id        BIGINT       NOT NULL REFERENCES rental_orders(id) ON DELETE CASCADE,
+    reviewer_id     BIGINT       NOT NULL REFERENCES customers(id),
+    reviewee_id     BIGINT       NOT NULL REFERENCES customers(id),
+    rating          INT          NOT NULL CHECK (rating BETWEEN 1 AND 5),
+    comment         TEXT,
+    created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
+    UNIQUE (order_id, reviewer_id),     -- mỗi người đánh giá một đơn một lần
+    CHECK (reviewer_id <> reviewee_id)
+);
+
+-- ---------------------------------------------------------------------
+-- 8. TRIGGER BẢO VỆ DỮ LIỆU (lớp phòng thủ cuối cùng, service vẫn phải kiểm tra trước)
+-- ---------------------------------------------------------------------
+-- 8.1 Đơn thuê phải nằm trọn trong slot, slot còn mở, đúng hình thức thuê, đủ số giờ tối thiểu
+CREATE OR REPLACE FUNCTION trg_check_order_in_slot() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+    s car_slots%ROWTYPE;
+BEGIN
+    SELECT * INTO s FROM car_slots WHERE id = NEW.car_slot_id;
+
+    IF NEW.start_time < s.start_time OR NEW.end_time > s.end_time THEN
+        RAISE EXCEPTION 'Thời gian thuê nằm ngoài slot (% - %)', s.start_time, s.end_time
+            USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF TG_OP = 'INSERT' AND s.status <> 'OPEN' THEN
+        RAISE EXCEPTION 'Slot % không còn mở để đặt (status=%)', s.id, s.status
+            USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF NEW.rental_type = 'HOURLY' AND s.rental_option = 'DAILY' THEN
+        RAISE EXCEPTION 'Slot % chỉ cho thuê theo ngày', s.id USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.rental_type = 'DAILY' AND s.rental_option = 'HOURLY' THEN
+        RAISE EXCEPTION 'Slot % chỉ cho thuê theo giờ', s.id USING ERRCODE = 'check_violation';
+    END IF;
+
+    IF NEW.rental_type = 'HOURLY'
+       AND EXTRACT(EPOCH FROM (NEW.end_time - NEW.start_time)) / 3600 < s.min_rental_hours THEN
+        RAISE EXCEPTION 'Thời gian thuê tối thiểu của slot là % giờ', s.min_rental_hours
+            USING ERRCODE = 'check_violation';
+    END IF;
+
+    RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_order_in_slot
+    BEFORE INSERT OR UPDATE OF start_time, end_time, car_slot_id, rental_type ON rental_orders
+    FOR EACH ROW EXECUTE FUNCTION trg_check_order_in_slot();
+
+-- 8.2 Không cho thu hẹp/hủy slot khi còn đơn đang hiệu lực nằm ngoài khoảng mới
+CREATE OR REPLACE FUNCTION trg_check_slot_change() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM rental_orders o
+        WHERE o.car_slot_id = NEW.id
+          AND o.status IN ('PENDING', 'CONFIRMED', 'ONGOING')
+          AND (NEW.status = 'CANCELLED'
+               OR o.start_time < NEW.start_time OR o.end_time > NEW.end_time)
+    ) THEN
+        RAISE EXCEPTION 'Slot % còn đơn đang hiệu lực, không thể thu hẹp hoặc hủy', NEW.id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+
+CREATE TRIGGER trg_slot_change
+    BEFORE UPDATE OF start_time, end_time, status ON car_slots
+    FOR EACH ROW EXECUTE FUNCTION trg_check_slot_change();
+
+-- 8.3 Tự cập nhật updated_at cho mọi bảng có cột này
+DO $$
+DECLARE
+    t text;
+BEGIN
+    FOR t IN
+        SELECT table_name FROM information_schema.columns
+        WHERE table_schema = 'public' AND column_name = 'updated_at'
+    LOOP
+        EXECUTE format(
+            'CREATE TRIGGER trg_%I_updated_at BEFORE UPDATE ON %I
+             FOR EACH ROW EXECUTE FUNCTION set_updated_at()', t, t);
+    END LOOP;
+END $$;
+
+-- ---------------------------------------------------------------------
+-- 9. INDEX cho khóa ngoại và truy vấn hay dùng
+-- ---------------------------------------------------------------------
+CREATE INDEX idx_user_documents_customer ON user_documents(customer_id);
+CREATE INDEX idx_bank_accounts_customer  ON bank_accounts(customer_id);
+CREATE INDEX idx_cars_owner              ON cars(owner_id);
+CREATE INDEX idx_cars_search             ON cars(city, car_type) WHERE status = 'ACTIVE';
+CREATE INDEX idx_car_images_car          ON car_images(car_id);
+CREATE INDEX idx_car_documents_car       ON car_documents(car_id);
+CREATE INDEX idx_car_slots_car_time      ON car_slots(car_id, start_time, end_time);
+CREATE INDEX idx_car_slots_open_time     ON car_slots(start_time, end_time) WHERE status = 'OPEN';
+CREATE INDEX idx_orders_customer         ON rental_orders(customer_id);
+CREATE INDEX idx_orders_slot             ON rental_orders(car_slot_id);
+CREATE INDEX idx_orders_voucher          ON rental_orders(voucher_id);
+CREATE INDEX idx_orders_status           ON rental_orders(status);
+CREATE INDEX idx_orders_pending_expiry   ON rental_orders(expires_at) WHERE status = 'PENDING';
+CREATE INDEX idx_action_logs_order       ON action_logs(order_id);
+CREATE INDEX idx_handovers_order         ON order_handovers(order_id);
+CREATE INDEX idx_handover_images_ho      ON handover_images(handover_id);
+CREATE INDEX idx_extra_fees_order        ON extra_fees(order_id);
+CREATE INDEX idx_disputes_order          ON disputes(order_id);
+CREATE INDEX idx_evidences_dispute       ON dispute_evidences(dispute_id);
+CREATE INDEX idx_transactions_order      ON transactions(order_id);
+CREATE INDEX idx_payouts_order           ON payouts(order_id);
+CREATE INDEX idx_payouts_recipient       ON payouts(recipient_id);
+CREATE INDEX idx_reviews_reviewee        ON reviews(reviewee_id);
+
+-- ---------------------------------------------------------------------
+-- 10. BẢO MẬT: bật Row Level Security cho mọi bảng
+-- Supabase mở schema public ra Data API (REST) cho anon/authenticated. Bật RLS mà không tạo
+-- policy = chặn hoàn toàn truy cập qua Data API. Spring Boot kết nối bằng user postgres
+-- (chủ bảng) nên vẫn đọc/ghi bình thường. Ảnh giấy tờ nên để bucket private, dùng link có hạn.
+-- ---------------------------------------------------------------------
+DO $$
+DECLARE
+    t text;
+BEGIN
+    FOR t IN SELECT tablename FROM pg_tables WHERE schemaname = 'public' LOOP
+        EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', t);
+    END LOOP;
+END $$;

@@ -1,69 +1,18 @@
-import api from './api';
-import { tokenStorage, userStorage } from '../storage';
+import { endpoints } from "@/services/endpoints.js";
+import { request } from "@/services/api.js";
+import { saveSession } from "@/utils/session.js";
 
-export const authService = {
-  /**
-   * Log in user with email/phone & password
-   */
-  async login({ account, password }) {
-    try {
-      const response = await api.post('/auth/login', { account, password });
-      if (response?.token) {
-        tokenStorage.setToken(response.token);
-      }
-      if (response?.user) {
-        userStorage.setUser(response.user);
-      }
-      return response;
-    } catch {
-      // Offline / Demo fallback
-      const mockUser = {
-        id: 'CDB-VN-88492',
-        fullName: 'Nguyễn Hoàng Minh',
-        email: account.includes('@') ? account : 'minh.nguyen@example.com',
-        phone: !account.includes('@') ? account : '0908 123 456',
-        role: 'CUSTOMER',
-        membershipTier: 'VIP',
-      };
-      tokenStorage.setToken('mock_jwt_token_vip_cardb');
-      userStorage.setUser(mockUser);
-      return { success: true, user: mockUser };
-    }
-  },
+/** POST /api/auth/login — backend chỉ nhận email + mật khẩu. */
+export async function authenticate({ email, password }) {
+    const token = await request(endpoints.auth.login, { method: "POST", auth: false, json: { email: email.trim(), password } });
+    return saveSession(token);
+}
 
-  /**
-   * Register new user account
-   */
-  async register({ fullName, email, phone, password }) {
-    try {
-      return await api.post('/auth/register', { fullName, email, phone, password });
-    } catch {
-      // Demo fallback
-      return { success: true, message: 'OTP sent to ' + phone };
-    }
-  },
-
-  /**
-   * Logout user and clear tokens
-   */
-  logout() {
-    tokenStorage.clearToken();
-    tokenStorage.clearRefreshToken();
-  },
-
-  /**
-   * Get current authenticated user session
-   */
-  getCurrentUser() {
-    return userStorage.getUser();
-  },
-
-  /**
-   * Check if user is logged in
-   */
-  isAuthenticated() {
-    return tokenStorage.hasValidToken();
-  },
-};
-
-export default authService;
+/** POST /api/auth/register → trả về hồ sơ khách hàng vừa tạo. */
+export function registerAccount({ fullName, email, phone, password }) {
+    return request(endpoints.auth.register, {
+        method: "POST",
+        auth: false,
+        json: { fullName: fullName.trim(), email: email.trim(), phone: phone.trim().replace(/\s+/g, ""), password },
+    });
+}
