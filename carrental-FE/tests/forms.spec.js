@@ -29,7 +29,7 @@ test("login submits normalized values once, persists the session, and honors nex
     await responseReady;
     await route.fulfill({ json: { success: true, data: token } });
   });
-  await page.goto("/login?next=/pricing");
+  await page.goto("/login?next=/packages");
   await page.locator("#login-account").fill("  test@example.com  ");
   await page.locator("#login-password").fill("secret123");
   const submit = page.locator("#view-login form [type=submit]");
@@ -37,7 +37,7 @@ test("login submits normalized values once, persists the session, and honors nex
   await expect(submit).toBeDisabled();
   await expect.poll(() => requests.length).toBe(1);
   release();
-  await expect(page).toHaveURL(/\/pricing$/);
+  await expect(page).toHaveURL(/\/packages$/);
   expect(requests).toEqual([{ email: "test@example.com", password: "secret123" }]);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem("cardb:session:v2")).accessToken)).toBe("test-token");
 });

@@ -17,7 +17,7 @@ test(`routes render on direct visits and reloads (${signedIn ? "authenticated" :
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   const routes = [
-    "/", "/pricing", "/login", "/register", "/explore", "/cars/42?slotId=7",
+    "/", "/pricing", "/packages", "/login", "/register", "/explore", "/cars/42?slotId=7",
     "/account", "/account/orders", "/account/history", "/account/bank", "/account/driver",
     "/account/verification", "/booking/confirm?slotId=7", "/my-trips", "/orders/42",
     "/payment?orderId=42", "/reviews?orderId=42", "/disputes?orderId=42",
@@ -43,8 +43,8 @@ test(`routes render on direct visits and reloads (${signedIn ? "authenticated" :
 
 test("aliases preserve query strings and hashes, including dynamic IDs", async ({ page }) => {
   await page.goto("/cach-tinh-gia?city=HCM#pricing");
-  await expect(page).toHaveURL(/\/pricing\?city=HCM#pricing$/);
-  await expect(page).toHaveTitle("Cách tính giá thuê xe | CarDB");
+  await expect(page).toHaveURL(/\/packages\?city=HCM#pricing$/);
+  await expect(page).toHaveTitle("Gói đăng tin | CarDB");
   await page.goto("/xe/42?slotId=7");
   await expect(page).toHaveURL(/\/cars\/42\?slotId=7$/);
   await page.goto("/don-thue/42?created=1");

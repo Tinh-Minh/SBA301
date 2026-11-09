@@ -35,8 +35,8 @@ test("client navigation reuses fresh fleet data", async ({ page }) => {
   const state = await fleetBackend(page);
   await page.goto("/owner/vehicles");
   await expect(page.getByRole("heading", { name: "Test Cache" })).toBeVisible();
-  await page.locator('header a[href="/pricing"]').first().click();
-  await expect(page).toHaveURL(/\/pricing$/);
+  await page.locator('header a[href="/packages"]').first().click();
+  await expect(page).toHaveURL(/\/packages$/);
   await page.goBack();
   await expect(page.getByRole("heading", { name: "Test Cache" })).toBeVisible();
   expect(state.listCalls).toBe(1);

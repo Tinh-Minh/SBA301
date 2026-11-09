@@ -2,7 +2,6 @@ import { lazy } from "react";
 const CarDetailPage = lazy(() => import("@/pages/vehicles/CarDetailPage.jsx"));
 const ExploreCarsPage = lazy(() => import("@/pages/vehicles/ExploreCarsPage.jsx"));
 const HomePage = lazy(() => import("@/pages/home/HomePage.jsx"));
-const PricingPage = lazy(() => import("@/pages/pricing/PricingPage.jsx"));
 const PackagePricingPage = lazy(() => import("@/pages/pricing/PackagePricingPage.jsx"));
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage.jsx"));
@@ -10,11 +9,11 @@ const BanksAlternativePage = lazy(() => import("@/pages/account/BanksAlternative
 const PaymentSuccessPage = lazy(() => import("@/pages/payments/PaymentSuccessPage.jsx"));
 const PaymentFailedPage = lazy(() => import("@/pages/payments/PaymentFailedPage.jsx"));
 const HeaderShowcasePage = lazy(() => import("@/pages/information/HeaderShowcasePage.jsx"));
-import { page, CarRoute } from "@/routes/elements.jsx";
+import { page, CarRoute, AliasRedirect } from "@/routes/elements.jsx";
 
 export const publicPages = [
     page("", <HomePage />),
-    page("pricing", <PricingPage />),
+    page("pricing", <AliasRedirect to="/packages" />),
     page("packages", <PackagePricingPage />),
     page("login", <LoginPage />),
     page("register", <RegisterPage />),
