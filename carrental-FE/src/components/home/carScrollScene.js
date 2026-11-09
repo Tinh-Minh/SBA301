@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { createCarLights } from "./carJourneyLights.js";
-import { prepareWheels, createCustomer, createExhaust, createRoad } from "./carJourneyEffects.js";
+import { prepareWheels, createCustomer, createExhaust, createRoad, createTireTracks } from "./carJourneyEffects.js";
 
 function disposeObject(root) {
     const textures = new Set();
@@ -81,6 +81,7 @@ export function createCarScrollScene(host, { onReady, onError, reducedMotion }) 
     customer.person.visible = false;
     const exhaust = createExhaust(scene, renderer);
     const road = createRoad(scene);
+    const tracks = createTireTracks(scene);
     const screenOffset = new THREE.Vector3();
     const lightOffset = new THREE.Vector3(3, 7, 5);
     let previousTravel = 0;
@@ -173,9 +174,16 @@ export function createCarScrollScene(host, { onReady, onError, reducedMotion }) 
         const lightsActive = lights?.update(time, Math.abs(travelSpeed));
         const smokeAlive = exhaust.update(dt, Math.abs(travelSpeed), pivot, loaded && !reducedMotion);
         road.update(pivot, current.overhead, current.distance, current.depart);
+        const tracksAlive = tracks.update(dt, {
+            wheels,
+            distance: current.distance,
+            groundY: pivot.position.y + 0.02,
+            worldRadius: wheelRadius * pivot.scale.x,
+            active: loaded && !reducedMotion && current.wheelCloseup < 0.12 && Math.hypot(current.lapX, current.lapZ) < 0.08,
+        });
         renderer.render(scene, camera);
         if (loaded && !readyNotified) { readyNotified = true; onReady(); }
-        if ((!reducedMotion && current.wheelCloseup > 0.0002) || moving || smokeAlive || lightsActive || (!reducedMotion && current.customer > 0.02)) schedule();
+        if ((!reducedMotion && current.wheelCloseup > 0.0002) || moving || smokeAlive || lightsActive || tracksAlive || (!reducedMotion && current.customer > 0.02)) schedule();
     }
     function syncVisibility() {
         if (document.hidden) { cancelAnimationFrame(frame); frame = 0; }

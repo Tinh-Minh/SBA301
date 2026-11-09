@@ -19,6 +19,7 @@ const chapterPoses = Object.fromEntries(chapterIds.map((id, index) => [id, poses
 
 export function CarJourney({ root }) {
     const host = useRef(null);
+    const speedRef = useRef(null);
     const [status, setStatus] = useState("loading");
     const [attempt, setAttempt] = useState(0);
     useEffect(() => {
@@ -38,6 +39,9 @@ export function CarJourney({ root }) {
         host.current.removeAttribute('style');
         host.current.removeAttribute('data-car-stage');
         let chapters = [];
+        let lastScroll = window.scrollY;
+        let lastSpeedAt = performance.now();
+        let shownSpeed = 0;
         const header = document.querySelector(".site-header");
         function measure() {
             const headerHeight = header?.getBoundingClientRect().height || 80;
@@ -122,12 +126,27 @@ export function CarJourney({ root }) {
             const finaleOffset = motion.matches ? 0 : Math.max(0, scroll - stops.at(-1));
             host.current.style.transform = finaleOffset ? `translate3d(0, -${finaleOffset}px, 0)` : '';
             scene?.setPose(motion.matches ? { ...poses[0], x: 0, scale: mobile ? 1 : 1.2, distance: 0, wheelCloseup: 0, wheelSpinSpeed: 0, lapX: 0, lapZ: 0 } : pose);
-            element.style.setProperty("--journey-progress", Math.min(1, scroll / stops.at(-1)));
+            const progress = Math.min(1, scroll / Math.max(1, stops.at(-1)));
+            const now = performance.now();
+            const elapsed = Math.max(16, now - lastSpeedAt);
+            const coast = (1 - progress) * 56 + 8;
+            const burst = Math.min(46, Math.abs(scroll - lastScroll) / elapsed * 150);
+            const targetSpeed = motion.matches ? 0 : coast * 0.42 + burst;
+            shownSpeed += (targetSpeed - shownSpeed) * 0.14;
+            lastScroll = scroll;
+            lastSpeedAt = now;
+            if (speedRef.current) speedRef.current.textContent = String(Math.round(shownSpeed));
+            if (Math.abs(targetSpeed - shownSpeed) > 0.6) schedule();
             element.dataset.carChapter = chapters[Math.min(chapters.length - 1, index + (t > 0.5 ? 1 : 0))].dataset.carStop;
-            for (const chapter of chapters) {
+            for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex += 1) {
+                const chapter = chapters[chapterIndex];
                 const passage = Math.max(-1, Math.min(1, (scroll - (chapter.getBoundingClientRect().top + scroll)) / innerHeight));
                 chapter.style.setProperty("--passage", motion.matches ? 0 : passage);
-
+                const start = stops[Math.max(0, chapterIndex - 1)] ?? 0;
+                const end = stops[chapterIndex] ?? start;
+                const progress = chapterIndex === 0 ? 1 : (scroll - start) / Math.max(1, end - start);
+                const introDone = element.dataset.introState === "complete";
+                chapter.dataset.carArrived = motion.matches || (chapterIndex === 0 ? introDone : progress >= 0.68) ? "true" : "false";
             }
         }
         function schedule() { if (!frame) frame = requestAnimationFrame(update); }
@@ -177,6 +196,7 @@ export function CarJourney({ root }) {
         {status !== "ready" ? <div className="journey-loading" role="status" data-native>
             {status === "error" ? <><span>Không thể tải mô hình 3D trên thiết bị này.</span><button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></> : <><span>Đang chuẩn bị hành trình…</span></>}
         </div> : null}
+        <p className="journey-speed" aria-hidden="true"><strong ref={speedRef}>0</strong> KM/H</p>
         <nav className="journey-rail" aria-label="Hành trình trên trang">
             {[['hero','Bắt đầu'],['search','Tìm xe'],['fleet','Bộ sưu tập'],['steps','Kết nối'],['flow','Cách thuê xe'],['drive','Lăn bánh'],['faq','Giải đáp'],['finale','Lên đường']].map(([id,label]) => <a key={id} href={`#journey-${id}`} data-journey-stop={id} aria-label={label}><span>{label}</span></a>)}
         </nav>

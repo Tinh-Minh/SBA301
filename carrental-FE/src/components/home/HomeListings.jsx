@@ -19,19 +19,19 @@ export function HomeListings() {
     if (!latest.data?.content?.length) return null;
     const cars = result.data?.content ?? [];
     return <section className="journey-fleet" id="journey-fleet" data-car-stop="fleet" data-native aria-labelledby="home-listings-title">
-        <div className="journey-listings-header">
+        <div className="journey-listings-header journey-reveal">
             <div><h2 id="home-listings-title">Tin đăng mới nhất</h2><p>Giá tham khảo do chủ xe cung cấp.</p></div>
             <div className="journey-listing-filters" role="group" aria-label="Lọc loại xe">
                 {filters.map(([type, label]) => <button key={type} type="button" aria-pressed={carType === type} onClick={() => setCarType(type)}>{label}</button>)}
             </div>
         </div>
         <LiveState loading={result.loading && !result.data} error={result.error ? { message:"Không thể tải tin đăng. Vui lòng thử lại." } : null} empty={false} label="tin đăng phù hợp" onRetry={result.reload} />
-        {result.data && !cars.length && !result.error ? <div className="journey-listings-empty">
+        {result.data && !cars.length && !result.error ? <div className="journey-listings-empty journey-reveal journey-reveal--late">
             <h3>Chưa có tin đăng thuộc loại xe này.</h3>
             <p>Thử chọn loại xe khác hoặc xem tất cả tin đăng.</p>
             <button type="button" onClick={() => setCarType("")}>Xem tất cả tin đăng</button>
         </div> : null}
-        {cars.length ? <div className="journey-listings-grid">
+        {cars.length ? <div className="journey-listings-grid journey-reveal journey-reveal--late">
             {cars.map(car => <article key={car.id} className="journey-listing" data-vehicle-card={car.carType}>
                 {car.primaryImageUrl ? <img src={car.primaryImageUrl} alt={carName(car)} loading="lazy" decoding="async" /> : <div className="journey-listing-no-image"><Icon name="directions_car" /><span>Chưa có ảnh xe</span></div>}
                 <div className="journey-listing-body">
