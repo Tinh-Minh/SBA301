@@ -74,6 +74,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
     @Override
+    protected ResponseEntity<Object> handleHttpMessageNotReadable(
+            org.springframework.http.converter.HttpMessageNotReadableException ex,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        log.warn("HttpMessageNotReadable traceId={} msg={}", RequestTraceFilter.currentTraceId(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .headers(headers)
+                .body(failure(ErrorCode.INVALID_REQUEST, ex.getMessage(), List.of()));
+    }
+
+    @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
             HttpStatusCode statusCode, WebRequest request) {
         ErrorCode code = codeFor(statusCode);
