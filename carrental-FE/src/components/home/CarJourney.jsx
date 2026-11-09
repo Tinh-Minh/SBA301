@@ -81,7 +81,7 @@ export function CarJourney({ root }) {
             const mobile = innerWidth < 1024;
             if (mobile) {
                 const mobilePoses = [
-                    { x:0, y:-0.08, scale:1.10 }, { x:0, y:0.03, scale:0.85 },
+                    { x:0, y:-0.08, scale:1.10 }, { x:0.08, y:0.2, scale:0.52 },
                     { x:0.26, y:0.23, scale:0.38 },
                     innerWidth >= 640 && innerHeight < 600 ? { x:-0.22, y:-0.10, scale:0.60 } : { x:-0.04, y:-0.10, scale:innerWidth < 640 ? 0.95 : 0.78 },
                     { x:0.24, y:0.24, scale:0.45 },

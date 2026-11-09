@@ -29,6 +29,9 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-text-link { display:inline-flex;margin-top:20px;gap:38px;align-items:center;padding-bottom:8px;border-bottom:1px solid #9f9f91;font-size:12px; }
 .journey-text-link span { font-size:22px;color:#fc6c26; }
 .journey-search-form { position:absolute;z-index:6;bottom:clamp(24px,5dvh,48px);left:50%;transform:translateX(-50%);width:min(1100px,90%);padding:24px;border:1px solid #e3e3da;border-radius:20px;background:#fffffff5;box-shadow:0 12px 36px #25251f0c;backdrop-filter:blur(12px); }
+@media(min-width:1024px) {
+ .journey-search-form { z-index:3; }
+}
 .journey-search-heading { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #e8e8df; }
 .journey-search-heading h3 { display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700; }.journey-search-heading p { font-size:12px;color:#717165; }
 .journey-search-heading .material-symbols-outlined { color:#fc6c26;font-size:20px; }
