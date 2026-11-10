@@ -6,5 +6,6 @@
 !/carrental-FE/
 !/docs/
 !/BACKEND_CONVENTIONS.md
+!/seeddb.sql
 !/.gitignore
 /.idea/
