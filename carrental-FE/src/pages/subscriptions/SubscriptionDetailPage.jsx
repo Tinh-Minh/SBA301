@@ -15,6 +15,7 @@ export default function SubscriptionDetailPage() {
     const detail = useApiQuery(["subscription", id], () => subscriptionService.getById(id));
     const pay = useApiMutation(subscriptionService.payWithVnpay);
     const cancel = useApiMutation(subscriptionService.cancel, detail.reload);
+    const activateSlot = useApiMutation(subscriptionService.activateSlot, detail.reload);
     const [confirmPay, setConfirmPay] = useState(false);
     const [confirmCancel, setConfirmCancel] = useState(false);
     const item = detail.data;
@@ -33,16 +34,27 @@ export default function SubscriptionDetailPage() {
         <StatusBadge meta={subscriptionStatusMeta[item.status]}/>
       </div>
       <dl className="mt-5 grid gap-3 text-sm sm:grid-cols-2">
-        <div><dt className="text-[#666666]">Giá gói</dt><dd className="font-semibold">{formatMoney(item.basePrice)}</dd></div>
+        <div><dt className="text-[#666666]">Giá gói</dt><dd className="font-semibold">{formatMoney(item.packagePrice || item.basePrice)}</dd></div>
         <div><dt className="text-[#666666]">Giảm giá</dt><dd className="font-semibold">{formatMoney(item.discountAmount)}</dd></div>
         <div><dt className="text-[#666666]">Tổng thanh toán</dt><dd className="font-semibold">{formatMoney(item.totalAmount)}</dd></div>
         <div><dt className="text-[#666666]">Mã giảm giá</dt><dd>{item.voucherCode ?? "Không dùng"}</dd></div>
+        <div><dt className="text-[#666666]">Quyền lợi slot</dt><dd className="font-semibold text-[#FC6C26]">{item.totalSlots ? `${item.totalSlots - (item.remainingSlots ?? 0)}/${item.totalSlots} đã dùng (Còn ${item.remainingSlots ?? 0} slots • ${item.durationDaysPerSlot || 7} ngày/slot)` : "—"}</dd></div>
+        <div><dt className="text-[#666666]">Slot hiện tại đến</dt><dd className="font-semibold">{formatDateTime(item.currentSlotEndDate) || "Chưa kích hoạt"}</dd></div>
         <div><dt className="text-[#666666]">Bắt đầu</dt><dd>{formatDateTime(item.startDate)}</dd></div>
-        <div><dt className="text-[#666666]">Kết thúc</dt><dd>{formatDateTime(item.endDate)}</dd></div>
-        <div><dt className="text-[#666666]">Còn lại</dt><dd>{item.daysRemaining == null ? "—" : `${item.daysRemaining} ngày`}</dd></div>
-        <div><dt className="text-[#666666]">Hết hạn thanh toán</dt><dd>{formatDateTime(item.paymentDeadline)}</dd></div>
+        <div><dt className="text-[#666666]">Hết hạn gói</dt><dd>{formatDateTime(item.endDate)}</dd></div>
+        <div><dt className="text-[#666666]">Còn lại trong slot</dt><dd>{item.daysRemaining == null ? "—" : `${item.daysRemaining} ngày`}</dd></div>
       </dl>
       <div className="mt-5 flex flex-wrap gap-2">
+        {item.status === "ACTIVE" && (item.remainingSlots ?? 0) > 0 ? (
+          <button
+            type="button"
+            disabled={activateSlot.running}
+            onClick={() => activateSlot.run(Number(id))}
+            className="rounded-xl bg-[#047857] px-4 py-2 text-sm font-bold text-white hover:bg-[#065F46] disabled:opacity-50"
+          >
+            {activateSlot.running ? "Đang kích hoạt…" : `⚡ Kích hoạt slot tiếp theo (${item.durationDaysPerSlot || 7} ngày)`}
+          </button>
+        ) : null}
         {payable ? <button type="button" onClick={() => setConfirmPay(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Thanh toán VNPay</button> : null}
         {cancellable ? <button type="button" onClick={() => setConfirmCancel(true)} className="rounded-xl border border-[#EF4444] px-4 py-2 text-sm font-bold text-[#EF4444]">Huỷ gói</button> : null}
       </div>

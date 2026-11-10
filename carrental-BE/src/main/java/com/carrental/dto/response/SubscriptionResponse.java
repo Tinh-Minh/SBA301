@@ -32,7 +32,12 @@ public record SubscriptionResponse(
         LocalDateTime endDate,
         LocalDateTime activatedAt,
         LocalDateTime createdAt,
-        Long daysRemaining) {
+        Long daysRemaining,
+        Integer totalSlots,
+        Integer remainingSlots,
+        Integer durationDaysPerSlot,
+        LocalDateTime currentSlotStartDate,
+        LocalDateTime currentSlotEndDate) {
 
     public static SubscriptionResponse from(CarSubscription subscription, LocalDateTime now) {
         Car car = subscription.getCar();
@@ -59,15 +64,27 @@ public record SubscriptionResponse(
                 subscription.getEndDate(),
                 subscription.getActivatedAt(),
                 subscription.getCreatedAt(),
-                daysRemaining(subscription, now));
+                daysRemaining(subscription, now),
+                subscription.getTotalSlots(),
+                subscription.getRemainingSlots(),
+                subscription.getDurationDaysPerSlot(),
+                subscription.getCurrentSlotStartDate(),
+                subscription.getCurrentSlotEndDate());
     }
 
-    /** Số ngày còn hiển thị, làm tròn lên; null khi gói không còn hiệu lực. */
+    /** Số ngày còn hiển thị trong slot hiện tại, làm tròn lên; null khi gói/slot không còn hiệu lực. */
     private static Long daysRemaining(CarSubscription subscription, LocalDateTime now) {
-        if (subscription.getStatus() != SubscriptionStatus.ACTIVE || subscription.getEndDate() == null) {
+        if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
             return null;
         }
-        long seconds = Duration.between(now, subscription.getEndDate()).getSeconds();
+        LocalDateTime target = subscription.getCurrentSlotEndDate();
+        if (target == null) {
+            target = subscription.getEndDate();
+        }
+        if (target == null) {
+            return null;
+        }
+        long seconds = Duration.between(now, target).getSeconds();
         return seconds <= 0 ? 0 : (seconds + 86399) / 86400;
     }
 }

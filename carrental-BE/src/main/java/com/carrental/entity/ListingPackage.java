@@ -33,6 +33,14 @@ public class ListingPackage {
     @Column(name = "duration_days", nullable = false)
     private Integer durationDays;
 
+    @Column(name = "slot_count", nullable = false)
+    @Builder.Default
+    private Integer slotCount = 1;
+
+    @Column(name = "duration_days_per_slot", nullable = false)
+    @Builder.Default
+    private Integer durationDaysPerSlot = 7;
+
     @Column(name = "priority_level", nullable = false)
     @Builder.Default
     private Integer priorityLevel = 1;

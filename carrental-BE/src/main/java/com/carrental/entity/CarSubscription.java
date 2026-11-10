@@ -62,6 +62,24 @@ public class CarSubscription {
     @Builder.Default
     private PaymentStatus paymentStatus = PaymentStatus.UNPAID;
 
+    @Column(name = "total_slots", nullable = false)
+    @Builder.Default
+    private Integer totalSlots = 1;
+
+    @Column(name = "remaining_slots", nullable = false)
+    @Builder.Default
+    private Integer remainingSlots = 0;
+
+    @Column(name = "duration_days_per_slot", nullable = false)
+    @Builder.Default
+    private Integer durationDaysPerSlot = 7;
+
+    @Column(name = "current_slot_start_date")
+    private LocalDateTime currentSlotStartDate;
+
+    @Column(name = "current_slot_end_date")
+    private LocalDateTime currentSlotEndDate;
+
     @Column(name = "start_date")
     private LocalDateTime startDate;
 

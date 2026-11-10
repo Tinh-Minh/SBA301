@@ -11,5 +11,20 @@ public record SubscriptionQuoteResponse(
         String voucherCode,
         BigDecimal packagePrice,
         BigDecimal discountAmount,
-        BigDecimal totalAmount) {
+        BigDecimal totalAmount,
+        Integer slotCount,
+        Integer durationDaysPerSlot) {
+
+    public SubscriptionQuoteResponse(
+            Long carId,
+            Long packageId,
+            String packageName,
+            Integer durationDays,
+            String voucherCode,
+            BigDecimal packagePrice,
+            BigDecimal discountAmount,
+            BigDecimal totalAmount) {
+        this(carId, packageId, packageName, durationDays, voucherCode, packagePrice, discountAmount, totalAmount, 1,
+                durationDays != null ? durationDays : 7);
+    }
 }

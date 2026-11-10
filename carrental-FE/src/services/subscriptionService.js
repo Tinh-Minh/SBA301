@@ -16,6 +16,8 @@ export const subscriptionService = {
     listMine: () => fetchAllPages(endpoints.subscriptions.mine, { sortBy: "createdAt", direction: "desc" }, { pageSize: 50 }),
     /** PUT /api/subscriptions/{id}/cancel */
     cancel: (id) => request(endpoints.subscriptions.byIdCancel(id), { method: "PUT" }),
+    /** POST /api/subscriptions/{id}/activate-slot */
+    activateSlot: (id) => request(endpoints.subscriptions.activateSlot(id), { method: "POST" }),
     /** GET /api/admin/subscriptions */
     adminList: async ({ status, page = 0, size = 20 } = {}) => toPage(await request(endpoints.subscriptions.adminList, { query: { status, page, size, sortBy: "createdAt", direction: "desc" } })),
     /** POST /api/transactions/package-payment: tạo giao dịch VNPay rồi chuyển sang trang thanh toán. */

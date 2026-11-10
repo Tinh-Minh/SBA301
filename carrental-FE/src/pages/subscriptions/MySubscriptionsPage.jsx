@@ -15,8 +15,9 @@ export default function MySubscriptionsPage() {
     const { data, loading, error, reload } = useMySubscriptions();
     const pay = useApiMutation(subscriptionService.payWithVnpay);
     const cancel = useApiMutation(subscriptionService.cancel, reload);
+    const activateSlot = useApiMutation(subscriptionService.activateSlot, reload);
     const [pending, setPending] = useState(null);
-    const actionError = pay.error ?? cancel.error;
+    const actionError = pay.error ?? cancel.error ?? activateSlot.error;
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col gap-2">
       <OwnerCrumb homeHref={ownerRoutes.dashboard} current="Gói đăng tin"/>
@@ -35,13 +36,27 @@ export default function MySubscriptionsPage() {
         </div>
         <p className="text-sm text-muted-gray">
           Tổng tiền: <strong className="text-charcoal">{formatMoney(subscription.totalAmount)}</strong>
-          {subscription.startDate ? ` • Từ ${formatDateTime(subscription.startDate)} đến ${formatDateTime(subscription.endDate)}` : ""}
+          {subscription.totalSlots ? ` • Số slot: ${subscription.totalSlots - (subscription.remainingSlots ?? 0)}/${subscription.totalSlots} đã dùng (${subscription.remainingSlots ?? 0} slot còn lại • ${subscription.durationDaysPerSlot || 7} ngày/slot)` : ""}
+          {subscription.startDate ? ` • Bắt đầu: ${formatDateTime(subscription.startDate)}` : ""}
+          {subscription.currentSlotEndDate ? ` • Slot hiện tại đến: ${formatDateTime(subscription.currentSlotEndDate)}` : ""}
           {subscription.daysRemaining !== null ? ` • Còn ${subscription.daysRemaining} ngày hiển thị` : ""}
         </p>
-        {subscription.status === "PENDING_PAYMENT" ? <div className="flex flex-wrap gap-2">
-          <button type="button" disabled={pay.running} onClick={() => setPending({ kind: "pay", subscription })} className="rounded-xl bg-brand-accent px-3.5 py-2 text-xs font-bold text-white disabled:opacity-50">Thanh toán ngay qua VNPay</button>
-          <button type="button" disabled={cancel.running} onClick={() => setPending({ kind: "cancel", subscription })} className="rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal disabled:opacity-50">Huỷ yêu cầu</button>
-        </div> : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {subscription.status === "ACTIVE" && (subscription.remainingSlots ?? 0) > 0 ? (
+            <button
+              type="button"
+              disabled={activateSlot.running}
+              onClick={() => activateSlot.run(subscription.id)}
+              className="rounded-xl bg-[#047857] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#065F46] disabled:opacity-50"
+            >
+              {activateSlot.running ? "Đang kích hoạt…" : `⚡ Kích hoạt slot tiếp theo (${subscription.durationDaysPerSlot || 7} ngày)`}
+            </button>
+          ) : null}
+          {subscription.status === "PENDING_PAYMENT" ? <>
+            <button type="button" disabled={pay.running} onClick={() => setPending({ kind: "pay", subscription })} className="rounded-xl bg-brand-accent px-3.5 py-2 text-xs font-bold text-white disabled:opacity-50">Thanh toán ngay qua VNPay</button>
+            <button type="button" disabled={cancel.running} onClick={() => setPending({ kind: "cancel", subscription })} className="rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal disabled:opacity-50">Huỷ yêu cầu</button>
+          </> : null}
+        </div>
       </article>)}
     </div>
     <ConfirmDialog open={pending?.kind === "pay"} title="Thanh toán gói đăng tin" description={pending?.subscription ? `Chuyển sang VNPay để thanh toán ${formatMoney(pending.subscription.totalAmount)} cho xe ${pending.subscription.licensePlate}.` : ""} confirmLabel="Đi tới VNPay" busy={pay.running} error={pay.error?.message} onClose={() => setPending(null)} onConfirm={() => { const id = pending.subscription.id; setPending(null); void pay.run(id); }}/>

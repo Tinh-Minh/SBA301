@@ -71,6 +71,12 @@ public class CarSubscriptionController {
     }
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PostMapping("/{id}/activate-slot")
+    public ApiResponse<SubscriptionResponse> activateSlot(@PathVariable Long id) {
+        return ApiResponse.ok("Kích hoạt slot thành công", subscriptionService.activateNextSlot(id));
+    }
+
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
     @PutMapping("/{id}/cancel")
     public ApiResponse<SubscriptionResponse> cancel(@PathVariable Long id) {
         return ApiResponse.ok("Huỷ gói đăng tin thành công", subscriptionService.cancelSubscription(id));

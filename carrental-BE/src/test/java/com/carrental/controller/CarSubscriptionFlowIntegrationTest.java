@@ -370,6 +370,74 @@ class CarSubscriptionFlowIntegrationTest {
         as(adminId, get("/api/admin/subscriptions").param("status", "ACTIVE")).andExpect(jsonPath("$.data.totalElements").value(0));
     }
 
+    @Test
+    void multiSlotPackageFlowAndActivation() throws Exception {
+        Long slotPkgId = tx.execute(s -> persist(ListingPackage.builder()
+                .name("Gói 3 Slots")
+                .code("PKG_SLOT_3")
+                .price(new BigDecimal("90000"))
+                .durationDays(9)
+                .slotCount(3)
+                .durationDaysPerSlot(3)
+                .isActive(true)
+                .build()).getId());
+
+        String body = as(ownerId, post("/api/subscriptions").content("{\"carId\":" + carId + ",\"packageId\":" + slotPkgId + "}"))
+                .andExpect(status().isCreated()).andReturn().getResponse().getContentAsString();
+        Long subId = ((Number) JsonPath.read(body, "$.data.id")).longValue();
+
+        subscriptionService.activateSubscription(subId);
+
+        CarSubscription sub = subscription(subId);
+        assertThat(sub.getTotalSlots()).isEqualTo(3);
+        assertThat(sub.getRemainingSlots()).isEqualTo(2);
+        assertThat(sub.getCurrentSlotStartDate()).isNotNull();
+        assertThat(sub.getCurrentSlotEndDate()).isNotNull();
+        assertThat(car().getListingStatus()).isEqualTo(ListingStatus.LISTED);
+
+        // Cannot activate next slot while current slot is still active
+        as(ownerId, post("/api/subscriptions/" + subId + "/activate-slot"))
+                .andExpect(status().isConflict());
+
+        // Advance 3 days + 1 min: 1st slot expires
+        clock.advance(Duration.ofDays(3).plusMinutes(1));
+        assertThat(subscriptionService.findExpiredSubscriptionIds()).contains(subId);
+        assertThat(subscriptionService.expireSubscription(subId)).isTrue();
+
+        // Car is UNLISTED, subscription is still ACTIVE with 2 slots remaining
+        assertThat(car().getListingStatus()).isEqualTo(ListingStatus.UNLISTED);
+        assertThat(subscription(subId).getStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
+        assertThat(subscription(subId).getRemainingSlots()).isEqualTo(2);
+
+        // Owner activates 2nd slot
+        as(ownerId, post("/api/subscriptions/" + subId + "/activate-slot"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.remainingSlots").value(1));
+        assertThat(car().getListingStatus()).isEqualTo(ListingStatus.LISTED);
+
+        // Advance 3 days + 1 min: 2nd slot expires
+        clock.advance(Duration.ofDays(3).plusMinutes(1));
+        subscriptionService.expireSubscription(subId);
+        assertThat(car().getListingStatus()).isEqualTo(ListingStatus.UNLISTED);
+        assertThat(subscription(subId).getRemainingSlots()).isEqualTo(1);
+
+        // Owner activates 3rd (last) slot
+        as(ownerId, post("/api/subscriptions/" + subId + "/activate-slot"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.remainingSlots").value(0));
+        assertThat(car().getListingStatus()).isEqualTo(ListingStatus.LISTED);
+
+        // Advance 3 days + 1 min: last slot expires -> subscription and car EXPIRED!
+        clock.advance(Duration.ofDays(3).plusMinutes(1));
+        subscriptionService.expireSubscription(subId);
+        assertThat(car().getListingStatus()).isEqualTo(ListingStatus.EXPIRED);
+        assertThat(subscription(subId).getStatus()).isEqualTo(SubscriptionStatus.EXPIRED);
+
+        // Cannot activate anymore when 0 slots remain
+        as(ownerId, post("/api/subscriptions/" + subId + "/activate-slot"))
+                .andExpect(status().isBadRequest());
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {
@@ -420,6 +488,7 @@ class CarSubscriptionFlowIntegrationTest {
 
     private static ListingPackage listingPackage(String code, int days, boolean onSale) {
         return ListingPackage.builder().name(code).code(code).price(new BigDecimal("180000")).durationDays(days)
+                .slotCount(1).durationDaysPerSlot(days)
                 .isActive(onSale).build();
     }
 

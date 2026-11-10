@@ -7482,7 +7482,7 @@
       "ListingPackage": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "code", "price", "durationDays", "priorityLevel", "badgeLabel", "description", "isActive", "createdAt", "updatedAt"],
+        "required": ["id", "name", "code", "price", "durationDays", "priorityLevel", "badgeLabel", "description", "isActive", "createdAt", "updatedAt", "slotCount", "durationDaysPerSlot"],
         "properties": {
           "id": { "$ref": "#/components/schemas/Id" },
           "name": { "type": "string", "maxLength": 100 },
@@ -7494,7 +7494,9 @@
           "description": { "type": ["string", "null"] },
           "isActive": { "type": "boolean" },
           "createdAt": { "type": "string", "format": "local-date-time" },
-          "updatedAt": { "type": "string", "format": "local-date-time" }
+          "updatedAt": { "type": "string", "format": "local-date-time" },
+          "slotCount": { "type": "integer", "minimum": 1 },
+          "durationDaysPerSlot": { "type": "integer", "minimum": 1 }
         }
       },
       "ListingPackageCreateRequest": {
@@ -7509,7 +7511,9 @@
           "priorityLevel": { "type": "integer", "minimum": 1, "maximum": 3 },
           "badgeLabel": { "type": ["string", "null"], "maxLength": 50 },
           "description": { "type": ["string", "null"] },
-          "isActive": { "type": ["boolean", "null"] }
+          "isActive": { "type": ["boolean", "null"] },
+          "slotCount": { "type": "integer", "minimum": 1 },
+          "durationDaysPerSlot": { "type": "integer", "minimum": 1 }
         }
       },
       "ListingPackageUpdateRequest": {
@@ -7523,7 +7527,9 @@
           "priorityLevel": { "type": "integer", "minimum": 1, "maximum": 3 },
           "badgeLabel": { "type": ["string", "null"], "maxLength": 50 },
           "description": { "type": ["string", "null"] },
-          "isActive": { "type": "boolean" }
+          "isActive": { "type": "boolean" },
+          "slotCount": { "type": "integer", "minimum": 1 },
+          "durationDaysPerSlot": { "type": "integer", "minimum": 1 }
         }
       },
       "VoucherCatalog": {

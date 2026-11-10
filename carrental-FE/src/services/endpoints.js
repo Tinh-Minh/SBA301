@@ -89,6 +89,7 @@ export const endpoints = {
         search: "/api/slots/search",
     },
     subscriptions: {
+        activateSlot: (id) => `/api/subscriptions/${id}/activate-slot`,
         adminList: "/api/admin/subscriptions",
         byId: (id) => `/api/subscriptions/${id}`,
         byIdCancel: (id) => `/api/subscriptions/${id}/cancel`,

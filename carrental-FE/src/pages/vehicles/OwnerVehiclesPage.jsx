@@ -37,8 +37,8 @@ function statusNote(status) {
 }
 
 export default function OwnerVehicles() {
-    const { data, loading, error, toggleStatus } = useOwnerCars();
-    const { data: subscriptions } = useMySubscriptions();
+    const { data, loading, error, toggleStatus, reload: reloadCars } = useOwnerCars();
+    const { data: subscriptions, reload: reloadSubs } = useMySubscriptions();
     const [filter, setFilter] = useState("all");
     const [query, setQuery] = useState("");
     const [pendingCar, setPendingCar] = useState(null);
@@ -93,7 +93,7 @@ export default function OwnerVehicles() {
                 </div>
               </div>
               <p className="text-sm text-muted-gray">{statusNote(car.status)} Điểm giao xe: {car.pickupAddress}</p>
-              <ListingStatusBar car={car} subscriptions={subscriptions ?? []}/>
+              <ListingStatusBar car={car} subscriptions={subscriptions ?? []} onReload={() => { reloadCars?.(); reloadSubs?.(); }}/>
               <div className="mt-auto flex flex-wrap items-center gap-2">
                 <Link to={ownerRoutes.vehicleEdit(car.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal hover:border-orange-200 hover:text-brand-accent">
                   <Icon name="edit_square" className="text-[16px]"/>
