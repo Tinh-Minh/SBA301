@@ -24,7 +24,7 @@ export function LoginForm() {
             const next = search.get("next");
             navigate(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/explore");
         } catch (error) {
-            const message = error.status === 401 ? "Email hoặc mật khẩu không đúng." : (error.message || "Đăng nhập thất bại.");
+            const message = error.message || (error.status === 401 ? "Email hoặc mật khẩu không đúng." : "Đăng nhập thất bại.");
             setError("root.server", { message });
             notify(message, "error");
         }
