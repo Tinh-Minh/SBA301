@@ -1,12 +1,13 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { useId, useState } from "react";
 import { useAuth } from "@/hooks/useAuth.js";
+import { useNotice } from "@/context/NoticeProvider.jsx";
 import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
 import { initials } from "@/utils/labels.js";
 
-const publicNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/list-your-car", "Cho thuê xe"], ["/pricing", "Cách tính giá"], ["/packages", "Gói đăng tin"]];
-const memberNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/owner/dashboard", "Chủ xe"], ["/pricing", "Cách tính giá"], ["/packages", "Gói đăng tin"]];
+const publicNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/list-your-car", "Cho thuê xe"], ["/packages", "Gói đăng tin"]];
+const memberNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/owner/dashboard", "Chủ xe"], ["/packages", "Gói đăng tin"]];
 const adminLink = ["/admin/dashboard", "Quản trị"];
 const accountLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/account/bank", "Tài khoản ngân hàng", "account_balance"], ["/owner/subscriptions", "Gói đăng tin", "workspace_premium"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
 export function Header({ previewState } = {}) {
@@ -16,6 +17,7 @@ export function Header({ previewState } = {}) {
     const path = useLocation().pathname;
     const navigate = useNavigate();
     const { loggedIn: authenticated, user, isAdmin, logout } = useAuth();
+    const notify = useNotice();
     const loggedIn = previewState ?? authenticated;
     const displayName = user?.fullName || (previewState ? "Khách hàng CarDB" : "Tài khoản");
     const displayCode = user ? `${user.role === "ADMIN" ? "Quản trị viên" : "Khách hàng"} • #${user.id}` : "CarDB";
@@ -26,7 +28,16 @@ export function Header({ previewState } = {}) {
     const [menu, setMenu] = useState(false);
     const [account, setAccount] = useState(false);
     function close() { setMenu(false); setAccount(false); }
-    function signOut() { logout(); close(); navigate("/"); }
+    function signOut() {
+        try {
+            logout();
+            close();
+            navigate("/login");
+            notify("Đăng xuất thành công.");
+        } catch (error) {
+            notify(error?.message || "Đăng xuất thất bại.", "error");
+        }
+    }
     return <header className={`site-header ${overPhoto ? "auth-overlay" : "border-border-light bg-white/95 backdrop-blur-xl"} ${previewState === undefined ? `fixed inset-x-0 top-0 z-50 ${overPhoto ? "" : "border-b"}` : "relative w-full rounded-2xl border shadow-sm"}`}>
     <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
       <SiteBrand compact onClick={close}/>

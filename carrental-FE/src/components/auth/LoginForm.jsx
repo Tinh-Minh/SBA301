@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth.js";
+import { useNotice } from "@/context/NoticeProvider.jsx";
 import { FormErrors } from "@/components/FormErrors.jsx";
 import { loginSchema } from "@/utils/schemas/auth.js";
 import { Link, useNavigate, useSearchParams } from "react-router";
@@ -11,6 +12,7 @@ export function LoginForm() {
     const [passwordVisible, setPasswordVisible] = useState(false);
 
     const { login } = useAuth();
+    const notify = useNotice();
     const [search] = useSearchParams();
     const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(loginSchema), defaultValues: { email: "", password: "" },
@@ -18,10 +20,13 @@ export function LoginForm() {
     const onSubmit = handleSubmit(async values => {
         try {
             const session = await login(values);
+            notify("Đăng nhập thành công.");
             const next = search.get("next");
             navigate(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/explore");
         } catch (error) {
-            setError("root.server", { message: error.status === 401 ? "Email hoặc mật khẩu không đúng." : error.message });
+            const message = error.status === 401 ? "Email hoặc mật khẩu không đúng." : (error.message || "Đăng nhập thất bại.");
+            setError("root.server", { message });
+            notify(message, "error");
         }
     });
 

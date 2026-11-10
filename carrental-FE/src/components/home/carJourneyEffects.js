@@ -229,3 +229,160 @@ export function createRoad(scene) {
         },
     };
 }
+
+function createTreadTexture() {
+    const width = 160;
+    const height = 256;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, width, height);
+    const ribs = [[12, 36], [52, 34], [94, 34], [134, 16]];
+    context.fillStyle = "#111111";
+    for (const [x, ribWidth] of ribs) context.fillRect(x, 0, ribWidth, height);
+    context.globalCompositeOperation = "destination-out";
+    context.fillStyle = "rgba(0,0,0,1)";
+    for (let y = 10; y < height; y += 28) {
+        context.fillRect(12, y, 36, 6);
+        context.fillRect(52, y + 14, 34, 6);
+        context.fillRect(94, y, 34, 6);
+        context.fillRect(134, y + 14, 16, 6);
+    }
+    context.globalCompositeOperation = "destination-in";
+    const edge = context.createLinearGradient(0, 0, width, 0);
+    edge.addColorStop(0, "rgba(0,0,0,0)");
+    edge.addColorStop(0.06, "rgba(0,0,0,1)");
+    edge.addColorStop(0.94, "rgba(0,0,0,1)");
+    edge.addColorStop(1, "rgba(0,0,0,0)");
+    context.fillStyle = edge;
+    context.fillRect(0, 0, width, height);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.premultiplyAlpha = false;
+    texture.anisotropy = 8;
+    return texture;
+}
+
+export function createTireTracks(scene) {
+    const texture = createTreadTexture();
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    const pool = [];
+    const states = new Map();
+    const contact = new THREE.Vector3();
+    const delta = new THREE.Vector3();
+    const lateral = new THREE.Vector3();
+    const backward = new THREE.Vector3();
+    const side = new THREE.Vector3();
+    const frontPos = new THREE.Vector3();
+    const rearPos = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+    const basis = new THREE.Matrix4();
+    let lastDistance = 0;
+    let pending = 0;
+    let armed = false;
+
+    function acquire() {
+        const spare = pool.find(mesh => !mesh.visible);
+        if (spare) return spare;
+        if (pool.length >= 64) return pool.reduce((oldest, mesh) => mesh.userData.age > oldest.userData.age ? mesh : oldest);
+        const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            depthWrite: false,
+            toneMapped: false,
+            side: THREE.DoubleSide,
+            polygonOffset: true,
+            polygonOffsetFactor: -4,
+            polygonOffsetUnits: -4,
+        });
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.renderOrder = 3;
+        mesh.visible = false;
+        mesh.userData.age = 0;
+        scene.add(mesh);
+        pool.push(mesh);
+        return mesh;
+    }
+
+    return {
+        update(dt, { wheels, distance, groundY, worldRadius, active }) {
+            for (const mesh of pool) {
+                if (!mesh.visible) continue;
+                mesh.userData.age += dt;
+                const life = 1 - Math.max(0, mesh.userData.age - 1.2) / 3.8;
+                mesh.material.opacity = Math.max(0, life);
+                if (life <= 0) mesh.visible = false;
+            }
+            const alive = () => pool.some(mesh => mesh.visible);
+            if (!active || !wheels.length || !(worldRadius > 0)) {
+                armed = false;
+                lastDistance = distance;
+                pending = 0;
+                return alive();
+            }
+            if (!armed) {
+                armed = true;
+                lastDistance = distance;
+                pending = 0;
+                states.clear();
+                return alive();
+            }
+            const front = wheels.find(({ wheel }) => /Front/.test(wheel.name));
+            const rear = wheels.find(({ wheel }) => /Rear/.test(wheel.name));
+            if (!front || !rear) return alive();
+            const patch = worldRadius * 0.7;
+            const piece = worldRadius * 1.2;
+            pending = Math.min(pending + Math.max(0, distance - lastDistance) * worldRadius / 0.39, piece * 3);
+            lastDistance = distance;
+            front.wheel.getWorldPosition(frontPos);
+            rear.wheel.getWorldPosition(rearPos);
+            backward.copy(rearPos).sub(frontPos);
+            backward.y = 0;
+            if (backward.lengthSq() < 1e-6) return alive();
+            backward.normalize();
+            side.crossVectors(backward, up).normalize();
+            let placed = 0;
+            while (pending >= piece * 0.82 && placed < 4) {
+                for (const { wheel } of wheels) {
+                    if (!/Rear/.test(wheel.name)) continue;
+                    wheel.getWorldPosition(contact);
+                    contact.y = groundY;
+                    let state = states.get(wheel.uuid);
+                    if (!state) {
+                        state = { cursor: contact.clone(), last: contact.clone(), marks: [] };
+                        states.set(wheel.uuid, state);
+                        continue;
+                    }
+                    delta.copy(contact).sub(state.last);
+                    lateral.copy(delta);
+                    lateral.y = 0;
+                    const along = lateral.dot(backward);
+                    lateral.addScaledVector(backward, -along);
+                    if (lateral.length() > patch * 2.4) {
+                        state.cursor.copy(contact);
+                        for (const mark of state.marks) mark.visible = false;
+                        state.marks = [];
+                        pending = Math.min(pending, piece);
+                    } else state.cursor.add(delta);
+                    state.last.copy(contact);
+                    const mesh = acquire();
+                    mesh.position.copy(state.cursor).addScaledVector(backward, piece * 0.08);
+                    mesh.position.y = groundY;
+                    basis.makeBasis(side, backward, up);
+                    mesh.quaternion.setFromRotationMatrix(basis);
+                    mesh.scale.set(patch, piece, 1);
+                    mesh.userData.age = 0;
+                    mesh.visible = true;
+                    mesh.material.opacity = 1;
+                    state.cursor.addScaledVector(backward, piece * 0.84);
+                    state.marks.push(mesh);
+                    while (state.marks.length > 8) state.marks.shift().visible = false;
+                }
+                pending -= piece * 0.82;
+                placed += 1;
+            }
+            return alive();
+        },
+    };
+}

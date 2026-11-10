@@ -2,11 +2,15 @@ html:has(.home-journey-page) { scroll-snap-type:y proximity;scroll-padding-top:v
 html:has(.home-journey-page)::-webkit-scrollbar,.home-journey-page *::-webkit-scrollbar { display:none; }
 .home-journey-page * { scrollbar-width:none; }
 body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:normal; }
-.home-journey-page { --journey-progress:0;--chapter-height:calc(100dvh - var(--journey-header-height,80px));position:relative;background:#f2f2ed;color:#25251f;overflow:clip; }
+.home-journey-page { --chapter-height:calc(100dvh - var(--journey-header-height,80px));position:relative;background:#f2f2ed;color:#25251f;overflow:clip; }
 .home-journey-page main { position:relative;padding-top:var(--journey-header-height,80px); }
 .home-journey-page main > [data-car-stop] { position:relative;box-sizing:border-box;height:auto;min-height:var(--chapter-height);padding:clamp(18px,4dvh,46px) 5vw;scroll-snap-align:start;scroll-snap-stop:normal;scroll-margin-top:0; }
 .journey-canvas { position:fixed;inset:0;z-index:4;pointer-events:none; }
 .journey-canvas canvas { display:block;width:100%;height:100%; }
+.journey-wheel-cursor { position:fixed;inset:0;z-index:60;width:100%;height:100%;pointer-events:none; }
+.journey-speed { position:fixed;z-index:25;left:5vw;top:calc(var(--journey-header-height, 80px) + 22px);margin:0;color:#8d8d80;font-size:12px;font-weight:600;letter-spacing:.12em;pointer-events:none;font-variant-numeric:tabular-nums; }
+.journey-speed strong { color:#25251f;font-size:15px;letter-spacing:0; }
+.home-journey-page:not([data-intro-state="complete"]) .journey-speed { opacity:0; }
 .journey-hero { container-type:inline-size;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 65%,#fff,#ededdf 75%); }
 .journey-hero-top { display:flex;justify-content:space-between;font-size:11px;color:#7b7b71; }
 .journey-hero h1 { z-index:1;position:relative;margin:clamp(14px,3dvh,34px) 0 0;font-size:clamp(2rem,min(15cqi,18dvh),12rem);font-weight:900;letter-spacing:-.025em;word-spacing:.04em;line-height:1.1; }
@@ -25,6 +29,9 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-text-link { display:inline-flex;margin-top:20px;gap:38px;align-items:center;padding-bottom:8px;border-bottom:1px solid #9f9f91;font-size:12px; }
 .journey-text-link span { font-size:22px;color:#fc6c26; }
 .journey-search-form { position:absolute;z-index:6;bottom:clamp(24px,5dvh,48px);left:50%;transform:translateX(-50%);width:min(1100px,90%);padding:24px;border:1px solid #e3e3da;border-radius:20px;background:#fffffff5;box-shadow:0 12px 36px #25251f0c;backdrop-filter:blur(12px); }
+@media(min-width:1024px) {
+ .journey-search-form { z-index:3; }
+}
 .journey-search-heading { display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid #e8e8df; }
 .journey-search-heading h3 { display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700; }.journey-search-heading p { font-size:12px;color:#717165; }
 .journey-search-heading .material-symbols-outlined { color:#fc6c26;font-size:20px; }
@@ -192,8 +199,12 @@ body:has(.home-journey-page[data-intro-state="playing"][data-intro-step="4"]) .s
 .home-journey-page[data-intro-state="playing"] .journey-hero-bottom { position:relative;z-index:6;color:color-mix(in srgb,#25251f calc(var(--intro-light,0) * 100%),#f5f5ef); }
 @keyframes journey-intro-title { from { opacity:0;visibility:hidden;transform:translate3d(var(--title-entry-x),0,0); } to { opacity:1;visibility:visible;transform:translate3d(0,0,0); } }
 @keyframes journey-intro-content { from { opacity:0;visibility:hidden; } to { opacity:1;visibility:visible; } }
+.home-journey-page main > [data-car-stop]:not([data-car-stop="hero"]) .journey-reveal { opacity:0;translate:0 36px;pointer-events:none;transition:opacity .7s ease,translate .8s cubic-bezier(.2,.7,.3,1); }
+.home-journey-page main > [data-car-stop][data-car-arrived="true"] .journey-reveal { opacity:1;translate:0 0;pointer-events:auto; }
+.home-journey-page main > [data-car-stop][data-car-arrived="true"] .journey-reveal--late { transition-delay:.14s; }
 @media(prefers-reduced-motion:reduce) {
  .home-journey-page::before { display:none; }
  .home-journey-page .journey-hero h1,.home-journey-page .journey-hero-top,.home-journey-page .journey-hero-bottom,
  body:has(.home-journey-page) .site-header,.home-journey-page .journey-canvas canvas,.home-journey-page .journey-title-line { animation:none!important;opacity:1!important;visibility:visible!important; }
+ .home-journey-page .journey-reveal { opacity:1!important;translate:none!important;pointer-events:auto;transition:none; }
 }

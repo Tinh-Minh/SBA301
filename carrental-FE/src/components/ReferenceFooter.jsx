@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
 const groups = [
-    { title: "Dịch vụ", links: [["Thuê xe tự lái", "/explore"], ["Thuê xe có tài xế", "/explore"], ["Bảng giá & Cách tính", "/pricing"], ["Thuê xe theo tháng", "/long-term"]] },
+    { title: "Dịch vụ", links: [["Thuê xe tự lái", "/explore"], ["Thuê xe có tài xế", "/explore"], ["Thuê xe theo tháng", "/long-term"]] },
     { title: "Chính sách & Hỗ trợ", links: [["Bảo hiểm chuyến đi", "/insurance"], ["Quy định đặt cọc", "/deposit-policy"], ["Chính sách hoàn hủy", "/cancellation-policy"], ["Câu hỏi thường gặp", "/faq"]] },
     { title: "Về CarDB", links: [["Ưu đãi khách hàng", "/explore"], ["Tuyển dụng tài xế", "/contact"], ["Liên hệ hợp tác", "/list-your-car"]] },
 ];
