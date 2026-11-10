@@ -46,11 +46,6 @@ export const endpoints = {
         byIdResolve: (id) => `/api/disputes/${id}/resolve`,
         list: "/api/disputes",
     },
-    drivers: {
-        list: "/api/drivers",
-        me: "/api/drivers/me",
-        meEligibility: "/api/drivers/me/eligibility",
-    },
     extraFees: {
         byId: (id) => `/api/extra-fees/${id}`,
         byIdPay: (id) => `/api/extra-fees/${id}/pay`,

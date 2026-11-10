@@ -10,7 +10,6 @@ export const pageTitles = {
     "account/history": "Lịch sử chuyến đi",
     "account/verification": "Xác minh giấy tờ",
     "account/verification/compact": "Xác minh giấy tờ",
-    "account/driver": "Hồ sơ tài xế",
     "account/bank": "Tài khoản ngân hàng",
     "design/banks": "Tài khoản ngân hàng",
     "account/bank/add": "Thêm tài khoản ngân hàng",

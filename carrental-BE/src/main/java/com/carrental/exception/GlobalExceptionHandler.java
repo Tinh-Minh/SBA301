@@ -164,7 +164,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private boolean isFunction1Request(HttpServletRequest request) {
         String path = request.getServletPath();
-        return List.of("auth", "customers", "drivers", "user-documents", "bank-accounts", "vouchers").stream()
+        return List.of("auth", "customers", "user-documents", "bank-accounts", "vouchers").stream()
                 .anyMatch(resource -> path.equals("/api/" + resource) || path.startsWith("/api/" + resource + "/"));
     }
 

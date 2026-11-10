@@ -25,7 +25,6 @@ export interface CarSummaryResponse {
 export interface CarResponse extends CarSummaryResponse {
   ownerId: number;
   ownerFullName: string;
-  driverId: number | null;
   manufactureYear: number;
   color: string | null;
   description: string | null;

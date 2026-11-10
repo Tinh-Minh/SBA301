@@ -25,10 +25,6 @@ public class Car extends BaseEntity {
     @JoinColumn(name = "owner_id", nullable = false)
     private Customer owner;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "driver_id", unique = true)
-    private Driver driver;
-
     @Column(name = "license_plate", nullable = false, unique = true, length = 20)
     private String licensePlate;
 

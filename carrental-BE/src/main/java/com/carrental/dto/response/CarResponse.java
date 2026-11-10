@@ -59,7 +59,7 @@ public record CarResponse(
 
     public static CarResponse from(Car car, List<CarImage> images, List<CarDocument> documents) {
         if (car == null) return null;
-        Long driverId = car.getDriver() != null ? car.getDriver().getId() : null;
+        Long driverId = null;
         return build(car, driverId, car.getLicensePlate(), images, documents);
     }
 
