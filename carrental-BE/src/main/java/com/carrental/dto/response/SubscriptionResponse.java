@@ -23,6 +23,7 @@ public record SubscriptionResponse(
         Integer durationDays,
         String badgeLabel,
         String voucherCode,
+        BigDecimal basePrice,
         BigDecimal packagePrice,
         BigDecimal discountAmount,
         BigDecimal totalAmount,
@@ -32,11 +33,20 @@ public record SubscriptionResponse(
         LocalDateTime endDate,
         LocalDateTime activatedAt,
         LocalDateTime createdAt,
+        LocalDateTime paymentDeadline,
         Long daysRemaining) {
 
     public static SubscriptionResponse from(CarSubscription subscription, LocalDateTime now) {
+        return from(subscription, now, 30L);
+    }
+
+    public static SubscriptionResponse from(CarSubscription subscription, LocalDateTime now, long paymentTimeoutMinutes) {
         Car car = subscription.getCar();
         ListingPackage listingPackage = subscription.getListingPackage();
+        LocalDateTime deadline = subscription.getStatus() == SubscriptionStatus.PENDING_PAYMENT
+                && subscription.getCreatedAt() != null
+                ? subscription.getCreatedAt().plusMinutes(paymentTimeoutMinutes)
+                : null;
         return new SubscriptionResponse(
                 subscription.getId(),
                 subscription.getSubscriptionCode(),
@@ -51,6 +61,7 @@ public record SubscriptionResponse(
                 listingPackage.getBadgeLabel(),
                 subscription.getVoucher() == null ? null : subscription.getVoucher().getCode(),
                 subscription.getPackagePrice(),
+                subscription.getPackagePrice(),
                 subscription.getDiscountAmount(),
                 subscription.getTotalAmount(),
                 subscription.getStatus(),
@@ -59,6 +70,7 @@ public record SubscriptionResponse(
                 subscription.getEndDate(),
                 subscription.getActivatedAt(),
                 subscription.getCreatedAt(),
+                deadline,
                 daysRemaining(subscription, now));
     }
 

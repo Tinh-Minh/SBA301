@@ -35,6 +35,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
     Optional<Transaction> findFirstBySubscriptionIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
             Long subscriptionId, TransactionType transactionType, TransactionStatus status);
 
+    List<Transaction> findAllBySubscriptionIdAndStatus(Long subscriptionId, TransactionStatus status);
+
     @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer"})
     List<Transaction> findTop10ByStatusOrderByCreatedAtDesc(TransactionStatus status);
 
