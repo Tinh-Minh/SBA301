@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import { clearSession, readSession } from "@/utils/session.js";
+import { repairDisplayText } from "@/utils/text.js";
 
 /**
  * Mặc định gọi cùng origin `/api/...`; Vite / nginx proxy chuyển tiếp sang backend.
@@ -90,7 +91,7 @@ httpClient.interceptors.request.use(config => {
 
 httpClient.interceptors.response.use(async response => {
     if (response.config.responseType === "blob") return response;
-    response.data = unwrap(await decodeResponse(response));
+    response.data = repairDisplayText(unwrap(await decodeResponse(response)));
     return response;
 }, async error => {
     if (axios.isCancel(error)) return Promise.reject(error);
@@ -98,7 +99,7 @@ httpClient.interceptors.response.use(async response => {
     if (!response) return Promise.reject(new ApiError(0,
         "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy ở cổng 8080 chưa."));
     const { status } = response;
-    const payload = await decodeResponse(response);
+    const payload = repairDisplayText(await decodeResponse(response));
     if (status === 401 && error.config.sessionToken && error.config.sessionToken === readSession()?.accessToken)
         clearSession();
     if (status >= 500 && !payload?.message) return Promise.reject(new ApiError(status,

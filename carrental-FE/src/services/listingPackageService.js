@@ -1,5 +1,6 @@
 import { request } from "@/services/api.js";
 import { endpoints } from "@/services/endpoints.js";
+import { repairPackageText } from "@/utils/text.js";
 
 const createPayload = ({ name, code, price, durationDays, priorityLevel, badgeLabel, description, isActive }) => ({
     name: name.trim(),
@@ -25,11 +26,11 @@ const updatePayload = ({ name, price, durationDays, priorityLevel, badgeLabel, d
 export const listingPackageService = {
     publicList: async () => {
         const data = await request(endpoints.listingPackages.publicList, { auth: false });
-        return Array.isArray(data) ? data : [];
+        return Array.isArray(data) ? data.map(repairPackageText) : [];
     },
     adminList: async () => {
         const data = await request(endpoints.listingPackages.adminList);
-        return Array.isArray(data) ? data : [];
+        return Array.isArray(data) ? data.map(repairPackageText) : [];
     },
     create: (values) => request(endpoints.listingPackages.adminList, {
         method: "POST",

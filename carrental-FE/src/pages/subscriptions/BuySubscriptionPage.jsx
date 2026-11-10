@@ -10,6 +10,7 @@ import { useOwnerCars } from "@/hooks/useVehicles.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { subscriptionService } from "@/services/subscriptionService.js";
 import { formatMoney } from "@/utils/labels.js";
+import { packageTitle } from "@/utils/text.js";
 
 const choiceClass = (selected) => `rounded-2xl border bg-white p-4 text-left shadow-sm transition ${selected ? "border-[#FC6C26] ring-2 ring-orange-100" : "border-[#E9E9E7] hover:border-orange-200"}`;
 const buySchema = z.object({
@@ -103,7 +104,7 @@ export default function BuySubscriptionPage() {
               <span className="block text-[11px] font-bold uppercase tracking-wide text-[#FC6C26]">{item.badgeLabel}</span>
               <span className="rounded bg-orange-50 px-2 py-0.5 text-[11px] font-bold text-[#FC6C26]">{slotCount} slots</span>
             </div>
-            <span className="mt-1 block font-bold text-[#292929]">{item.name}</span>
+            <span className="mt-1 block font-bold text-[#292929]">{packageTitle(item)}</span>
             <span className="mt-1 block text-lg font-bold text-[#292929]">{formatMoney(item.price)}</span>
             <span className="block text-xs font-semibold text-[#8F3208]">{slotCount} slots × {slotDays} ngày/slot</span>
             <span className="block text-[11px] text-[#666666]">Tổng {item.durationDays} ngày hiển thị</span>

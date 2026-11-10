@@ -1,11 +1,15 @@
 import { endpoints } from "@/services/endpoints.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
+import { repairPackageText } from "@/utils/text.js";
 
 const body = ({ carId, packageId, voucherCode }) => ({ carId: Number(carId), packageId: Number(packageId), voucherCode: voucherCode?.trim() || undefined });
 
 export const subscriptionService = {
     /** GET /api/subscriptions/packages */
-    packages: () => request(endpoints.subscriptions.packages),
+    packages: async () => {
+        const data = await request(endpoints.subscriptions.packages);
+        return Array.isArray(data) ? data.map(repairPackageText) : data;
+    },
     /** POST /api/subscriptions/quote */
     quote: (input) => request(endpoints.subscriptions.quote, { method: "POST", json: body(input) }),
     /** POST /api/subscriptions */
