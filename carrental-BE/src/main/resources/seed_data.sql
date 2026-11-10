@@ -328,26 +328,26 @@ CREATE INDEX idx_reviews_car ON reviews(car_id);
 INSERT INTO customers (id, full_name, email, phone, password_hash, date_of_birth, address, avatar_url, zalo_phone, contact_note, email_verified, kyc_status, role, status)
 VALUES
 -- Quáº£n trá»‹ viÃªn
-(1, 'Quáº£n Trá»‹ ViÃªn Há»‡ Thá»‘ng', 'admin@carrental.vn', '0900000001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1990-01-15', 'TÃ²a nhÃ  CarRental, Quáº­n 1, TP. Há»“ ChÃ­ Minh', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', '0900000001', 'Há»— trá»£ ká»¹ thuáº­t 24/7', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
-(2, 'Kiá»ƒm Duyá»‡t ViÃªn Admin', 'admin2@carrental.vn', '0900000002', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1993-05-20', 'Trung tÃ¢m Váº­n hÃ nh CarRental, Cáº§u Giáº¥y, HÃ  Ná»™i', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', '0900000002', 'Duyá»‡t há»“ sÆ¡ xe & KYC', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
+(1, 'Quáº£n Trá»‹ ViÃªn Há»‡ Thá»‘ng', 'admin@carrental.vn', '0900000001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1990-01-15', 'TÃ²a nhÃ  CarRental, Quáº­n 1, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-1-admin.jpg', '0900000001', 'Há»— trá»£ ká»¹ thuáº­t 24/7', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
+(2, 'Kiá»ƒm Duyá»‡t ViÃªn Admin', 'admin2@carrental.vn', '0900000002', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1993-05-20', 'Trung tÃ¢m Váº­n hÃ nh CarRental, Cáº§u Giáº¥y, HÃ  Ná»™i', '/images/avatars/user-2-admin2.jpg', '0900000002', 'Duyá»‡t há»“ sÆ¡ xe & KYC', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
 
 -- Chá»§ xe (Owners)
-(3, 'Tráº§n Thá»‹ BÃ¬nh', 'binh@gmail.com', '0912345678', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1988-08-12', '123 Nguyá»…n Thá»‹ Tháº­p, TÃ¢n PhÃº, Quáº­n 7, TP. Há»“ ChÃ­ Minh', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', '0912345678', 'Gá»i tiá»‡n nháº¥t 8h00 - 21h00', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(4, 'Nguyá»…n VÄƒn An', 'an@gmail.com', '0923456789', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1985-03-25', '456 LÃª VÄƒn Viá»‡t, TÄƒng NhÆ¡n PhÃº A, TP. Thá»§ Äá»©c, TP. Há»“ ChÃ­ Minh', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', '0923456789', 'Zalo hoáº·c gá»i trá»±c tiáº¿p', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(5, 'Pháº¡m Huy HoÃ ng', 'hoang@gmail.com', '0934567890', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1982-11-05', '789 Nguyá»…n TrÃ£i, Thanh XuÃ¢n, HÃ  Ná»™i', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150', '0934567890', 'Giao xe táº­n nÆ¡i khu vá»±c ná»™i thÃ nh', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(6, 'VÃµ Tuyáº¿t Mai', 'mai@gmail.com', '0945678901', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1991-09-18', '101 Tráº§n PhÃº, Háº£i ChÃ¢u, ÄÃ  Náºµng', 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150', '0945678901', 'Há»— trá»£ khÃ¡ch du lá»‹ch chu Ä‘Ã¡o', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(3, 'Tráº§n Thá»‹ BÃ¬nh', 'binh@gmail.com', '0912345678', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1988-08-12', '123 Nguyá»…n Thá»‹ Tháº­p, TÃ¢n PhÃº, Quáº­n 7, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-3-binh.jpg', '0912345678', 'Gá»i tiá»‡n nháº¥t 8h00 - 21h00', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(4, 'Nguyá»…n VÄƒn An', 'an@gmail.com', '0923456789', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1985-03-25', '456 LÃª VÄƒn Viá»‡t, TÄƒng NhÆ¡n PhÃº A, TP. Thá»§ Äá»©c, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-4-an.jpg', '0923456789', 'Zalo hoáº·c gá»i trá»±c tiáº¿p', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(5, 'Pháº¡m Huy HoÃ ng', 'hoang@gmail.com', '0934567890', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1982-11-05', '789 Nguyá»…n TrÃ£i, Thanh XuÃ¢n, HÃ  Ná»™i', '/images/avatars/user-5-hoang.jpg', '0934567890', 'Giao xe táº­n nÆ¡i khu vá»±c ná»™i thÃ nh', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(6, 'VÃµ Tuyáº¿t Mai', 'mai@gmail.com', '0945678901', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1991-09-18', '101 Tráº§n PhÃº, Háº£i ChÃ¢u, ÄÃ  Náºµng', '/images/avatars/user-6-mai.jpg', '0945678901', 'Há»— trá»£ khÃ¡ch du lá»‹ch chu Ä‘Ã¡o', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
 
 -- KhÃ¡ch hÃ ng thuÃª xe (Customers)
-(7, 'LÃª Minh CÆ°á»ng', 'cuong@gmail.com', '0956789012', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1989-06-30', '234 Cá»™ng HÃ²a, PhÆ°á»ng 13, TÃ¢n BÃ¬nh, TP. Há»“ ChÃ­ Minh', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', '0956789012', 'KhÃ¡ch hÃ ng thÃ¢n thiáº¿t', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(8, 'Äáº·ng Quá»‘c DÅ©ng', 'dung@gmail.com', '0967890123', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1986-12-14', '567 Cáº§u Giáº¥y, Dá»‹ch Vá»ng Háº­u, Cáº§u Giáº¥y, HÃ  Ná»™i', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', '0967890123', 'ThÆ°á»ng xuyÃªn thuÃª xe tá»± lÃ¡i', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(9, 'Nguyá»…n VÄƒn KhÃ¡ch', 'khach@gmail.com', '0978901234', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1995-04-02', '12 Hai BÃ  TrÆ°ng, Báº¿n NghÃ©, Quáº­n 1, TP. Há»“ ChÃ­ Minh', 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150', '0978901234', 'KhÃ¡ch thuÃª tá»± lÃ¡i', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(10, 'Äá»— ThÃ¹y Linh', 'linh@gmail.com', '0989012345', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1997-10-28', '88 LÃ¡ng Háº¡, Äá»‘ng Äa, HÃ  Ná»™i', 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150', '0989012345', 'ThÃ­ch xe gia Ä‘Ã¬nh 7 chá»—', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(7, 'LÃª Minh CÆ°á»ng', 'cuong@gmail.com', '0956789012', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1989-06-30', '234 Cá»™ng HÃ²a, PhÆ°á»ng 13, TÃ¢n BÃ¬nh, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-7-cuong.jpg', '0956789012', 'KhÃ¡ch hÃ ng thÃ¢n thiáº¿t', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(8, 'Äáº·ng Quá»‘c DÅ©ng', 'dung@gmail.com', '0967890123', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1986-12-14', '567 Cáº§u Giáº¥y, Dá»‹ch Vá»ng Háº­u, Cáº§u Giáº¥y, HÃ  Ná»™i', '/images/avatars/user-8-dung.jpg', '0967890123', 'ThÆ°á»ng xuyÃªn thuÃª xe tá»± lÃ¡i', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(9, 'Nguyá»…n VÄƒn KhÃ¡ch', 'khach@gmail.com', '0978901234', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1995-04-02', '12 Hai BÃ  TrÆ°ng, Báº¿n NghÃ©, Quáº­n 1, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-9-khach.jpg', '0978901234', 'KhÃ¡ch thuÃª tá»± lÃ¡i', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(10, 'Äá»— ThÃ¹y Linh', 'linh@gmail.com', '0989012345', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1997-10-28', '88 LÃ¡ng Háº¡, Äá»‘ng Äa, HÃ  Ná»™i', '/images/avatars/user-10-linh.jpg', '0989012345', 'ThÃ­ch xe gia Ä‘Ã¬nh 7 chá»—', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
 
 -- TÃ i khoáº£n tráº¡ng thÃ¡i chá» duyá»‡t, tá»« chá»‘i, khÃ³a Ä‘á»ƒ test unhappy cases
-(11, 'HoÃ ng Háº£i Nam', 'nam@gmail.com', '0990123456', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '2000-02-17', '68 Quang Trung, GÃ² Váº¥p, TP. Há»“ ChÃ­ Minh', NULL, '0990123456', NULL, false, 'PENDING', 'CUSTOMER', 'ACTIVE'),
-(12, 'Huá»³nh ÄÄƒng Khoa', 'khoa@gmail.com', '0901112233', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1996-07-22', '350 HoÃ ng Diá»‡u, Háº£i ChÃ¢u, ÄÃ  Náºµng', NULL, '0901112233', NULL, true, 'REJECTED', 'CUSTOMER', 'ACTIVE'),
-(13, 'TÃ i Khoáº£n Bá»‹ KhÃ³a', 'locked@gmail.com', '0909990001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1994-01-01', 'HÃ  Ná»™i', NULL, NULL, NULL, false, 'NONE', 'CUSTOMER', 'LOCKED'),
-(14, 'TÃ i Khoáº£n Test', 'tester99@gmail.com', '0909999999', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1998-05-12', 'TP. Há»“ ChÃ­ Minh', NULL, '0909999999', NULL, true, 'NONE', 'CUSTOMER', 'ACTIVE');
+(11, 'HoÃ ng Háº£i Nam', 'nam@gmail.com', '0990123456', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '2000-02-17', '68 Quang Trung, GÃ² Váº¥p, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-11-nam.jpg', '0990123456', NULL, false, 'PENDING', 'CUSTOMER', 'ACTIVE'),
+(12, 'Huá»³nh ÄÄƒng Khoa', 'khoa@gmail.com', '0901112233', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1996-07-22', '350 HoÃ ng Diá»‡u, Háº£i ChÃ¢u, ÄÃ  Náºµng', '/images/avatars/user-12-khoa.jpg', '0901112233', NULL, true, 'REJECTED', 'CUSTOMER', 'ACTIVE'),
+(13, 'TÃ i Khoáº£n Bá»‹ KhÃ³a', 'locked@gmail.com', '0909990001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1994-01-01', 'HÃ  Ná»™i', '/images/avatars/user-13-locked.jpg', NULL, NULL, false, 'NONE', 'CUSTOMER', 'LOCKED'),
+(14, 'TÃ i Khoáº£n Test', 'tester99@gmail.com', '0909999999', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1998-05-12', 'TP. Há»“ ChÃ­ Minh', '/images/avatars/user-14-tester.jpg', '0909999999', NULL, true, 'NONE', 'CUSTOMER', 'ACTIVE');
 
 SELECT setval(pg_get_serial_sequence('customers', 'id'), (SELECT COALESCE(MAX(id), 1) FROM customers));
 
@@ -357,36 +357,36 @@ SELECT setval(pg_get_serial_sequence('customers', 'id'), (SELECT COALESCE(MAX(id
 INSERT INTO user_documents (id, customer_id, doc_type, doc_number, full_name_on_doc, date_of_birth_on_doc, issue_place, issue_date, expires_at, license_class, front_image_url, back_image_url, verify_status, reject_reason, verified_by, verified_at)
 VALUES
 -- CCCD & Báº±ng lÃ¡i xe cá»§a Chá»§ xe BÃ¬nh (id=3)
-(1, 3, 'CITIZEN_ID', '079188001234', 'TRáº¦N THá»Š BÃŒNH', '1988-08-12', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-05-10', '2048-08-12', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(2, 3, 'DRIVER_LICENSE', '790158823456', 'TRáº¦N THá»Š BÃŒNH', '1988-08-12', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2019-06-15', '2029-06-15', 'B2', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
+(1, 3, 'CITIZEN_ID', '079188001234', 'TRáº¦N THá»Š BÃŒNH', '1988-08-12', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-05-10', '2048-08-12', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(2, 3, 'DRIVER_LICENSE', '790158823456', 'TRáº¦N THá»Š BÃŒNH', '1988-08-12', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2019-06-15', '2029-06-15', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Báº±ng lÃ¡i cá»§a Chá»§ xe An (id=4)
-(3, 4, 'CITIZEN_ID', '079185002345', 'NGUYá»„N VÄ‚N AN', '1985-03-25', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-08-20', '2045-03-25', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(4, 4, 'DRIVER_LICENSE', '790158834567', 'NGUYá»„N VÄ‚N AN', '1985-03-25', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2018-04-10', '2028-04-10', 'B2', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
+(3, 4, 'CITIZEN_ID', '079185002345', 'NGUYá»„N VÄ‚N AN', '1985-03-25', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-08-20', '2045-03-25', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(4, 4, 'DRIVER_LICENSE', '790158834567', 'NGUYá»„N VÄ‚N AN', '1985-03-25', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2018-04-10', '2028-04-10', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Báº±ng lÃ¡i cá»§a Chá»§ xe HoÃ ng (id=5)
-(5, 5, 'CITIZEN_ID', '001182003456', 'PHáº M HUY HOÃ€NG', '1982-11-05', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-09-12', '2042-11-05', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(6, 5, 'DRIVER_LICENSE', '010158845678', 'PHáº M HUY HOÃ€NG', '1982-11-05', 'Sá»Ÿ GTVT HÃ  Ná»™i', '2017-10-18', '2027-10-18', 'B2', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
+(5, 5, 'CITIZEN_ID', '001182003456', 'PHáº M HUY HOÃ€NG', '1982-11-05', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-09-12', '2042-11-05', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(6, 5, 'DRIVER_LICENSE', '010158845678', 'PHáº M HUY HOÃ€NG', '1982-11-05', 'Sá»Ÿ GTVT HÃ  Ná»™i', '2017-10-18', '2027-10-18', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Báº±ng lÃ¡i cá»§a Chá»§ xe Mai (id=6)
-(7, 6, 'CITIZEN_ID', '048191004567', 'VÃ• TUYáº¾T MAI', '1991-09-18', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2022-01-14', '2051-09-18', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(8, 6, 'DRIVER_LICENSE', '480158856789', 'VÃ• TUYáº¾T MAI', '1991-09-18', 'Sá»Ÿ GTVT ÄÃ  Náºµng', '2020-03-22', '2030-03-22', 'B2', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
+(7, 6, 'CITIZEN_ID', '048191004567', 'VÃ• TUYáº¾T MAI', '1991-09-18', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2022-01-14', '2051-09-18', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(8, 6, 'DRIVER_LICENSE', '480158856789', 'VÃ• TUYáº¾T MAI', '1991-09-18', 'Sá»Ÿ GTVT ÄÃ  Náºµng', '2020-03-22', '2030-03-22', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Báº±ng lÃ¡i cá»§a CÆ°á»ng (id=7) & DÅ©ng (id=8)
-(9, 7, 'CITIZEN_ID', '079189005678', 'LÃŠ MINH CÆ¯á»œNG', '1989-06-30', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-03-11', '2049-06-30', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(10, 7, 'DRIVER_LICENSE', '790158867890', 'LÃŠ MINH CÆ¯á»œNG', '1989-06-30', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2016-08-15', '2026-08-15', 'B2', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(11, 8, 'CITIZEN_ID', '001186006789', 'Äáº¶NG QUá»C DÅ¨NG', '1986-12-14', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-07-09', '2046-12-14', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(12, 8, 'DRIVER_LICENSE', '010158878901', 'Äáº¶NG QUá»C DÅ¨NG', '1986-12-14', 'Sá»Ÿ GTVT HÃ  Ná»™i', '2015-11-20', '2025-11-20', 'B2', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
+(9, 7, 'CITIZEN_ID', '079189005678', 'LÃŠ MINH CÆ¯á»œNG', '1989-06-30', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-03-11', '2049-06-30', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(10, 7, 'DRIVER_LICENSE', '790158867890', 'LÃŠ MINH CÆ¯á»œNG', '1989-06-30', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2016-08-15', '2026-08-15', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(11, 8, 'CITIZEN_ID', '001186006789', 'Äáº¶NG QUá»C DÅ¨NG', '1986-12-14', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2021-07-09', '2046-12-14', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(12, 8, 'DRIVER_LICENSE', '010158878901', 'Äáº¶NG QUá»C DÅ¨NG', '1986-12-14', 'Sá»Ÿ GTVT HÃ  Ná»™i', '2015-11-20', '2025-11-20', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giáº¥y tá» cá»§a KhÃ¡ch thuÃª (id=9 & id=10)
-(13, 9, 'CITIZEN_ID', '079195007890', 'NGUYá»„N VÄ‚N KHÃCH', '1995-04-02', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2022-04-18', '2055-04-02', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
-(14, 9, 'DRIVER_LICENSE', '790158889012', 'NGUYá»„N VÄ‚N KHÃCH', '1995-04-02', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2021-05-12', '2031-05-12', 'B2', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'APPROVED', NULL, 1, vn_now()),
+(13, 9, 'CITIZEN_ID', '079195007890', 'NGUYá»„N VÄ‚N KHÃCH', '1995-04-02', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2022-04-18', '2055-04-02', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(14, 9, 'DRIVER_LICENSE', '790158889012', 'NGUYá»„N VÄ‚N KHÃCH', '1995-04-02', 'Sá»Ÿ GTVT TP. Há»“ ChÃ­ Minh', '2021-05-12', '2031-05-12', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giáº¥y tá» PENDING chá» duyá»‡t cá»§a Nam (id=11)
-(15, 11, 'CITIZEN_ID', '079200008901', 'HOÃ€NG Háº¢I NAM', '2000-02-17', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2023-01-10', '2060-02-17', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'PENDING', NULL, NULL, NULL),
+(15, 11, 'CITIZEN_ID', '079200008901', 'HOÃ€NG Háº¢I NAM', '2000-02-17', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2023-01-10', '2060-02-17', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'PENDING', NULL, NULL, NULL),
 
 -- Giáº¥y tá» REJECTED cá»§a Khoa (id=12)
-(16, 12, 'CITIZEN_ID', '048196009012', 'HUá»²NH ÄÄ‚NG KHOA', '1996-07-22', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2022-09-05', '2056-07-22', NULL, 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600', 'REJECTED', 'áº¢nh chá»¥p bá»‹ chÃ³i flash vÃ  máº¥t gÃ³c dÆ°á»›i, vui lÃ²ng chá»¥p láº¡i rÃµ nÃ©t cáº£ 2 máº·t', 1, vn_now());
+(16, 12, 'CITIZEN_ID', '048196009012', 'HUá»²NH ÄÄ‚NG KHOA', '1996-07-22', 'Cá»¥c Cáº£nh sÃ¡t QLHC vá» TTXH', '2022-09-05', '2056-07-22', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'REJECTED', 'áº¢nh chá»¥p bá»‹ chÃ³i flash vÃ  máº¥t gÃ³c dÆ°á»›i, vui lÃ²ng chá»¥p láº¡i rÃµ nÃ©t cáº£ 2 máº·t', 1, vn_now());
 
 SELECT setval(pg_get_serial_sequence('user_documents', 'id'), (SELECT COALESCE(MAX(id), 1) FROM user_documents));
 
@@ -511,53 +511,55 @@ SELECT setval(pg_get_serial_sequence('cars', 'id'), (SELECT COALESCE(MAX(id), 1)
 -- ---------------------------------------------------------------------
 INSERT INTO car_images (id, car_id, image_url, is_primary, sort_order)
 VALUES
--- áº¢nh Xe 1: Honda City RS
-(1, 1, 'https://images.unsplash.com/photo-1590362891988-f77804702e30?w=800', true, 0),
-(2, 1, 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800', false, 1),
-(3, 1, 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800', false, 2),
+-- Car 1: Honda City RS
+(1, 1, '/images/cars/car-1-honda-city-1.jpg', true, 0),
+(2, 1, '/images/cars/car-1-honda-city-2.jpg', false, 1),
+(3, 1, '/images/cars/car-1-honda-city-3.jpg', false, 2),
 
--- áº¢nh Xe 2: Toyota Vios G
-(4, 2, 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800', true, 0),
-(5, 2, 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=800', false, 1),
-(6, 2, 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800', false, 2),
+-- Car 2: Toyota Vios G
+(4, 2, '/images/cars/car-2-toyota-vios-1.jpg', true, 0),
+(5, 2, '/images/cars/car-2-toyota-vios-2.jpg', false, 1),
+(6, 2, '/images/cars/car-2-toyota-vios-3.jpg', false, 2),
 
--- áº¢nh Xe 3: Mazda CX-5
-(7, 3, 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800', true, 0),
-(8, 3, 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?w=800', false, 1),
-(9, 3, 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800', false, 2),
+-- Car 3: Mazda CX-5
+(7, 3, '/images/cars/car-3-mazda-cx5-1.jpg', true, 0),
+(8, 3, '/images/cars/car-3-mazda-cx5-2.jpg', false, 1),
+(9, 3, '/images/cars/car-3-mazda-cx5-3.jpg', false, 2),
 
--- áº¢nh Xe 4: Hyundai Accent AT
-(10, 4, 'https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=800', true, 0),
-(11, 4, 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800', false, 1),
-(12, 4, 'https://images.unsplash.com/photo-1542362567-b07e54358753?w=800', false, 2),
+-- Car 4: Hyundai Accent AT
+(10, 4, '/images/cars/car-4-hyundai-accent-1.jpg', true, 0),
+(11, 4, '/images/cars/car-4-hyundai-accent-2.jpg', false, 1),
+(12, 4, '/images/cars/car-4-hyundai-accent-3.jpg', false, 2),
 
--- áº¢nh Xe 5: Kia Carnival
-(13, 5, 'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800', true, 0),
-(14, 5, 'https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=800', false, 1),
-(15, 5, 'https://images.unsplash.com/photo-1508974239320-0a029497e820?w=800', false, 2),
+-- Car 5: Kia Carnival
+(13, 5, '/images/cars/car-5-kia-carnival-1.jpg', true, 0),
+(14, 5, '/images/cars/car-5-kia-carnival-2.jpg', false, 1),
+(15, 5, '/images/cars/car-5-kia-carnival-3.jpg', false, 2),
 
--- áº¢nh Xe 6: Mercedes-Benz C200
-(16, 6, 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?w=800', true, 0),
-(17, 6, 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=800', false, 1),
-(18, 6, 'https://images.unsplash.com/photo-1508974239320-0a029497e820?w=800', false, 2),
+-- Car 6: Mercedes-Benz C200
+(16, 6, '/images/cars/car-6-mercedes-c200-1.jpg', true, 0),
+(17, 6, '/images/cars/car-6-mercedes-c200-2.jpg', false, 1),
+(18, 6, '/images/cars/car-6-mercedes-c200-3.jpg', false, 2),
 
--- áº¢nh Xe 7: VinFast VF8
-(19, 7, 'https://images.unsplash.com/photo-1563720223185-11003d516935?w=800', true, 0),
-(20, 7, 'https://images.unsplash.com/photo-1550355291-bbee04a92027?w=800', false, 1),
-(21, 7, 'https://images.unsplash.com/photo-1511919884226-fd3cad34687c?w=800', false, 2),
+-- Car 7: VinFast VF8
+(19, 7, '/images/cars/car-7-vinfast-vf8-1.jpg', true, 0),
+(20, 7, '/images/cars/car-7-vinfast-vf8-2.jpg', false, 1),
+(21, 7, '/images/cars/car-7-vinfast-vf8-3.jpg', false, 2),
 
--- áº¢nh Xe 8: Mitsubishi Xpander Cross
-(22, 8, 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=800', true, 0),
-(23, 8, 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800', false, 1),
-(24, 8, 'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?w=800', false, 2),
+-- Car 8: Mitsubishi Xpander Cross
+(22, 8, '/images/cars/car-8-xpander-cross-1.jpg', true, 0),
+(23, 8, '/images/cars/car-8-xpander-cross-2.jpg', false, 1),
+(24, 8, '/images/cars/car-8-xpander-cross-3.jpg', false, 2),
 
--- áº¢nh Xe 9: Ford Ranger Wildtrak
-(25, 9, 'https://images.unsplash.com/photo-1559416523-140ddc3d238c?w=800', true, 0),
-(26, 9, 'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800', false, 1),
+-- Car 9: Ford Ranger Wildtrak
+(25, 9, '/images/cars/car-9-ford-ranger-1.jpg', true, 0),
+(26, 9, '/images/cars/car-9-ford-ranger-2.jpg', false, 1),
+(27, 9, '/images/cars/car-9-ford-ranger-3.jpg', false, 2),
 
--- áº¢nh Xe 10: Toyota Fortuner
-(27, 10, 'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=800', true, 0),
-(28, 10, 'https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800', false, 1);
+-- Car 10: Toyota Fortuner
+(28, 10, '/images/cars/car-10-toyota-fortuner-1.jpg', true, 0),
+(29, 10, '/images/cars/car-10-toyota-fortuner-2.jpg', false, 1),
+(30, 10, '/images/cars/car-10-toyota-fortuner-3.jpg', false, 2);
 
 SELECT setval(pg_get_serial_sequence('car_images', 'id'), (SELECT COALESCE(MAX(id), 1) FROM car_images));
 
