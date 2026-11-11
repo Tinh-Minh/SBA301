@@ -14,7 +14,7 @@ export function RegisterForm() {
     const navigate = useNavigate();
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmVisible, setConfirmVisible] = useState(false);
-    const { register: createAccount, login } = useAuth();
+    const { register: createAccount } = useAuth();
     const { register, control, handleSubmit, setError, formState: { errors, isSubmitting, isValid } } = useForm({
         resolver: zodResolver(registrationSchema),
         mode: "onChange",
@@ -26,8 +26,9 @@ export function RegisterForm() {
     const onSubmit = handleSubmit(async ({ confirmPassword, terms, ...values }) => {
         try {
             await createAccount(values);
-            await login({ email: values.email, password: values.password });
-            navigate("/account");
+            const email = values.email.trim();
+            window.sessionStorage.setItem("cardb:pending-verification-email", email);
+            navigate("/verify-email", { state: { email } });
         } catch (error) {
             setError("root.server", { message: error.message });
         }

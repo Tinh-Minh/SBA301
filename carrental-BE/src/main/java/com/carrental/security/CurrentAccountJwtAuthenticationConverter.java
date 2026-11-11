@@ -22,6 +22,9 @@ public class CurrentAccountJwtAuthenticationConverter implements Converter<Jwt, 
 
     @Override
     public UsernamePasswordAuthenticationToken convert(Jwt jwt) {
+        if ("email_verification".equals(jwt.getClaimAsString("purpose"))) {
+            throw new InvalidCurrentAccountException();
+        }
         long customerId;
         try {
             customerId = Long.parseLong(jwt.getSubject());
