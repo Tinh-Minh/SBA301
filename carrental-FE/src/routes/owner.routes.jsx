@@ -33,7 +33,7 @@ function OwnerContent() {
 }
 
 export function OwnerRoute() {
-    return <main data-native className="w-full bg-bg-light pt-20"><RequireAuth title="Đăng nhập để quản lý xe cho thuê"><OwnerContent /></RequireAuth></main>;
+    return <main data-native className="w-full bg-bg-light pt-20"><RequireAuth owner title="Đăng nhập để quản lý xe cho thuê"><OwnerContent /></RequireAuth></main>;
 }
 
 export const ownerPages = [

@@ -4,6 +4,7 @@ import static com.carrental.util.RequestChecks.ok;
 import static com.carrental.util.RequestChecks.requirePositiveId;
 
 import com.carrental.config.CustomerProperties;
+import com.carrental.dto.request.customer.ChangeCustomerRoleRequest;
 import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
 import com.carrental.dto.request.customer.CustomerListQuery;
 import com.carrental.dto.request.customer.UpdateProfileRequest;
@@ -100,5 +101,15 @@ public class CustomerController {
             @RequestBody ChangeCustomerStatusRequest request) {
         requirePositiveId(id);
         return ok(customerService.changeCustomerStatus(actor, id, request));
+    }
+
+    @PatchMapping(path = "/{id}/role", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CustomerAdminResponse>> changeCustomerRole(
+            @AuthenticationPrincipal CurrentAccount actor,
+            @PathVariable long id,
+            @RequestBody ChangeCustomerRoleRequest request) {
+        requirePositiveId(id);
+        return ok(customerService.changeCustomerRole(actor, id, request));
     }
 }

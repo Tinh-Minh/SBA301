@@ -76,7 +76,7 @@ public class VoucherCatalogServiceImpl implements VoucherCatalogService {
         Customer row = customers.findById(actor.customerId())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
         if (row.getStatus() != CustomerStatus.ACTIVE || row.getRole() != actor.role()
-                || (row.getRole() != Role.CUSTOMER && row.getRole() != Role.ADMIN)) {
+                || row.getRole() == null) {
             throw new AppException(ErrorCode.INVALID_TOKEN);
         }
         return row;

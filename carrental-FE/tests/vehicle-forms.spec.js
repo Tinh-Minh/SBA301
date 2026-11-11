@@ -11,7 +11,7 @@ const car = {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("cardb:session:v2", JSON.stringify({
-    accessToken: "test-token", account: { id: 1, fullName: "Test Owner", role: "CUSTOMER" },
+    accessToken: "test-token", account: { id: 1, fullName: "Test Owner", role: "OWNER" },
   })));
   await page.route("**/api/**", route => route.fulfill({ status: 503, json: { message: "Test backend unavailable" } }));
 });

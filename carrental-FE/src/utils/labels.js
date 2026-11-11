@@ -90,17 +90,15 @@ export function initials(name) {
     return parts.length === 1 ? parts[0][0].toUpperCase() : (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
-/** Xác định nhãn vai trò hiển thị (phân biệt Quản trị viên, Chủ xe có xe và Khách hàng). */
-export function accountRoleLabel(user, ownerCarCount) {
+/** Xác định nhãn vai trò hiển thị theo role tài khoản. */
+export function accountRoleLabel(user) {
     if (!user)
         return "";
     if (user.role === "ADMIN")
         return "Quản trị viên";
-    if (typeof ownerCarCount === "number" && ownerCarCount > 0)
+    if (user.role === "OWNER")
         return "Chủ xe";
-    if (ownerCarCount === 0)
-        return "Khách hàng";
-    return "Thành viên";
+    return "Khách hàng";
 }
 
 const FALLBACK_CAR_IMAGE = "/images/cardb-02d5cb41aa8f9514.webp";

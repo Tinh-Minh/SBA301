@@ -8,11 +8,14 @@ import { adminUserService } from "@/services/adminService.js";
 
 export const tabs = [
     { id: "all", label: "Tất cả" },
+    { id: "role:OWNER", label: "Chủ xe" },
+    { id: "role:CUSTOMER", label: "Khách hàng" },
     { id: "kyc:PENDING", label: "Chờ duyệt KYC" },
     { id: "kyc:VERIFIED", label: "Đã xác thực" },
     { id: "kyc:REJECTED", label: "KYC bị từ chối" },
     { id: "status:LOCKED", label: "Bị khóa" },
 ];
+export const roleLabels = { CUSTOMER: "Khách hàng (CUSTOMER)", OWNER: "Chủ xe (OWNER)", ADMIN: "Quản trị viên (ADMIN)" };
 export const kycTone = { NONE: "neutral", PENDING: "warning", VERIFIED: "success", REJECTED: "danger" };
 const docTone = { PENDING: "warning", APPROVED: "success", REJECTED: "danger" };
 
@@ -31,21 +34,24 @@ export function UserDetail({ id, onChanged }) {
     const [reason, setReason] = useState("");
     const review = useApiMutation((docId, status, why) => adminUserService.reviewDocument(docId, status, why), () => { setDialog(null); setReason(""); refresh(); });
     const lock = useApiMutation((status, why) => adminUserService.setStatus(id, status, why || null), () => { setDialog(null); setReason(""); refresh(); });
+    const changeRole = useApiMutation((nextRole) => adminUserService.setRole(id, nextRole), () => refresh());
     if (!detail.data)
         return <aside><AdminState loading={detail.loading} error={detail.error} label="hồ sơ"/></aside>;
     const { profile, kyc, documents } = detail.data;
     const locked = profile.status === "LOCKED";
+    const kycState = kyc?.kycStatus ?? profile.kycStatus;
     return <aside className="flex min-w-0 flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div>
       <h2 className="break-words text-base font-bold text-[#292929]">{profile.fullName}</h2>
-      <p className="text-xs text-[#666666]">KH #{profile.id} • tạo {formatDate(profile.createdAt)}</p>
+      <p className="text-xs text-[#666666]">TK #{profile.id} • tạo {formatDate(profile.createdAt)}</p>
     </div>
     <dl className="grid gap-2 text-sm">
+      <Row term="Vai trò" value={roleLabels[profile.role] ?? profile.role}/>
       <Row term="Email" value={`${profile.email}${profile.emailVerified ? " ✓" : ""}`}/>
       <Row term="Điện thoại" value={profile.phone || "—"}/>
       <Row term="Ngày sinh" value={formatDate(profile.dateOfBirth)}/>
       <Row term="Địa chỉ" value={profile.address || "—"}/>
-      <Row term="KYC" value={kycStatusLabels[kyc?.kycStatus ?? profile.kycStatus] ?? profile.kycStatus}/>
+      <Row term="KYC" value={kycStatusLabels[kycState] ?? profile.kycStatus}/>
     </dl>
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-bold text-[#292929]">Giấy tờ đã nộp ({documents.length})</h3>
@@ -55,6 +61,12 @@ export function UserDetail({ id, onChanged }) {
       {review.error ? <p className="text-sm text-[#B91C1C]">{review.error.message}</p> : null}
     </div>
     <div className="flex flex-col gap-2 border-t border-[#E9E9E7] pt-4">
+      {profile.role !== "ADMIN" ? (profile.role === "OWNER"
+            ? <button type="button" disabled={changeRole.running} onClick={() => void changeRole.run("CUSTOMER")} className="rounded-xl border border-[#E9E9E7] bg-[#F7F7F5] px-4 py-2.5 text-sm font-bold text-[#292929] hover:bg-[#EFEFED] disabled:opacity-50">Chuyển về Khách hàng (CUSTOMER)</button>
+            : kycState === "VERIFIED"
+                ? <button type="button" disabled={changeRole.running || locked} onClick={() => void changeRole.run("OWNER")} className="rounded-xl border border-[#047857] bg-[#ECFDF5] px-4 py-2.5 text-sm font-bold text-[#047857] hover:bg-[#D1FAE5] disabled:opacity-50">Nâng cấp lên Chủ xe (OWNER)</button>
+                : <p className="rounded-xl bg-[#FFFBEB] px-3 py-2 text-xs text-[#92400E]">Cần duyệt giấy xác nhận danh tính (KYC VERIFIED) trước khi nâng cấp Chủ xe.</p>) : null}
+      {changeRole.error ? <p className="text-sm text-[#B91C1C]">{changeRole.error.message}</p> : null}
       {locked
             ? <PrimaryButton disabled={lock.running} onClick={() => void lock.run("ACTIVE")}>Mở khóa tài khoản</PrimaryButton>
             : profile.role === "ADMIN"

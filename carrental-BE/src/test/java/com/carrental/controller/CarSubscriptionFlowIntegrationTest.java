@@ -12,6 +12,7 @@ import com.carrental.enums.CarType;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.FuelType;
+import com.carrental.enums.KycStatus;
 import com.carrental.enums.ListingStatus;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.Role;
@@ -105,6 +106,7 @@ class CarSubscriptionFlowIntegrationTest {
     private LocalDateTime now;
     private Long ownerId;
     private Long otherId;
+    private Long plainCustomerId;
     private Long adminId;
     private Long carId;
     private Long pendingApprovalCarId;
@@ -121,8 +123,10 @@ class CarSubscriptionFlowIntegrationTest {
                     "ListingPackage", "Voucher", "Customer")) {
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }
-            Customer owner = persist(customer("Chủ Xe", "owner@sub.vn", "0930000001", Role.CUSTOMER));
-            Customer other = persist(customer("Chủ Khác", "other@sub.vn", "0930000002", Role.CUSTOMER));
+            Customer owner = persist(customer("Chủ Xe", "owner@sub.vn", "0930000001", Role.OWNER));
+            Customer other = persist(customer("Chủ Khác", "other@sub.vn", "0930000002", Role.OWNER));
+            Customer plainCustomer = persist(customer("Khách Hàng", "customer@sub.vn", "0930000004", Role.CUSTOMER));
+            plainCustomerId = plainCustomer.getId();
             Customer admin = persist(customer("Admin", "admin@sub.vn", "0930000003", Role.ADMIN));
             ownerId = owner.getId();
             otherId = other.getId();
@@ -168,6 +172,14 @@ class CarSubscriptionFlowIntegrationTest {
                 .andExpect(jsonPath("$.data.daysRemaining").doesNotExist());
         assertThat(voucherUsedCount()).isEqualTo(1);
         assertThat(car().getListingStatus()).isEqualTo(ListingStatus.UNLISTED);
+    }
+
+    @Test
+    void customerWithoutOwnerRoleIsForbiddenFromOwnerEndpoints() throws Exception {
+        as(plainCustomerId, get("/api/cars/my-cars")).andExpect(status().isForbidden());
+        as(plainCustomerId, post("/api/cars").content("{\"licensePlate\":\"51A-99999\",\"brand\":\"Toyota\",\"model\":\"Vios\",\"manufactureYear\":2022,\"carType\":\"SEDAN\",\"seats\":5,\"transmission\":\"AUTOMATIC\",\"fuelType\":\"GASOLINE\",\"city\":\"Hồ Chí Minh\",\"pickupAddress\":\"1 Lê Lợi\",\"pricePerHour\":100000,\"pricePerDay\":800000,\"depositAmount\":0}")).andExpect(status().isForbidden());
+        as(plainCustomerId, post("/api/subscriptions").content(json(carId, packageId, null))).andExpect(status().isForbidden());
+        as(plainCustomerId, get("/api/subscriptions/my-subscriptions")).andExpect(status().isForbidden());
     }
 
     @Test
@@ -477,7 +489,8 @@ class CarSubscriptionFlowIntegrationTest {
 
     private static Customer customer(String name, String email, String phone, Role role) {
         return Customer.builder().fullName(name).email(email).phone(phone).passwordHash("{noop}test")
-                .role(role).status(CustomerStatus.ACTIVE).build();
+                .role(role).kycStatus(role == Role.OWNER ? KycStatus.VERIFIED : KycStatus.NONE)
+                .status(CustomerStatus.ACTIVE).build();
     }
 
     private static Car car(Customer owner, String plate, CarStatus status) {

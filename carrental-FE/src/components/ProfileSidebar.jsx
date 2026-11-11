@@ -1,6 +1,5 @@
 import { Link } from "react-router";
 import { useAuth } from "@/hooks/useAuth.js";
-import { useOwnerCounts } from "@/hooks/useVehicles.js";
 import { Icon } from "@/components/Icon.jsx";
 import { accountRoleLabel, initials } from "@/utils/labels.js";
 const groups = [
@@ -10,24 +9,26 @@ const groups = [
         ] },
     { title: "Tin đăng và đánh giá", links: [
             { section: "reviews", href: "/my-trips", label: "Đánh giá của tôi", icon: "reviews" },
-            { section: "subscriptions", href: "/owner/subscriptions", label: "Gói đăng tin", icon: "workspace_premium" },
-            { section: "owner", href: "/owner/dashboard", label: "Kênh chủ xe", icon: "garage_home" },
+            { section: "subscriptions", href: "/owner/subscriptions", label: "Gói đăng tin", icon: "workspace_premium", ownerOnly: true },
+            { section: "owner", href: "/owner/dashboard", label: "Kênh chủ xe", icon: "garage_home", ownerOnly: true },
         ] },
 ];
 export function ProfileSidebar({ active, className = "" }) {
-    const { user, isAdmin } = useAuth();
-    const ownerCounts = useOwnerCounts(Boolean(user && !isAdmin));
-    const roleLabel = accountRoleLabel(user, ownerCounts.approvedCars);
+    const { user, isAdmin, isOwner } = useAuth();
+    const roleLabel = accountRoleLabel(user);
+    const visibleGroups = groups
+        .map(group => ({ ...group, links: group.links.filter(link => !link.ownerOnly || isOwner) }))
+        .filter(group => group.links.length > 0);
     return <aside className={`space-y-4 ${className}`} data-purpose="account-sidebar">
     <div className="relative overflow-hidden rounded-xl bg-surface-container-lowest p-4 shadow-sm">
       <div className="pointer-events-none absolute -top-4 -right-4 size-24 rounded-full bg-gradient-to-br from-primary-container/10 to-transparent blur-xl"/>
       <div className="flex items-center gap-4">
         <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-[#FFF2EB] text-lg font-bold text-[#FC6C26] ring-2 ring-primary-container/20">{initials(user?.fullName)}</span>
-        <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold text-on-surface">{user?.fullName ?? "Khách"}</h2><p className="mt-0.5 text-xs text-on-surface-variant">{user ? `${roleLabel} • #${user.id}` : "Chưa đăng nhập"}</p>{user?.role === "ADMIN" ? <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-secondary-fixed px-2 py-0.5 text-[10px] font-semibold text-on-secondary-fixed"><Icon name="admin_panel_settings" className="text-[12px]"/>Quản trị viên</span> : null}</div>
+        <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-semibold text-on-surface">{user?.fullName ?? "Khách"}</h2><p className="mt-0.5 text-xs text-on-surface-variant">{user ? `${roleLabel} • #${user.id}` : "Chưa đăng nhập"}</p>{isAdmin ? <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-secondary-fixed px-2 py-0.5 text-[10px] font-semibold text-on-secondary-fixed"><Icon name="admin_panel_settings" className="text-[12px]"/>Quản trị viên</span> : isOwner ? <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700"><Icon name="directions_car" className="text-[12px]"/>Chủ xe</span> : null}</div>
       </div>
     </div>
     <nav aria-label="Hồ sơ và tài khoản" className="space-y-4 rounded-xl bg-surface-container-lowest p-2 shadow-sm">
-      {groups.map(group => <div key={group.title}><h3 className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">{group.title}</h3><div className="space-y-1">{group.links.map(link => {
+      {visibleGroups.map(group => <div key={group.title}><h3 className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">{group.title}</h3><div className="space-y-1">{group.links.map(link => {
                 const selected = link.section === active;
                 return <Link key={link.href} to={link.href} aria-current={selected ? "page" : undefined} className={`group flex items-center gap-2 rounded-lg px-4 py-2.5 transition-colors ${selected ? "bg-primary-fixed/50 font-semibold text-primary-container shadow-sm" : "text-on-surface hover:bg-surface-container-low"}`}><Icon name={link.icon} className={`shrink-0 text-[20px] ${selected ? "text-primary-container" : "text-outline group-hover:text-primary-container"}`}/><span className="min-w-0 flex-1 whitespace-nowrap text-sm">{link.label}</span><Icon name="chevron_right" className="text-[16px] text-outline"/></Link>;
             })}</div></div>)}

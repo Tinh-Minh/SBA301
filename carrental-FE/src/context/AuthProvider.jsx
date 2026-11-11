@@ -1,5 +1,6 @@
 import { authenticate, registerAccount } from "@/services/authService.js";
-import { clearSession, readSession, subscribeSession } from "@/utils/session.js";
+import { getMyProfile } from "@/services/accountService.js";
+import { clearSession, readSession, subscribeSession, updateSessionAccount } from "@/utils/session.js";
 import { createContext, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -12,9 +13,11 @@ export const AuthContext = createContext({
     loggedIn: false,
     user: null,
     isAdmin: false,
+    isOwner: false,
     login: async () => { },
     register: async () => { },
     logout: () => { },
+    refreshAccount: async () => null,
 });
 
 export function AuthProvider({ children }) {
@@ -46,9 +49,38 @@ export function AuthProvider({ children }) {
         endSession();
         setSession(null);
     }, []);
+    const refreshAccount = useCallback(async () => {
+        const current = readSession();
+        if (!current?.accessToken || !current?.account?.id)
+            return null;
+        try {
+            const profile = await getMyProfile();
+            if (profile?.id === current.account.id && profile?.role) {
+                updateSessionAccount({
+                    role: profile.role,
+                    kycStatus: profile.kycStatus,
+                    fullName: profile.fullName ?? current.account.fullName,
+                });
+            }
+            return profile;
+        }
+        catch {
+            return null;
+        }
+    }, []);
     const value = useMemo(() => {
         const user = session?.account ?? null;
-        return { ready, loggedIn: Boolean(user), user, isAdmin: user?.role === "ADMIN", login, register, logout };
-    }, [ready, session, login, register, logout]);
+        return {
+            ready,
+            loggedIn: Boolean(user),
+            user,
+            isAdmin: user?.role === "ADMIN",
+            isOwner: user?.role === "OWNER",
+            login,
+            register,
+            logout,
+            refreshAccount,
+        };
+    }, [ready, session, login, register, logout, refreshAccount]);
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
