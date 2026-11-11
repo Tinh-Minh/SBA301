@@ -16,3 +16,17 @@ export function registerAccount({ fullName, email, phone, password }) {
         json: { fullName: fullName.trim(), email: email.trim(), phone: phone.trim().replace(/\s+/g, ""), password },
     });
 }
+
+/** POST /api/auth/verify-email — token chỉ được gửi trong body, không dùng Authorization. */
+export function verifyEmail(token) {
+    return request(endpoints.auth.verifyEmail, { method: "POST", auth: false, json: { token } });
+}
+
+/** POST /api/auth/resend-verification — phản hồi luôn chung để tránh dò email tồn tại. */
+export function resendVerification(email) {
+    return request(endpoints.auth.resendVerification, {
+        method: "POST",
+        auth: false,
+        json: { email: email.trim() },
+    });
+}

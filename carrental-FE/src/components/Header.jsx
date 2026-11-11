@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth.js";
 import { useNotice } from "@/context/NoticeProvider.jsx";
 import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
-import { accountRoleLabel, initials } from "@/utils/labels.js";
+import { initials } from "@/utils/labels.js";
 
 const publicNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/list-your-car", "Cho thuê xe"], ["/packages", "Gói đăng tin"]];
 const customerNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/account/verification", "Đăng ký chủ xe"], ["/packages", "Gói đăng tin"]];

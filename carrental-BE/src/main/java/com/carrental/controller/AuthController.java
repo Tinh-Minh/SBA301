@@ -4,7 +4,9 @@ import static com.carrental.util.RequestChecks.ok;
 
 import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.LoginRequest;
+import com.carrental.dto.request.auth.ResendVerificationRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
+import com.carrental.dto.request.auth.VerifyEmailRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.TokenResponse;
@@ -41,6 +43,19 @@ public class AuthController {
     @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<TokenResponse>> login(@Valid @RequestBody LoginRequest request) {
         return ok(authService.login(request));
+    }
+
+    @PostMapping(path = "/verify-email", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Void>> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request.token());
+        return ok(null);
+    }
+
+    @PostMapping(path = "/resend-verification", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<Void>> resendVerification(
+            @Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerification(request.email());
+        return ok(null);
     }
 
     @PostMapping(path = "/change-password", consumes = MediaType.APPLICATION_JSON_VALUE)

@@ -20,6 +20,7 @@ import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
+import com.carrental.service.AuthService;
 import com.carrental.service.CustomerService;
 import com.carrental.util.DbErrors;
 import com.carrental.util.RequestChecks;
@@ -52,13 +53,15 @@ public class CustomerServiceImpl implements CustomerService {
     private final EntityManager entityManager;
     private final CustomerProperties properties;
     private final Clock clock;
+    private final AuthService authService;
 
     public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
-            CustomerProperties properties, Clock clock) {
+            CustomerProperties properties, Clock clock, AuthService authService) {
         this.customers = customers;
         this.entityManager = entityManager;
         this.properties = properties;
         this.clock = clock;
+        this.authService = authService;
     }
 
     @Override
@@ -87,6 +90,7 @@ public class CustomerServiceImpl implements CustomerService {
         String avatarUrl = request.avatarUrlWasProvided() ? normalizedAvatar(request.getAvatarUrl()) : null;
         String zaloPhone = request.zaloPhoneWasProvided() ? normalizedZaloPhone(request.getZaloPhone()) : null;
         String contactNote = request.contactNoteWasProvided() ? normalizedContactNote(request.getContactNote()) : null;
+        boolean emailChanged = request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail());
 
         if (request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail())) {
             customers.findByEmailIgnoreCase(email)
@@ -106,6 +110,7 @@ public class CustomerServiceImpl implements CustomerService {
             // The database trigger is authoritative for updated_at; reload it after the write.
             entityManager.refresh(customer);
         }
+        if (emailChanged) authService.resendVerification(customer.getEmail());
         return CustomerProfileResponse.from(customer);
     }
 

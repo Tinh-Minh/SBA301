@@ -15,7 +15,7 @@ export function RegisterForm() {
     const navigate = useNavigate();
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmVisible, setConfirmVisible] = useState(false);
-    const { register: createAccount, login } = useAuth();
+    const { register: createAccount } = useAuth();
     const notify = useNotice();
     const { register, control, handleSubmit, setError, clearErrors, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(registrationSchema),
@@ -28,9 +28,10 @@ export function RegisterForm() {
     const submit = handleSubmit(async ({ confirmPassword, terms, ...values }) => {
         try {
             await createAccount(values);
-            await login({ email: values.email, password: values.password });
-            notify("Đăng ký tài khoản thành công.");
-            navigate("/account");
+            const email = values.email.trim();
+            window.sessionStorage.setItem("cardb:pending-verification-email", email);
+            notify("Đăng ký tài khoản thành công! Vui lòng kiểm tra email để xác minh tài khoản.");
+            navigate("/verify-email", { state: { email } });
         } catch (error) {
             const message = error?.message || "Đăng ký tài khoản thất bại.";
             setError("root.server", { message });
