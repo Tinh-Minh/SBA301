@@ -1,15 +1,16 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { useId, useState } from "react";
 import { useAuth } from "@/hooks/useAuth.js";
+import { useOwnerCounts } from "@/hooks/useVehicles.js";
 import { useNotice } from "@/context/NoticeProvider.jsx";
 import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
-import { initials } from "@/utils/labels.js";
+import { accountRoleLabel, initials } from "@/utils/labels.js";
 
 const publicNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/list-your-car", "Cho thuê xe"], ["/packages", "Gói đăng tin"]];
 const memberNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/owner/dashboard", "Chủ xe"], ["/packages", "Gói đăng tin"]];
 const adminLink = ["/admin/dashboard", "Quản trị"];
-const accountLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/account/bank", "Tài khoản ngân hàng", "account_balance"], ["/owner/subscriptions", "Gói đăng tin", "workspace_premium"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
+const accountLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/owner/subscriptions", "Gói đăng tin", "workspace_premium"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
 export function Header({ previewState } = {}) {
     const instance = useId();
     const mobileId = previewState === undefined ? "mobile-navigation" : `mobile-navigation-${instance}`;
@@ -17,10 +18,11 @@ export function Header({ previewState } = {}) {
     const path = useLocation().pathname;
     const navigate = useNavigate();
     const { loggedIn: authenticated, user, isAdmin, logout } = useAuth();
+    const ownerCounts = useOwnerCounts(previewState === undefined && authenticated && !isAdmin);
     const notify = useNotice();
     const loggedIn = previewState ?? authenticated;
     const displayName = user?.fullName || (previewState ? "Khách hàng CarDB" : "Tài khoản");
-    const displayCode = user ? `${user.role === "ADMIN" ? "Quản trị viên" : "Khách hàng"} • #${user.id}` : "CarDB";
+    const displayCode = user ? `${accountRoleLabel(user, ownerCounts.approvedCars)} • #${user.id}` : "CarDB";
     const navigation = loggedIn ? (isAdmin ? [...memberNavigation, adminLink] : memberNavigation) : publicNavigation;
     const menuLinks = isAdmin ? [...accountLinks, ["/admin/dashboard", "Trang quản trị", "admin_panel_settings"]] : accountLinks;
     const activePath = previewState === undefined ? path : loggedIn ? "/my-trips" : "/explore";

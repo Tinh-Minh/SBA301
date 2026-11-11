@@ -19,7 +19,7 @@ export function useOwnerCar(id) {
 }
 
 /** Số xe và số yêu cầu chờ duyệt của chủ xe. */
-export function useOwnerCounts() {
-    const { data } = useApiQuery(["owner", "counts"], getOwnerCounts);
-    return data ?? { cars: null, pending: null };
+export function useOwnerCounts(enabled = true) {
+    const { data } = useApiQuery(["owner", "counts"], getOwnerCounts, { enabled });
+    return data ?? { cars: null, approvedCars: null, pending: null };
 }
