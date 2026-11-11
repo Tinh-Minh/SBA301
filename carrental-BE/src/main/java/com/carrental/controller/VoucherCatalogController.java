@@ -27,7 +27,7 @@ public class VoucherCatalogController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     public ResponseEntity<ApiResponse<List<VoucherCatalogResponse>>> listAvailable(
             @AuthenticationPrincipal CurrentAccount actor, @RequestParam long packageId) {
         return ok(service.listAvailableForPackage(actor, packageId));

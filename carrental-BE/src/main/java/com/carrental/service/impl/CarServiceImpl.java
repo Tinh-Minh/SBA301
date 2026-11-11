@@ -62,6 +62,7 @@ public class CarServiceImpl implements CarService {
         log.info("Create car licensePlate={}", request.getLicensePlate());
         try {
             Customer owner = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(owner);
 
             Car car = request.toEntity();
             if (carRepository.existsByLicensePlateIgnoreCase(car.getLicensePlate())) {
@@ -163,6 +164,7 @@ public class CarServiceImpl implements CarService {
         log.info("Get my cars status={}, listingStatus={}", status, listingStatus);
         try {
             Customer owner = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(owner);
             Specification<Car> spec = (root, query, cb) -> {
                 List<Predicate> ps = new ArrayList<>();
                 ps.add(cb.equal(root.get("owner").get("id"), owner.getId()));
@@ -501,8 +503,11 @@ public class CarServiceImpl implements CarService {
         try {
             Customer requester = currentUserService.getCurrentUser();
             Car car = findCarOrThrow(carId);
-            if (!currentUserService.isOwner(car, requester) && !currentUserService.isAdmin(requester)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem giấy tờ của xe này");
+            if (!currentUserService.isAdmin(requester)) {
+                CurrentUserService.requireVerifiedOwner(requester);
+                if (!currentUserService.isOwner(car, requester)) {
+                    throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem giấy tờ của xe này");
+                }
             }
             return carDocumentRepository.findAllByCarId(carId).stream()
                     .map(CarDocumentResponse::from)
@@ -560,6 +565,7 @@ public class CarServiceImpl implements CarService {
 
     private Car loadOwnedCar(Long carId) {
         Customer owner = currentUserService.getCurrentUser();
+        CurrentUserService.requireVerifiedOwner(owner);
         Car car = findCarOrThrow(carId);
         if (!currentUserService.isOwner(car, owner)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");

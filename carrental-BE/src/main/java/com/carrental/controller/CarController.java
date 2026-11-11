@@ -18,6 +18,7 @@ import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -70,6 +71,7 @@ public class CarController {
     }
 
     // Chủ xe xem danh sách xe của mình (hỗ trợ lọc status và listingStatus)
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/my-cars")
     public ApiResponse<PageResponse<CarSummaryResponse>> getMyCars(
             @RequestParam(required = false) CarStatus status,
@@ -84,6 +86,7 @@ public class CarController {
     }
 
     // Chủ xe đăng ký xe mới
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     public ApiResponse<CarResponse> createCar(
             @Valid @RequestBody CarCreateRequest request
@@ -92,6 +95,7 @@ public class CarController {
     }
 
     // Chủ xe cập nhật thông tin xe
+    @PreAuthorize("hasRole('OWNER')")
     @PutMapping("/{id}")
     public ApiResponse<CarResponse> updateCar(
             @PathVariable Long id,
@@ -101,6 +105,7 @@ public class CarController {
     }
 
     // Chủ xe tạm dừng hoặc kích hoạt lại xe (ACTIVE <-> INACTIVE)
+    @PreAuthorize("hasRole('OWNER')")
     @PatchMapping("/{id}/status")
     public ApiResponse<CarResponse> updateCarStatus(
             @PathVariable Long id,
@@ -110,6 +115,7 @@ public class CarController {
     }
 
     // Tải lên danh sách ảnh xe
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/{id}/images")
     public ApiResponse<List<CarImageResponse>> addCarImages(
             @PathVariable Long id,
@@ -119,6 +125,7 @@ public class CarController {
     }
 
     // Xoá một ảnh xe
+    @PreAuthorize("hasRole('OWNER')")
     @DeleteMapping("/{id}/images/{imageId}")
     public ApiResponse<Void> deleteCarImage(
             @PathVariable Long id,
@@ -129,6 +136,7 @@ public class CarController {
     }
 
     // Chọn ảnh đại diện chính cho xe
+    @PreAuthorize("hasRole('OWNER')")
     @PatchMapping("/{id}/images/{imageId}/primary")
     public ApiResponse<CarImageResponse> setPrimaryCarImage(
             @PathVariable Long id,
@@ -138,6 +146,7 @@ public class CarController {
     }
 
     // Thêm giấy tờ xe (cà vẹt, đăng kiểm, bảo hiểm)
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/{id}/documents")
     public ApiResponse<CarDocumentResponse> addCarDocument(
             @PathVariable Long id,
@@ -147,6 +156,7 @@ public class CarController {
     }
 
     // Xem danh sách giấy tờ của xe
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @GetMapping("/{id}/documents")
     public ApiResponse<List<CarDocumentResponse>> getCarDocuments(
             @PathVariable Long id

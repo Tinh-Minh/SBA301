@@ -9,7 +9,7 @@ const car = {
 const emptyPage = { content: [], totalElements: 0, totalPages: 1 };
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=", "base64");
 
-async function session(page, role = "CUSTOMER") {
+async function session(page, role = "OWNER") {
   await page.addInitScript(role => localStorage.setItem("cardb:session:v2", JSON.stringify({
     accessToken: "test-token", account: { id: 1, fullName: "Cache Owner", role },
   })), role);
@@ -67,7 +67,7 @@ test("switching accounts discards previous account query data", async ({ page })
   await expect(page.getByRole("heading", { name: "Test First Account" })).toBeVisible();
   await page.evaluate(() => {
     localStorage.setItem("cardb:session:v2", JSON.stringify({
-      accessToken: "second-token", account: { id: 2, fullName: "Second Owner", role: "CUSTOMER" },
+      accessToken: "second-token", account: { id: 2, fullName: "Second Owner", role: "OWNER" },
     }));
     window.dispatchEvent(new Event("cardb:session-change"));
   });

@@ -1,5 +1,6 @@
 package com.carrental.service;
 
+import com.carrental.dto.request.customer.ChangeCustomerRoleRequest;
 import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
 import com.carrental.dto.request.customer.CustomerListQuery;
 import com.carrental.dto.request.customer.UpdateProfileRequest;
@@ -19,4 +20,6 @@ public interface CustomerService {
     CustomerAdminResponse getCustomer(long id);
 
     CustomerAdminResponse changeCustomerStatus(CurrentAccount actor, long targetId, ChangeCustomerStatusRequest request);
+
+    CustomerAdminResponse changeCustomerRole(CurrentAccount actor, long targetId, ChangeCustomerRoleRequest request);
 }

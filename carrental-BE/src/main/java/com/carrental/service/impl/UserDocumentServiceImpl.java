@@ -65,7 +65,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     @Transactional
     public UserDocumentDetailResponse submit(CurrentAccount account, UserDocumentSubmissionCommand command) {
         requirePrincipal(account);
@@ -104,7 +104,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     public PageResponse<UserDocumentSummaryResponse> list(CurrentAccount account, UserDocumentListQuery query) {
         requirePrincipal(account);
         Objects.requireNonNull(query);
@@ -120,13 +120,13 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     public UserDocumentDetailResponse get(CurrentAccount account, long documentId) {
         return UserDocumentDetailResponse.from(findAccessibleDocument(account, documentId));
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     public PrivateDocumentFile download(CurrentAccount account, long documentId, String side) {
         requirePrincipal(account);
         requirePositiveId(documentId);
@@ -185,12 +185,23 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         documents.flush();
 
         KycStatus currentKyc = kycService.currentStatus(owner.getId(), evaluatedOn);
+        boolean ownerChanged = false;
         if (owner.getKycStatus() != currentKyc) {
             owner.setKycStatus(currentKyc);
+            ownerChanged = true;
+        }
+        Role oldRole = owner.getRole();
+        if (currentKyc == KycStatus.VERIFIED
+                && owner.getStatus() == CustomerStatus.ACTIVE
+                && owner.getRole() == Role.CUSTOMER) {
+            owner.setRole(Role.OWNER);
+            ownerChanged = true;
+        }
+        if (ownerChanged) {
             customers.flush();
         }
         UserDocumentReviewResponse response = UserDocumentReviewResponse.from(document, currentKyc, evaluatedOn);
-        log.info("document-review actorId={} ownerId={} documentId={} type={} {} -> {} kyc {} -> {} reasonProvided={}", actorRow.getId(), owner.getId(), document.getId(), document.getDocType(), oldStatus, command.status(), oldKyc, currentKyc, command.reason() != null);
+        log.info("document-review actorId={} ownerId={} documentId={} type={} {} -> {} kyc {} -> {} role {} -> {} reasonProvided={}", actorRow.getId(), owner.getId(), document.getId(), document.getDocType(), oldStatus, command.status(), oldKyc, currentKyc, oldRole, owner.getRole(), command.reason() != null);
         return response;
     }
 

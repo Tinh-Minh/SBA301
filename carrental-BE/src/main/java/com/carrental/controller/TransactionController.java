@@ -22,7 +22,7 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/package-payment")
     public ApiResponse<TransactionResponse> createPackagePayment(
             @Valid @RequestBody PackagePaymentRequest request,
@@ -31,7 +31,7 @@ public class TransactionController {
                 transactionService.createPackagePayment(request, servletRequest));
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/{id}/vnpay-url")
     public ApiResponse<Map<String, String>> getVNPayUrl(
             @PathVariable Long id,
@@ -41,19 +41,19 @@ public class TransactionController {
         return ApiResponse.ok(Map.of("paymentUrl", paymentUrl));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<TransactionResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(transactionService.getById(id));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @PostMapping("/{id}/simulate-gateway")
     public ApiResponse<TransactionResponse> simulateGateway(@PathVariable Long id) {
         return ApiResponse.ok("Giả lập thanh toán thành công", transactionService.simulateGateway(id));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<TransactionResponse>> getPaged(
             @RequestParam(required = false) Long subscriptionId,

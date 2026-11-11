@@ -34,26 +34,26 @@ public class CarSubscriptionController {
 
     private final CarSubscriptionService subscriptionService;
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/packages")
     public ApiResponse<List<SubscriptionPackageOption>> getPackages() {
         return ApiResponse.ok(subscriptionService.getPackages());
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/quote")
     public ApiResponse<SubscriptionQuoteResponse> quote(@Valid @RequestBody CreateSubscriptionRequest request) {
         return ApiResponse.ok(subscriptionService.quote(request));
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<SubscriptionResponse> create(@Valid @RequestBody CreateSubscriptionRequest request) {
         return ApiResponse.ok("Tạo yêu cầu mua gói thành công", subscriptionService.createSubscription(request));
     }
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/my-subscriptions")
     public ApiResponse<PageResponse<SubscriptionResponse>> getMine(
             @RequestParam(defaultValue = "0") int page,
@@ -64,19 +64,19 @@ public class CarSubscriptionController {
                 PageRequestFactory.of(page, size, sortBy, direction, SORT_FIELDS, "createdAt")));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<SubscriptionResponse> getDetail(@PathVariable Long id) {
         return ApiResponse.ok(subscriptionService.getSubscriptionDetail(id));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @PostMapping("/{id}/activate-slot")
     public ApiResponse<SubscriptionResponse> activateSlot(@PathVariable Long id) {
         return ApiResponse.ok("Kích hoạt slot thành công", subscriptionService.activateNextSlot(id));
     }
 
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @PutMapping("/{id}/cancel")
     public ApiResponse<SubscriptionResponse> cancel(@PathVariable Long id) {
         return ApiResponse.ok("Huỷ gói đăng tin thành công", subscriptionService.cancelSubscription(id));

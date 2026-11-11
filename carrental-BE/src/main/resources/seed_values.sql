@@ -28,7 +28,7 @@ INSERT INTO customers (
 )
 VALUES 
 (7, 'Hệ Thống Admin', 'admin@carrental.com', '0900000001', '$2a$10$Pbzn2e63dKrK9GvWRoxkqehF4fTr3Pxlq8aU63OKZ5yR/dH53YrVa', true, 'VERIFIED', 'ADMIN', 'ACTIVE', NOW(), NOW()),
-(8, 'Trần Văn Chủ Xe', 'chuxe@gmail.com', '0909876543', '$2a$10$Pbzn2e63dKrK9GvWRoxkqehF4fTr3Pxlq8aU63OKZ5yR/dH53YrVa', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE', NOW(), NOW()),
+(8, 'Trần Văn Chủ Xe', 'chuxe@gmail.com', '0909876543', '$2a$10$Pbzn2e63dKrK9GvWRoxkqehF4fTr3Pxlq8aU63OKZ5yR/dH53YrVa', true, 'VERIFIED', 'OWNER', 'ACTIVE', NOW(), NOW()),
 (9, 'Nguyễn Văn Khách', 'khach@gmail.com', '0901234567', '$2a$10$Pbzn2e63dKrK9GvWRoxkqehF4fTr3Pxlq8aU63OKZ5yR/dH53YrVa', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE SET 
     email = EXCLUDED.email,
