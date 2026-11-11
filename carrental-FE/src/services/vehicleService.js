@@ -1,6 +1,7 @@
 import { endpoints } from "@/services/endpoints.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
 import { normalizeCar } from "@/utils/apiResponse.js";
+import { isApprovedCar } from "@/utils/owner.js";
 
 const nullable = (value) => (value === "" || value === undefined ? null : value);
 
@@ -93,8 +94,12 @@ export const carService = {
     getPublic: getCar,
 };
 
-/** Đếm số xe (GET /api/cars/my-cars). */
+/** Đếm số xe và số xe đã được duyệt (GET /api/cars/my-cars). */
 export async function getOwnerCounts() {
-    const cars = await request(endpoints.cars.myCars, { query: { page: 0, size: 1 } }).then(toPage).catch(() => null);
-    return { cars: cars?.totalElements ?? null, pending: 0 };
+    const page = await request(endpoints.cars.myCars, { query: { page: 0, size: 100 }, clearSessionOn401: false }).then(toPage).catch(() => null);
+    return {
+        cars: page?.totalElements ?? null,
+        approvedCars: page ? page.content.filter(car => isApprovedCar(car.status)).length : null,
+        pending: 0,
+    };
 }

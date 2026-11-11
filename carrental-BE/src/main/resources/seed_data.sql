@@ -1,4 +1,4 @@
-﻿-- =====================================================================
+-- =====================================================================
 -- SBA301 - Ná»€N Táº¢NG CHO THUÃŠ XE Tá»° LÃI (CAR LISTING PLATFORM)
 -- TOÃ€N Bá»˜ CÆ  Sá»ž Dá»® LIá»†U & SEED DATA Äáº¦Y Äá»¦ (FULL SEED DATA)
 -- CHá»ˆ Gá»’M: QUáº¢N TRá»Š VIÃŠN (ADMIN), CHá»¦ XE (OWNER), KHÃCH HÃ€NG (CUSTOMER)
@@ -37,16 +37,10 @@ DROP TABLE IF EXISTS bank_accounts CASCADE;
 -- 1. HÃ€M DÃ™NG CHUNG (MÃšI GIá»œ VIá»†T NAM & AUTO UPDATED_AT)
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vn_now() RETURNS timestamp
-LANGUAGE sql STABLE AS $$ 
-    SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh') 
-$$;
+LANGUAGE sql STABLE AS 'SELECT (now() AT TIME ZONE ''Asia/Ho_Chi_Minh'')';
 
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger
-LANGUAGE plpgsql AS $$
-BEGIN
-    NEW.updated_at := vn_now();
-    RETURN NEW;
-END $$;
+LANGUAGE plpgsql AS 'BEGIN NEW.updated_at := (now() AT TIME ZONE ''Asia/Ho_Chi_Minh''); RETURN NEW; END';
 
 -- ---------------------------------------------------------------------
 -- 2. TÃ€I KHOáº¢N NGÆ¯á»œI DÃ™NG (CUSTOMERS - F1)
@@ -66,7 +60,7 @@ CREATE TABLE customers (
     kyc_status      VARCHAR(20)  NOT NULL DEFAULT 'NONE'
                     CHECK (kyc_status IN ('NONE', 'PENDING', 'VERIFIED', 'REJECTED')),
     role            VARCHAR(20)  NOT NULL DEFAULT 'CUSTOMER'
-                    CHECK (role IN ('CUSTOMER', 'ADMIN')),
+                    CHECK (role IN ('CUSTOMER', 'OWNER', 'ADMIN')),
     status          VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE'
                     CHECK (status IN ('ACTIVE', 'LOCKED')),
     created_at      TIMESTAMP    NOT NULL DEFAULT vn_now(),
@@ -291,19 +285,13 @@ CREATE TABLE reviews (
 -- ---------------------------------------------------------------------
 -- 12. TRIGGERS & INDEXES
 -- ---------------------------------------------------------------------
-DO $$
-DECLARE
-    t text;
-BEGIN
-    FOR t IN
-        SELECT table_name FROM information_schema.columns
-        WHERE table_schema = 'public' AND column_name = 'updated_at'
-    LOOP
-        EXECUTE format(
-            'CREATE TRIGGER trg_%I_updated_at BEFORE UPDATE ON %I
-             FOR EACH ROW EXECUTE FUNCTION set_updated_at()', t, t);
-    END LOOP;
-END $$;
+CREATE TRIGGER trg_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_user_documents_updated_at BEFORE UPDATE ON user_documents FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_listing_packages_updated_at BEFORE UPDATE ON listing_packages FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_vouchers_updated_at BEFORE UPDATE ON vouchers FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_cars_updated_at BEFORE UPDATE ON cars FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_car_subscriptions_updated_at BEFORE UPDATE ON car_subscriptions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_transactions_updated_at BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE INDEX idx_cars_search_active ON cars(city, car_type) 
     WHERE status = 'ACTIVE' AND listing_status = 'LISTED';
@@ -332,10 +320,10 @@ VALUES
 (2, 'Kiá»ƒm Duyá»‡t ViÃªn Admin', 'admin2@carrental.vn', '0900000002', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1993-05-20', 'Trung tÃ¢m Váº­n hÃ nh CarRental, Cáº§u Giáº¥y, HÃ  Ná»™i', '/images/avatars/user-2-admin2.jpg', '0900000002', 'Duyá»‡t há»“ sÆ¡ xe & KYC', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
 
 -- Chá»§ xe (Owners)
-(3, 'Tráº§n Thá»‹ BÃ¬nh', 'binh@gmail.com', '0912345678', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1988-08-12', '123 Nguyá»…n Thá»‹ Tháº­p, TÃ¢n PhÃº, Quáº­n 7, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-3-binh.jpg', '0912345678', 'Gá»i tiá»‡n nháº¥t 8h00 - 21h00', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(4, 'Nguyá»…n VÄƒn An', 'an@gmail.com', '0923456789', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1985-03-25', '456 LÃª VÄƒn Viá»‡t, TÄƒng NhÆ¡n PhÃº A, TP. Thá»§ Äá»©c, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-4-an.jpg', '0923456789', 'Zalo hoáº·c gá»i trá»±c tiáº¿p', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(5, 'Pháº¡m Huy HoÃ ng', 'hoang@gmail.com', '0934567890', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1982-11-05', '789 Nguyá»…n TrÃ£i, Thanh XuÃ¢n, HÃ  Ná»™i', '/images/avatars/user-5-hoang.jpg', '0934567890', 'Giao xe táº­n nÆ¡i khu vá»±c ná»™i thÃ nh', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(6, 'VÃµ Tuyáº¿t Mai', 'mai@gmail.com', '0945678901', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1991-09-18', '101 Tráº§n PhÃº, Háº£i ChÃ¢u, ÄÃ  Náºµng', '/images/avatars/user-6-mai.jpg', '0945678901', 'Há»— trá»£ khÃ¡ch du lá»‹ch chu Ä‘Ã¡o', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(3, 'Tráº§n Thá»‹ BÃ¬nh', 'binh@gmail.com', '0912345678', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1988-08-12', '123 Nguyá»…n Thá»‹ Tháº­p, TÃ¢n PhÃº, Quáº­n 7, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-3-binh.jpg', '0912345678', 'Gá»i tiá»‡n nháº¥t 8h00 - 21h00', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(4, 'Nguyá»…n VÄƒn An', 'an@gmail.com', '0923456789', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1985-03-25', '456 LÃª VÄƒn Viá»‡t, TÄƒng NhÆ¡n PhÃº A, TP. Thá»§ Äá»©c, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-4-an.jpg', '0923456789', 'Zalo hoáº·c gá»i trá»±c tiáº¿p', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(5, 'Pháº¡m Huy HoÃ ng', 'hoang@gmail.com', '0934567890', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1982-11-05', '789 Nguyá»…n TrÃ£i, Thanh XuÃ¢n, HÃ  Ná»™i', '/images/avatars/user-5-hoang.jpg', '0934567890', 'Giao xe táº­n nÆ¡i khu vá»±c ná»™i thÃ nh', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(6, 'VÃµ Tuyáº¿t Mai', 'mai@gmail.com', '0945678901', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1991-09-18', '101 Tráº§n PhÃº, Háº£i ChÃ¢u, ÄÃ  Náºµng', '/images/avatars/user-6-mai.jpg', '0945678901', 'Há»— trá»£ khÃ¡ch du lá»‹ch chu Ä‘Ã¡o', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
 
 -- KhÃ¡ch hÃ ng thuÃª xe (Customers)
 (7, 'LÃª Minh CÆ°á»ng', 'cuong@gmail.com', '0956789012', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1989-06-30', '234 Cá»™ng HÃ²a, PhÆ°á»ng 13, TÃ¢n BÃ¬nh, TP. Há»“ ChÃ­ Minh', '/images/avatars/user-7-cuong.jpg', '0956789012', 'KhÃ¡ch hÃ ng thÃ¢n thiáº¿t', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),

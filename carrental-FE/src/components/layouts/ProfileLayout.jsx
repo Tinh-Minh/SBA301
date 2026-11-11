@@ -6,8 +6,6 @@ import { RequireAuth } from "@/components/RequireAuth.jsx";
 const labels = {
     account: "Hồ sơ cá nhân",
     verification: "Hồ sơ định danh eKYC",
-    driver: "Hồ sơ tài xế",
-    banks: "Tài khoản ngân hàng",
     reviews: "Đánh giá của tôi",
     subscriptions: "Gói đăng tin",
 };

@@ -5,7 +5,7 @@ import { toNumber } from "@/utils/labels.js";
 import { currentUserId } from "@/utils/session.js";
 import { request, toPage } from "@/services/api.js";
 import { normalizeCar } from "@/utils/apiResponse.js";
-import { getCustomer, getCustomerKyc, listCustomers, updateCustomerStatus } from "@/services/accountService.js";
+import { getCustomer, getCustomerKyc, listCustomers, updateCustomerRole, updateCustomerStatus } from "@/services/accountService.js";
 import { adminPayoutService } from "@/services/payoutService.js";
 
 const pageOf = async (path, query, map = (item) => item) => {
@@ -20,6 +20,8 @@ export const adminUserService = {
     kyc: getCustomerKyc,
     /** PATCH /api/customers/{id}/status { status: ACTIVE|LOCKED, reason } */
     setStatus: updateCustomerStatus,
+    /** PATCH /api/customers/{id}/role { role: CUSTOMER|OWNER } */
+    setRole: updateCustomerRole,
     /** GET /api/user-documents?scope=all&customerId&verifyStatus */
     listDocuments: ({ customerId, verifyStatus, docType, page = 0, size = 50 } = {}) =>
         pageOf(endpoints.userDocuments.list, { scope: "all", customerId, verifyStatus, docType, page, size, sort: "createdAt,desc" }),

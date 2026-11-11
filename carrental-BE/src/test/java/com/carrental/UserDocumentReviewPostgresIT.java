@@ -259,7 +259,7 @@ class UserDocumentReviewPostgresIT {
         assertThat(afterOwner.get("full_name")).isEqualTo(beforeOwner.get("full_name"));
         assertThat(afterOwner.get("email")).isEqualTo(beforeOwner.get("email"));
         assertThat(afterOwner.get("phone")).isEqualTo(beforeOwner.get("phone"));
-        assertThat(afterOwner.get("role")).isEqualTo(beforeOwner.get("role"));
+        assertThat(afterOwner.get("role")).isEqualTo("OWNER");
         assertThat(afterOwner.get("status")).isEqualTo(beforeOwner.get("status"));
         assertThat(fileNames()).isEqualTo(filesBefore);
         HttpResponse<String> current = get("/api/customers/" + owner.id() + "/kyc", token);

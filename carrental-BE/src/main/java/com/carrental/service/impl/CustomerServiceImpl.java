@@ -4,6 +4,7 @@ import static com.carrental.util.RequestChecks.fieldError;
 
 import com.carrental.config.CustomerProperties;
 import com.carrental.dto.request.auth.AuthInputNormalizer;
+import com.carrental.dto.request.customer.ChangeCustomerRoleRequest;
 import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
 import com.carrental.dto.request.customer.CustomerListQuery;
 import com.carrental.dto.request.customer.UpdateProfileRequest;
@@ -13,6 +14,7 @@ import com.carrental.dto.response.CustomerSummaryResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
+import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
@@ -62,7 +64,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     public CustomerProfileResponse getMe(CurrentAccount account) {
         return customers.findById(account.customerId())
                 .map(CustomerProfileResponse::from)
@@ -71,7 +73,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     public CustomerProfileResponse updateMe(CurrentAccount account, UpdateProfileRequest request) {
         if (request == null || !request.hasAnyAllowedField()) throw new AppException(ErrorCode.INVALID_REQUEST);
 
@@ -175,11 +177,51 @@ public class CustomerServiceImpl implements CustomerService {
         return CustomerAdminResponse.from(target);
     }
 
+    @Override
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public CustomerAdminResponse changeCustomerRole(
+            CurrentAccount actor, long targetId, ChangeCustomerRoleRequest request) {
+        if (request == null || !request.roleWasProvided() || request.getRole() == null
+                || request.getRole() == Role.ADMIN) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Vai trò chỉ chấp nhận CUSTOMER hoặc OWNER");
+        }
+        if (actor == null || actor.customerId() <= 0 || actor.role() != Role.ADMIN) {
+            throw new AppException(ErrorCode.INVALID_TOKEN);
+        }
+        Customer actorRow = customers.findById(actor.customerId())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+        if (actorRow.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
+        if (actorRow.getRole() != Role.ADMIN) throw new AppException(ErrorCode.ACCESS_DENIED);
+
+        Customer target = customers.findWithLockById(targetId).orElseThrow(RequestChecks::notFound);
+        if (target.getRole() == Role.ADMIN) {
+            throw new AppException(ErrorCode.ACCESS_DENIED, "Không thể đổi vai trò của tài khoản quản trị");
+        }
+        Role requestedRole = request.getRole();
+        if (requestedRole == Role.OWNER) {
+            if (target.getStatus() != CustomerStatus.ACTIVE) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Tài khoản đang bị khóa, không thể nâng cấp Chủ xe");
+            }
+            if (target.getKycStatus() != KycStatus.VERIFIED) {
+                throw new AppException(ErrorCode.INVALID_REQUEST, "Khách hàng phải gửi giấy xác nhận và được duyệt KYC trước khi trở thành Chủ xe");
+            }
+        }
+        Role oldRole = target.getRole();
+        if (oldRole != requestedRole) {
+            target.setRole(requestedRole);
+            customers.flush();
+            log.info("customer-role actorId={} targetId={} {} -> {}", actorRow.getId(), target.getId(), oldRole, requestedRole);
+        }
+        return CustomerAdminResponse.from(target);
+    }
+
     private Specification<Customer> customerSpecification(CustomerListQuery query) {
         return (root, criteriaQuery, builder) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             if (query.status() != null) predicates.add(builder.equal(root.get("status"), query.status()));
             if (query.kycStatus() != null) predicates.add(builder.equal(root.get("kycStatus"), query.kycStatus()));
+            if (query.role() != null) predicates.add(builder.equal(root.get("role"), query.role()));
             if (query.keyword() != null) {
                 String pattern = "%" + escapeLike(query.keyword().toLowerCase(Locale.ROOT)) + "%";
                 var fullName = builder.like(builder.lower(root.get("fullName")), pattern, LIKE_ESCAPE);

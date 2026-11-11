@@ -23,7 +23,12 @@ export function LoginForm() {
             setVerificationEmail("");
             notify("Đăng nhập thành công.");
             const next = search.get("next");
-            navigate(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/explore");
+            const defaultHome = session.account.role === "ADMIN"
+                ? "/admin/dashboard"
+                : session.account.role === "OWNER"
+                    ? "/owner/dashboard"
+                    : "/explore";
+            navigate(next && next.startsWith("/") ? next : defaultHome);
         } catch (error) {
             const message = error.message || (error.status === 401 ? "Email hoặc mật khẩu không đúng." : "Đăng nhập thất bại.");
             setError("root.server", { message });

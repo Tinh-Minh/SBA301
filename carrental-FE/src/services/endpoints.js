@@ -37,6 +37,7 @@ export const endpoints = {
     customers: {
         byId: (id) => `/api/customers/${id}`,
         byIdKyc: (id) => `/api/customers/${id}/kyc`,
+        byIdRole: (id) => `/api/customers/${id}/role`,
         byIdStatus: (id) => `/api/customers/${id}/status`,
         list: "/api/customers",
         me: "/api/customers/me",

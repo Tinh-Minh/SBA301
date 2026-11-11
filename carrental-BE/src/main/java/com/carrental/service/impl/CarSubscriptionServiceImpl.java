@@ -10,17 +10,20 @@ import com.carrental.entity.Car;
 import com.carrental.entity.CarSubscription;
 import com.carrental.entity.Customer;
 import com.carrental.entity.ListingPackage;
+import com.carrental.entity.Transaction;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.ListingStatus;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.SubscriptionStatus;
+import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.exception.AppException;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.repository.ListingPackageRepository;
+import com.carrental.repository.TransactionRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.service.CarSubscriptionService;
 import com.carrental.service.CurrentUserService;
@@ -56,6 +59,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     private final CarRepository carRepository;
     private final ListingPackageRepository listingPackageRepository;
     private final VoucherRepository voucherRepository;
+    private final TransactionRepository transactionRepository;
     private final CurrentUserService currentUserService;
     private final SubscriptionProperties subscriptionProperties;
     private final Clock clock;
@@ -74,6 +78,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     public SubscriptionQuoteResponse quote(CreateSubscriptionRequest request) {
         return run("báo giá gói đăng tin", request.getCarId(), () -> {
             Customer owner = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(owner);
             Car car = loadOwnCar(request.getCarId(), owner);
             ensureCarCanBuy(car);
             ListingPackage listingPackage = loadPackage(request.getPackageId());
@@ -95,6 +100,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         log.info("Tạo yêu cầu mua gói carId={}, packageId={}", request.getCarId(), request.getPackageId());
         return run("tạo yêu cầu mua gói", request.getCarId(), () -> {
             Customer owner = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(owner);
             Car car = loadOwnCar(request.getCarId(), owner);
             ensureCarCanBuy(car);
             ListingPackage listingPackage = loadPackage(request.getPackageId());
@@ -130,7 +136,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
                 activate(subscription, now);
             }
             log.info("Tạo yêu cầu mua gói thành công id={}, code={}", subscription.getId(), subscription.getSubscriptionCode());
-            return SubscriptionResponse.from(subscription, now);
+            return toResponse(subscription, now);
         });
     }
 
@@ -154,8 +160,11 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         return run("kích hoạt slot tiếp theo", subscriptionId, () -> {
             Customer user = currentUserService.getCurrentUser();
             CarSubscription subscription = findSubscription(subscriptionId);
-            if (!isBuyer(subscription, user) && !currentUserService.isAdmin(user)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền kích hoạt slot của gói này");
+            if (!currentUserService.isAdmin(user)) {
+                CurrentUserService.requireVerifiedOwner(user);
+                if (!isBuyer(subscription, user)) {
+                    throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền kích hoạt slot của gói này");
+                }
             }
             if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Gói đăng tin không trong trạng thái kích hoạt");
@@ -189,9 +198,10 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     public PageResponse<SubscriptionResponse> getMySubscriptions(Pageable pageable) {
         return run("xem gói đăng tin của tôi", null, () -> {
             Customer user = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(user);
             LocalDateTime now = LocalDateTime.now(clock);
             return PageResponse.from(subscriptionRepository.findAllByCustomerId(user.getId(), pageable)
-                    .map(subscription -> SubscriptionResponse.from(subscription, now)));
+                    .map(subscription -> toResponse(subscription, now)));
         });
     }
 
@@ -201,10 +211,13 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         return run("xem chi tiết gói đăng tin", id, () -> {
             Customer user = currentUserService.getCurrentUser();
             CarSubscription subscription = findSubscription(id);
-            if (!isBuyer(subscription, user) && !currentUserService.isAdmin(user)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem gói đăng tin này");
+            if (!currentUserService.isAdmin(user)) {
+                CurrentUserService.requireVerifiedOwner(user);
+                if (!isBuyer(subscription, user)) {
+                    throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem gói đăng tin này");
+                }
             }
-            return SubscriptionResponse.from(subscription, LocalDateTime.now(clock));
+            return toResponse(subscription, LocalDateTime.now(clock));
         });
     }
 
@@ -215,7 +228,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         return run("xem toàn bộ gói đăng tin", null, () -> {
             LocalDateTime now = LocalDateTime.now(clock);
             return PageResponse.from(subscriptionRepository.search(status, pageable)
-                    .map(subscription -> SubscriptionResponse.from(subscription, now)));
+                    .map(subscription -> toResponse(subscription, now)));
         });
     }
 
@@ -229,14 +242,17 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             Customer user = currentUserService.getCurrentUser();
             CarSubscription subscription = findSubscription(id);
             boolean admin = currentUserService.isAdmin(user);
-            if (!admin && !isBuyer(subscription, user)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền huỷ gói đăng tin này");
+            if (!admin) {
+                CurrentUserService.requireVerifiedOwner(user);
+                if (!isBuyer(subscription, user)) {
+                    throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền huỷ gói đăng tin này");
+                }
             }
             if (!admin && subscription.getStatus() == SubscriptionStatus.ACTIVE) {
                 throw new AppException(HttpStatus.FORBIDDEN, "Gói đã kích hoạt chỉ quản trị viên mới được huỷ");
             }
             cancel(subscription);
-            return SubscriptionResponse.from(subscription, LocalDateTime.now(clock));
+            return toResponse(subscription, LocalDateTime.now(clock));
         });
     }
 
@@ -369,6 +385,12 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         SubscriptionStatus from = subscription.getStatus();
         from.validateTransitionTo(SubscriptionStatus.CANCELLED);
         subscription.setStatus(SubscriptionStatus.CANCELLED);
+        // Huỷ mọi giao dịch PENDING liên quan để không bị treo trạng thái chờ thanh toán trên hệ thống.
+        List<Transaction> pendingTransactions = transactionRepository
+                .findAllBySubscriptionIdAndStatus(subscription.getId(), TransactionStatus.PENDING);
+        for (Transaction tx : pendingTransactions) {
+            tx.setStatus(TransactionStatus.FAILED);
+        }
         // Gói chưa thanh toán chưa dùng thật nên trả lại lượt voucher; xe chưa được gói này mở tin nên giữ nguyên.
         if (from == SubscriptionStatus.PENDING_PAYMENT) {
             if (subscription.getVoucher() != null) {
@@ -380,6 +402,10 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         if (subscription.getId().equals(car.getCurrentSubscriptionId())) {
             car.setListingStatus(ListingStatus.UNLISTED);
         }
+    }
+
+    private SubscriptionResponse toResponse(CarSubscription subscription, LocalDateTime now) {
+        return SubscriptionResponse.from(subscription, now, subscriptionProperties.getPaymentTimeoutMinutes());
     }
 
     private LocalDateTime paymentCutoff() {

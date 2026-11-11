@@ -24,7 +24,7 @@ CREATE TABLE public.customers (
     kyc_status      VARCHAR(20)  NOT NULL DEFAULT 'NONE'
                     CHECK (kyc_status IN ('NONE', 'PENDING', 'VERIFIED', 'REJECTED')),
     role            VARCHAR(20)  NOT NULL DEFAULT 'CUSTOMER'
-                    CHECK (role IN ('CUSTOMER', 'ADMIN')),
+                    CHECK (role IN ('CUSTOMER', 'OWNER', 'ADMIN')),
     status          VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE'
                     CHECK (status IN ('ACTIVE', 'LOCKED')),
     created_at      TIMESTAMP    NOT NULL DEFAULT public.vn_now(),

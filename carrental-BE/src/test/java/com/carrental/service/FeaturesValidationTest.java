@@ -63,7 +63,8 @@ class FeaturesValidationTest {
         reviewService = new ReviewServiceImpl(reviewRepository, carRepository, currentUserService);
         dashboardService = new DashboardServiceImpl(transactionRepository, carRepository, listingPackageRepository);
 
-        owner = Customer.builder().fullName("Nguyễn Văn Chủ").email("owner@test.com").phone("0901111111").role(Role.CUSTOMER).build();
+        owner = Customer.builder().fullName("Nguyễn Văn Chủ").email("owner@test.com").phone("0901111111")
+                .role(Role.OWNER).kycStatus(KycStatus.VERIFIED).status(CustomerStatus.ACTIVE).build();
         owner.setId(1L);
 
         customer = Customer.builder().fullName("Trần Khách Hàng").email("customer@test.com").phone("0902222222").role(Role.CUSTOMER).build();
@@ -126,7 +127,8 @@ class FeaturesValidationTest {
     @Test
     @DisplayName("F4 - Người không phải chủ xe sở hữu gói đăng ký bị chặn thanh toán")
     void testCreatePackagePayment_NotOwnerForbidden() {
-        Customer otherUser = Customer.builder().fullName("Người dùng khác").email("other@test.com").phone("0900000001").role(Role.CUSTOMER).build();
+        Customer otherUser = Customer.builder().fullName("Người dùng khác").email("other@test.com").phone("0900000001")
+                .role(Role.OWNER).kycStatus(KycStatus.VERIFIED).status(CustomerStatus.ACTIVE).build();
         otherUser.setId(99L);
 
         when(currentUserService.getCurrentUser()).thenReturn(otherUser);
@@ -140,6 +142,21 @@ class FeaturesValidationTest {
         AppException ex = assertThrows(AppException.class, () -> transactionService.createPackagePayment(request, servletRequest));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertTrue(ex.getMessage().contains("sở hữu"));
+    }
+
+    @Test
+    @DisplayName("F4 - Tài khoản CUSTOMER chưa xác minh làm chủ xe bị chặn thanh toán gói")
+    void testCreatePackagePayment_CustomerRoleForbidden() {
+        customer.setStatus(CustomerStatus.ACTIVE);
+        when(currentUserService.getCurrentUser()).thenReturn(customer);
+
+        PackagePaymentRequest request = PackagePaymentRequest.builder()
+                .subscriptionId(200L)
+                .method(PaymentMethod.VNPAY)
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> transactionService.createPackagePayment(request, servletRequest));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     @Test

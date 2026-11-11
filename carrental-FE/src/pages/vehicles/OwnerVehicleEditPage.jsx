@@ -94,22 +94,42 @@ export default function OwnerVehicleEdit({ carId }) {
           </div>
           <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
             Đơn giá thuê theo ngày (VND)
-            <Controller name="pricePerDay" control={control} render={({ field, fieldState }) => <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
+            <Controller name="pricePerDay" control={control} render={({ field, fieldState }) => (
+              <>
+                <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className={`rounded-xl border px-3 py-2.5 font-medium outline-none focus:border-brand-accent ${fieldState.error ? "border-red-500" : "border-card-border"}`}/>
+                {fieldState.error?.message ? <span role="alert" className="text-xs font-medium text-red-600">{fieldState.error.message}</span> : null}
+              </>
+            )}/>
             <span className="text-xs font-normal text-muted-gray">Áp dụng cho khung lịch đang mở. {price ? formatVnd(price) : "Nhập số nguyên."} / ngày</span>
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
             Tiền cọc thế chấp (VND)
-            <Controller name="depositAmount" control={control} render={({ field, fieldState }) => <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
+            <Controller name="depositAmount" control={control} render={({ field, fieldState }) => (
+              <>
+                <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className={`rounded-xl border px-3 py-2.5 font-medium outline-none focus:border-brand-accent ${fieldState.error ? "border-red-500" : "border-card-border"}`}/>
+                {fieldState.error?.message ? <span role="alert" className="text-xs font-medium text-red-600">{fieldState.error.message}</span> : null}
+              </>
+            )}/>
             <span className="text-xs font-normal text-muted-gray">Chủ xe thu trực tiếp khi ký C10-A. Khoản này không vào escrow.</span>
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
               Giới hạn km / ngày
-              <Controller name="kmLimitPerDay" control={control} render={({ field, fieldState }) => <input {...field} value={field.value} onChange={event => field.onChange(event.target.value)} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
+              <Controller name="kmLimitPerDay" control={control} render={({ field, fieldState }) => (
+                <>
+                  <input {...field} value={field.value} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className={`rounded-xl border px-3 py-2.5 font-medium outline-none focus:border-brand-accent ${fieldState.error ? "border-red-500" : "border-card-border"}`}/>
+                  {fieldState.error?.message ? <span role="alert" className="text-xs font-medium text-red-600">{fieldState.error.message}</span> : null}
+                </>
+              )}/>
             </label>
             <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
               Phí quá km (VND)
-              <Controller name="extraKmFee" control={control} render={({ field, fieldState }) => <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className="rounded-xl border border-card-border px-3 py-2.5 font-medium outline-none focus:border-brand-accent"/>}/>
+              <Controller name="extraKmFee" control={control} render={({ field, fieldState }) => (
+                <>
+                  <input {...field} value={grouped(field.value)} onChange={event => field.onChange(digitsOf(event.target.value))} aria-invalid={fieldState.invalid} inputMode="numeric" className={`rounded-xl border px-3 py-2.5 font-medium outline-none focus:border-brand-accent ${fieldState.error ? "border-red-500" : "border-card-border"}`}/>
+                  {fieldState.error?.message ? <span role="alert" className="text-xs font-medium text-red-600">{fieldState.error.message}</span> : null}
+                </>
+              )}/>
             </label>
           </div>
           <p className="rounded-xl bg-bg-light px-4 py-3 text-xs leading-relaxed text-muted-gray">Khách hủy trước 24 giờ được miễn phí theo chuẩn đối tác. Hủy muộn hơn đền bù theo hợp đồng thuê, không làm đổi công thức payout.</p>

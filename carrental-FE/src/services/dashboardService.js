@@ -1,6 +1,5 @@
 import { parseDate } from "@/utils/datetime.js";
 import { readSession } from "@/utils/session.js";
-import { bankAccountService } from "@/services/accountService.js";
 import { carService } from "@/services/vehicleService.js";
 import { subscriptionService } from "@/services/subscriptionService.js";
 import { transactionService } from "@/services/paymentService.js";
@@ -10,11 +9,10 @@ const money = (value) => Number(value) || 0;
 export const dashboardService = {
     async getSummary() {
         const session = readSession();
-        const [cars, subscriptions, transactions, defaultBankAccount] = await Promise.all([
+        const [cars, subscriptions, transactions] = await Promise.all([
             carService.listMine(),
             subscriptionService.listMine().catch(() => []),
             transactionService.listRecent().catch(() => []),
-            bankAccountService.getDefault().catch(() => null),
         ]);
         const activeListings = subscriptions.filter(item => item.status === "ACTIVE");
         const pendingPayments = subscriptions.filter(item => item.status === "PENDING_PAYMENT");
@@ -31,7 +29,6 @@ export const dashboardService = {
             activeListings: activeListings.length,
             pendingPayments: pendingPayments.length,
             paidTotal: paid.reduce((sum, item) => sum + money(item.amount), 0),
-            defaultBankAccount,
             pendingPaymentsList: pendingPayments.slice(0, 5),
             cars: cars.slice(0, 4),
             activities,
