@@ -106,29 +106,34 @@ export const initial = {
     cancellation: cancelPolicies[0],
 };
 const fieldClass = "w-full rounded-xl border border-card-border bg-white px-3 py-2.5 text-sm font-medium text-charcoal outline-none focus:border-brand-accent";
-function Field({ label, children }) {
+const fieldErrorClass = "w-full rounded-xl border border-[#EF4444] bg-[#FEF2F2]/40 px-3 py-2.5 text-sm font-medium text-charcoal outline-none focus:border-[#EF4444]";
+function inputCls(error) {
+    return error ? fieldErrorClass : fieldClass;
+}
+function Field({ label, error, children }) {
     return <label className="flex flex-col gap-1.5 text-[11px] font-bold uppercase tracking-wide text-muted-gray">
     {label}
     {children}
+    {error ? <span role="alert" className="text-[11px] font-semibold normal-case tracking-normal text-[#B91C1C]">{error}</span> : null}
   </label>;
 }
 function listed(options) {
     return options.map(item => typeof item === "string" ? { value: item, label: item } : item);
 }
-function ChoiceSelect({ value, options, onPick, onType, placeholder, inputMode, maxLength }) {
+function ChoiceSelect({ value, options, onPick, onType, placeholder, inputMode, maxLength, error }) {
     const items = listed(options);
     const known = items.some(item => item.value === value);
     const shown = known ? value : OTHER;
     const type = onType ?? onPick;
     return <>
-    <select className={fieldClass} value={shown} onChange={event => onPick(event.target.value === OTHER ? "" : event.target.value)}>
+    <select className={inputCls(error)} value={shown} onChange={event => onPick(event.target.value === OTHER ? "" : event.target.value)}>
       {items.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
       <option value={OTHER}>Khác — tự nhập</option>
     </select>
-    {shown === OTHER ? <input className={`${fieldClass} normal-case`} value={value} placeholder={placeholder} inputMode={inputMode} maxLength={maxLength} onChange={event => type(event.target.value)}/> : null}
+    {shown === OTHER ? <input className={`${inputCls(error)} normal-case`} value={value} placeholder={placeholder} inputMode={inputMode} maxLength={maxLength} onChange={event => type(event.target.value)}/> : null}
   </>;
 }
-export function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment, onCity, onCavet, onInspection }) {
+export function StepOne({ form, cavet, inspection, errors = {}, onChange, onBrand, onSegment, onCity, onCavet, onInspection }) {
     const models = modelsByBrand[form.brand] ?? [];
     const areaOptions = areas[form.city] ?? [];
     return <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
@@ -136,20 +141,20 @@ export function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment,
       <h2 className="flex items-center gap-2 text-base font-bold text-charcoal"><Icon name="directions_car" className="text-[20px] text-brand-accent"/> Thông tin định danh phương tiện</h2>
       <p className="mt-1 text-xs text-muted-gray">Nhập đúng biển số và địa chỉ trên giấy đăng ký xe.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Field label="Hãng xe">
-          <ChoiceSelect value={form.brand} options={brands} onPick={onBrand} onType={brand => onChange({ brand })} placeholder="Nhập hãng xe" maxLength={50}/>
+        <Field label="Hãng xe" error={errors.brand}>
+          <ChoiceSelect value={form.brand} options={brands} onPick={onBrand} onType={brand => onChange({ brand })} placeholder="Nhập hãng xe" maxLength={50} error={errors.brand}/>
         </Field>
-        <Field label="Dòng xe / phiên bản">
-          {models.length ? <ChoiceSelect value={form.model} options={models} onPick={model => onChange({ model })} placeholder="Nhập dòng xe" maxLength={50}/> : <input className={`${fieldClass} normal-case`} value={form.model} maxLength={50} placeholder="Nhập dòng xe" onChange={event => onChange({ model: event.target.value })}/>}
+        <Field label="Dòng xe / phiên bản" error={errors.model}>
+          {models.length ? <ChoiceSelect value={form.model} options={models} onPick={model => onChange({ model })} placeholder="Nhập dòng xe" maxLength={50} error={errors.model}/> : <input className={`${inputCls(errors.model)} normal-case`} value={form.model} maxLength={50} placeholder="Nhập dòng xe" onChange={event => onChange({ model: event.target.value })}/>}
         </Field>
-        <Field label="Biển kiểm soát">
-          <input className={fieldClass} value={form.licensePlate} placeholder="51K-889.92" onChange={event => onChange({ licensePlate: event.target.value.toUpperCase() })}/>
+        <Field label="Biển kiểm soát" error={errors.licensePlate}>
+          <input className={inputCls(errors.licensePlate)} value={form.licensePlate} maxLength={20} placeholder="51K-889.92" onChange={event => onChange({ licensePlate: event.target.value.toUpperCase() })}/>
         </Field>
-        <Field label="Năm sản xuất">
-          <ChoiceSelect value={form.manufactureYear} options={years} onPick={manufactureYear => onChange({ manufactureYear })} placeholder="Ví dụ 2016" inputMode="numeric" maxLength={4}/>
+        <Field label="Năm sản xuất" error={errors.manufactureYear}>
+          <ChoiceSelect value={form.manufactureYear} options={years} onPick={manufactureYear => onChange({ manufactureYear: digitsOf(manufactureYear).slice(0, 4) })} placeholder="Ví dụ 2016" inputMode="numeric" maxLength={4} error={errors.manufactureYear}/>
         </Field>
-        <Field label="Phân khúc xe">
-          <select className={fieldClass} value={form.segment} onChange={event => onSegment(event.target.value)}>
+        <Field label="Phân khúc xe" error={errors.carType}>
+          <select className={inputCls(errors.carType)} value={form.segment} onChange={event => onSegment(event.target.value)}>
             {segments.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
             <option value={OTHER}>Khác — tự nhập</option>
           </select>
@@ -158,14 +163,14 @@ export function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment,
             <select className={fieldClass} value={form.carType} onChange={event => onChange({ carType: event.target.value })}>{carTypes.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
           </> : null}
         </Field>
-        <Field label="Thành phố vận hành">
-          <ChoiceSelect value={form.city} options={cities} onPick={onCity} onType={city => onChange({ city })} placeholder="Nhập thành phố" maxLength={100}/>
+        <Field label="Thành phố vận hành" error={errors.city}>
+          <ChoiceSelect value={form.city} options={cities} onPick={onCity} onType={city => onChange({ city })} placeholder="Nhập thành phố" maxLength={100} error={errors.city}/>
         </Field>
         <Field label="Khu vực giao nhận">
           {areaOptions.length ? <ChoiceSelect value={form.area} options={areaOptions} onPick={area => onChange({ area })} placeholder="Nhập khu vực" maxLength={100}/> : <input className={`${fieldClass} normal-case`} value={form.area} maxLength={100} placeholder="Nhập khu vực" onChange={event => onChange({ area: event.target.value })}/>}
         </Field>
-        <Field label="Địa chỉ bãi xe cố định">
-          <input className={fieldClass} value={form.pickupAddress} placeholder="128 Thảo Điền, P. Thảo Điền" onChange={event => onChange({ pickupAddress: event.target.value })}/>
+        <Field label="Địa chỉ bãi xe cố định" error={errors.pickupAddress}>
+          <input className={inputCls(errors.pickupAddress)} value={form.pickupAddress} maxLength={300} placeholder="128 Thảo Điền, P. Thảo Điền" onChange={event => onChange({ pickupAddress: event.target.value })}/>
         </Field>
       </div>
       <p className="mt-4 rounded-xl bg-accent-soft px-4 py-3 text-xs leading-relaxed text-charcoal">Biển số và địa chỉ giao nhận cần trùng giấy đăng ký xe để CarDB đối chiếu hồ sơ.</p>
@@ -175,11 +180,13 @@ export function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment,
       <p className="text-xs text-muted-gray">Hệ thống lưu giấy tờ dạng đường dẫn (Google Drive, ảnh đã tải lên...). Có thể bổ sung sau khi gửi hồ sơ.</p>
       <label className="rounded-xl border border-dashed border-card-border p-3 text-sm">
         <span className="font-bold text-charcoal">Giấy đăng ký xe (cavet)</span>
-        <input type="url" value={cavet} placeholder="https://..." onChange={event => onCavet(event.target.value)} className={`${fieldClass} mt-2`}/>
+        <input type="url" value={cavet} placeholder="https://..." onChange={event => onCavet(event.target.value)} className={`${inputCls(errors.registrationUrl)} mt-2`}/>
+        {errors.registrationUrl ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{errors.registrationUrl}</span> : null}
       </label>
       <label className="rounded-xl border border-dashed border-card-border p-3 text-sm">
         <span className="font-bold text-charcoal">Sổ kiểm định an toàn</span>
-        <input type="url" value={inspection} placeholder="https://..." onChange={event => onInspection(event.target.value)} className={`${fieldClass} mt-2`}/>
+        <input type="url" value={inspection} placeholder="https://..." onChange={event => onInspection(event.target.value)} className={`${inputCls(errors.inspectionUrl)} mt-2`}/>
+        {errors.inspectionUrl ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{errors.inspectionUrl}</span> : null}
         <span className="mt-1 block text-xs text-muted-gray">Còn hạn tối thiểu 3 tháng khi niêm yết.</span>
       </label>
       <div className="rounded-xl bg-status-green-bg px-3 py-3 text-xs leading-relaxed text-status-success-ink">
@@ -190,7 +197,7 @@ export function StepOne({ form, cavet, inspection, onChange, onBrand, onSegment,
     </section>
   </div>;
 }
-export function StepTwo({ form, onChange }) {
+export function StepTwo({ form, errors = {}, onChange }) {
     function toggle(name) {
         onChange({ amenities: form.amenities.includes(name) ? form.amenities.filter(item => item !== name) : [...form.amenities, name] });
     }
@@ -198,21 +205,21 @@ export function StepTwo({ form, onChange }) {
     <section className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="text-base font-bold text-charcoal">Thông số kỹ thuật</h2>
       <div className="mt-4 grid gap-4">
-        <Field label="Nhiên liệu">
-          <select className={fieldClass} value={form.fuelType} onChange={event => onChange({ fuelType: event.target.value })}>{fuels.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+        <Field label="Nhiên liệu" error={errors.fuelType}>
+          <select className={inputCls(errors.fuelType)} value={form.fuelType} onChange={event => onChange({ fuelType: event.target.value })}>{fuels.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
         </Field>
-        <Field label="Số chỗ ngồi">
-          <ChoiceSelect value={form.seats} options={seatOptions} onPick={seats => onChange({ seats: digitsOf(seats).slice(0, 2) })} placeholder="Ví dụ 9" inputMode="numeric" maxLength={2}/>
+        <Field label="Số chỗ ngồi" error={errors.seats}>
+          <ChoiceSelect value={form.seats} options={seatOptions} onPick={seats => onChange({ seats: digitsOf(seats).slice(0, 2) })} placeholder="Ví dụ 9" inputMode="numeric" maxLength={2} error={errors.seats}/>
         </Field>
-        <Field label="Hộp số">
-          <select className={fieldClass} value={form.transmission} onChange={event => onChange({ transmission: event.target.value })}>{gearOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
+        <Field label="Hộp số" error={errors.transmission}>
+          <select className={inputCls(errors.transmission)} value={form.transmission} onChange={event => onChange({ transmission: event.target.value })}>{gearOptions.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select>
         </Field>
         <p className="text-xs font-medium normal-case text-muted-gray">Nhiên liệu và hộp số chỉ gồm các loại hệ thống đang lưu được.</p>
         <Field label={form.fuelType === "ELECTRIC" ? "Dung lượng pin / công suất" : "Động cơ / công suất"}>
-          <input className={fieldClass} value={form.powerNote} placeholder={form.fuelType === "ELECTRIC" ? "Ví dụ 123 kWh" : "Ví dụ 2.0L"} onChange={event => onChange({ powerNote: event.target.value })}/>
+          <input className={fieldClass} maxLength={60} value={form.powerNote} placeholder={form.fuelType === "ELECTRIC" ? "Ví dụ 123 kWh" : "Ví dụ 2.0L"} onChange={event => onChange({ powerNote: event.target.value })}/>
         </Field>
-        <Field label="Tầm vận hành (km)">
-          <input inputMode="numeric" className={fieldClass} value={form.rangeKm} placeholder="Không bắt buộc" onChange={event => onChange({ rangeKm: digitsOf(event.target.value) })}/>
+        <Field label="Tầm vận hành (km)" error={errors.rangeKm}>
+          <input inputMode="numeric" maxLength={4} className={inputCls(errors.rangeKm)} value={form.rangeKm} placeholder="Không bắt buộc (10 - 5.000 km)" onChange={event => onChange({ rangeKm: digitsOf(event.target.value) })}/>
         </Field>
       </div>
     </section>
@@ -231,32 +238,32 @@ export function StepTwo({ form, onChange }) {
     </section>
   </div>;
 }
-export function StepThree({ form, dayPrice, weekend, fee, onChange }) {
+export function StepThree({ form, dayPrice, weekend, fee, errors = {}, onChange }) {
     return <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.3fr)_300px]">
     <section className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="flex items-center gap-2 text-base font-bold text-charcoal"><Icon name="payments" className="text-[20px] text-brand-accent"/> Cài đặt bảng giá và tiền cọc</h2>
       <p className="mt-1 text-sm text-muted-gray">Đơn giá ngày thường được lưu làm giá niêm yết. Tiền cọc chủ xe tự thu khi ký C10-A.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <Field label="Đơn giá ngày thường (VND)">
-          <input inputMode="numeric" className={fieldClass} value={grouped(form.pricePerDay)} onChange={event => onChange({ pricePerDay: digitsOf(event.target.value) })}/>
+        <Field label="Đơn giá ngày thường (VND)" error={errors.pricePerDay}>
+          <input inputMode="numeric" className={inputCls(errors.pricePerDay)} value={grouped(form.pricePerDay)} placeholder="Tối thiểu 10.000đ" onChange={event => onChange({ pricePerDay: digitsOf(event.target.value) })}/>
         </Field>
-        <Field label="Đơn giá cuối tuần (VND)">
-          <input inputMode="numeric" className={fieldClass} value={grouped(form.weekendPrice)} onChange={event => onChange({ weekendPrice: digitsOf(event.target.value) })}/>
+        <Field label="Đơn giá cuối tuần (VND)" error={errors.weekendPrice}>
+          <input inputMode="numeric" className={inputCls(errors.weekendPrice)} value={grouped(form.weekendPrice)} placeholder="Tối thiểu 10.000đ" onChange={event => onChange({ weekendPrice: digitsOf(event.target.value) })}/>
         </Field>
-        <Field label="Tiền cọc thế chấp (VND)">
-          <input inputMode="numeric" className={fieldClass} value={grouped(form.depositAmount)} onChange={event => onChange({ depositAmount: digitsOf(event.target.value) })}/>
+        <Field label="Tiền cọc thế chấp (VND)" error={errors.depositAmount}>
+          <input inputMode="numeric" className={inputCls(errors.depositAmount)} value={grouped(form.depositAmount)} placeholder="Nhập 0 nếu miễn cọc" onChange={event => onChange({ depositAmount: digitsOf(event.target.value) })}/>
         </Field>
         <Field label="Chính sách hủy">
           <ChoiceSelect value={form.cancellation} options={cancelPolicies} onPick={cancellation => onChange({ cancellation })} placeholder="Nhập chính sách hủy" maxLength={120}/>
         </Field>
-        <Field label="Giới hạn km / ngày">
-          <input inputMode="numeric" className={fieldClass} value={form.kmLimitPerDay} onChange={event => onChange({ kmLimitPerDay: digitsOf(event.target.value) })}/>
+        <Field label="Giới hạn km / ngày" error={errors.kmLimitPerDay}>
+          <input inputMode="numeric" maxLength={4} className={inputCls(errors.kmLimitPerDay)} value={form.kmLimitPerDay} placeholder="10 - 5.000 km" onChange={event => onChange({ kmLimitPerDay: digitsOf(event.target.value) })}/>
         </Field>
-        <Field label="Phí quá km (VND)">
-          <input inputMode="numeric" className={fieldClass} value={grouped(form.extraKmFee)} onChange={event => onChange({ extraKmFee: digitsOf(event.target.value) })}/>
+        <Field label="Phí quá km (VND)" error={errors.extraKmFee}>
+          <input inputMode="numeric" className={inputCls(errors.extraKmFee)} value={grouped(form.extraKmFee)} placeholder="0 - 1.000.000đ" onChange={event => onChange({ extraKmFee: digitsOf(event.target.value) })}/>
         </Field>
-        <Field label="Phí trễ giờ (VND)">
-          <input inputMode="numeric" className={fieldClass} value={grouped(form.lateFee)} onChange={event => onChange({ lateFee: digitsOf(event.target.value) })}/>
+        <Field label="Phí trễ giờ (VND)" error={errors.lateFee}>
+          <input inputMode="numeric" className={inputCls(errors.lateFee)} value={grouped(form.lateFee)} placeholder="Không bắt buộc" onChange={event => onChange({ lateFee: digitsOf(event.target.value) })}/>
         </Field>
       </div>
       <p className="mt-4 text-xs leading-relaxed text-muted-gray">Khách hủy muộn hơn mốc đã chọn đền bù theo hợp đồng thuê. Phí trễ giờ chủ xe đối soát khi trả xe, không trừ vào payout.</p>
