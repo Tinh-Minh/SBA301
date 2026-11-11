@@ -1,8 +1,88 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { DecalGeometry } from "three/addons/geometries/DecalGeometry.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { createCarLights } from "./carJourneyLights.js";
 import { prepareWheels, createCustomer, createExhaust, createRoad, createTireTracks } from "./carJourneyEffects.js";
+
+function createBrandMaterial() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 320;
+    const context = canvas.getContext("2d");
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "#FC6C26";
+    context.font = "800 210px Arial, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText("CarDB", 512, 168);
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = 8;
+    return new THREE.MeshBasicMaterial({
+        map: texture,
+        transparent: true,
+        depthWrite: false,
+        toneMapped: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -8,
+        polygonOffsetUnits: -8,
+    });
+}
+
+function decalOrientation(right, up, normal) {
+    const desired = new THREE.Matrix4().makeBasis(right, up, normal);
+    const euler = new THREE.Euler();
+    const check = new THREE.Matrix4();
+    const got = new THREE.Vector3();
+    const spin = new THREE.Quaternion();
+    const quaternion = new THREE.Quaternion();
+    for (const twist of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {
+        quaternion.setFromRotationMatrix(desired);
+        spin.setFromAxisAngle(new THREE.Vector3(0, 0, 1), twist);
+        quaternion.multiply(spin);
+        euler.setFromQuaternion(quaternion);
+        check.makeRotationFromEuler(euler);
+        got.setFromMatrixColumn(check, 0);
+        if (got.dot(right) > 0.85) return euler;
+    }
+    return euler;
+}
+
+function addCarBrand(model, pivot) {
+    const material = createBrandMaterial();
+    const raycaster = new THREE.Raycaster();
+    const inverse = new THREE.Matrix4().copy(pivot.matrixWorld).invert();
+    const localBox = new THREE.Box3().setFromObject(model).applyMatrix4(inverse);
+    const skip = /glass|wheel|calliper|light|rim|mirror|window|badge|windwos/i;
+    const placements = [
+        { name: "left-door", origin: [localBox.max.x + 1.4, 0.72, 0.15], direction: [-1, 0, 0], up: [0, 1, 0], size: [1.15, 0.28] },
+        { name: "right-door", origin: [localBox.min.x - 1.4, 0.72, 0.15], direction: [1, 0, 0], up: [0, 1, 0], size: [1.15, 0.28] },
+        { name: "roof", origin: [0, localBox.max.y + 1.4, -0.15], direction: [0, -1, 0], up: [0, 0, -1], size: [1.45, 0.48] },
+        { name: "hood", origin: [0, localBox.max.y + 1.2, 2.2], direction: [0, -1, 0], up: [0, 0, -1], size: [0.82, 0.2] },
+    ];
+    for (const placement of placements) {
+        const origin = new THREE.Vector3(...placement.origin).applyMatrix4(pivot.matrixWorld);
+        const direction = new THREE.Vector3(...placement.direction).transformDirection(pivot.matrixWorld).normalize();
+        raycaster.set(origin, direction);
+        const hit = raycaster.intersectObject(model, true).find(item => item.face && !skip.test(`${item.object.name} ${item.object.parent?.name || ""}`));
+        if (!hit) continue;
+        const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+        const up = new THREE.Vector3(...placement.up).transformDirection(pivot.matrixWorld).projectOnPlane(normal);
+        if (up.lengthSq() < 1e-4) up.set(0, 1, 0).transformDirection(pivot.matrixWorld).projectOnPlane(normal);
+        up.normalize();
+        const right = new THREE.Vector3().crossVectors(up, normal).normalize();
+        const orientation = decalOrientation(right, up, normal);
+        const geometry = new DecalGeometry(hit.object, hit.point, orientation, new THREE.Vector3(placement.size[0], placement.size[1], 0.5));
+        geometry.applyMatrix4(inverse);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.name = `brand-${placement.name}`;
+        mesh.renderOrder = 2;
+        mesh.castShadow = false;
+        mesh.receiveShadow = false;
+        pivot.add(mesh);
+    }
+}
 
 function disposeObject(root) {
     const textures = new Set();
@@ -210,6 +290,7 @@ export function createCarScrollScene(host, { onReady, onError, reducedMotion }) 
         wheels.push(...prepareWheels(model));
         pivot.add(normalized);
         pivot.updateWorldMatrix(true, true);
+        addCarBrand(model, pivot);
         introWheel = wheels.find(({ wheel }) => /^3DWheel[ _]Front[ _]L$/.test(wheel.name))?.wheel;
         if (introWheel) {
             const wheelSize = new THREE.Box3().setFromObject(introWheel).getSize(new THREE.Vector3());

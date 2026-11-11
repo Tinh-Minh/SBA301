@@ -222,7 +222,7 @@
 .ambient-glow { animation:ambient-glow 6s ease-in-out infinite; }
 @keyframes ambient-glow { 0%,100%{opacity:.6}50%{opacity:.85} }
 .auth-screen { position:relative;background:#e7e2d8;color:#25251f; }
-.auth-screen::before { content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:#e7e2d8 url("/images/auth-coast.jpg") left center / cover no-repeat; }
+.auth-screen::before { content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:#e7e2d8 url("/images/auth-cardb.jpg") left center / cover no-repeat; }
 .auth-screen main { position:relative;z-index:1;box-sizing:border-box;min-height:100dvh;padding-top:80px;background:transparent; }
 .auth-screen-brand { position:absolute;z-index:1;top:clamp(104px,12vh,148px);left:max(1rem,calc((100% - 1440px) / 2 + 1rem));margin:0;color:#25251f;pointer-events:none; }
 .auth-screen-brand-title { margin:0;font-size:clamp(34px,2.8vw,46px);font-weight:700;line-height:1.15;letter-spacing:-.02em; }
@@ -261,7 +261,7 @@
 .auth-switch { margin-top:16px;color:#5f5f55;font-size:14px;text-align:center; }
 @media(max-width:900px) {
  .auth-screen-brand { display:none; }
- .auth-screen::before { background-position:28% 42%; }
+ .auth-screen::before { background-position:30% 62%; }
  .auth-screen-frame { align-items:flex-start;justify-content:stretch;padding:16px 16px 32px; }
  .auth-screen-card { width:100%;padding:24px 20px 20px; }
 }

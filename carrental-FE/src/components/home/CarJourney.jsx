@@ -6,7 +6,7 @@ const INTRO_SPEED = 1.5;
 const poses = [
     { x: 0.28, y: -0.22, scale: 0.72, yaw: -0.78, tilt: 0, overhead: 0, customer: 0, depart: 0 },
     { x: 0.16, y: 0.02, scale: 0.66, yaw: -1.10, tilt: -0.025, overhead: 0.10, customer: 0, depart: 0 },
-    { x: 0.26, y: 0.23, scale: 0.40, yaw: 0.35, tilt: 0, overhead: 0.28, customer: 0, depart: 0 },
+    { x: 0.34, y: -0.34, scale: 0.5, yaw: Math.PI / 2, tilt: 0, overhead: 0, customer: 0, depart: 0 },
     { x: -0.23, y: -0.04, scale: 0.77, yaw: 2.75, tilt: 0, overhead: 0.04, customer: 1, depart: 0 },
     { x: -0.27, y: -0.22, scale: 0.45, yaw: -0.7, tilt: 0, overhead: 0.12, customer: 0, depart: 0 },
     { x: 0.24, y: -0.08, scale: 0.78, yaw: 4.72, tilt: 0, overhead: 0.94, customer: 0, depart: 0 },
@@ -16,6 +16,75 @@ const poses = [
 
 const chapterIds = ["hero", "search", "fleet", "steps", "flow", "drive", "faq", "finale"];
 const chapterPoses = Object.fromEntries(chapterIds.map((id, index) => [id, poses[index]]));
+
+function smoothstep(value) {
+    const t = Math.max(0, Math.min(1, value));
+    return t * t * (3 - 2 * t);
+}
+
+function mixAngle(from, to, t) {
+    return from + Math.atan2(Math.sin(to - from), Math.cos(to - from)) * t;
+}
+
+// The search page stays put, then the car grows and drives left to right,
+// pulling the listings sheet across behind its nose.
+function fleetPass(progress, mobile) {
+    const search = chapterPoses.search;
+    const fleet = chapterPoses.fleet;
+    const side = Math.PI / 2;
+    const scale = mobile ? 0.52 : 0.6;
+    const lane = mobile ? -0.2 : -0.34;
+    const launch = 0.18;
+    const cruise = 0.7;
+    const enter = mobile ? -0.2 : -0.26;
+    const leave = mobile ? 0.26 : 0.36;
+    if (progress <= 0)
+        return { pose: { ...search }, reveal: 0, spin: 0 };
+    if (progress < launch) {
+        const u = smoothstep(progress / launch);
+        return {
+            pose: {
+                x: search.x + (enter - search.x) * u,
+                y: search.y + (lane - search.y) * u,
+                scale: search.scale + (scale - search.scale) * u,
+                yaw: mixAngle(search.yaw, side, u),
+                tilt: search.tilt * (1 - u),
+                overhead: search.overhead * (1 - u),
+                customer: 0,
+                depart: 0,
+            },
+            reveal: 0,
+            spin: u * 2,
+        };
+    }
+    if (progress < cruise) {
+        const u = smoothstep((progress - launch) / (cruise - launch));
+        const x = enter + (leave - enter) * u;
+        return {
+            pose: { x, y: lane, scale, yaw: side, tilt: 0, overhead: 0, customer: 0, depart: 0 },
+            reveal: Math.max(0, Math.min(1, (x + 0.22) / 0.62)),
+            spin: 4 + u * 8,
+        };
+    }
+    const u = smoothstep((progress - cruise) / (1 - cruise));
+    const park = mobile ? 0.34 : 0.46;
+    const rise = u < 0.45 ? 0 : smoothstep((u - 0.45) / 0.55);
+    const slide = smoothstep(Math.min(1, u / 0.45));
+    return {
+        pose: {
+            x: leave + (park - leave) * slide + (fleet.x - park) * rise,
+            y: lane + (fleet.y - lane) * rise,
+            scale: scale + (0.48 - scale) * slide + (fleet.scale - 0.48) * rise,
+            yaw: mixAngle(side, fleet.yaw, rise),
+            tilt: 0,
+            overhead: fleet.overhead * rise,
+            customer: 0,
+            depart: 0,
+        },
+        reveal: 1,
+        spin: (1 - rise) * 2,
+    };
+}
 
 export function CarJourney({ root }) {
     const host = useRef(null);
@@ -36,6 +105,7 @@ export function CarJourney({ root }) {
         element.style.setProperty("--intro-speed", String(INTRO_SPEED));
         element.dataset.introState = introSkipped || motion.matches ? "complete" : "loading";
         element.dataset.introTitle = "hidden";
+        element.dataset.introBrand = "hidden";
         host.current.removeAttribute('style');
         host.current.removeAttribute('data-car-stage');
         let chapters = [];
@@ -47,7 +117,11 @@ export function CarJourney({ root }) {
             const headerHeight = header?.getBoundingClientRect().height || 80;
             document.documentElement.style.setProperty("--journey-header-height", `${headerHeight}px`);
             chapters = [...element.querySelectorAll("[data-car-stop]")];
-            stops = chapters.map(chapter => chapter.getBoundingClientRect().top + window.scrollY - headerHeight);
+            stops = chapters.map(chapter => {
+                const marker = chapter.dataset.carPin ? element.querySelector(`[data-car-marker="${chapter.dataset.carPin}"]`) : null;
+                const node = marker ?? chapter;
+                return node.getBoundingClientRect().top + window.scrollY - headerHeight;
+            });
             stops[0] = 0;
 
             schedule();
@@ -79,10 +153,20 @@ export function CarJourney({ root }) {
             else if (introSkipped || motion.matches || introStarted != null) element.dataset.introState = "complete";
             pose.distance = motion.matches ? 0 : scroll * 0.012;
             const mobile = innerWidth < 1024;
-            if (mobile) {
+            let fleetReveal = chapterIds.indexOf(fromId) > chapterIds.indexOf("fleet") || fromId === "fleet" ? 1 : 0;
+            let fleetDrive = 0;
+            if (!motion.matches && fromId === "search" && toId === "fleet") {
+                fleetDrive = t <= 0.22 ? 0 : (t - 0.22) / 0.78;
+                const pass = fleetPass(fleetDrive, mobile);
+                Object.assign(pose, pass.pose);
+                fleetReveal = pass.reveal;
+                pose.distance += pass.spin;
+            }
+            element.style.setProperty("--fleet-reveal", fleetReveal.toFixed(4));
+            if (mobile && !(fromId === "search" && toId === "fleet" && !motion.matches)) {
                 const mobilePoses = [
                     { x:0.16, y:-0.24, scale:0.72 }, { x:0.08, y:0.2, scale:0.52 },
-                    { x:0.26, y:0.23, scale:0.38 },
+                    { x:0.2, y:-0.16, scale:0.48 },
                     innerWidth >= 640 && innerHeight < 600 ? { x:-0.22, y:-0.10, scale:0.60 } : { x:-0.04, y:-0.10, scale:innerWidth < 640 ? 0.95 : 0.78 },
                     { x:0.24, y:0.24, scale:0.45 },
                     { x:0, y:-0.12, scale:1.05 }, innerWidth < 640 ? { x:0.30, y:0.38, scale:0.38 } : { x:0.26, y:0.20, scale:0.38 },
@@ -93,7 +177,21 @@ export function CarJourney({ root }) {
             const intro = carIntroPath(introSkipped ? CAR_INTRO_DURATION : introElapsed, mobile);
             element.style.setProperty("--intro-light", motion.matches ? 1 : intro.light);
             element.dataset.introStep = String(intro.step);
-            element.dataset.introTitle = intro.step >= 2 ? "visible" : "hidden";
+            const brandStart = 2600;
+            const titleStart = 4700;
+            if (introSkipped || motion.matches) {
+                element.dataset.introBrand = "done";
+                element.dataset.introTitle = "visible";
+            } else if (introElapsed >= titleStart) {
+                element.dataset.introBrand = "out";
+                element.dataset.introTitle = "visible";
+            } else if (introElapsed >= brandStart) {
+                element.dataset.introBrand = "in";
+                element.dataset.introTitle = "hidden";
+            } else {
+                element.dataset.introBrand = "hidden";
+                element.dataset.introTitle = "hidden";
+            }
             pose.wheelCloseup = 0;
             pose.wheelSpinSpeed = 0;
             pose.lapX = 0;
@@ -146,7 +244,10 @@ export function CarJourney({ root }) {
                 const end = stops[chapterIndex] ?? start;
                 const progress = chapterIndex === 0 ? 1 : (scroll - start) / Math.max(1, end - start);
                 const introDone = element.dataset.introState === "complete";
-                chapter.dataset.carArrived = motion.matches || (chapterIndex === 0 ? introDone : progress >= 0.68) ? "true" : "false";
+                const arrived = chapter.dataset.carStop === "fleet" && fromId === "search"
+                    ? fleetDrive > 0.12
+                    : chapterIndex === 0 ? introDone : progress >= 0.68;
+                chapter.dataset.carArrived = motion.matches || arrived ? "true" : "false";
             }
         }
         function schedule() { if (!frame) frame = requestAnimationFrame(update); }
