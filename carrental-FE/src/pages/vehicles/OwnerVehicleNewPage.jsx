@@ -14,6 +14,7 @@ import { ownerRoutes } from "@/routes/paths.js";
 import { carService } from "@/services/vehicleService.js";
 import { useAuth } from "@/hooks/useAuth.js";
 import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/components/vehicles/VehicleRegistrationSteps.jsx";
+import { repairDisplayText } from "@/utils/text.js";
 
 export default function OwnerVehicleNew() {
     const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function OwnerVehicleNew() {
         if (!raw)
             return;
         try {
-            const saved = JSON.parse(raw);
+            const saved = repairDisplayText(JSON.parse(raw));
             if (saved.form)
                 reset({ ...getValues(), ...saved.form, amenities: saved.form?.amenities ?? initial.amenities });
             if (saved.photos)

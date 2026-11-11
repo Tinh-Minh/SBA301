@@ -13,9 +13,13 @@ public record SubscriptionPackageOption(
         Integer durationDays,
         Integer priorityLevel,
         String badgeLabel,
-        String description) {
+        String description,
+        Integer slotCount,
+        Integer durationDaysPerSlot) {
 
     public static SubscriptionPackageOption from(ListingPackage listingPackage) {
+        int slots = listingPackage.getSlotCount() != null ? listingPackage.getSlotCount() : 1;
+        int slotDays = listingPackage.getDurationDaysPerSlot() != null ? listingPackage.getDurationDaysPerSlot() : 7;
         return new SubscriptionPackageOption(
                 listingPackage.getId(),
                 listingPackage.getCode(),
@@ -24,6 +28,8 @@ public record SubscriptionPackageOption(
                 listingPackage.getDurationDays(),
                 listingPackage.getPriorityLevel(),
                 listingPackage.getBadgeLabel(),
-                listingPackage.getDescription());
+                listingPackage.getDescription(),
+                slots,
+                slotDays);
     }
 }

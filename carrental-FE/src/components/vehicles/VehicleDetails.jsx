@@ -71,7 +71,7 @@ function Body({ car }) {
 
                     <div className="flex items-center gap-2 text-sm text-[#292929]">
                         <span>📍</span>
-                        <span>{[car.pickupAddress, car.district, car.city].filter(Boolean).join(", ")}</span>
+                        <span>{car.pickupAddress || [car.district, car.city].filter(Boolean).join(", ")}</span>
                     </div>
 
                     {car.description ? (

@@ -29,6 +29,11 @@ export interface SubscriptionResponse {
   createdAt: DateTimeString;
   /** Số ngày còn hiển thị; null khi gói không ở trạng thái ACTIVE. */
   daysRemaining: number | null;
+  totalSlots?: number;
+  remainingSlots?: number;
+  durationDaysPerSlot?: number;
+  currentSlotStartDate?: DateTimeString | null;
+  currentSlotEndDate?: DateTimeString | null;
 }
 
 export interface SubscriptionPackageOption {
@@ -40,6 +45,8 @@ export interface SubscriptionPackageOption {
   priorityLevel: number;
   badgeLabel: string;
   description: string | null;
+  slotCount?: number;
+  durationDaysPerSlot?: number;
 }
 
 /** POST /api/subscriptions/quote */
@@ -52,4 +59,6 @@ export interface SubscriptionQuoteResponse {
   packagePrice: number;
   discountAmount: number;
   totalAmount: number;
+  slotCount?: number;
+  durationDaysPerSlot?: number;
 }

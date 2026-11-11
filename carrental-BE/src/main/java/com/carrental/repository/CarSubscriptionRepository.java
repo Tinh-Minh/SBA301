@@ -56,6 +56,9 @@ public interface CarSubscriptionRepository extends JpaRepository<CarSubscription
 
     List<CarSubscription> findByStatusAndEndDateBefore(SubscriptionStatus status, LocalDateTime dateTime);
 
+    @Query("select s from CarSubscription s where s.status = :status and ((s.currentSlotEndDate is not null and s.currentSlotEndDate <= :dateTime) or (s.endDate is not null and s.endDate <= :dateTime))")
+    List<CarSubscription> findActiveEligibleForExpiration(@Param("status") SubscriptionStatus status, @Param("dateTime") LocalDateTime dateTime);
+
     boolean existsByCarIdAndStatus(Long carId, SubscriptionStatus status);
 
     /** Toàn bộ gói cho admin, lọc trạng thái nếu có (nạp sẵn quan hệ, tránh N+1). */

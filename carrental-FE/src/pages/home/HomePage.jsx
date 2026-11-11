@@ -9,6 +9,10 @@ import { WheelCursor } from "@/components/home/WheelCursor.jsx";
 export default function Home() {
     const root = useRef(null);
     return <div ref={root} className="cardb-screen home-journey-page font-sans text-text-primary" data-intro-state="loading">
+        <link rel="preload" as="image" href="/images/hero-coast-road.jpg" />
+        <link rel="preload" as="image" href="/images/home/02-road.jpg" />
+        <link rel="preload" as="image" href="/images/home/03-pickup.jpg" />
+        <link rel="preload" as="image" href="/images/home/05-finale.jpg" />
         <WheelCursor />
         <CarJourney root={root} />
         <main>

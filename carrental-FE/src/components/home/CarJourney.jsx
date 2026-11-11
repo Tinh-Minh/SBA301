@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 const INTRO_SPEED = 1.5;
 
 const poses = [
-    { x: 0.02, y: -0.16, scale: 1.04, yaw: -0.65, tilt: 0, overhead: 0, customer: 0, depart: 0 },
+    { x: 0.28, y: -0.22, scale: 0.72, yaw: -0.78, tilt: 0, overhead: 0, customer: 0, depart: 0 },
     { x: 0.16, y: 0.02, scale: 0.66, yaw: -1.10, tilt: -0.025, overhead: 0.10, customer: 0, depart: 0 },
     { x: 0.26, y: 0.23, scale: 0.40, yaw: 0.35, tilt: 0, overhead: 0.28, customer: 0, depart: 0 },
     { x: -0.23, y: -0.04, scale: 0.77, yaw: 2.75, tilt: 0, overhead: 0.04, customer: 1, depart: 0 },
@@ -81,7 +81,7 @@ export function CarJourney({ root }) {
             const mobile = innerWidth < 1024;
             if (mobile) {
                 const mobilePoses = [
-                    { x:0, y:-0.08, scale:1.10 }, { x:0.08, y:0.2, scale:0.52 },
+                    { x:0.16, y:-0.24, scale:0.72 }, { x:0.08, y:0.2, scale:0.52 },
                     { x:0.26, y:0.23, scale:0.38 },
                     innerWidth >= 640 && innerHeight < 600 ? { x:-0.22, y:-0.10, scale:0.60 } : { x:-0.04, y:-0.10, scale:innerWidth < 640 ? 0.95 : 0.78 },
                     { x:0.24, y:0.24, scale:0.45 },

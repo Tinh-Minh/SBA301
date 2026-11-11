@@ -6,7 +6,6 @@ const groups = [
     { title: "Cài đặt tài khoản", links: [
             { section: "account", href: "/account", label: "Thông tin cá nhân", icon: "person" },
             { section: "verification", href: "/account/verification", label: "Xác minh giấy tờ", icon: "verified_user" },
-            { section: "driver", href: "/account/driver", label: "Hồ sơ tài xế", icon: "badge" },
             { section: "banks", href: "/account/bank", label: "Tài khoản ngân hàng", icon: "account_balance" },
         ] },
     { title: "Tin đăng và đánh giá", links: [

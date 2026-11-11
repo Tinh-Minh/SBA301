@@ -15,19 +15,16 @@ import java.util.List;
 import java.util.UUID;
 
 import com.carrental.entity.Customer;
-import com.carrental.entity.Driver;
 import com.carrental.entity.UserDocument;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.VerificationStatus;
-import com.carrental.enums.DriverStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
 import com.carrental.enums.DocumentType;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.repository.CustomerRepository;
-import com.carrental.repository.DriverRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.repository.VoucherRepository;
 import org.flywaydb.core.Flyway;
@@ -79,7 +76,6 @@ class Function1PostgresIT {
     @Autowired private Environment environment;
     @Autowired private CustomerRepository customers;
     @Autowired private UserDocumentRepository documents;
-    @Autowired private DriverRepository drivers;
     @Autowired private VoucherRepository vouchers;
 
     @Test
@@ -89,7 +85,7 @@ class Function1PostgresIT {
         List<String> tables = jdbc.queryForList("""
                 select tablename from pg_tables where schemaname = 'public' order by tablename
                 """, String.class);
-        assertThat(tables).contains("customers", "drivers", "flyway_schema_history", "user_documents", "vouchers");
+        assertThat(tables).contains("customers", "flyway_schema_history", "user_documents", "vouchers");
 
         assertThat(jdbc.queryForObject("select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace "
                 + "where n.nspname='public' and p.proname in ('vn_now','set_updated_at')", Integer.class)).isEqualTo(2);
@@ -98,7 +94,7 @@ class Function1PostgresIT {
                         "idx_user_documents_customer");
         assertThat(jdbc.queryForList("select tgname from pg_trigger where not tgisinternal", String.class))
                 .containsExactlyInAnyOrder("trg_customers_updated_at", "trg_user_documents_updated_at",
-                        "trg_drivers_updated_at", "trg_vouchers_updated_at");
+                        "trg_vouchers_updated_at");
 
         String email = "migration-" + SUFFIX + "@example.test";
         Long markerId = insertCustomer(email, "m" + SUFFIX.substring(0, 18));
@@ -153,11 +149,6 @@ class Function1PostgresIT {
             document.setVerifiedAt(LocalDateTime.of(2026, 10, 13, 9, 15));
             entityManager.persist(document);
 
-            Driver driver = new Driver();
-            driver.setCustomer(customer);
-            driver.setStatus(DriverStatus.ACTIVE);
-            entityManager.persist(driver);
-
             Voucher voucher = new Voucher();
             voucher.setCode("MAP-" + SUFFIX);
             voucher.setDiscountType(DiscountType.FIXED);
@@ -171,21 +162,17 @@ class Function1PostgresIT {
             entityManager.flush();
             assertThat(customer.getId()).isNotNull();
             assertThat(document.getId()).isNotNull();
-            assertThat(driver.getId()).isNotNull();
             assertThat(voucher.getId()).isNotNull();
             assertThat(customer.getCreatedAt()).isNotNull();
             assertThat(customer.getUpdatedAt()).isNotNull();
             assertThat(document.getCreatedAt()).isNotNull();
             assertThat(document.getUpdatedAt()).isNotNull();
-            assertThat(driver.getCreatedAt()).isNotNull();
-            assertThat(driver.getUpdatedAt()).isNotNull();
             assertThat(voucher.getCreatedAt()).isNotNull();
             assertThat(voucher.getUpdatedAt()).isNotNull();
             entityManager.clear();
 
             Customer loaded = entityManager.find(Customer.class, customer.getId());
             UserDocument loadedDocument = entityManager.find(UserDocument.class, document.getId());
-            Driver loadedDriver = entityManager.find(Driver.class, driver.getId());
             Voucher loadedVoucher = entityManager.find(Voucher.class, voucher.getId());
             assertThat(loaded.getDateOfBirth()).isEqualTo(LocalDate.of(1995, 4, 3));
             assertThat(loaded.getKycStatus()).isEqualTo(KycStatus.PENDING);
@@ -197,7 +184,6 @@ class Function1PostgresIT {
             assertThat(loadedDocument.getBackImageUrl()).isNull();
             assertThat(loadedDocument.getVerifiedAt()).isEqualTo(LocalDateTime.of(2026, 10, 13, 9, 15));
             assertThat(entityManager.find(Customer.class, administrator.getId()).getRole()).isEqualTo(Role.ADMIN);
-            assertThat(loadedDriver.getStatus()).isEqualTo(DriverStatus.ACTIVE);
             assertThat(loadedVoucher.getDiscountType()).isEqualTo(DiscountType.FIXED);
             assertThat(loadedVoucher.getDiscountValue()).isEqualByComparingTo("250000");
             assertThat(loadedVoucher.getMaxDiscount()).isEqualByComparingTo("0");
@@ -230,7 +216,6 @@ class Function1PostgresIT {
                 insert into user_documents(customer_id, doc_type, doc_number, front_image_url)
                 values (?, 'CITIZEN_ID', ?, 'audit/front') returning id
                 """, Long.class, customer, "AUD-" + SUFFIX);
-        Long driver = jdbc.queryForObject("insert into drivers(customer_id) values (?) returning id", Long.class, customer);
         Long voucher = jdbc.queryForObject("""
                 insert into vouchers(code, discount_type, discount_value, start_at, end_at)
                 values (?, 'PERCENT', 10, timestamp '2026-10-01', timestamp '2026-11-01') returning id
@@ -242,17 +227,15 @@ class Function1PostgresIT {
                 .containsEntry("role", "CUSTOMER").containsEntry("status", "ACTIVE");
         assertThat(jdbc.queryForObject("select verify_status from user_documents where id=?", String.class, document))
                 .isEqualTo("PENDING");
-        assertThat(jdbc.queryForObject("select status from drivers where id=?", String.class, driver)).isEqualTo("PENDING");
         assertThat(jdbc.queryForMap("select status, used_count, min_order_amount, per_user_limit, created_at, updated_at "
                 + "from vouchers where id=?", voucher))
                 .containsEntry("status", "ACTIVE").containsEntry("used_count", 0)
                 .containsEntry("min_order_amount", new BigDecimal("0")).containsEntry("per_user_limit", 1);
 
-        for (String table : List.of("customers", "user_documents", "drivers", "vouchers")) {
+        for (String table : List.of("customers", "user_documents", "vouchers")) {
             String id = switch (table) {
                 case "customers" -> customer.toString();
                 case "user_documents" -> document.toString();
-                case "drivers" -> driver.toString();
                 default -> voucher.toString();
             };
             jdbc.update("update " + table + " set created_at=timestamp '2000-01-01', updated_at=timestamp '2000-01-01' where id=?",
@@ -260,15 +243,13 @@ class Function1PostgresIT {
         }
         jdbc.update("update customers set full_name='Audit changed' where id=?", customer);
         jdbc.update("update user_documents set reject_reason='Audit changed' where id=?", document);
-        jdbc.update("update drivers set status='ACTIVE' where id=?", driver);
         jdbc.update("update vouchers set description='Audit changed' where id=?", voucher);
-        for (String table : List.of("customers", "user_documents", "drivers", "vouchers")) {
+        for (String table : List.of("customers", "user_documents", "vouchers")) {
             assertThat(jdbc.queryForObject("select created_at=timestamp '2000-01-01' and updated_at>timestamp '2000-01-01' "
                     + "from " + table + " where id=?", Boolean.class,
                     switch (table) {
                         case "customers" -> customer;
                         case "user_documents" -> document;
-                        case "drivers" -> driver;
                         default -> voucher;
                     })).isTrue();
         }
@@ -319,12 +300,6 @@ class Function1PostgresIT {
                 "PENDING", null, null, null, null));
         expectConstraintFailure(() -> insertDocument(owner, "PASSPORT", "STATUS-" + SUFFIX,
                 "OUTSIDE_ENUM", null, null, null, null));
-
-        insertDriver(owner);
-        expectConstraintFailure(() -> insertDriver(owner));
-        Long driverId = jdbc.queryForObject("select id from drivers where customer_id=?", Long.class, owner);
-        expectConstraintFailure(() -> jdbc.update("update drivers set status='OUTSIDE_ENUM' where id=?", driverId));
-        assertThat(jdbc.queryForObject("select count(*) from drivers where customer_id=?", Integer.class, owner)).isEqualTo(1);
     }
 
     @Test
@@ -375,11 +350,6 @@ class Function1PostgresIT {
         assertThat(documents.existsByDocTypeAndDocNumberAndVerifyStatus(DocumentType.CITIZEN_ID,
                 approved.getDocNumber(), VerificationStatus.APPROVED)).isTrue();
 
-        Driver oneDriver = saveDriver(one);
-        saveDriver(two);
-        assertThat(drivers.findByCustomerId(one.getId()).map(Driver::getId)).contains(oneDriver.getId());
-        assertThat(drivers.findByIdAndCustomerId(oneDriver.getId(), two.getId())).isEmpty();
-
         Voucher voucher = vouchers.save(voucher("SCOPE-" + SUFFIX));
         assertThat(vouchers.findByCodeIgnoreCase(voucher.getCode()).map(Voucher::getId)).contains(voucher.getId());
         assertThat(vouchers.existsByCode(voucher.getCode())).isTrue();
@@ -418,10 +388,6 @@ class Function1PostgresIT {
         });
     }
 
-    private void insertDriver(Long customerId) {
-        jdbc.update("insert into drivers(customer_id) values (?)", customerId);
-    }
-
     private void insertVoucher(String code, String type, int value, int max, int min, Integer limit,
             int used, String status, String endOverride) {
         insertVoucher(code, type, value, max, min, limit, used, status, endOverride, 1);
@@ -458,12 +424,6 @@ class Function1PostgresIT {
         document.setDocNumber(number);
         document.setFrontImageUrl("test/front");
         return documents.save(document);
-    }
-
-    private Driver saveDriver(Customer customer) {
-        Driver driver = new Driver();
-        driver.setCustomer(customer);
-        return drivers.save(driver);
     }
 
     private Voucher voucher(String code) {

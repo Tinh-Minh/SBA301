@@ -1,11 +1,15 @@
 import { endpoints } from "@/services/endpoints.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
+import { repairPackageText } from "@/utils/text.js";
 
 const body = ({ carId, packageId, voucherCode }) => ({ carId: Number(carId), packageId: Number(packageId), voucherCode: voucherCode?.trim() || undefined });
 
 export const subscriptionService = {
     /** GET /api/subscriptions/packages */
-    packages: () => request(endpoints.subscriptions.packages),
+    packages: async () => {
+        const data = await request(endpoints.subscriptions.packages);
+        return Array.isArray(data) ? data.map(repairPackageText) : data;
+    },
     /** POST /api/subscriptions/quote */
     quote: (input) => request(endpoints.subscriptions.quote, { method: "POST", json: body(input) }),
     /** POST /api/subscriptions */
@@ -16,6 +20,8 @@ export const subscriptionService = {
     listMine: () => fetchAllPages(endpoints.subscriptions.mine, { sortBy: "createdAt", direction: "desc" }, { pageSize: 50 }),
     /** PUT /api/subscriptions/{id}/cancel */
     cancel: (id) => request(endpoints.subscriptions.byIdCancel(id), { method: "PUT" }),
+    /** POST /api/subscriptions/{id}/activate-slot */
+    activateSlot: (id) => request(endpoints.subscriptions.activateSlot(id), { method: "POST" }),
     /** GET /api/admin/subscriptions */
     adminList: async ({ status, page = 0, size = 20 } = {}) => toPage(await request(endpoints.subscriptions.adminList, { query: { status, page, size, sortBy: "createdAt", direction: "desc" } })),
     /** POST /api/transactions/package-payment: tạo giao dịch VNPay rồi chuyển sang trang thanh toán. */

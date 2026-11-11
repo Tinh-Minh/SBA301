@@ -17,5 +17,19 @@ public record ListingPackageUpdateRequest(
         @NotNull @Min(1) @Max(3) Integer priorityLevel,
         @Size(max = 50) String badgeLabel,
         String description,
-        @NotNull Boolean isActive) {
+        @NotNull Boolean isActive,
+        @Positive Integer slotCount,
+        @Positive Integer durationDaysPerSlot) {
+
+    public ListingPackageUpdateRequest(
+            String name,
+            BigDecimal price,
+            Integer durationDays,
+            Integer priorityLevel,
+            String badgeLabel,
+            String description,
+            Boolean isActive) {
+        this(name, price, durationDays, priorityLevel, badgeLabel, description, isActive, 1,
+                durationDays != null ? durationDays : 7);
+    }
 }

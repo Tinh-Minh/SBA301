@@ -27,6 +27,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public class CarCreateRequest {
 
     @NotBlank(message = "Biển số xe không được để trống")
@@ -106,7 +107,10 @@ public class CarCreateRequest {
     @Size(max = 20, message = "Số Zalo liên hệ tối đa 20 ký tự")
     private String contactZalo;
 
+    private BigDecimal pricePerDay;
+
     public Car toEntity() {
+        BigDecimal dayPrice = this.rentalPricePerDay != null ? this.rentalPricePerDay : this.pricePerDay;
         return Car.builder()
                 .licensePlate(this.licensePlate != null ? this.licensePlate.trim().toUpperCase(Locale.ROOT) : null)
                 .brand(this.brand)
@@ -124,7 +128,7 @@ public class CarCreateRequest {
                 .pickupAddress(this.pickupAddress)
                 .latitude(this.latitude)
                 .longitude(this.longitude)
-                .rentalPricePerDay(this.rentalPricePerDay)
+                .rentalPricePerDay(dayPrice)
                 .rentalPricePerMonth(this.rentalPricePerMonth)
                 .contactName(this.contactName)
                 .contactPhone(this.contactPhone)

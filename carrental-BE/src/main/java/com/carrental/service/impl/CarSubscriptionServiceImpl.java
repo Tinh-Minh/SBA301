@@ -85,7 +85,9 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             BigDecimal discount = calculateDiscount(voucher, listingPackage.getPrice());
             return new SubscriptionQuoteResponse(car.getId(), listingPackage.getId(), listingPackage.getName(),
                     listingPackage.getDurationDays(), voucher == null ? null : voucher.getCode(),
-                    listingPackage.getPrice(), discount, listingPackage.getPrice().subtract(discount));
+                    listingPackage.getPrice(), discount, listingPackage.getPrice().subtract(discount),
+                    listingPackage.getSlotCount() != null ? listingPackage.getSlotCount() : 1,
+                    listingPackage.getDurationDaysPerSlot() != null ? listingPackage.getDurationDaysPerSlot() : 7);
         });
     }
 
@@ -109,6 +111,8 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             }
 
             LocalDateTime now = LocalDateTime.now(clock);
+            int slotCount = listingPackage.getSlotCount() != null ? listingPackage.getSlotCount() : 1;
+            int slotDays = listingPackage.getDurationDaysPerSlot() != null ? listingPackage.getDurationDaysPerSlot() : 7;
             CarSubscription subscription = subscriptionRepository.saveAndFlush(CarSubscription.builder()
                     .subscriptionCode(generateCode(now))
                     .customer(owner)
@@ -118,6 +122,9 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
                     .packagePrice(listingPackage.getPrice())
                     .discountAmount(discount)
                     .totalAmount(listingPackage.getPrice().subtract(discount))
+                    .totalSlots(slotCount)
+                    .remainingSlots(slotCount)
+                    .durationDaysPerSlot(slotDays)
                     .status(SubscriptionStatus.PENDING_PAYMENT)
                     .paymentStatus(PaymentStatus.UNPAID)
                     .build());
@@ -141,6 +148,41 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
                 activate(subscription, LocalDateTime.now(clock));
             }
             return null;
+        });
+    }
+
+    @Override
+    @Transactional
+    public SubscriptionResponse activateNextSlot(Long subscriptionId) {
+        log.info("Kích hoạt slot tiếp theo cho gói đăng tin id={}", subscriptionId);
+        return run("kích hoạt slot tiếp theo", subscriptionId, () -> {
+            Customer user = currentUserService.getCurrentUser();
+            CarSubscription subscription = findSubscription(subscriptionId);
+            if (!isBuyer(subscription, user) && !currentUserService.isAdmin(user)) {
+                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền kích hoạt slot của gói này");
+            }
+            if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Gói đăng tin không trong trạng thái kích hoạt");
+            }
+            if (subscription.getRemainingSlots() == null || subscription.getRemainingSlots() <= 0) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Gói đăng tin đã sử dụng hết toàn bộ slot");
+            }
+
+            LocalDateTime now = LocalDateTime.now(clock);
+            if (subscription.getCurrentSlotEndDate() != null && subscription.getCurrentSlotEndDate().isAfter(now)) {
+                throw new AppException(HttpStatus.CONFLICT, "Slot hiện tại vẫn còn hiệu lực đến " + subscription.getCurrentSlotEndDate());
+            }
+
+            int slotDays = subscription.getDurationDaysPerSlot() != null ? subscription.getDurationDaysPerSlot() : 7;
+            subscription.setRemainingSlots(subscription.getRemainingSlots() - 1);
+            subscription.setCurrentSlotStartDate(now);
+            subscription.setCurrentSlotEndDate(now.plusDays(slotDays));
+
+            Car car = subscription.getCar();
+            car.setListingStatus(ListingStatus.LISTED);
+            car.setCurrentSubscriptionId(subscription.getId());
+            log.info("Kích hoạt slot thành công xe={}, còn lại {} slots", car.getLicensePlate(), subscription.getRemainingSlots());
+            return SubscriptionResponse.from(subscription, now);
         });
     }
 
@@ -208,7 +250,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     @Transactional(readOnly = true)
     public List<Long> findExpiredSubscriptionIds() {
         return run("tìm gói hết hạn", null, () -> subscriptionRepository
-                .findByStatusAndEndDateBefore(SubscriptionStatus.ACTIVE, LocalDateTime.now(clock))
+                .findActiveEligibleForExpiration(SubscriptionStatus.ACTIVE, LocalDateTime.now(clock))
                 .stream().map(CarSubscription::getId).toList());
     }
 
@@ -217,14 +259,35 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     public boolean expireSubscription(Long id) {
         return run("chuyển gói sang EXPIRED", id, () -> {
             CarSubscription subscription = findSubscription(id);
-            // Kiểm tra lại: gói có thể vừa bị admin huỷ, hoặc job chạy chồng lần trước.
-            if (subscription.getStatus() != SubscriptionStatus.ACTIVE || subscription.getEndDate() == null
-                    || subscription.getEndDate().isAfter(LocalDateTime.now(clock))) {
+            if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
                 return false;
             }
+            LocalDateTime now = LocalDateTime.now(clock);
+            boolean slotExpired = subscription.getCurrentSlotEndDate() != null && !subscription.getCurrentSlotEndDate().isAfter(now);
+            boolean overallExpired = subscription.getEndDate() != null && !subscription.getEndDate().isAfter(now);
+
+            if (subscription.getCurrentSlotEndDate() == null && !overallExpired) {
+                return false;
+            }
+            if (!slotExpired && !overallExpired) {
+                return false;
+            }
+
+            Car car = subscription.getCar();
+            // Nếu còn slots và chưa quá hạn tổng thể: chuyển xe sang UNLISTED, gói vẫn ACTIVE
+            if (subscription.getRemainingSlots() != null && subscription.getRemainingSlots() > 0 && !overallExpired) {
+                subscription.setCurrentSlotStartDate(null);
+                subscription.setCurrentSlotEndDate(null);
+                if (subscription.getId().equals(car.getCurrentSubscriptionId())) {
+                    car.setListingStatus(ListingStatus.UNLISTED);
+                }
+                log.info("Slot hiện tại của gói {} (xe {}) đã kết thúc -> Xe chuyển về UNLISTED, còn lại {} slot",
+                        subscription.getSubscriptionCode(), car.getLicensePlate(), subscription.getRemainingSlots());
+                return true;
+            }
+
             subscription.getStatus().validateTransitionTo(SubscriptionStatus.EXPIRED);
             subscription.setStatus(SubscriptionStatus.EXPIRED);
-            Car car = subscription.getCar();
             if (subscription.getId().equals(car.getCurrentSubscriptionId())) {
                 car.setListingStatus(ListingStatus.EXPIRED);
             }
@@ -284,8 +347,22 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         subscription.getStatus().validateTransitionTo(SubscriptionStatus.ACTIVE);
         subscription.setStatus(SubscriptionStatus.ACTIVE);
         subscription.setPaymentStatus(PaymentStatus.PAID);
+
+        ListingPackage pkg = subscription.getListingPackage();
+        int totalSlots = (pkg != null && pkg.getSlotCount() != null) ? pkg.getSlotCount() : 1;
+        int slotDays = (pkg != null && pkg.getDurationDaysPerSlot() != null)
+                ? pkg.getDurationDaysPerSlot()
+                : ((pkg != null && pkg.getDurationDays() != null) ? pkg.getDurationDays() : 7);
+        int totalDays = (pkg != null && pkg.getDurationDays() != null) ? pkg.getDurationDays() : (totalSlots * slotDays);
+
+        subscription.setTotalSlots(totalSlots);
+        subscription.setRemainingSlots(Math.max(0, totalSlots - 1));
+        subscription.setDurationDaysPerSlot(slotDays);
+        subscription.setCurrentSlotStartDate(now);
+        subscription.setCurrentSlotEndDate(now.plusDays(slotDays));
+
         subscription.setStartDate(now);
-        subscription.setEndDate(now.plusDays(subscription.getListingPackage().getDurationDays()));
+        subscription.setEndDate(now.plusDays(totalDays));
         subscription.setActivatedAt(now);
         Car car = subscription.getCar();
         car.setListingStatus(ListingStatus.LISTED);

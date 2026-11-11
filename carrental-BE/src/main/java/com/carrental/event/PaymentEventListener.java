@@ -44,17 +44,24 @@ public class PaymentEventListener {
             CarSubscription subscription = transaction.getSubscription();
             if (subscription != null && subscription.getStatus() != SubscriptionStatus.ACTIVE) {
                 LocalDateTime now = TimeUtil.nowVn();
-                int durationDays = (subscription.getListingPackage() != null && subscription.getListingPackage().getDurationDays() != null)
-                        ? subscription.getListingPackage().getDurationDays()
-                        : 30;
+                var pkg = subscription.getListingPackage();
+                int totalSlots = (pkg != null && pkg.getSlotCount() != null) ? pkg.getSlotCount() : 1;
+                int slotDays = (pkg != null && pkg.getDurationDaysPerSlot() != null) ? pkg.getDurationDaysPerSlot() : 7;
+                int durationDays = (pkg != null && pkg.getDurationDays() != null) ? pkg.getDurationDays() : (totalSlots * slotDays);
 
                 subscription.setPaymentStatus(PaymentStatus.PAID);
                 subscription.setStatus(SubscriptionStatus.ACTIVE);
+                subscription.setTotalSlots(totalSlots);
+                subscription.setRemainingSlots(Math.max(0, totalSlots - 1));
+                subscription.setDurationDaysPerSlot(slotDays);
+                subscription.setCurrentSlotStartDate(now);
+                subscription.setCurrentSlotEndDate(now.plusDays(slotDays));
                 subscription.setStartDate(now);
                 subscription.setEndDate(now.plusDays(durationDays));
                 subscription.setActivatedAt(now);
                 carSubscriptionRepository.save(subscription);
-                log.info("Kích hoạt gói thành công cho subscriptionId={}, hiệu lực đến {}", subscription.getId(), subscription.getEndDate());
+                log.info("Kích hoạt gói thành công cho subscriptionId={}, hiệu lực slot đến {}, còn {} slot",
+                        subscription.getId(), subscription.getCurrentSlotEndDate(), subscription.getRemainingSlots());
 
                 Car car = subscription.getCar();
                 if (car != null) {

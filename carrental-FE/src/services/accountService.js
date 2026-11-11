@@ -66,22 +66,6 @@ export const getCustomerKyc = (id) => request(endpoints.customers.byIdKyc(id));
 /** ADMIN: PATCH /api/customers/{id}/status { status: ACTIVE|LOCKED, reason } */
 export const updateCustomerStatus = (id, status, reason) => request(endpoints.customers.byIdStatus(id), { method: "PATCH", json: { status, reason } });
 
-export const driverService = {
-    /** GET /api/drivers/me — 404 nếu chưa đăng ký. */
-    async me() {
-        try {
-            return await request(endpoints.drivers.me);
-        }
-        catch (error) {
-            if (error instanceof ApiError && error.status === 404)
-                return null;
-            throw error;
-        }
-    },
-    eligibility: () => request(endpoints.drivers.meEligibility),
-    register: () => request(endpoints.drivers.list, { method: "POST" }),
-};
-
 export const userDocumentService = {
     listMine: async () => toPage(await request(endpoints.userDocuments.list, { query: { scope: "mine", size: 50 } })).content,
     get: (id) => request(endpoints.userDocuments.byId(id)),

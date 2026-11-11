@@ -59,15 +59,6 @@ CREATE TABLE public.user_documents (
 CREATE UNIQUE INDEX uq_user_doc_approved
     ON public.user_documents (doc_type, doc_number) WHERE verify_status = 'APPROVED';
 
-CREATE TABLE public.drivers (
-    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    customer_id     BIGINT       NOT NULL UNIQUE REFERENCES public.customers(id) ON DELETE CASCADE,
-    status          VARCHAR(20)  NOT NULL DEFAULT 'PENDING'
-                    CHECK (status IN ('PENDING', 'ACTIVE', 'SUSPENDED')),
-    created_at      TIMESTAMP    NOT NULL DEFAULT public.vn_now(),
-    updated_at      TIMESTAMP    NOT NULL DEFAULT public.vn_now()
-);
-
 CREATE TABLE public.vouchers (
     id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     code             VARCHAR(50)  NOT NULL UNIQUE,
@@ -94,9 +85,6 @@ CREATE TRIGGER trg_customers_updated_at
     FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE TRIGGER trg_user_documents_updated_at
     BEFORE UPDATE ON public.user_documents
-    FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
-CREATE TRIGGER trg_drivers_updated_at
-    BEFORE UPDATE ON public.drivers
     FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 CREATE TRIGGER trg_vouchers_updated_at
     BEFORE UPDATE ON public.vouchers

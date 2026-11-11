@@ -23,7 +23,6 @@ public final class DbErrors {
             if (!"23505".equals(state)) continue;
             return switch (name) {
                 case "uq_customers_email_lower", "customers_phone_key" -> ErrorCode.ACCOUNT_ALREADY_EXISTS;
-                case "drivers_customer_id_key" -> ErrorCode.DRIVER_PROFILE_ALREADY_EXISTS;
                 case "uq_user_doc_approved" -> ErrorCode.APPROVED_DOCUMENT_CONFLICT;
                 case "vouchers_code_key" -> ErrorCode.VOUCHER_CODE_ALREADY_EXISTS;
                 default -> null;

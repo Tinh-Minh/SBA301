@@ -59,6 +59,9 @@ public interface CarSubscriptionService {
     /** Id các gói PENDING_PAYMENT đã quá hạn thanh toán (dùng cho job hết hạn). */
     List<Long> findOverduePendingIds();
 
+    /** Chủ xe kích hoạt slot tiếp theo khi slot trước đã hết thời gian và xe đang tạm ẩn. */
+    SubscriptionResponse activateNextSlot(Long subscriptionId);
+
     /** Hệ thống huỷ một gói quá hạn thanh toán, trả lượt voucher. Trả về false nếu gói không còn chờ thanh toán. */
     boolean cancelOverduePending(Long id);
 }

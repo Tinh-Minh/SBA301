@@ -11,10 +11,11 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-speed { position:fixed;z-index:25;left:5vw;top:calc(var(--journey-header-height, 80px) + 22px);margin:0;color:#8d8d80;font-size:12px;font-weight:600;letter-spacing:.12em;pointer-events:none;font-variant-numeric:tabular-nums; }
 .journey-speed strong { color:#25251f;font-size:15px;letter-spacing:0; }
 .home-journey-page:not([data-intro-state="complete"]) .journey-speed { opacity:0; }
-.journey-hero { container-type:inline-size;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 65%,#fff,#ededdf 75%); }
-.journey-hero-top { display:flex;justify-content:space-between;font-size:11px;color:#7b7b71; }
-.journey-hero h1 { z-index:1;position:relative;margin:clamp(14px,3dvh,34px) 0 0;font-size:clamp(2rem,min(15cqi,18dvh),12rem);font-weight:900;letter-spacing:-.025em;word-spacing:.04em;line-height:1.1; }
-.journey-hero h1 .journey-title-line--second { padding-left:18vw;color:#c7c7bb; }
+.journey-hero { container-type:inline-size;display:flex;flex-direction:column;background:#e7e2d8 url("/images/hero-coast-road.jpg") center 38% / cover no-repeat; }
+.journey-hero::after { content:"";position:absolute;inset:0;background:linear-gradient(180deg,#f2f2edf2 0%,#f2f2ed8c 18%,#f2f2ed00 46%);pointer-events:none; }
+.journey-hero-top { position:relative;z-index:6;display:flex;justify-content:space-between;font-size:11px;color:#7b7b71; }
+.journey-hero h1 { z-index:6;position:relative;margin:clamp(14px,3dvh,34px) 0 0;font-size:clamp(2rem,min(15cqi,18dvh),12rem);font-weight:900;letter-spacing:-.025em;word-spacing:.04em;line-height:1.1; }
+.journey-hero h1 .journey-title-line--second { padding-left:8vw;color:#8a8a80; }
 .journey-hero-bottom { position:relative;z-index:6;margin-top:auto;display:flex;justify-content:space-between;align-items:end;gap:20px; }
 .journey-hero-bottom p { font-size:clamp(12px,1.3vw,18px);line-height:1.35;font-weight:500; }
 .journey-hero-bottom a { display:flex;gap:18px;align-items:center;font-size:clamp(12px,1.1vw,16px); }
@@ -56,6 +57,9 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-listings-empty p { margin:8px 0 16px;font-size:13px;color:#737365; }
 .journey-listings-empty button { font-size:13px;text-decoration:underline;text-underline-offset:4px; }
 .journey-listings-grid { position:relative;z-index:6;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;min-height:0;flex:0; }
+@media(min-width:1024px) {
+ .journey-listings-grid,.journey-listings-empty { z-index:3; }
+}
 .journey-listing { container-type:inline-size;display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid #d8d8ca;border-radius:12px;overflow:hidden;background:#fff; }
 .journey-listing > img,.journey-listing-no-image { width:100%;height:clamp(60px,14dvh,150px);object-fit:cover;flex-shrink:0; }
 .journey-listing-no-image { display:grid;place-content:center;gap:8px;text-align:center;background:#eaeade;color:#777768;font-size:12px; }
@@ -64,12 +68,12 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-listing h3 { font-size:clamp(1rem,6.7cqi,1.25rem);font-weight:700;line-height:1.3; }
 .journey-listing-price { display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-top:auto; }.journey-listing-price strong { font-size:16px;color:#d95018; }.journey-listing-price span { font-size:11px;color:#707063; }
 .journey-listing-body > a { display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0 0;border-top:1px solid #deded1;font-size:12px;font-weight:600; }
-.journey-steps { display:flex;flex-direction:column;justify-content:flex-start;background:#e9e9df; }
+.journey-steps { display:flex;flex-direction:column;justify-content:flex-start;background:#e9e9df url("/images/home/03-pickup.jpg") left center / cover no-repeat; }
 .journey-steps > .journey-copy { margin-left:55%;max-width:45%;padding-top:clamp(12px,5dvh,56px);transform:none; }
 
 .journey-steps .journey-copy h2 { font-size:clamp(1.35rem,min(8.5cqi,5.8dvh),3.5rem); }
 .journey-steps .journey-copy h2 span { display:block; }
-.journey-drive { display:flex;flex-direction:column;justify-content:flex-start;background:#e0e2da; }
+.journey-drive { display:flex;flex-direction:column;justify-content:flex-start;background:#e0e2da url("/images/home/02-road.jpg") 8% center / cover no-repeat; }
 .journey-drive .journey-copy { max-width:43%;padding-top:clamp(12px,5dvh,56px);transform:none; }
 .journey-drive .journey-copy > p { max-width:400px;font-size:clamp(13px,1.3vw,19px); }
 .journey-flow { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center;gap:7vw;background:#f7f7ef; }
@@ -90,7 +94,7 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-questions summary::after { content:'+';color:#fc6c26;font-size:20px;font-weight:400; }
 .journey-questions details[open] summary::after { content:'−'; }
 .journey-questions details p { color:#77776b;line-height:1.65;font-size:12px;margin-top:14px; }
-.journey-finale { container-type:inline-size;display:flex;align-items:center;flex-direction:column;background:#e7e7da; }
+.journey-finale { container-type:inline-size;display:flex;align-items:center;flex-direction:column;background:#e7e7da url("/images/home/05-finale.jpg") center 46% / cover no-repeat; }
 .journey-finale > p { z-index:6;font-size:12px;color:#777765; }
 .journey-finale h2 { margin:clamp(16px,3dvh,40px) 0 0;position:relative;z-index:6;font-size:clamp(1.5rem,min(10.5cqi,14dvh),11rem);letter-spacing:-.015em;word-spacing:.055em;font-weight:800;line-height:1.2;text-align:center; }
 .journey-primary { position:relative;z-index:6;display:flex;align-items:center;gap:45px;margin-top:auto;padding:18px 28px;background:#fc6c26;color:white;border-radius:40px;font-size:14px;font-weight:600; }
@@ -107,6 +111,9 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-rail a:hover span,.journey-rail a:focus-visible span { opacity:1; }
 .home-journey-page[data-car-chapter='hero'] .journey-rail a:nth-child(1),.home-journey-page[data-car-chapter='search'] .journey-rail a:nth-child(2),.home-journey-page[data-car-chapter='fleet'] .journey-rail a:nth-child(3),.home-journey-page[data-car-chapter='steps'] .journey-rail a:nth-child(4),.home-journey-page[data-car-chapter='flow'] .journey-rail [data-journey-stop='flow'],.home-journey-page[data-car-chapter='drive'] .journey-rail [data-journey-stop='drive'],.home-journey-page[data-car-chapter='faq'] .journey-rail [data-journey-stop='faq'],.home-journey-page[data-car-chapter='finale'] .journey-rail [data-journey-stop='finale'] { background:#fc6c26;box-shadow:0 0 0 4px #fc6c2622; }
 @media(max-width:1023px) {
+ .journey-steps { background-position:72% 62%; }
+ .journey-drive { background-position:22% center; }
+ .journey-finale { background-position:center 40%; }
  .journey-search > .journey-copy { top:0;margin-left:0;max-width:90%; }
  .journey-listings-grid { grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:min(75vw,290px);overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity; }
  .journey-listings-header { flex-wrap:wrap;gap:10px; }.journey-listings-header p { font-size:12px; }
@@ -150,6 +157,8 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
  .journey-flow-list li { gap:14px;padding:10px 0; }
  .journey-flow-list h3 { font-size:20px; }
  .journey-flow-list p { font-size:12px;line-height:1.55; }
+ .journey-steps { background-position:22% 74%; }
+ .journey-steps > .journey-copy { padding:6px 8px 10px;border-radius:12px;background:#f4f1eae0; }
  .journey-finale-bottom { flex-direction:column;gap:8px;font-size:8px;margin-top:18px; }.journey-rail { right:9px; }
 }
 @media(min-width:640px) and (max-width:1023px) and (max-height:600px) {

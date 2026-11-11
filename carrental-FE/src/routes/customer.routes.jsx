@@ -1,6 +1,5 @@
 import { lazy } from "react";
 const BanksPage = lazy(() => import("@/pages/account/BanksPage.jsx"));
-const DriverProfilePage = lazy(() => import("@/pages/account/DriverProfilePage.jsx"));
 const ProfilePage = lazy(() => import("@/pages/account/ProfilePage.jsx"));
 const VerificationPage = lazy(() => import("@/pages/account/VerificationPage.jsx"));
 const PaymentPage = lazy(() => import("@/pages/payments/PaymentPage.jsx"));
@@ -10,7 +9,6 @@ import { page, AliasRedirect } from "@/routes/elements.jsx";
 export const customerPages = [
     page("account", <ProfilePage />),
     page("account/bank", <BanksPage />),
-    page("account/driver", <DriverProfilePage />),
     page("account/verification", <VerificationPage />),
     page("account/orders", <AliasRedirect to="/my-trips" />),
     page("account/history", <AliasRedirect to="/my-trips" />),

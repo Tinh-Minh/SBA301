@@ -80,11 +80,21 @@ public class ListingPackageServiceImpl implements ListingPackageService {
         validatePrice(request.price());
         if (packages.existsByCode(code)) throw new AppException(ErrorCode.LISTING_PACKAGE_CODE_ALREADY_EXISTS);
 
+        int slotCount = request.slotCount() != null && request.slotCount() > 0 ? request.slotCount() : 1;
+        int durationDaysPerSlot = request.durationDaysPerSlot() != null && request.durationDaysPerSlot() > 0
+                ? request.durationDaysPerSlot()
+                : (request.durationDays() != null ? request.durationDays() : 7);
+        int durationDays = request.durationDays() != null && request.durationDays() > 0
+                ? request.durationDays()
+                : (slotCount * durationDaysPerSlot);
+
         ListingPackage listingPackage = ListingPackage.builder()
                 .name(normalizedRequired(request.name(), "name", 100))
                 .code(code)
                 .price(request.price())
-                .durationDays(request.durationDays())
+                .durationDays(durationDays)
+                .slotCount(slotCount)
+                .durationDaysPerSlot(durationDaysPerSlot)
                 .priorityLevel(request.priorityLevel())
                 .badgeLabel(normalizedBadge(request.badgeLabel()))
                 .description(normalizedDescription(request.description()))
@@ -107,14 +117,27 @@ public class ListingPackageServiceImpl implements ListingPackageService {
         validatePrice(request.price());
 
         ListingPackage listingPackage = packages.findWithLockById(id).orElseThrow(RequestChecks::notFound);
-        if (!listingPackage.getDurationDays().equals(request.durationDays())
+
+        int slotCount = request.slotCount() != null && request.slotCount() > 0
+                ? request.slotCount()
+                : (listingPackage.getSlotCount() != null ? listingPackage.getSlotCount() : 1);
+        int durationDaysPerSlot = request.durationDaysPerSlot() != null && request.durationDaysPerSlot() > 0
+                ? request.durationDaysPerSlot()
+                : (listingPackage.getDurationDaysPerSlot() != null ? listingPackage.getDurationDaysPerSlot() : 7);
+        int durationDays = request.durationDays() != null && request.durationDays() > 0
+                ? request.durationDays()
+                : (slotCount * durationDaysPerSlot);
+
+        if (!listingPackage.getDurationDays().equals(durationDays)
                 && subscriptions.existsByListingPackage_Id(id)) {
             throw new AppException(ErrorCode.LISTING_PACKAGE_DURATION_IN_USE);
         }
 
         listingPackage.setName(normalizedRequired(request.name(), "name", 100));
         listingPackage.setPrice(request.price());
-        listingPackage.setDurationDays(request.durationDays());
+        listingPackage.setDurationDays(durationDays);
+        listingPackage.setSlotCount(slotCount);
+        listingPackage.setDurationDaysPerSlot(durationDaysPerSlot);
         listingPackage.setPriorityLevel(request.priorityLevel());
         listingPackage.setBadgeLabel(normalizedBadge(request.badgeLabel()));
         listingPackage.setDescription(normalizedDescription(request.description()));

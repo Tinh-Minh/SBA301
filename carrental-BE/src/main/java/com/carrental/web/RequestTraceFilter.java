@@ -31,10 +31,6 @@ public class RequestTraceFilter extends OncePerRequestFilter {
         MDC.put(MDC_KEY, traceId);
         try {
             response.setHeader(HEADER_NAME, traceId);
-            if (isDriverCreate(request) && request.getInputStream().read() != -1) {
-                rejectRequest(response, traceId);
-                return;
-            }
             filterChain.doFilter(request, response);
         } finally {
             MDC.remove(MDC_KEY);
@@ -43,17 +39,5 @@ public class RequestTraceFilter extends OncePerRequestFilter {
 
     public static String currentTraceId() {
         return MDC.get(MDC_KEY);
-    }
-
-    private boolean isDriverCreate(HttpServletRequest request) {
-        return "POST".equals(request.getMethod()) && "/api/drivers".equals(request.getServletPath());
-    }
-
-    private void rejectRequest(HttpServletResponse response, String traceId) throws IOException {
-        response.setStatus(ErrorCode.INVALID_REQUEST.status().value());
-        response.setContentType("application/json");
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.getWriter().write(JSON.writeValueAsString(
-                ApiResponse.failure(ErrorCode.INVALID_REQUEST, traceId, java.util.List.of())));
     }
 }

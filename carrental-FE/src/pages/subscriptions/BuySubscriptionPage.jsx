@@ -10,6 +10,7 @@ import { useOwnerCars } from "@/hooks/useVehicles.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { subscriptionService } from "@/services/subscriptionService.js";
 import { formatMoney } from "@/utils/labels.js";
+import { packageTitle } from "@/utils/text.js";
 
 const choiceClass = (selected) => `rounded-2xl border bg-white p-4 text-left shadow-sm transition ${selected ? "border-[#FC6C26] ring-2 ring-orange-100" : "border-[#E9E9E7] hover:border-orange-200"}`;
 const buySchema = z.object({
@@ -95,13 +96,21 @@ export default function BuySubscriptionPage() {
     <Step number={2} title="Chọn gói cước">
       <LiveState loading={packages.loading && !packages.data} error={packages.error} empty={!!packages.data && packages.data.length === 0} label="gói đăng tin" onRetry={packages.reload}/>
       <div className="grid gap-3 md:grid-cols-3">
-        {(packages.data ?? []).map(item => <button key={item.id} type="button" aria-pressed={String(item.id) === packageId} onClick={() => setPackageId(String(item.id))} className={choiceClass(String(item.id) === packageId)}>
-          <span className="block text-[11px] font-bold uppercase tracking-wide text-[#FC6C26]">{item.badgeLabel}</span>
-          <span className="mt-1 block font-bold text-[#292929]">{item.name}</span>
-          <span className="mt-1 block text-lg font-bold text-[#292929]">{formatMoney(item.price)}</span>
-          <span className="block text-xs text-[#666666]">{item.durationDays} ngày hiển thị</span>
-          {item.description ? <span className="mt-2 block text-xs text-[#666666]">{item.description}</span> : null}
-        </button>)}
+        {(packages.data ?? []).map(item => {
+          const slotCount = item.slotCount || (item.code === "PKG_BASIC" ? 3 : item.code === "PKG_STANDARD" ? 5 : item.code === "PKG_VIP" ? 10 : 1);
+          const slotDays = item.durationDaysPerSlot || (item.code === "PKG_BASIC" ? 3 : item.code === "PKG_STANDARD" ? 7 : item.code === "PKG_VIP" ? 15 : item.durationDays);
+          return <button key={item.id} type="button" aria-pressed={String(item.id) === packageId} onClick={() => setPackageId(String(item.id))} className={choiceClass(String(item.id) === packageId)}>
+            <div className="flex items-center justify-between">
+              <span className="block text-[11px] font-bold uppercase tracking-wide text-[#FC6C26]">{item.badgeLabel}</span>
+              <span className="rounded bg-orange-50 px-2 py-0.5 text-[11px] font-bold text-[#FC6C26]">{slotCount} slots</span>
+            </div>
+            <span className="mt-1 block font-bold text-[#292929]">{packageTitle(item)}</span>
+            <span className="mt-1 block text-lg font-bold text-[#292929]">{formatMoney(item.price)}</span>
+            <span className="block text-xs font-semibold text-[#8F3208]">{slotCount} slots × {slotDays} ngày/slot</span>
+            <span className="block text-[11px] text-[#666666]">Tổng {item.durationDays} ngày hiển thị</span>
+            {item.description ? <span className="mt-2 block text-xs text-[#666666]">{item.description}</span> : null}
+          </button>;
+        })}
       </div>
     </Step>
 
@@ -114,6 +123,8 @@ export default function BuySubscriptionPage() {
         {formError ? <p role="alert" className="text-sm text-[#B91C1C]">{formError}</p> : null}
         {quote.error ? <p role="alert" className="text-sm text-[#B91C1C]">{quote.error.message}</p> : null}
         {quoted ? <dl className="flex flex-col gap-1 text-sm">
+          <div className="flex justify-between"><dt className="text-[#666666]">Gói cước</dt><dd className="font-semibold text-[#292929]">{quoted.packageName}</dd></div>
+          <div className="flex justify-between"><dt className="text-[#666666]">Quyền lợi slot</dt><dd className="font-semibold text-[#FC6C26]">{quoted.slotCount || 1} slots • {quoted.durationDaysPerSlot || 7} ngày/slot</dd></div>
           <div className="flex justify-between"><dt className="text-[#666666]">Giá gói</dt><dd>{formatMoney(quoted.packagePrice)}</dd></div>
           <div className="flex justify-between"><dt className="text-[#666666]">Giảm giá{quoted.voucherCode ? ` (${quoted.voucherCode})` : ""}</dt><dd>-{formatMoney(quoted.discountAmount)}</dd></div>
           <div className="mt-1 flex justify-between border-t border-[#E9E9E7] pt-2 text-base font-bold"><dt>Tổng thanh toán</dt><dd className="text-[#FC6C26]">{formatMoney(quoted.totalAmount)}</dd></div>

@@ -1,3 +1,5 @@
+import { repairDisplayText } from "@/utils/text.js";
+
 const STORAGE_KEY = "cardb:session:v2";
 const EVENT = "cardb:session-change";
 
@@ -12,7 +14,7 @@ export function readSession() {
         const raw = window.localStorage.getItem(STORAGE_KEY);
         if (!raw)
             return null;
-        const session = JSON.parse(raw);
+        const session = repairDisplayText(JSON.parse(raw));
         if (!session?.accessToken || !session?.account?.id)
             return null;
         if (session.expiresAt && Date.now() >= session.expiresAt) {

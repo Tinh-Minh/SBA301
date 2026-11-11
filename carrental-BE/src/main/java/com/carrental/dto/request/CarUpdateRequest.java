@@ -24,6 +24,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 public class CarUpdateRequest {
 
     @NotBlank(message = "Hãng xe không được để trống")
@@ -97,6 +98,8 @@ public class CarUpdateRequest {
     @Size(max = 20, message = "Số Zalo liên hệ tối đa 20 ký tự")
     private String contactZalo;
 
+    private BigDecimal pricePerDay;
+
     public void applyTo(Car car) {
         car.setBrand(this.brand);
         car.setModel(this.model);
@@ -118,6 +121,8 @@ public class CarUpdateRequest {
 
         if (this.rentalPricePerDay != null) {
             car.setRentalPricePerDay(this.rentalPricePerDay);
+        } else if (this.pricePerDay != null) {
+            car.setRentalPricePerDay(this.pricePerDay);
         }
         if (this.rentalPricePerMonth != null) {
             car.setRentalPricePerMonth(this.rentalPricePerMonth);

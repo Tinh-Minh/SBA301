@@ -41,14 +41,6 @@ export interface BankAccountResponse {
   createdAt: DateTimeString;
 }
 
-export interface DriverResponse {
-  id: number;
-  customerId: number;
-  status: string;
-  createdAt: DateTimeString;
-  updatedAt: DateTimeString;
-}
-
 export interface VoucherResponse {
   id: number;
   code: string;

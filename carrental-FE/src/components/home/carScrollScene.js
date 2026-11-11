@@ -53,9 +53,8 @@ export function createCarScrollScene(host, { onReady, onError, reducedMotion }) 
     const rim = new THREE.DirectionalLight(0xffffff, 3);
     rim.position.set(-4, 3, -5);
     scene.add(rim);
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.16 }));
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.16, depthWrite: false }));
     ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.01;
     ground.receiveShadow = true;
     scene.add(ground);
 
@@ -176,10 +175,10 @@ export function createCarScrollScene(host, { onReady, onError, reducedMotion }) 
         road.update(pivot, current.overhead, current.distance, current.depart);
         const tracksAlive = tracks.update(dt, {
             wheels,
-            distance: current.distance,
             groundY: pivot.position.y + 0.02,
             worldRadius: wheelRadius * pivot.scale.x,
-            active: loaded && !reducedMotion && current.wheelCloseup < 0.12 && Math.hypot(current.lapX, current.lapZ) < 0.08,
+            camera,
+            active: false,
         });
         renderer.render(scene, camera);
         if (loaded && !readyNotified) { readyNotified = true; onReady(); }

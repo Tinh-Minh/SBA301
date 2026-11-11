@@ -217,43 +217,31 @@ export function createRoad(scene) {
     }
     scene.add(road);
     return {
-        update(car, overhead, distance, depart) {
-            markings.opacity = Math.max(THREE.MathUtils.smoothstep(overhead, 0.35, 0.85) * 0.55,
-                THREE.MathUtils.smoothstep(depart, 0.05, 0.6) * 0.3);
-            road.visible = markings.opacity > 0.01;
-            road.position.copy(car.position);
-            road.position.y -= 0.025;
-            road.rotation.y = car.rotation.y;
-            road.scale.copy(car.scale);
-            for (const { strip, base } of strips) strip.position.z = base - distance % 2.5;
+        update() {
+            markings.opacity = 0;
+            road.visible = false;
         },
     };
 }
 
 function createTreadTexture() {
-    const width = 160;
+    const width = 64;
     const height = 256;
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, width, height);
-    const ribs = [[12, 36], [52, 34], [94, 34], [134, 16]];
-    context.fillStyle = "#111111";
-    for (const [x, ribWidth] of ribs) context.fillRect(x, 0, ribWidth, height);
+    context.fillStyle = "rgba(18,16,14,0.88)";
+    context.fillRect(0, 0, width, height);
     context.globalCompositeOperation = "destination-out";
-    context.fillStyle = "rgba(0,0,0,1)";
-    for (let y = 10; y < height; y += 28) {
-        context.fillRect(12, y, 36, 6);
-        context.fillRect(52, y + 14, 34, 6);
-        context.fillRect(94, y, 34, 6);
-        context.fillRect(134, y + 14, 16, 6);
-    }
+    context.fillStyle = "rgba(0,0,0,0.45)";
+    for (let y = 0; y < height; y += 18) context.fillRect(6, y, width - 12, 3);
     context.globalCompositeOperation = "destination-in";
     const edge = context.createLinearGradient(0, 0, width, 0);
     edge.addColorStop(0, "rgba(0,0,0,0)");
-    edge.addColorStop(0.06, "rgba(0,0,0,1)");
-    edge.addColorStop(0.94, "rgba(0,0,0,1)");
+    edge.addColorStop(0.18, "rgba(0,0,0,1)");
+    edge.addColorStop(0.82, "rgba(0,0,0,1)");
     edge.addColorStop(1, "rgba(0,0,0,0)");
     context.fillStyle = edge;
     context.fillRect(0, 0, width, height);
@@ -261,33 +249,44 @@ function createTreadTexture() {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.premultiplyAlpha = false;
     texture.anisotropy = 8;
+    texture.wrapS = THREE.ClampToEdgeWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
     return texture;
 }
 
 export function createTireTracks(scene) {
     const texture = createTreadTexture();
-    const geometry = new THREE.PlaneGeometry(1, 1);
-    const pool = [];
-    const states = new Map();
+    const tracks = new Map();
     const contact = new THREE.Vector3();
-    const delta = new THREE.Vector3();
-    const lateral = new THREE.Vector3();
-    const backward = new THREE.Vector3();
+    const forward = new THREE.Vector3();
     const side = new THREE.Vector3();
-    const frontPos = new THREE.Vector3();
-    const rearPos = new THREE.Vector3();
-    const up = new THREE.Vector3(0, 1, 0);
-    const basis = new THREE.Matrix4();
-    let lastDistance = 0;
-    let pending = 0;
+    const view = new THREE.Vector3();
+    const maxPoints = 80;
     let armed = false;
 
-    function acquire() {
-        const spare = pool.find(mesh => !mesh.visible);
-        if (spare) return spare;
-        if (pool.length >= 64) return pool.reduce((oldest, mesh) => mesh.userData.age > oldest.userData.age ? mesh : oldest);
-        const material = new THREE.MeshBasicMaterial({
-            map: texture,
+    function createTrack(wheel) {
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(maxPoints * 2 * 3);
+        const uvs = new Float32Array(maxPoints * 2 * 2);
+        const alphas = new Float32Array(maxPoints * 2);
+        const indices = new Uint16Array((maxPoints - 1) * 6);
+        for (let index = 0; index < maxPoints - 1; index += 1) {
+            const left = index * 2;
+            const offset = index * 6;
+            indices[offset] = left;
+            indices[offset + 1] = left + 1;
+            indices[offset + 2] = left + 2;
+            indices[offset + 3] = left + 1;
+            indices[offset + 4] = left + 3;
+            indices[offset + 5] = left + 2;
+        }
+        geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute("uv", new THREE.BufferAttribute(uvs, 2));
+        geometry.setAttribute("alpha", new THREE.BufferAttribute(alphas, 1));
+        geometry.setIndex(new THREE.BufferAttribute(indices, 1));
+        geometry.setDrawRange(0, 0);
+        const material = new THREE.ShaderMaterial({
+            uniforms: { map: { value: texture } },
             transparent: true,
             depthWrite: false,
             toneMapped: false,
@@ -295,94 +294,159 @@ export function createTireTracks(scene) {
             polygonOffset: true,
             polygonOffsetFactor: -4,
             polygonOffsetUnits: -4,
+            vertexShader: `
+                attribute float alpha;
+                varying float vAlpha;
+                varying vec2 vUv;
+                void main() {
+                    vAlpha = alpha;
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D map;
+                varying float vAlpha;
+                varying vec2 vUv;
+                void main() {
+                    vec4 color = texture2D(map, vUv);
+                    float opacity = color.a * vAlpha;
+                    if (opacity < 0.03) discard;
+                    gl_FragColor = vec4(color.rgb * opacity, opacity);
+                }
+            `,
         });
+        material.map = texture;
         const mesh = new THREE.Mesh(geometry, material);
         mesh.renderOrder = 3;
+        mesh.frustumCulled = false;
         mesh.visible = false;
-        mesh.userData.age = 0;
         scene.add(mesh);
-        pool.push(mesh);
-        return mesh;
+        const track = { points: [], geometry, mesh, side: new THREE.Vector3(1, 0, 0) };
+        tracks.set(wheel.uuid, track);
+        return track;
+    }
+
+    function rebuild(track, halfWidth) {
+        const points = track.points;
+        const count = points.length;
+        if (count < 2) {
+            track.mesh.visible = false;
+            return;
+        }
+        const positions = track.geometry.attributes.position.array;
+        const uvs = track.geometry.attributes.uv.array;
+        const alphas = track.geometry.attributes.alpha.array;
+        let traveled = 0;
+        for (let index = 0; index < count; index += 1) {
+            const current = points[index].position;
+            const before = points[Math.max(0, index - 1)].position;
+            const after = points[Math.min(count - 1, index + 1)].position;
+            forward.subVectors(after, before);
+            if (forward.lengthSq() > 1e-6) {
+                forward.normalize();
+                side.crossVectors(forward, view);
+                if (side.lengthSq() > 1e-6) {
+                    side.normalize();
+                    if (side.dot(track.side) < 0) side.negate();
+                    track.side.lerp(side, 0.45).normalize();
+                }
+            }
+            const vertex = index * 6;
+            positions[vertex] = current.x + track.side.x * halfWidth - view.x * 0.03;
+            positions[vertex + 1] = current.y + track.side.y * halfWidth - view.y * 0.03;
+            positions[vertex + 2] = current.z + track.side.z * halfWidth - view.z * 0.03;
+            positions[vertex + 3] = current.x - track.side.x * halfWidth - view.x * 0.03;
+            positions[vertex + 4] = current.y - track.side.y * halfWidth - view.y * 0.03;
+            positions[vertex + 5] = current.z - track.side.z * halfWidth - view.z * 0.03;
+            if (index > 0) traveled += current.distanceTo(before);
+            const along = traveled / Math.max(halfWidth * 5, 0.08);
+            const fade = Math.min(1, (index + 1) / Math.min(count, 6)) * 0.72;
+            uvs[index * 4] = 0.12;
+            uvs[index * 4 + 1] = along;
+            uvs[index * 4 + 2] = 0.88;
+            uvs[index * 4 + 3] = along;
+            alphas[index * 2] = fade;
+            alphas[index * 2 + 1] = fade;
+        }
+        track.geometry.attributes.position.needsUpdate = true;
+        track.geometry.attributes.uv.needsUpdate = true;
+        track.geometry.attributes.alpha.needsUpdate = true;
+        track.geometry.setDrawRange(0, (count - 1) * 6);
+        track.mesh.visible = true;
+    }
+
+    function trim(points, maxLength) {
+        let length = 0;
+        for (let index = points.length - 1; index > 0; index -= 1) {
+            length += Math.hypot(points[index].position.x - points[index - 1].position.x, points[index].position.z - points[index - 1].position.z);
+            if (length > maxLength) {
+                points.splice(0, index);
+                return;
+            }
+        }
     }
 
     return {
-        update(dt, { wheels, distance, groundY, worldRadius, active }) {
-            for (const mesh of pool) {
-                if (!mesh.visible) continue;
-                mesh.userData.age += dt;
-                const life = 1 - Math.max(0, mesh.userData.age - 1.2) / 3.8;
-                mesh.material.opacity = Math.max(0, life);
-                if (life <= 0) mesh.visible = false;
+        update(dt, { wheels, groundY, worldRadius, active, camera, retain = true }) {
+            camera.getWorldDirection(view);
+            const aging = retain ? 1 : 12;
+            for (const track of tracks.values()) {
+                for (const point of track.points) point.age += dt * aging;
+                while (track.points.length && track.points[0].age > 2.4) track.points.shift();
             }
-            const alive = () => pool.some(mesh => mesh.visible);
-            if (!active || !wheels.length || !(worldRadius > 0)) {
+            const rearWheels = wheels.filter(({ wheel }) => /Rear/.test(wheel.name));
+            const halfWidth = Math.max(worldRadius * 0.22, 0.035);
+            const paint = () => {
+                for (const track of tracks.values()) rebuild(track, halfWidth);
+                return [...tracks.values()].some(track => track.mesh.visible);
+            };
+            if (!active || rearWheels.length < 2 || !(worldRadius > 0)) {
                 armed = false;
-                lastDistance = distance;
-                pending = 0;
-                return alive();
+                return paint();
             }
+            const spacing = Math.max(worldRadius * 0.14, 0.03);
+            const maxLength = Math.max(worldRadius * 5.5, 1.15);
             if (!armed) {
                 armed = true;
-                lastDistance = distance;
-                pending = 0;
-                states.clear();
-                return alive();
-            }
-            const front = wheels.find(({ wheel }) => /Front/.test(wheel.name));
-            const rear = wheels.find(({ wheel }) => /Rear/.test(wheel.name));
-            if (!front || !rear) return alive();
-            const patch = worldRadius * 0.7;
-            const piece = worldRadius * 1.2;
-            pending = Math.min(pending + Math.max(0, distance - lastDistance) * worldRadius / 0.39, piece * 3);
-            lastDistance = distance;
-            front.wheel.getWorldPosition(frontPos);
-            rear.wheel.getWorldPosition(rearPos);
-            backward.copy(rearPos).sub(frontPos);
-            backward.y = 0;
-            if (backward.lengthSq() < 1e-6) return alive();
-            backward.normalize();
-            side.crossVectors(backward, up).normalize();
-            let placed = 0;
-            while (pending >= piece * 0.82 && placed < 4) {
-                for (const { wheel } of wheels) {
-                    if (!/Rear/.test(wheel.name)) continue;
+                for (const track of tracks.values()) track.points.length = 0;
+                for (const { wheel } of rearWheels) {
+                    const track = tracks.get(wheel.uuid) ?? createTrack(wheel);
                     wheel.getWorldPosition(contact);
                     contact.y = groundY;
-                    let state = states.get(wheel.uuid);
-                    if (!state) {
-                        state = { cursor: contact.clone(), last: contact.clone(), marks: [] };
-                        states.set(wheel.uuid, state);
-                        continue;
-                    }
-                    delta.copy(contact).sub(state.last);
-                    lateral.copy(delta);
-                    lateral.y = 0;
-                    const along = lateral.dot(backward);
-                    lateral.addScaledVector(backward, -along);
-                    if (lateral.length() > patch * 2.4) {
-                        state.cursor.copy(contact);
-                        for (const mark of state.marks) mark.visible = false;
-                        state.marks = [];
-                        pending = Math.min(pending, piece);
-                    } else state.cursor.add(delta);
-                    state.last.copy(contact);
-                    const mesh = acquire();
-                    mesh.position.copy(state.cursor).addScaledVector(backward, piece * 0.08);
-                    mesh.position.y = groundY;
-                    basis.makeBasis(side, backward, up);
-                    mesh.quaternion.setFromRotationMatrix(basis);
-                    mesh.scale.set(patch, piece, 1);
-                    mesh.userData.age = 0;
-                    mesh.visible = true;
-                    mesh.material.opacity = 1;
-                    state.cursor.addScaledVector(backward, piece * 0.84);
-                    state.marks.push(mesh);
-                    while (state.marks.length > 8) state.marks.shift().visible = false;
+                    track.points.push({ position: contact.clone(), age: 0 });
                 }
-                pending -= piece * 0.82;
-                placed += 1;
+                return false;
             }
-            return alive();
+            for (const { wheel } of rearWheels) {
+                const track = tracks.get(wheel.uuid) ?? createTrack(wheel);
+                wheel.getWorldPosition(contact);
+                contact.y = groundY;
+                const points = track.points;
+                const last = points.at(-1);
+                const step = last ? contact.distanceTo(last.position) : spacing;
+                if (!last || step > 4) {
+                    points.length = 0;
+                    points.push({ position: contact.clone(), age: 0 });
+                    continue;
+                }
+                if (points.length === 1) {
+                    if (step >= spacing) points.push({ position: contact.clone(), age: 0 });
+                } else if (step >= spacing) {
+                    const copies = Math.min(8, Math.ceil(step / spacing));
+                    for (let copy = 1; copy <= copies; copy += 1) {
+                        const position = last.position.clone().lerp(contact, copy / copies);
+                        position.y = THREE.MathUtils.lerp(last.position.y, groundY, copy / copies);
+                        points.push({ position, age: 0 });
+                    }
+                } else {
+                    last.position.copy(contact);
+                    last.age = 0;
+                }
+                while (points.length > maxPoints) points.shift();
+                trim(points, maxLength);
+            }
+            return paint();
         },
     };
 }

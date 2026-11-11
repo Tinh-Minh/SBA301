@@ -52,7 +52,7 @@ export function CarDetail({ id, onChanged }) {
       <Row term="Tiền cọc" value={formatMoney(car.depositAmount)}/>
       <Row term="Giới hạn km" value={car.kmLimitPerDay ? `${car.kmLimitPerDay} km/ngày` : "—"}/>
     </dl>
-    <p className="text-sm text-[#666666]">{[car.pickupAddress, car.district, car.city].filter(Boolean).join(", ")}</p>
+    <p className="text-sm text-[#666666]">{car.pickupAddress || [car.district, car.city].filter(Boolean).join(", ")}</p>
     {car.description ? <p className="whitespace-pre-line rounded-xl bg-[#F7F7F5] p-3 text-xs text-[#292929]">{car.description}</p> : null}
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-bold text-[#292929]">Giấy tờ xe ({documents.length})</h3>
@@ -70,10 +70,11 @@ export function CarDetail({ id, onChanged }) {
       </div>)}
     </div>
     {error ? <p className="text-sm text-[#B91C1C]">{error.message}</p> : null}
-    {car.status === "PENDING_APPROVAL" || car.status === "REJECTED" ? <div className="flex flex-col gap-2 border-t border-[#E9E9E7] pt-4">
+    {car.status === "PENDING_APPROVAL" ? <div className="flex flex-col gap-2 border-t border-[#E9E9E7] pt-4">
       <PrimaryButton disabled={busy} onClick={() => void approve.run()}>✓ Duyệt niêm yết xe</PrimaryButton>
-      {car.status === "PENDING_APPROVAL" ? <button type="button" disabled={busy} onClick={() => setDialog({ type: "car" })} className="rounded-xl border border-[#EF4444] px-4 py-2.5 text-sm font-bold text-[#EF4444]">Từ chối hồ sơ xe</button> : null}
+      <button type="button" disabled={busy} onClick={() => setDialog({ type: "car" })} className="rounded-xl border border-[#EF4444] px-4 py-2.5 text-sm font-bold text-[#EF4444]">Từ chối hồ sơ xe</button>
     </div> : null}
+    {car.status === "REJECTED" ? <p className="border-t border-[#E9E9E7] pt-4 text-sm text-[#666666]">Hồ sơ đã bị từ chối. Chủ xe cần cập nhật và gửi duyệt lại trước khi niêm yết.</p> : null}
     {dialog ? <AdminDialog title={dialog.type === "car" ? "Từ chối hồ sơ xe" : "Từ chối giấy tờ"} onClose={() => setDialog(null)}>
       <label className="block text-sm text-[#666666]">Lý do
         <textarea value={reason} onChange={event => setReason(event.target.value)} rows={3} className="mt-1 w-full rounded-xl border border-[#E9E9E7] p-3 text-[#292929]"/>
