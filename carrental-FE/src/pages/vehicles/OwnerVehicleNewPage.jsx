@@ -22,7 +22,7 @@ export default function OwnerVehicleNew() {
     const create = useApiMutation(submitCar);
     const [step, setStep] = useState(1);
     const [reached, setReached] = useState(1);
-    const { control, register, setValue, getValues, reset, trigger, handleSubmit, formState: { errors, isSubmitting } } = useForm({
+    const { control, register, setValue, getValues, reset, trigger, handleSubmit, formState: { errors, dirtyFields, isSubmitting } } = useForm({
         resolver: zodResolver(vehicleCreateSchema),
         defaultValues: { ...initial, registrationUrl: "", inspectionUrl: "", photos: {}, agreed: false },
     });
@@ -67,7 +67,13 @@ export default function OwnerVehicleNew() {
     const photoCount = Object.keys(photos).length;
     const stepResults = vehicleStepSchemas.map(schema => validateInput(schema, form));
     const ready = stepResults.map(result => result.success);
-    const gaps = stepResults[0].success ? [] : stepResults[0].error.issues.map(issue => issue.message);
+    const activeResult = stepResults[step - 1];
+    const gaps = activeResult && !activeResult.success ? activeResult.error.issues.map(issue => issue.message) : [];
+    const visibleStepErrors = Object.fromEntries(
+        (activeResult && !activeResult.success ? activeResult.error.issues : [])
+            .map(issue => [String(issue.path[0] ?? ""), issue.message])
+            .filter(([key]) => key && (dirtyFields[key] || errors[key] || String(form[key] ?? "").trim() !== ""))
+    );
     async function advance() {
         if (await trigger(vehicleStepFields[step - 1])) {
             setStep(step + 1);
@@ -190,12 +196,12 @@ export default function OwnerVehicleNew() {
 
     {step > 1 ? <p className="text-sm text-muted-gray">Chủ xe đại diện <span className="font-semibold text-charcoal">{user?.fullName ?? "Chủ xe"}</span> • {subtitle}</p> : null}
 
-    {step === 1 ? <StepOne form={form} cavet={cavet} inspection={inspection} onChange={set} onBrand={chooseBrand} onSegment={chooseSegment} onCity={chooseCity} onCavet={files => setCavet(files)} onInspection={setInspection}/> : null}
-    {step === 2 ? <StepTwo form={form} onChange={set}/> : null}
-    {step === 3 ? <StepThree form={form} dayPrice={dayPrice} weekend={weekend} fee={fee} onChange={set}/> : null}
+    {step === 1 ? <StepOne form={form} errors={visibleStepErrors} cavet={cavet} inspection={inspection} onChange={set} onBrand={chooseBrand} onSegment={chooseSegment} onCity={chooseCity} onCavet={files => setCavet(files)} onInspection={setInspection}/> : null}
+    {step === 2 ? <StepTwo form={form} errors={visibleStepErrors} onChange={set}/> : null}
+    {step === 3 ? <StepThree form={form} errors={visibleStepErrors} dayPrice={dayPrice} weekend={weekend} fee={fee} onChange={set}/> : null}
     {step === 4 ? <StepFour form={form} photos={photos} photoCount={photoCount} dayPrice={dayPrice} deposit={deposit} agreed={agreed} onAgree={setAgreed} onPhoto={addPhoto} onZoom={setZoom} hasCavet={Boolean(cavet.trim())} hasInspection={Boolean(inspection.trim())}/> : null}
 
-    {step === 1 && gaps.length ? <p className="text-sm text-muted-gray">{gaps.join(" ")}</p> : null}
+    {step <= 3 && gaps.length ? <p className="text-sm text-muted-gray">{gaps.join(" ")}</p> : null}
     {draftNote ? <p className="text-sm font-semibold text-status-success-ink">{draftNote}</p> : null}
     <FormErrors errors={errors} />
     {create.error ? <p className="text-sm text-on-error-container">{create.error.message}</p> : null}
