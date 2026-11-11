@@ -10,5 +10,7 @@ import com.carrental.security.CurrentAccount;
 public interface AuthService {
     CustomerProfileResponse register(RegisterRequest request);
     TokenResponse login(LoginRequest request);
+    void verifyEmail(String token);
+    void resendVerification(String email);
     void changePassword(CurrentAccount account, ChangePasswordRequest request);
 }

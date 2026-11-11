@@ -5,6 +5,7 @@ const HomePage = lazy(() => import("@/pages/home/HomePage.jsx"));
 const PackagePricingPage = lazy(() => import("@/pages/pricing/PackagePricingPage.jsx"));
 const LoginPage = lazy(() => import("@/pages/auth/LoginPage.jsx"));
 const RegisterPage = lazy(() => import("@/pages/auth/RegisterPage.jsx"));
+const VerifyEmailPage = lazy(() => import("@/pages/auth/VerifyEmailPage.jsx"));
 const BanksAlternativePage = lazy(() => import("@/pages/account/BanksAlternativePage.jsx"));
 const PaymentSuccessPage = lazy(() => import("@/pages/payments/PaymentSuccessPage.jsx"));
 const PaymentFailedPage = lazy(() => import("@/pages/payments/PaymentFailedPage.jsx"));
@@ -17,6 +18,7 @@ export const publicPages = [
     page("packages", <PackagePricingPage />),
     page("login", <LoginPage />),
     page("register", <RegisterPage />),
+    page("verify-email", <VerifyEmailPage />, "Xác minh email"),
     page("design/banks", <BanksAlternativePage />),
     page("payment/success", <PaymentSuccessPage />),
     page("payment/failed", <PaymentFailedPage />),

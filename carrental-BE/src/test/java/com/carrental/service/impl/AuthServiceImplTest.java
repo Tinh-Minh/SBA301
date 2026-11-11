@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.carrental.config.security.JwtProperties;
 import com.carrental.dto.request.auth.LoginRequest;
+import com.carrental.dto.request.auth.RegisterRequest;
 import com.carrental.dto.response.TokenResponse;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
@@ -23,10 +24,15 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 
@@ -35,14 +41,20 @@ class AuthServiceImplTest {
     private final CustomerRepository customers = mock(CustomerRepository.class);
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final JwtEncoder jwtEncoder = mock(JwtEncoder.class);
+    private final JwtDecoder jwtDecoder = mock(JwtDecoder.class);
+    private final JavaMailSender mailSender = mock(JavaMailSender.class);
+    @SuppressWarnings("unchecked")
+    private final ObjectProvider<JavaMailSender> mailSenderProvider = mock(ObjectProvider.class);
     private final Instant now = Instant.parse("2026-01-01T00:00:00Z");
     private AuthServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthServiceImpl(customers, passwordEncoder, jwtEncoder,
+        service = new AuthServiceImpl(customers, passwordEncoder, jwtEncoder, jwtDecoder,
                 new JwtProperties("issuer", "audience", Duration.ofMinutes(30), Duration.ZERO, "x".repeat(32)),
-                Clock.fixed(now, ZoneOffset.UTC));
+                Clock.fixed(now, ZoneOffset.UTC), mailSenderProvider, "http://localhost:3000", "noreply@example.test",
+                "test-api-key", "test-secret-key");
+        when(mailSenderProvider.getIfAvailable()).thenReturn(mailSender);
     }
 
     @Test
@@ -104,6 +116,72 @@ class AuthServiceImplTest {
         verify(passwordEncoder, never()).matches(any(), any());
     }
 
+    @Test
+    void unverifiedCustomerCannotLoginEvenWithCorrectPassword() {
+        Customer customer = customer(CustomerStatus.ACTIVE, "$2a$10$" + "E".repeat(53));
+        customer.setEmailVerified(false);
+        when(customers.findByEmailIgnoreCase("user@example.test")).thenReturn(Optional.of(customer));
+        when(passwordEncoder.matches("password", customer.getPasswordHash())).thenReturn(true);
+
+        assertThatThrownBy(() -> service.login(loginRequest("password")))
+                .isInstanceOf(AppException.class)
+                .extracting(exception -> ((AppException) exception).errorCode())
+                .isEqualTo(ErrorCode.EMAIL_VERIFICATION_REQUIRED);
+    }
+
+    @Test
+    void registrationSendsSignedVerificationLinkAndReturnsUnverifiedProfile() {
+        RegisterRequest request = new RegisterRequest();
+        request.setFullName("New Customer");
+        request.setEmail("new@example.test");
+        request.setPhone("0912345678");
+        request.setPassword("Good password 123!");
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("$2a$10$" + "F".repeat(53));
+        when(customers.existsByEmailIgnoreCase(request.getEmail())).thenReturn(false);
+        when(customers.existsByPhone(request.getPhone())).thenReturn(false);
+        when(customers.saveAndFlush(any(Customer.class))).thenAnswer(invocation -> {
+            Customer saved = invocation.getArgument(0);
+            saved.setId(43L);
+            return saved;
+        });
+        when(jwtEncoder.encode(any(JwtEncoderParameters.class))).thenReturn(
+                Jwt.withTokenValue("signed-verification-token").header("alg", "HS256")
+                        .subject("43").build());
+
+        var response = service.register(request);
+
+        assertThat(response.emailVerified()).isFalse();
+        ArgumentCaptor<SimpleMailMessage> message = ArgumentCaptor.forClass(SimpleMailMessage.class);
+        verify(mailSender).send(message.capture());
+        assertThat(message.getValue().getTo()).containsExactly("new@example.test");
+        assertThat(message.getValue().getText()).contains(
+                "http://localhost:3000/verify-email#token=signed-verification-token",
+                "30 phút");
+        verify(jwtEncoder).encode(any(JwtEncoderParameters.class));
+    }
+
+    @Test
+    void verifyEmailMarksTheMatchingCurrentCustomerVerified() {
+        Customer customer = customer(CustomerStatus.ACTIVE, "$2a$10$" + "G".repeat(53));
+        customer.setEmailVerified(false);
+        when(jwtDecoder.decode("verification-token")).thenReturn(Jwt.withTokenValue("verification-token")
+                .header("alg", "HS256")
+                .issuer("issuer")
+                .audience(List.of("audience", "email-verification"))
+                .subject("42")
+                .issuedAt(now)
+                .expiresAt(now.plus(Duration.ofMinutes(30)))
+                .claim("purpose", "email_verification")
+                .claim("email", "user@example.test")
+                .build());
+        when(customers.findById(42L)).thenReturn(Optional.of(customer));
+
+        service.verifyEmail("verification-token");
+
+        assertThat(customer.getEmailVerified()).isTrue();
+        verify(customers).flush();
+    }
+
     private AppException loginFailure(LoginRequest request) {
         try {
             service.login(request);
@@ -128,6 +206,7 @@ class AuthServiceImplTest {
         customer.setPasswordHash(passwordHash);
         customer.setRole(Role.CUSTOMER);
         customer.setStatus(status);
+        customer.setEmailVerified(true);
         return customer;
     }
 }

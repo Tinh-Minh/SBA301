@@ -61,6 +61,12 @@ SQL leader có RLS. Database role trong JDBC phải có quyền phù hợp với
 - Sửa `CORS_ALLOWED_ORIGINS` đúng origin FE, ví dụ localhost5173. Methods dùng cấu hình chung GET/POST/PUT/PATCH/DELETE/OPTIONS; đã sửa example local bị thiếu PUT/DELETE.
 - `APP_SECURITY_BOOTSTRAP_ADMIN_ENABLED=false` mặc định. Nếu nhóm chưa có ADMIN, thống nhất một identity mới để provision bằng cơ chế bootstrap đã có; chỉ bật có chủ đích, điền bốn biến fullName/email/phone/password, rồi tắt lại sau khi tạo. Không dùng register để tạo ADMIN, không reset/promote/unlock bản ghi có sẵn. Chưa tự tạo ADMIN trên Supabase trong lượt này.
 
+### Xác minh email đăng ký qua Mailjet
+
+- Đăng ký CUSTOMER gửi link xác minh qua Mailjet SMTP. Trong `.env`, điền `MAILJET_API_KEY`, `MAILJET_SECRET_KEY` và `MAILJET_SENDER_EMAIL`; sender phải được xác minh trong Mailjet. `FRONTEND_URL` mặc định là `http://localhost:3000` và cần đổi đúng origin FE khi chạy nơi khác.
+- Ứng dụng kết nối SMTP tới `in-v3.mailjet.com:587` bằng STARTTLS. Nếu thiếu cấu hình Mailjet, đăng ký trả `503`; không gửi API key/secret vào source, Postman hay log.
+- Link hết hạn sau 30 phút. CUSTOMER chỉ đăng nhập được sau khi xác minh; ADMIN không bị thay đổi luồng đăng nhập. Gửi lại link trả phản hồi chung và có cooldown một phút trong tiến trình BE.
+
 ## 5. Chạy mỗi ngày
 
 ### Maven — không cần Docker

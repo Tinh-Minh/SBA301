@@ -10,6 +10,7 @@ import { Link, useNavigate, useSearchParams } from "react-router";
 export function LoginForm() {
     const navigate = useNavigate();
     const [passwordVisible, setPasswordVisible] = useState(false);
+    const [verificationEmail, setVerificationEmail] = useState("");
     const { login } = useAuth();
     const notify = useNotice();
     const [search] = useSearchParams();
@@ -19,12 +20,14 @@ export function LoginForm() {
     const onSubmit = handleSubmit(async values => {
         try {
             const session = await login(values);
+            setVerificationEmail("");
             notify("Đăng nhập thành công.");
             const next = search.get("next");
             navigate(next && next.startsWith("/") ? next : session.account.role === "ADMIN" ? "/admin/dashboard" : "/explore");
         } catch (error) {
             const message = error.message || (error.status === 401 ? "Email hoặc mật khẩu không đúng." : "Đăng nhập thất bại.");
             setError("root.server", { message });
+            if (error.code === "EMAIL_VERIFICATION_REQUIRED") setVerificationEmail(values.email.trim());
             notify(message, "error");
         }
     });
@@ -52,5 +55,8 @@ export function LoginForm() {
         </div>
         <button className="auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}</button>
         <FormErrors errors={errors} />
+        {verificationEmail ? <p className="mt-3 text-sm text-[#8F3208]" role="status">
+            Chưa xác minh email? <Link className="font-bold underline" to="/verify-email" state={{ email: verificationEmail }}>Gửi lại liên kết xác minh</Link>.
+        </p> : null}
     </form>;
 }

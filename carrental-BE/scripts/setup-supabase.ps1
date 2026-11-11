@@ -43,6 +43,10 @@ if (-not $secretMatch.Success -or
 # Fill only absent/blank generated values. Never parse, evaluate or print credentials.
 $generated = @{
     APP_DOCUMENT_STORAGE_ROOT = $privateRoot.Replace('\','/')
+    MAILJET_API_KEY = ''
+    MAILJET_SECRET_KEY = ''
+    MAILJET_SENDER_EMAIL = ''
+    FRONTEND_URL = 'http://localhost:3000'
 }
 foreach ($name in $generated.Keys) {
     $empty = '(?m)^' + [regex]::Escape($name) + '=\s*$'
@@ -56,4 +60,5 @@ foreach ($name in $generated.Keys) {
 [IO.File]::WriteAllText($envPath, $contents, [Text.UTF8Encoding]::new($false))
 Write-Output 'Local .env with JWT_SECRET and private storage are ready. Existing secrets and nonblank configuration were preserved.'
 Write-Output 'Fill DB_URL, DB_USERNAME and DB_PASSWORD in .env using Supabase Connect. No database was contacted.'
+Write-Output 'Fill MAILJET_API_KEY, MAILJET_SECRET_KEY and MAILJET_SENDER_EMAIL to enable email verification.'
 Write-Output 'Run with profile supabase from the repository root; see docs/SUPABASE_SETUP.md.'
