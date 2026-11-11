@@ -30,7 +30,7 @@ public class KycServiceImpl implements KycService {
     }
 
     @Override
-    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     public KycSummaryResponse getMe(CurrentAccount account) {
         if (account == null) throw new AppException(ErrorCode.INVALID_TOKEN);
         Customer customer = customer(account.customerId());

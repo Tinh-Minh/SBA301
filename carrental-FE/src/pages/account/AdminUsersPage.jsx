@@ -18,6 +18,7 @@ export default function AdminUsers() {
     }, []);
     const [kind, value] = tab.split(":");
     const load = useCallback(() => adminUserService.list({
+        role: kind === "role" ? value : undefined,
         kycStatus: kind === "kyc" ? value : undefined,
         status: kind === "status" ? value : undefined,
         keyword: query || undefined,
@@ -52,7 +53,7 @@ export default function AdminUsers() {
             <tbody>
               {rows.map(user => <tr key={user.id} onClick={() => setSelectedId(user.id)} className={`cursor-pointer border-t border-[#E9E9E7] ${user.id === activeId ? "bg-[#FFF7F2]" : ""}`}>
                 <td className="px-3 py-3 font-mono text-xs font-bold text-[#FC6C26]">#{user.id}</td>
-                <td className="px-3 py-3 font-semibold text-[#292929]"><span className="break-words">{user.fullName}</span>{user.role === "ADMIN" ? <span className="ml-2 text-[10px] font-bold text-blue-700">ADMIN</span> : null}</td>
+                <td className="px-3 py-3 font-semibold text-[#292929]"><span className="break-words">{user.fullName}</span>{user.role === "ADMIN" ? <span className="ml-2 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">ADMIN</span> : user.role === "OWNER" ? <span className="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">CHỦ XE</span> : <span className="ml-2 rounded bg-stone-100 px-1.5 py-0.5 text-[10px] font-bold text-stone-600">KHÁCH HÀNG</span>}</td>
                 <td className="px-3 py-3 text-[#666666]"><span className="break-all">{user.email}</span><br/><span className="text-xs">{user.phone}</span></td>
                 <td className="px-3 py-3"><StatusPill tone={kycTone[user.kycStatus]}>{kycStatusLabels[user.kycStatus] ?? user.kycStatus}</StatusPill></td>
                 <td className="px-3 py-3"><StatusPill tone={user.status === "LOCKED" ? "danger" : "success"}>{user.status === "LOCKED" ? "Bị khóa" : "Hoạt động"}</StatusPill></td>

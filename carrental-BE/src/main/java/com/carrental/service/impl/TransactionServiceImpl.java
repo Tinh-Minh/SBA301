@@ -74,6 +74,7 @@ public class TransactionServiceImpl implements TransactionService {
         log.info("Khởi tạo thanh toán gói subscriptionId={}, method={}", request.getSubscriptionId(), request.getMethod());
 
         Customer current = currentUserService.getCurrentUser();
+        CurrentUserService.requireVerifiedOwner(current);
         CarSubscription subscription = carSubscriptionRepository.findById(request.getSubscriptionId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy gói subscription id=" + request.getSubscriptionId()));
 
@@ -173,6 +174,7 @@ public class TransactionServiceImpl implements TransactionService {
         Specification<Transaction> spec = buildFilterSpecification(subscriptionId, transactionType, status);
 
         if (!currentUserService.isAdmin(current)) {
+            CurrentUserService.requireVerifiedOwner(current);
             spec = spec.and((root, query, cb) -> cb.equal(root.get("subscription").get("customer").get("id"), current.getId()));
         }
 
@@ -213,6 +215,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void validateOwnerAccess(Transaction transaction) {
         Customer current = currentUserService.getCurrentUser();
+        CurrentUserService.requireVerifiedOwner(current);
         if (!isTransactionOwner(transaction, current)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Chỉ chủ xe sở hữu giao dịch này mới có quyền");
         }
@@ -220,7 +223,11 @@ public class TransactionServiceImpl implements TransactionService {
 
     private void validateAccess(Transaction transaction) {
         Customer current = currentUserService.getCurrentUser();
-        if (currentUserService.isAdmin(current) || isTransactionOwner(transaction, current)) {
+        if (currentUserService.isAdmin(current)) {
+            return;
+        }
+        CurrentUserService.requireVerifiedOwner(current);
+        if (isTransactionOwner(transaction, current)) {
             return;
         }
         throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập giao dịch này");

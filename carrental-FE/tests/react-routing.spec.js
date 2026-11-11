@@ -68,10 +68,36 @@ test("unknown routes and invalid vehicle IDs use the intended fallback", async (
   await page.goto("/missing-page");
   await expect(page.getByRole("heading", { name: "Chưa tìm thấy trang này" })).toBeVisible();
   await page.evaluate(() => localStorage.setItem("cardb:session:v2", JSON.stringify({
-    accessToken: "frontend-test-token", account: { id: 1, fullName: "Test Owner", role: "CUSTOMER" },
+    accessToken: "frontend-test-token", account: { id: 1, fullName: "Test Owner", role: "OWNER" },
   })));
   await page.goto("/owner/vehicles/edit/invalid");
   await expect(page.getByRole("heading", { name: "Chưa tìm thấy trang này" })).toBeVisible();
   await page.goto("/cars/invalid");
   await expect(page).toHaveURL(/\/explore$/);
+});
+
+test("customer without verified owner role is blocked from owner pages until promoted", async ({ page }) => {
+  let profile = { id: 9, fullName: "Normal Customer", role: "CUSTOMER", kycStatus: "NONE" };
+  await page.addInitScript(account => localStorage.setItem("cardb:session:v2", JSON.stringify({
+    accessToken: "customer-test-token", account,
+  })), profile);
+  await page.route("**/api/**", route => {
+    const { pathname } = new URL(route.request().url());
+    if (pathname === "/api/customers/me") {
+      return route.fulfill({ json: { success: true, data: profile } });
+    }
+    if (pathname === "/api/cars/my-cars") {
+      return route.fulfill({ json: { success: true, data: { content: [], totalElements: 0 } } });
+    }
+    return route.fulfill({ status: 404, json: { message: "Not mocked" } });
+  });
+
+  await page.goto("/owner/vehicles/new");
+  await expect(page.getByRole("heading", { name: "Cần xác minh giấy tờ để trở thành Chủ xe" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Gửi giấy xác nhận/ })).toHaveAttribute("href", "/account/verification");
+  await expect(page.getByRole("heading", { name: "Đăng ký xe cho thuê mới" })).toHaveCount(0);
+
+  profile = { id: 9, fullName: "Normal Customer", role: "OWNER", kycStatus: "VERIFIED" };
+  await page.getByRole("button", { name: "Kiểm tra lại trạng thái" }).click();
+  await expect(page.getByRole("heading", { name: "Đăng ký xe cho thuê mới" })).toBeVisible();
 });

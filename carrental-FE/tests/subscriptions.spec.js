@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-const customer = { id: 1, fullName: "Chủ Xe", email: "owner@example.com", phone: "0912345678", role: "CUSTOMER", status: "ACTIVE", kycStatus: "APPROVED" };
+const customer = { id: 1, fullName: "Chủ Xe", email: "owner@example.com", phone: "0912345678", role: "OWNER", status: "ACTIVE", kycStatus: "APPROVED" };
 const car = (id, plate, status, listingStatus) => ({ id, ownerId: 1, brand: "Toyota", model: `Xe${id}`, licensePlate: plate, manufactureYear: 2024, seats: 5, carType: "SUV", transmission: "AUTOMATIC", fuelType: "GASOLINE", city: "HCM", pickupAddress: "1 Lê Lợi", pricePerDay: 800000, status, listingStatus, images: [], documents: [] });
 const cars = [car(1, "51K-00001", "ACTIVE", "LISTED"), car(2, "51K-00002", "ACTIVE", "UNLISTED"), car(3, "51K-00003", "ACTIVE", "EXPIRED"), car(4, "51K-00004", "PENDING_APPROVAL", "UNLISTED")];
 const subscription = (id, carId, status, daysRemaining = null) => ({ id, subscriptionCode: `SUB-20261107-00${id}`, customerId: 1, customerName: customer.fullName, carId, carName: `Toyota Xe${carId}`, licensePlate: `51K-0000${carId}`, packageId: 2, packageName: "Gói Tiêu Chuẩn", durationDays: 30, badgeLabel: "NỔI BẬT", voucherCode: null, packagePrice: 180000, discountAmount: 0, totalAmount: 180000, status, paymentStatus: status === "ACTIVE" ? "PAID" : "UNPAID", startDate: null, endDate: null, activatedAt: null, createdAt: "2026-11-07T08:00:00", daysRemaining });

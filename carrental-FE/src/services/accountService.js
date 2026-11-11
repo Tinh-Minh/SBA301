@@ -52,9 +52,9 @@ export function updateMyProfile({ fullName, dateOfBirth, address, email, phone, 
     return request(endpoints.customers.me, { method: "PUT", json });
 }
 
-/** ADMIN: GET /api/customers?status&kycStatus&keyword&page&size&sort */
-export async function listCustomers({ status, kycStatus, keyword, page = 0, size = 20, sort = "createdAt,desc" } = {}) {
-    return toPage(await request(endpoints.customers.list, { query: { status, kycStatus, keyword, page, size, sort } }));
+/** ADMIN: GET /api/customers?status&kycStatus&role&keyword&page&size&sort */
+export async function listCustomers({ status, kycStatus, role, keyword, page = 0, size = 20, sort = "createdAt,desc" } = {}) {
+    return toPage(await request(endpoints.customers.list, { query: { status, kycStatus, role, keyword, page, size, sort } }));
 }
 
 /** ADMIN: GET /api/customers/{id} */
@@ -65,6 +65,9 @@ export const getCustomerKyc = (id) => request(endpoints.customers.byIdKyc(id));
 
 /** ADMIN: PATCH /api/customers/{id}/status { status: ACTIVE|LOCKED, reason } */
 export const updateCustomerStatus = (id, status, reason) => request(endpoints.customers.byIdStatus(id), { method: "PATCH", json: { status, reason } });
+
+/** ADMIN: PATCH /api/customers/{id}/role { role: CUSTOMER|OWNER } */
+export const updateCustomerRole = (id, role) => request(endpoints.customers.byIdRole(id), { method: "PATCH", json: { role } });
 
 export const userDocumentService = {
     listMine: async () => toPage(await request(endpoints.userDocuments.list, { query: { scope: "mine", size: 50 } })).content,

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("cardb:session:v2", JSON.stringify({
-    accessToken: "test-token", account: { id: 1, fullName: "Backend Owner", role: "CUSTOMER" },
+    accessToken: "test-token", account: { id: 1, fullName: "Backend Owner", role: "OWNER" },
   })));
 });
 

@@ -74,6 +74,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     public SubscriptionQuoteResponse quote(CreateSubscriptionRequest request) {
         return run("báo giá gói đăng tin", request.getCarId(), () -> {
             Customer owner = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(owner);
             Car car = loadOwnCar(request.getCarId(), owner);
             ensureCarCanBuy(car);
             ListingPackage listingPackage = loadPackage(request.getPackageId());
@@ -95,6 +96,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         log.info("Tạo yêu cầu mua gói carId={}, packageId={}", request.getCarId(), request.getPackageId());
         return run("tạo yêu cầu mua gói", request.getCarId(), () -> {
             Customer owner = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(owner);
             Car car = loadOwnCar(request.getCarId(), owner);
             ensureCarCanBuy(car);
             ListingPackage listingPackage = loadPackage(request.getPackageId());
@@ -154,8 +156,11 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         return run("kích hoạt slot tiếp theo", subscriptionId, () -> {
             Customer user = currentUserService.getCurrentUser();
             CarSubscription subscription = findSubscription(subscriptionId);
-            if (!isBuyer(subscription, user) && !currentUserService.isAdmin(user)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền kích hoạt slot của gói này");
+            if (!currentUserService.isAdmin(user)) {
+                CurrentUserService.requireVerifiedOwner(user);
+                if (!isBuyer(subscription, user)) {
+                    throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền kích hoạt slot của gói này");
+                }
             }
             if (subscription.getStatus() != SubscriptionStatus.ACTIVE) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Gói đăng tin không trong trạng thái kích hoạt");
@@ -189,6 +194,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     public PageResponse<SubscriptionResponse> getMySubscriptions(Pageable pageable) {
         return run("xem gói đăng tin của tôi", null, () -> {
             Customer user = currentUserService.getCurrentUser();
+            CurrentUserService.requireVerifiedOwner(user);
             LocalDateTime now = LocalDateTime.now(clock);
             return PageResponse.from(subscriptionRepository.findAllByCustomerId(user.getId(), pageable)
                     .map(subscription -> SubscriptionResponse.from(subscription, now)));
@@ -201,8 +207,11 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         return run("xem chi tiết gói đăng tin", id, () -> {
             Customer user = currentUserService.getCurrentUser();
             CarSubscription subscription = findSubscription(id);
-            if (!isBuyer(subscription, user) && !currentUserService.isAdmin(user)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem gói đăng tin này");
+            if (!currentUserService.isAdmin(user)) {
+                CurrentUserService.requireVerifiedOwner(user);
+                if (!isBuyer(subscription, user)) {
+                    throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem gói đăng tin này");
+                }
             }
             return SubscriptionResponse.from(subscription, LocalDateTime.now(clock));
         });
@@ -229,8 +238,11 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             Customer user = currentUserService.getCurrentUser();
             CarSubscription subscription = findSubscription(id);
             boolean admin = currentUserService.isAdmin(user);
-            if (!admin && !isBuyer(subscription, user)) {
-                throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền huỷ gói đăng tin này");
+            if (!admin) {
+                CurrentUserService.requireVerifiedOwner(user);
+                if (!isBuyer(subscription, user)) {
+                    throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền huỷ gói đăng tin này");
+                }
             }
             if (!admin && subscription.getStatus() == SubscriptionStatus.ACTIVE) {
                 throw new AppException(HttpStatus.FORBIDDEN, "Gói đã kích hoạt chỉ quản trị viên mới được huỷ");

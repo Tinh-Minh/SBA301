@@ -19,7 +19,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")
     @PostMapping("/api/reviews")
     public ApiResponse<ReviewResponse> createReview(@Valid @RequestBody CreateReviewRequest request) {
         return ApiResponse.ok("Gửi đánh giá thành công", reviewService.createReview(request));
