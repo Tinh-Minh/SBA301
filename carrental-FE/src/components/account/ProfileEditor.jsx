@@ -48,7 +48,7 @@ export function Editor({ profile, kyc, onSaved }) {
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 className="text-lg font-bold">Thông tin cá nhân</h2>
-        <p className="text-sm text-[#666666]">Mã khách hàng #{profile.id} • tham gia {formatDate(profile.createdAt)}</p>
+        <p className="text-sm text-[#666666]">Mã tài khoản #{profile.id} • tham gia {formatDate(profile.createdAt)}</p>
       </div>
       <button type="button" onClick={() => setEditing(value => !value)} className="min-h-10 rounded-xl border border-[#767676] px-4 py-2 text-sm font-bold focus-visible:outline-[#B9430C]">{editing ? "Đóng" : "Chỉnh sửa"}</button>
     </div>

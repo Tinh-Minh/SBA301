@@ -1,4 +1,4 @@
-﻿-- =====================================================================
+-- =====================================================================
 -- SBA301 - Ná»€N Táº¢NG CHO THUÃŠ XE Tá»° LÃI (CAR LISTING PLATFORM)
 -- TOÃ€N Bá»˜ CÆ  Sá»ž Dá»® LIá»†U & SEED DATA Äáº¦Y Äá»¦ (FULL SEED DATA)
 -- CHá»ˆ Gá»’M: QUáº¢N TRá»Š VIÃŠN (ADMIN), CHá»¦ XE (OWNER), KHÃCH HÃ€NG (CUSTOMER)
@@ -37,16 +37,10 @@ DROP TABLE IF EXISTS bank_accounts CASCADE;
 -- 1. HÃ€M DÃ™NG CHUNG (MÃšI GIá»œ VIá»†T NAM & AUTO UPDATED_AT)
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION vn_now() RETURNS timestamp
-LANGUAGE sql STABLE AS $$ 
-    SELECT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh') 
-$$;
+LANGUAGE sql STABLE AS 'SELECT (now() AT TIME ZONE ''Asia/Ho_Chi_Minh'')';
 
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger
-LANGUAGE plpgsql AS $$
-BEGIN
-    NEW.updated_at := vn_now();
-    RETURN NEW;
-END $$;
+LANGUAGE plpgsql AS 'BEGIN NEW.updated_at := (now() AT TIME ZONE ''Asia/Ho_Chi_Minh''); RETURN NEW; END';
 
 -- ---------------------------------------------------------------------
 -- 2. TÃ€I KHOáº¢N NGÆ¯á»œI DÃ™NG (CUSTOMERS - F1)
@@ -291,19 +285,13 @@ CREATE TABLE reviews (
 -- ---------------------------------------------------------------------
 -- 12. TRIGGERS & INDEXES
 -- ---------------------------------------------------------------------
-DO $$
-DECLARE
-    t text;
-BEGIN
-    FOR t IN
-        SELECT table_name FROM information_schema.columns
-        WHERE table_schema = 'public' AND column_name = 'updated_at'
-    LOOP
-        EXECUTE format(
-            'CREATE TRIGGER trg_%I_updated_at BEFORE UPDATE ON %I
-             FOR EACH ROW EXECUTE FUNCTION set_updated_at()', t, t);
-    END LOOP;
-END $$;
+CREATE TRIGGER trg_customers_updated_at BEFORE UPDATE ON customers FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_user_documents_updated_at BEFORE UPDATE ON user_documents FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_listing_packages_updated_at BEFORE UPDATE ON listing_packages FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_vouchers_updated_at BEFORE UPDATE ON vouchers FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_cars_updated_at BEFORE UPDATE ON cars FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_car_subscriptions_updated_at BEFORE UPDATE ON car_subscriptions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_transactions_updated_at BEFORE UPDATE ON transactions FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE INDEX idx_cars_search_active ON cars(city, car_type) 
     WHERE status = 'ACTIVE' AND listing_status = 'LISTED';

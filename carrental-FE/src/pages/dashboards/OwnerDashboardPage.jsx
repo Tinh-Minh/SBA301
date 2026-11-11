@@ -2,7 +2,6 @@ import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { useOwnerDashboard } from "@/hooks/useDashboards.js";
-import { maskBankAccount } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { formatDateTime } from "@/utils/datetime.js";
 
@@ -20,7 +19,6 @@ export default function OwnerDashboard() {
         return <div className="rounded-2xl border border-card-border bg-white p-10 text-center text-sm text-muted-gray">Đang tải bảng điều khiển…</div>;
     if (error || !data)
         return <div className="rounded-2xl border border-red-200 bg-white p-10 text-center text-sm text-[#B91C1C]">{error?.message ?? "Không tải được dữ liệu."} <button type="button" onClick={reload} className="font-bold underline">Thử lại</button></div>;
-    const bankLabel = data.defaultBankAccount ? `${data.defaultBankAccount.bankName} ${maskBankAccount(data.defaultBankAccount.accountNumber)}` : "Chưa liên kết tài khoản nhận thông báo";
     return <div className="flex min-w-0 flex-col gap-6">
     <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
       <div>
@@ -51,7 +49,6 @@ export default function OwnerDashboard() {
           <Link to={`${ownerRoutes.subscriptions}/${item.id}`} className="font-bold text-[#FC6C26]">Thanh toán</Link>
         </li>)}
       </ul>}
-      <p className="mt-3 text-xs text-muted-gray">{bankLabel}</p>
     </section>
     <section className="rounded-2xl border border-card-border bg-white p-5">
       <h2 className="font-bold text-charcoal">Hoạt động gần đây</h2>

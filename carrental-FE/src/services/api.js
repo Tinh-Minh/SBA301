@@ -100,7 +100,7 @@ httpClient.interceptors.response.use(async response => {
         "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy ở cổng 8080 chưa."));
     const { status } = response;
     const payload = repairDisplayText(await decodeResponse(response));
-    if (status === 401 && error.config.sessionToken && error.config.sessionToken === readSession()?.accessToken)
+    if (status === 401 && error.config.clearSessionOn401 !== false && error.config.sessionToken && error.config.sessionToken === readSession()?.accessToken)
         clearSession();
     if (status >= 500 && !payload?.message) return Promise.reject(new ApiError(status,
         [502, 503, 504].includes(status) ? "Không kết nối được tới máy chủ backend. Kiểm tra backend đã chạy chưa." : statusMessages[500]));

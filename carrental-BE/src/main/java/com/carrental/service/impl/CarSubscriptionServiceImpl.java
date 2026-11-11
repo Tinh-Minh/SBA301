@@ -10,17 +10,20 @@ import com.carrental.entity.Car;
 import com.carrental.entity.CarSubscription;
 import com.carrental.entity.Customer;
 import com.carrental.entity.ListingPackage;
+import com.carrental.entity.Transaction;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.DiscountType;
 import com.carrental.enums.ListingStatus;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.SubscriptionStatus;
+import com.carrental.enums.TransactionStatus;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.exception.AppException;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.repository.ListingPackageRepository;
+import com.carrental.repository.TransactionRepository;
 import com.carrental.repository.VoucherRepository;
 import com.carrental.service.CarSubscriptionService;
 import com.carrental.service.CurrentUserService;
@@ -56,6 +59,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
     private final CarRepository carRepository;
     private final ListingPackageRepository listingPackageRepository;
     private final VoucherRepository voucherRepository;
+    private final TransactionRepository transactionRepository;
     private final CurrentUserService currentUserService;
     private final SubscriptionProperties subscriptionProperties;
     private final Clock clock;
@@ -130,7 +134,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
                 activate(subscription, now);
             }
             log.info("Tạo yêu cầu mua gói thành công id={}, code={}", subscription.getId(), subscription.getSubscriptionCode());
-            return SubscriptionResponse.from(subscription, now);
+            return toResponse(subscription, now);
         });
     }
 
@@ -191,7 +195,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             Customer user = currentUserService.getCurrentUser();
             LocalDateTime now = LocalDateTime.now(clock);
             return PageResponse.from(subscriptionRepository.findAllByCustomerId(user.getId(), pageable)
-                    .map(subscription -> SubscriptionResponse.from(subscription, now)));
+                    .map(subscription -> toResponse(subscription, now)));
         });
     }
 
@@ -204,7 +208,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             if (!isBuyer(subscription, user) && !currentUserService.isAdmin(user)) {
                 throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem gói đăng tin này");
             }
-            return SubscriptionResponse.from(subscription, LocalDateTime.now(clock));
+            return toResponse(subscription, LocalDateTime.now(clock));
         });
     }
 
@@ -215,7 +219,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         return run("xem toàn bộ gói đăng tin", null, () -> {
             LocalDateTime now = LocalDateTime.now(clock);
             return PageResponse.from(subscriptionRepository.search(status, pageable)
-                    .map(subscription -> SubscriptionResponse.from(subscription, now)));
+                    .map(subscription -> toResponse(subscription, now)));
         });
     }
 
@@ -236,7 +240,7 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
                 throw new AppException(HttpStatus.FORBIDDEN, "Gói đã kích hoạt chỉ quản trị viên mới được huỷ");
             }
             cancel(subscription);
-            return SubscriptionResponse.from(subscription, LocalDateTime.now(clock));
+            return toResponse(subscription, LocalDateTime.now(clock));
         });
     }
 
@@ -369,6 +373,12 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         SubscriptionStatus from = subscription.getStatus();
         from.validateTransitionTo(SubscriptionStatus.CANCELLED);
         subscription.setStatus(SubscriptionStatus.CANCELLED);
+        // Huỷ mọi giao dịch PENDING liên quan để không bị treo trạng thái chờ thanh toán trên hệ thống.
+        List<Transaction> pendingTransactions = transactionRepository
+                .findAllBySubscriptionIdAndStatus(subscription.getId(), TransactionStatus.PENDING);
+        for (Transaction tx : pendingTransactions) {
+            tx.setStatus(TransactionStatus.FAILED);
+        }
         // Gói chưa thanh toán chưa dùng thật nên trả lại lượt voucher; xe chưa được gói này mở tin nên giữ nguyên.
         if (from == SubscriptionStatus.PENDING_PAYMENT) {
             if (subscription.getVoucher() != null) {
@@ -380,6 +390,10 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
         if (subscription.getId().equals(car.getCurrentSubscriptionId())) {
             car.setListingStatus(ListingStatus.UNLISTED);
         }
+    }
+
+    private SubscriptionResponse toResponse(CarSubscription subscription, LocalDateTime now) {
+        return SubscriptionResponse.from(subscription, now, subscriptionProperties.getPaymentTimeoutMinutes());
     }
 
     private LocalDateTime paymentCutoff() {

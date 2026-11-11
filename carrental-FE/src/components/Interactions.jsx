@@ -60,8 +60,6 @@ export function Interactions({ children }) {
         const action = button.dataset.action;
         if (action === "receipt" || button.dataset.handler === "window.print") {
             window.print();
-        } else if (action === "default-bank") {
-            navigate("/account/bank");
         } else if (action === "search") {
             const section = button.closest("section") ?? root.current;
             const fields = section?.querySelectorAll('input[type="text"]');

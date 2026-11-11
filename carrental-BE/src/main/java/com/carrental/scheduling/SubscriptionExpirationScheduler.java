@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 /**
- * Mỗi đầu giờ dọn gói quá hạn: gói ACTIVE qua end_date sang EXPIRED (tạm ẩn tin),
+ * Mỗi phút dọn gói quá hạn: gói ACTIVE qua end_date sang EXPIRED (tạm ẩn tin),
  * gói PENDING_PAYMENT quá hạn thanh toán sang CANCELLED.
  */
 @Slf4j
@@ -20,7 +20,7 @@ public class SubscriptionExpirationScheduler {
 
     private final CarSubscriptionService subscriptionService;
 
-    @Scheduled(cron = "0 0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void scanAndExpireSubscriptions() {
         int expired = processEach(subscriptionService.findExpiredSubscriptionIds(),
                 subscriptionService::expireSubscription, "chuyển sang EXPIRED");

@@ -45,7 +45,10 @@ public final class VNPayHtmlRenderer {
                             <tr><td>Ngân hàng:</td><td>%s</td></tr>
                             <tr><td>Mã tham chiếu VNPay:</td><td>%s</td></tr>
                         </table>
-                        <a href="javascript:window.close();" class="btn">Đóng trang</a>
+                        <div style="display: flex; gap: 12px; justify-content: center; margin-top: 15px; flex-wrap: wrap;">
+                            <a href="http://localhost:3000/my-subscriptions" class="btn">Xem gói cước của tôi</a>
+                            <a href="http://localhost:3000" class="btn" style="background: #4b5563;">Về trang chủ</a>
+                        </div>
                     </div>
                 </body>
                 </html>

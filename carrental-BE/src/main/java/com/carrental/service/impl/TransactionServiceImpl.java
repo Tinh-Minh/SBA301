@@ -102,6 +102,11 @@ public class TransactionServiceImpl implements TransactionService {
         if (existingPending.isPresent() && existingPending.get().getMethod() == request.getMethod()) {
             transaction = existingPending.get();
         } else {
+            if (existingPending.isPresent()) {
+                Transaction oldPending = existingPending.get();
+                oldPending.setStatus(TransactionStatus.FAILED);
+                transactionRepository.save(oldPending);
+            }
             transaction = Transaction.builder()
                     .subscription(subscription)
                     .transactionType(TransactionType.PACKAGE_PAYMENT)
@@ -198,6 +203,10 @@ public class TransactionServiceImpl implements TransactionService {
             try {
                 TransactionStatus txStatus = TransactionStatus.valueOf(status.toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), txStatus));
+                if (txStatus == TransactionStatus.PENDING) {
+                    spec = spec.and((root, query, cb) -> cb.equal(
+                            root.get("subscription").get("status"), SubscriptionStatus.PENDING_PAYMENT));
+                }
             } catch (IllegalArgumentException ignored) {}
         }
 
