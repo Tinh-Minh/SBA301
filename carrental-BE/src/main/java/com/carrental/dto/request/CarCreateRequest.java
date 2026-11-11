@@ -13,6 +13,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.util.Locale;
@@ -32,6 +33,7 @@ public class CarCreateRequest {
 
     @NotBlank(message = "Biển số xe không được để trống")
     @Size(max = 20, message = "Biển số xe tối đa 20 ký tự")
+    @Pattern(regexp = "^[0-9A-Za-z.\\-\\s]{4,20}$", message = "Biển số xe phải từ 4-20 ký tự và chỉ chứa chữ, số, dấu chấm hoặc gạch nối")
     private String licensePlate;
 
     @NotBlank(message = "Hãng xe không được để trống")
@@ -44,14 +46,14 @@ public class CarCreateRequest {
 
     @NotNull(message = "Năm sản xuất không được để trống")
     @Min(value = 1990, message = "Năm sản xuất từ 1990 trở lên")
-    @Max(value = 2100, message = "Năm sản xuất không hợp lệ")
+    @Max(value = 2027, message = "Năm sản xuất không hợp lệ")
     private Integer manufactureYear;
 
     @NotNull(message = "Loại xe không được để trống")
     private CarType carType;
 
     @NotNull(message = "Số ghế không được để trống")
-    @Min(value = 1, message = "Số ghế tối thiểu là 1")
+    @Min(value = 2, message = "Số ghế tối thiểu là 2")
     @Max(value = 60, message = "Số ghế tối đa là 60")
     private Integer seats;
 
@@ -107,6 +109,8 @@ public class CarCreateRequest {
     @Size(max = 20, message = "Số Zalo liên hệ tối đa 20 ký tự")
     private String contactZalo;
 
+    @DecimalMin(value = "0", message = "Giá thuê theo ngày phải >= 0")
+    @Digits(integer = 14, fraction = 0, message = "Giá thuê theo ngày không có số lẻ")
     private BigDecimal pricePerDay;
 
     public Car toEntity() {

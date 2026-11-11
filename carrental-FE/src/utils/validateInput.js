@@ -7,15 +7,69 @@ export const httpUrlInput = z.string().trim().max(500, "Đường dẫn tối đ
     .regex(/^https?:\/\/\S+$/i, "Đường dẫn phải bắt đầu bằng http:// hoặc https://.");
 export const optionalHttpUrlInput = z.union([z.string().trim().length(0), httpUrlInput]);
 
-export function vndInput({ positive = false } = {}) {
-    return z.preprocess(parseVndInput, z.number({ error: "Vui lòng nhập số VND nguyên hợp lệ." })
-        .int().min(positive ? 1 : 0, positive ? "Giá trị phải lớn hơn 0." : "Giá trị không được âm.")
-        .max(Number.MAX_SAFE_INTEGER, "Giá trị quá lớn."));
+function parseStrictVnd(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return undefined;
+    if (/^-\d/.test(raw)) return -1;
+    const parsed = parseVndInput(raw);
+    return parsed === null ? Number.NaN : parsed;
 }
 
-export function integerInput(min, max) {
-    return z.preprocess(value => String(value ?? "").trim() === "" ? undefined : Number(value),
-        z.number({ error: "Vui lòng nhập số nguyên." }).int().min(min).max(max));
+function formatNumber(n) {
+    return new Intl.NumberFormat("vi-VN").format(n);
+}
+
+export function vndInput({ positive = false, min, max = 500_000_000, label = "Giá trị" } = {}) {
+    const floor = min ?? (positive ? 1 : 0);
+    return z.preprocess(
+        parseStrictVnd,
+        z.number({ error: `Vui lòng nhập ${label.toLowerCase()} hợp lệ.` })
+            .int(`${label} phải là số nguyên VND.`)
+            .refine(v => v >= 0, `${label} không được là số âm.`)
+            .refine(v => v >= floor, floor === 1 ? `${label} phải lớn hơn 0.` : `${label} tối thiểu là ${formatNumber(floor)}đ.`)
+            .refine(v => v <= max, `${label} tối đa là ${formatNumber(max)}đ.`)
+    );
+}
+
+export function optionalVndInput({ max = 500_000_000, label = "Giá trị" } = {}) {
+    return z.preprocess(
+        parseStrictVnd,
+        z.number({ error: `Vui lòng nhập ${label.toLowerCase()} hợp lệ.` })
+            .int(`${label} phải là số nguyên VND.`)
+            .refine(v => v >= 0, `${label} không được là số âm.`)
+            .refine(v => v <= max, `${label} tối đa là ${formatNumber(max)}đ.`)
+            .optional()
+    );
+}
+
+function parseStrictInteger(value) {
+    const raw = String(value ?? "").trim();
+    if (!raw) return undefined;
+    if (!/^-?\d+$/.test(raw)) return Number.NaN;
+    return Number(raw);
+}
+
+export function integerInput(min, max, label = "Giá trị") {
+    return z.preprocess(
+        parseStrictInteger,
+        z.number({ error: `Vui lòng nhập ${label.toLowerCase()}.` })
+            .int(`${label} phải là số nguyên.`)
+            .refine(v => v >= 0 || min < 0, `${label} không được là số âm.`)
+            .refine(v => v >= min, `${label} tối thiểu là ${min}.`)
+            .refine(v => v <= max, `${label} tối đa là ${max}.`)
+    );
+}
+
+export function optionalIntegerInput(min, max, label = "Giá trị") {
+    return z.preprocess(
+        parseStrictInteger,
+        z.number({ error: `Vui lòng nhập ${label.toLowerCase()} hợp lệ.` })
+            .int(`${label} phải là số nguyên.`)
+            .refine(v => v >= 0 || min < 0, `${label} không được là số âm.`)
+            .refine(v => v >= min, `${label} tối thiểu là ${min}.`)
+            .refine(v => v <= max, `${label} tối đa là ${max}.`)
+            .optional()
+    );
 }
 
 export function validateInput(schema, input) {
