@@ -21,6 +21,7 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.CustomerService;
+import com.carrental.util.DbErrors;
 import com.carrental.util.RequestChecks;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
@@ -90,12 +91,12 @@ public class CustomerServiceImpl implements CustomerService {
         if (request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail())) {
             customers.findByEmailIgnoreCase(email)
                     .filter(other -> !other.getId().equals(customer.getId()))
-                    .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
+                    .ifPresent(other -> { throw DbErrors.accountConflict(true, false); });
         }
         if (request.phoneWasProvided() && !phone.equals(customer.getPhone())) {
             customers.findByPhone(phone)
                     .filter(other -> !other.getId().equals(customer.getId()))
-                    .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
+                    .ifPresent(other -> { throw DbErrors.accountConflict(false, true); });
         }
 
         boolean changed = applyProfileUpdate(customer, request, fullName, dateOfBirth, address, email, phone,

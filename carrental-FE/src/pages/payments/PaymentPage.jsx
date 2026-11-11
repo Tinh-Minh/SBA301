@@ -1,11 +1,14 @@
-import { Link, useSearchParams } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState } from "@/components/LiveUi.jsx";
+import { useNotice } from "@/context/NoticeProvider.jsx";
 import { transactionService } from "@/services/paymentService.js";
 import { formatMoney } from "@/utils/labels.js";
 
 function VNPayReturnResult({ searchParams }) {
+    const navigate = useNavigate();
+    const notify = useNotice();
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -13,10 +16,16 @@ function VNPayReturnResult({ searchParams }) {
     useEffect(() => {
         const params = Object.fromEntries(searchParams.entries());
         transactionService.vnpayReturn(params)
-            .then(data => setResult(data))
+            .then(data => {
+                setResult(data);
+                if (data?.status === "SUCCESS") {
+                    notify("Thanh toán thành công!");
+                    navigate("/owner/subscriptions", { replace: true });
+                }
+            })
             .catch(err => setError(err))
             .finally(() => setLoading(false));
-    }, [searchParams]);
+    }, [searchParams, navigate, notify]);
 
     if (loading) {
         return <LiveState loading={true} label="kết quả thanh toán VNPay" />;

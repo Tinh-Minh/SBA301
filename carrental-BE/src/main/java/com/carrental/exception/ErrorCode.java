@@ -19,6 +19,7 @@ public enum ErrorCode {
     DOCUMENT_SELF_REVIEW_FORBIDDEN(HttpStatus.FORBIDDEN, "ADMIN không được tự duyệt giấy tờ của mình"),
     DOCUMENT_ALREADY_REVIEWED(HttpStatus.CONFLICT, "Giấy tờ đã được xử lý"),
     DOCUMENT_NOT_APPROVABLE(HttpStatus.CONFLICT, "Giấy tờ chưa đủ điều kiện duyệt"),
+    KYC_VERIFICATION_BLOCKED(HttpStatus.FORBIDDEN, "Tài khoản tạm thời bị cấm xác minh trong 1 tháng do bị từ chối đủ 3 lần"),
     APPROVED_DOCUMENT_CONFLICT(HttpStatus.CONFLICT, "Giấy tờ đã được duyệt không thể trùng lặp"),
     DRIVER_PROFILE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Hồ sơ tài xế đã tồn tại"),
     INVALID_DRIVER_STATUS_TRANSITION(HttpStatus.CONFLICT, "Không thể chuyển trạng thái hồ sơ tài xế"),

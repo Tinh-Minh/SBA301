@@ -18,6 +18,7 @@ export const routeAliases = {
   "/thanh-toan/thanh-cong": "/payment/success",
   "/thanh-toan/that-bai": "/payment/failed",
   "/thanh-toan": "/payment",
+  "/my-subscriptions": "/owner/subscriptions",
   "/ban-giao/nhan-xe": "/handover/pickup",
   "/ban-giao/tra-xe": "/handover/return",
   "/danh-gia": "/reviews",

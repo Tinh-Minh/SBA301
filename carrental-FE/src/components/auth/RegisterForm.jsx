@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth.js";
+import { useNotice } from "@/context/NoticeProvider.jsx";
 import { usePasswordStrength } from "@/hooks/usePasswordStrength.js";
 import { FormErrors } from "@/components/FormErrors.jsx";
 import { PasswordStrengthMeter } from "@/components/PasswordStrengthMeter.jsx";
@@ -15,7 +16,8 @@ export function RegisterForm() {
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmVisible, setConfirmVisible] = useState(false);
     const { register: createAccount, login } = useAuth();
-    const { register, control, handleSubmit, setError, formState: { errors, isSubmitting, isValid } } = useForm({
+    const notify = useNotice();
+    const { register, control, handleSubmit, setError, clearErrors, formState: { errors, isSubmitting } } = useForm({
         resolver: zodResolver(registrationSchema),
         mode: "onChange",
         defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "", terms: true },
@@ -23,15 +25,22 @@ export function RegisterForm() {
     const watched = useWatch({ control, name: ["fullName", "email", "phone", "password"] });
     const [fullName = "", email = "", phone = "", password = ""] = watched ?? [];
     const strength = usePasswordStrength({ password, fullName, email, phone });
-    const onSubmit = handleSubmit(async ({ confirmPassword, terms, ...values }) => {
+    const submit = handleSubmit(async ({ confirmPassword, terms, ...values }) => {
         try {
             await createAccount(values);
             await login({ email: values.email, password: values.password });
+            notify("Đăng ký tài khoản thành công.");
             navigate("/account");
         } catch (error) {
-            setError("root.server", { message: error.message });
+            const message = error?.message || "Đăng ký tài khoản thất bại.";
+            setError("root.server", { message });
+            notify(message, "error");
         }
     });
+    const onSubmit = (event) => {
+        clearErrors("root");
+        return submit(event);
+    };
 
     return <form data-native noValidate onSubmit={onSubmit} aria-busy={isSubmitting} className="auth-form">
         <div className="auth-field-group">
@@ -84,7 +93,7 @@ export function RegisterForm() {
                 <span className="text-[12px] text-[#666666] leading-tight">{"Tôi đồng ý với "}<Link className="text-[#FC6C26] hover:text-[#B9430C] hover:underline font-medium" to="/terms-of-service">{"Điều khoản sử dụng"}</Link>{" và "}<Link className="text-[#FC6C26] hover:text-[#B9430C] hover:underline font-medium" to="/privacy-policy">{"Chính sách bảo mật"}</Link>{" của CarDB "}<span className="text-[#FC6C26]">{"*"}</span></span>
             </label>
         </div>
-        <button className="auth-submit" type="submit" disabled={isSubmitting || !isValid}>{isSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}</button>
+        <button className="auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}</button>
         <FormErrors errors={errors} />
     </form>;
 }

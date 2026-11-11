@@ -8,6 +8,8 @@ import static org.mockito.Mockito.when;
 import com.carrental.config.CustomerProperties;
 import com.carrental.dto.request.customer.ChangeCustomerRoleRequest;
 import com.carrental.dto.request.document.ReviewUserDocumentRequest;
+import com.carrental.dto.request.document.UserDocumentSubmissionCommand;
+import com.carrental.dto.request.document.UserDocumentSubmissionRequest;
 import com.carrental.entity.Customer;
 import com.carrental.entity.UserDocument;
 import com.carrental.enums.CustomerStatus;
@@ -22,11 +24,14 @@ import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.KycService;
 import com.carrental.storage.PrivateDocumentStorage;
+import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import jakarta.persistence.EntityManager;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -132,6 +137,45 @@ class OwnerRoleUpgradeTest {
         toCustomer.setRole(StringNode.valueOf("CUSTOMER"));
         var demoted = service.changeCustomerRole(new CurrentAccount(1L, Role.ADMIN), 11L, toCustomer);
         assertThat(demoted.role()).isEqualTo(Role.CUSTOMER);
+    }
+
+    @Test
+    void submitRejectsCustomerForOneMonthAfterThreeRejectedDocuments() {
+        CustomerRepository customers = mock(CustomerRepository.class);
+        UserDocumentRepository documents = mock(UserDocumentRepository.class);
+        PrivateDocumentStorage storage = mock(PrivateDocumentStorage.class);
+        KycService kycService = mock(KycService.class);
+
+        Customer customer = customer(25L, Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.REJECTED);
+        LocalDateTime recent = LocalDateTime.now(FIXED_CLOCK).minusDays(2);
+        List<UserDocument> threeRejections = List.of(
+                rejectedDocument(1L, customer, recent.minusDays(2)),
+                rejectedDocument(2L, customer, recent.minusDays(1)),
+                rejectedDocument(3L, customer, recent));
+
+        when(customers.existsByIdAndStatusAndRole(25L, CustomerStatus.ACTIVE, Role.CUSTOMER)).thenReturn(true);
+        when(documents.findByCustomerId(25L)).thenReturn(threeRejections);
+
+        UserDocumentServiceImpl service = new UserDocumentServiceImpl(
+                customers, documents, storage, kycService, FIXED_CLOCK);
+        UserDocumentSubmissionRequest metadata = new UserDocumentSubmissionRequest(
+                DocumentType.CITIZEN_ID, "079200008901", "Test User", LocalDate.of(2000, 1, 1),
+                "Cục Cảnh sát", LocalDate.of(2022, 1, 1), LocalDate.of(2032, 1, 1), null);
+        UserDocumentSubmissionCommand command = new UserDocumentSubmissionCommand(
+                metadata, new UploadedDocumentImage("front.png", "image/png", new byte[] {1, 2, 3}), null);
+
+        assertThatThrownBy(() -> service.submit(new CurrentAccount(25L, Role.CUSTOMER), command))
+                .isInstanceOf(AppException.class)
+                .extracting(ex -> ((AppException) ex).errorCode())
+                .isEqualTo(ErrorCode.KYC_VERIFICATION_BLOCKED);
+    }
+
+    private static UserDocument rejectedDocument(long docId, Customer owner, LocalDateTime verifiedAt) {
+        UserDocument doc = pendingIdentityDocument(docId, owner);
+        doc.setVerifyStatus(VerificationStatus.REJECTED);
+        doc.setRejectReason("Ảnh mờ");
+        doc.setVerifiedAt(verifiedAt);
+        return doc;
     }
 
     private static Customer customer(long id, Role role, CustomerStatus status, KycStatus kycStatus) {

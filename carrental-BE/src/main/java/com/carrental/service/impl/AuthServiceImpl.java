@@ -14,13 +14,13 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
+import com.carrental.util.DbErrors;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -36,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AuthServiceImpl implements AuthService {
 
-    private static final List<String> UNIQUE_CONSTRAINTS = List.of("uq_customers_email_lower", "customers_phone_key");
     private static final Pattern BCRYPT_HASH = Pattern.compile(
             "^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
 
@@ -60,15 +59,18 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public CustomerProfileResponse register(RegisterRequest request) {
         Customer customer = request.toEntity(passwordEncoder.encode(request.getPassword()));
-        if (customers.existsByEmailIgnoreCase(customer.getEmail()) || customers.existsByPhone(customer.getPhone())) {
-            throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS);
+        boolean emailTaken = customers.existsByEmailIgnoreCase(customer.getEmail());
+        boolean phoneTaken = customers.existsByPhone(customer.getPhone());
+        if (emailTaken || phoneTaken) {
+            throw DbErrors.accountConflict(emailTaken, phoneTaken);
         }
         try {
             Customer saved = customers.saveAndFlush(customer);
             log.info("auth-register customerId={}", saved.getId());
             return CustomerProfileResponse.from(saved);
         } catch (DataIntegrityViolationException exception) {
-            if (isAccountUniqueViolation(exception)) throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, exception);
+            var mapped = DbErrors.resolveAccountUniqueViolation(exception);
+            if (mapped.isPresent()) throw mapped.get();
             throw exception;
         }
     }
@@ -116,14 +118,5 @@ public class AuthServiceImpl implements AuthService {
         }
         customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         log.info("auth-change-password customerId={}", customer.getId());
-    }
-
-    private boolean isAccountUniqueViolation(Throwable exception) {
-        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (cause instanceof ConstraintViolationException violation && violation.getSQLException() != null
-                    && "23505".equals(violation.getSQLException().getSQLState())
-                    && UNIQUE_CONSTRAINTS.contains(violation.getConstraintName())) return true;
-        }
-        return false;
     }
 }

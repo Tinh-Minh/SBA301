@@ -21,11 +21,14 @@ const docTone = { PENDING: "warning", APPROVED: "success", REJECTED: "danger" };
 
 export function UserDetail({ id, onChanged }) {
     const load = useCallback(async () => {
-        const [profile, kyc, documents] = await Promise.all([
+        const [profile, kyc, summaryDocs] = await Promise.all([
             adminUserService.get(id),
             adminUserService.kyc(id).catch(() => null),
             adminUserService.listDocuments({ customerId: id }).then(page => page.content).catch(() => []),
         ]);
+        const documents = await Promise.all(summaryDocs.map(doc => adminUserService.getDocument(doc.id)
+            .then(detail => (detail && typeof detail === "object" && "id" in detail ? { ...doc, ...detail } : doc))
+            .catch(() => doc)));
         return { profile, kyc, documents };
     }, [id]);
     const detail = useApiQuery(["admin", "user-detail", id], load);
@@ -52,6 +55,7 @@ export function UserDetail({ id, onChanged }) {
       <Row term="Ngày sinh" value={formatDate(profile.dateOfBirth)}/>
       <Row term="Địa chỉ" value={profile.address || "—"}/>
       <Row term="KYC" value={kycStatusLabels[kycState] ?? profile.kycStatus}/>
+      {kyc?.verificationBlocked && kyc?.verificationBlockedUntil ? <Row term="Cấm xác minh" value={`Đến ${formatDateTime(kyc.verificationBlockedUntil)} (${kyc.rejectedAttempts ?? 3}/${kyc.maxAttempts ?? 3} lần)`}/> : null}
     </dl>
     <div className="flex flex-col gap-2">
       <h3 className="text-sm font-bold text-[#292929]">Giấy tờ đã nộp ({documents.length})</h3>
@@ -86,10 +90,27 @@ export function UserDetail({ id, onChanged }) {
 function DocumentCard({ doc, busy, onApprove, onReject }) {
     const [images, setImages] = useState(null);
     const [failed, setFailed] = useState(false);
+    const details = [
+        ["Số giấy tờ", doc.docNumber || doc.docNumberMasked || "—"],
+        ["Họ tên trên giấy", doc.fullNameOnDoc || "—"],
+        ["Ngày sinh trên giấy", formatDate(doc.dateOfBirthOnDoc)],
+        ["Nơi cấp", doc.issuePlace || "—"],
+        ["Ngày cấp", formatDate(doc.issueDate)],
+        ["Ngày hết hạn", formatDate(doc.expiresAt)],
+        ...(doc.docType === "DRIVER_LICENSE" || doc.licenseClass ? [["Hạng bằng", doc.licenseClass || "—"]] : []),
+        ["Ngày nộp", formatDateTime(doc.createdAt)],
+        ...(doc.rejectReason ? [["Lý do từ chối", doc.rejectReason]] : []),
+    ];
     async function preview() {
         try {
-            const sides = [doc.hasFrontImage ? "front" : null, doc.hasBackImage ? "back" : null].filter(Boolean);
-            setImages(await Promise.all(sides.map(side => adminUserService.documentImage(doc.id, side))));
+            const sides = [
+                doc.hasFrontImage ? ["front", "Ảnh mặt trước"] : null,
+                doc.hasBackImage ? ["back", "Ảnh mặt sau"] : null,
+            ].filter(Boolean);
+            setImages(await Promise.all(sides.map(async ([side, label]) => ({
+                label,
+                src: await adminUserService.documentImage(doc.id, side),
+            }))));
         }
         catch {
             setFailed(true);
@@ -100,10 +121,12 @@ function DocumentCard({ doc, busy, onApprove, onReject }) {
       <span className="font-bold text-[#292929]">{docTypeLabels[doc.docType] ?? doc.docType}</span>
       <StatusPill tone={docTone[doc.verifyStatus]}>{verifyStatusLabels[doc.verifyStatus] ?? doc.verifyStatus}</StatusPill>
     </div>
-    <p className="mt-1 text-xs text-[#666666]">Số: {doc.docNumberMasked ?? "—"} • nộp {formatDateTime(doc.createdAt)}</p>
+    <dl className="mt-2 grid gap-1.5 text-xs">
+      {details.map(([term, value]) => <Row key={term} term={term} value={value}/>)}
+    </dl>
     {(doc.hasFrontImage || doc.hasBackImage) && !images ? <button type="button" onClick={preview} className="mt-2 text-xs font-bold text-[#FC6C26]">Xem ảnh giấy tờ</button> : null}
     {failed ? <p className="mt-1 text-xs text-[#B91C1C]">Không tải được ảnh (backend có thể đang tắt lưu trữ file).</p> : null}
-    {images ? <div className="mt-2 grid grid-cols-2 gap-2">{images.map(src => <img key={src} src={src} alt="Ảnh giấy tờ" className="h-24 w-full rounded-lg object-cover"/>)}</div> : null}
+    {images ? <div className="mt-2 grid grid-cols-2 gap-2">{images.map(item => <figure key={item.src} className="space-y-1"><img src={item.src} alt="Ảnh giấy tờ" className="h-24 w-full rounded-lg object-cover"/><figcaption className="text-[11px] text-[#666666]">{item.label}</figcaption></figure>)}</div> : null}
     {doc.verifyStatus === "PENDING" ? <div className="mt-3 flex gap-2">
       <button type="button" disabled={busy} onClick={onApprove} className="rounded-lg bg-[#047857] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60">Duyệt</button>
       <button type="button" disabled={busy} onClick={onReject} className="rounded-lg border border-[#EF4444] px-3 py-1.5 text-xs font-bold text-[#EF4444] disabled:opacity-60">Từ chối</button>
@@ -112,5 +135,5 @@ function DocumentCard({ doc, busy, onApprove, onReject }) {
 }
 
 function Row({ term, value }) {
-    return <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><dt className="text-[#666666]">{term}</dt><dd className="break-all text-right font-semibold text-[#292929]">{value}</dd></div>;
+    return <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3"><dt className="text-[#666666]">{term}</dt><dd className="[overflow-wrap:anywhere] text-right font-semibold text-[#292929]">{value}</dd></div>;
 }

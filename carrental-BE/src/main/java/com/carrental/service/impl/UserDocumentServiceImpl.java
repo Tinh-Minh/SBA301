@@ -24,6 +24,7 @@ import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.KycService;
+import com.carrental.service.KycService.RejectionBanStatus;
 import com.carrental.service.UserDocumentService;
 import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentFile;
@@ -33,6 +34,7 @@ import com.carrental.web.RequestTraceFilter;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -49,6 +51,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Service
 @Transactional(readOnly = true)
 public class UserDocumentServiceImpl implements UserDocumentService {
+    private static final DateTimeFormatter BAN_UNTIL_FORMAT = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+
     private final CustomerRepository customers;
     private final UserDocumentRepository documents;
     private final PrivateDocumentStorage storage;
@@ -73,6 +77,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         if (!customers.existsByIdAndStatusAndRole(account.customerId(), CustomerStatus.ACTIVE, account.role())) {
             throw new AppException(ErrorCode.INVALID_TOKEN);
         }
+        ensureNotVerificationBanned(account.customerId());
         requireStorage();
         List<PrivateDocumentReceipt> receipts = new ArrayList<>(2);
         try {
@@ -94,6 +99,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             if (owner.getStatus() != CustomerStatus.ACTIVE || owner.getRole() != account.role()) {
                 throw new AppException(ErrorCode.INVALID_TOKEN);
             }
+            ensureNotVerificationBanned(owner.getId());
             UserDocument document = command.metadata().toEntity(owner,
                     receipts.get(0).locator(), receipts.size() == 2 ? receipts.get(1).locator() : null);
             return UserDocumentDetailResponse.from(documents.saveAndFlush(document));
@@ -290,6 +296,17 @@ public class UserDocumentServiceImpl implements UserDocumentService {
                 log.error("Document cleanup failed traceId={} receiptId={} exceptionType={}",
                         RequestTraceFilter.currentTraceId(), receipt.receiptId(), failure.getClass().getSimpleName());
             }
+        }
+    }
+
+    private void ensureNotVerificationBanned(long customerId) {
+        List<UserDocument> existing = documents.findByCustomerId(customerId);
+        if (existing == null || existing.isEmpty()) return;
+        RejectionBanStatus ban = KycService.evaluateRejectionBan(existing, LocalDateTime.now(clock));
+        if (ban.blocked() && ban.blockedUntil() != null) {
+            throw new AppException(ErrorCode.KYC_VERIFICATION_BLOCKED,
+                    "Tài khoản đã bị từ chối xác minh " + ban.maxAttempts()
+                            + " lần và bị cấm gửi xác minh đến " + ban.blockedUntil().format(BAN_UNTIL_FORMAT) + ".");
         }
     }
 

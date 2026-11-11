@@ -211,12 +211,17 @@ public class CarServiceImpl implements CarService {
         log.info("Owner update car status carId={}, newStatus={}", carId, newStatus);
         try {
             Car car = loadOwnedCar(carId);
+            CarStatus currentStatus = car.getStatus();
 
             if (newStatus != CarStatus.ACTIVE && newStatus != CarStatus.INACTIVE) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Chủ xe chỉ có thể tạm dừng (INACTIVE) hoặc kích hoạt lại (ACTIVE) xe");
             }
+            if (currentStatus != CarStatus.ACTIVE && currentStatus != CarStatus.INACTIVE) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Xe đang ở trạng thái " + currentStatus + ", chủ xe không thể tự đổi sang " + newStatus);
+            }
 
-            car.getStatus().validateTransitionTo(newStatus);
+            currentStatus.validateTransitionTo(newStatus);
             car.setStatus(newStatus);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {

@@ -13,6 +13,42 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 public final class DbErrors {
     private DbErrors() {}
 
+    public static AppException accountConflict(boolean emailTaken, boolean phoneTaken) {
+        String message;
+        if (emailTaken && phoneTaken) {
+            message = "Email và số điện thoại đều đã được đăng ký.";
+        } else if (emailTaken) {
+            message = "Email này đã được đăng ký cho tài khoản khác.";
+        } else if (phoneTaken) {
+            message = "Số điện thoại này đã được đăng ký cho tài khoản khác.";
+        } else {
+            message = ErrorCode.ACCOUNT_ALREADY_EXISTS.message();
+        }
+        return new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, message);
+    }
+
+    public static Optional<AppException> resolveAccountUniqueViolation(Throwable exception) {
+        for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
+            if (!(cause instanceof ConstraintViolationException violation)
+                    || violation.getSQLException() == null) continue;
+            if (!"23505".equals(violation.getSQLException().getSQLState())) continue;
+            String name = violation.getConstraintName();
+            if ("uq_customers_email_lower".equals(name)) {
+                return Optional.of(new AppException(
+                        ErrorCode.ACCOUNT_ALREADY_EXISTS,
+                        "Email này đã được đăng ký cho tài khoản khác.",
+                        exception));
+            }
+            if ("customers_phone_key".equals(name)) {
+                return Optional.of(new AppException(
+                        ErrorCode.ACCOUNT_ALREADY_EXISTS,
+                        "Số điện thoại này đã được đăng ký cho tài khoản khác.",
+                        exception));
+            }
+        }
+        return Optional.empty();
+    }
+
     public static ErrorCode resolveConstraint(Throwable exception) {
         for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
             if (!(cause instanceof ConstraintViolationException violation)
