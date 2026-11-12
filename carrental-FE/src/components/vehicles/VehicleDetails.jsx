@@ -9,7 +9,7 @@ import { LiveState } from "@/components/LiveUi.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useAuth } from "@/hooks/useAuth.js";
-import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels } from "@/utils/labels.js";
+import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, resolveAssetUrl, transmissionLabels } from "@/utils/labels.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { carService } from "@/services/vehicleService.js";
 import { reviewService } from "@/services/reviewService.js";
@@ -43,29 +43,41 @@ export function Detail({ carId }) {
 }
 
 function Body({ car }) {
+    const [activeImage, setActiveImage] = useState(null);
     const features = parseFeatures(car.features);
     const dayPrice = car.rentalPricePerDay || car.pricePerDay || 0;
     const monthPrice = car.rentalPricePerMonth;
     const contactName = car.contactName || car.ownerFullName || "Chủ xe";
     const phone = car.contactPhone || "";
     const zalo = car.contactZalo || car.contactPhone || "";
+    const displayedImage = resolveAssetUrl(activeImage) || carImage(car);
 
     return (
         <div className="flex flex-col gap-6">
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
             {/* Cột trái: Hình ảnh và thông số xe */}
             <article className="overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
-                <img src={carImage(car)} alt={carName(car)} className="h-64 w-full object-cover" />
+                <img src={displayedImage} alt={carName(car)} className="h-64 w-full object-cover" />
                 {car.images?.length > 1 ? (
                     <div className="flex gap-2 overflow-x-auto p-3">
-                        {car.images.map((image) => (
-                            <img
-                                key={image.id}
-                                src={image.imageUrl}
-                                alt=""
-                                className="h-16 w-24 shrink-0 rounded-lg object-cover"
-                            />
-                        ))}
+                        {car.images.map((image) => {
+                            const url = resolveAssetUrl(image.imageUrl);
+                            const selected = url === displayedImage;
+                            return (
+                                <button
+                                    key={image.id}
+                                    type="button"
+                                    onClick={() => setActiveImage(url)}
+                                    className={`shrink-0 overflow-hidden rounded-lg border-2 transition ${selected ? "border-[#FC6C26]" : "border-transparent opacity-80 hover:opacity-100"}`}
+                                >
+                                    <img
+                                        src={url}
+                                        alt=""
+                                        className="h-16 w-24 object-cover"
+                                    />
+                                </button>
+                            );
+                        })}
                     </div>
                 ) : null}
                 <div className="flex flex-col gap-3 p-5">

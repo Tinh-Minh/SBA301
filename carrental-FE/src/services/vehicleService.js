@@ -49,9 +49,20 @@ export const carService = {
     /** POST /api/cars — xe mới luôn ở PENDING_APPROVAL; ảnh gửi tiếp qua POST /api/cars/{id}/images. */
     async create(draft) {
         const created = await request(endpoints.cars.list, { method: "POST", json: { licensePlate: draft.licensePlate.trim().toUpperCase(), ...carPayload(draft) } });
-        const imageUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
-        if (imageUrls.length)
-            await this.addImages(created.id, imageUrls);
+        const photoEntries = Array.isArray(draft.photoEntries) ? draft.photoEntries : [];
+        if (photoEntries.length) {
+            const fileEntries = photoEntries.filter(entry => entry.file);
+            const urlEntries = photoEntries.filter(entry => !entry.file && entry.url?.trim()).map(entry => entry.url.trim());
+            const primaryIsFile = Boolean(photoEntries[0]?.file);
+            if (fileEntries.length)
+                await this.uploadImages(created.id, fileEntries.map(entry => entry.file), primaryIsFile ? 0 : null);
+            if (urlEntries.length)
+                await this.addImages(created.id, urlEntries, { firstIsPrimary: !primaryIsFile && !fileEntries.length });
+        } else {
+            const imageUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
+            if (imageUrls.length)
+                await this.addImages(created.id, imageUrls);
+        }
         return getCar(created.id);
     },
     /** GET /api/cars/my-cars (tóm tắt) + GET /api/cars/{id} để có đủ địa chỉ, cọc, km... */
@@ -76,12 +87,21 @@ export const carService = {
     async setStatus(id, status) {
         return normalizeCar(await request(endpoints.cars.byIdStatus(id), { method: "PATCH", query: { status } }));
     },
-    /** POST /api/cars/{id}/images — backend chỉ nhận URL ảnh. */
+    /** POST /api/cars/{id}/images (JSON URL) */
     async addImages(id, urls, { firstIsPrimary = true } = {}) {
         return request(endpoints.cars.byIdImages(id), {
             method: "POST",
             json: urls.map((imageUrl, index) => ({ imageUrl, isPrimary: firstIsPrimary && index === 0, sortOrder: index })),
         });
+    },
+    /** POST /api/cars/{id}/images (multipart/form-data) */
+    async uploadImages(id, files, primaryIndex = null) {
+        const form = new FormData();
+        for (const file of files)
+            form.append("files", file);
+        if (primaryIndex !== null && primaryIndex !== undefined)
+            form.append("primaryIndex", String(primaryIndex));
+        return request(endpoints.cars.byIdImages(id), { method: "POST", body: form });
     },
     removeImage: (id, imageId) => request(endpoints.cars.byIdImagesById(id, imageId), { method: "DELETE" }),
     setPrimaryImage: (id, imageId) => request(endpoints.cars.byIdImagesByIdPrimary(id, imageId), { method: "PATCH" }),

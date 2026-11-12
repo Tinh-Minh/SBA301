@@ -11,6 +11,9 @@ import { OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerSc
 import { useOwnerCar } from "@/hooks/useVehicles.js";
 import { carSubtitle, formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
+import { carService } from "@/services/vehicleService.js";
+import { carImage, resolveAssetUrl } from "@/utils/labels.js";
+import { validateImageFile } from "@/utils/validateInput.js";
 
 const steps = [
     { id: 1, title: "Thông tin & giấy tờ", hint: "Hồ sơ pháp lý của xe" },
@@ -20,7 +23,7 @@ const steps = [
 ];
 
 export default function OwnerVehicleEdit({ carId }) {
-    const { data, loading, error, save } = useOwnerCar(carId);
+    const { data, loading, error, save, reload } = useOwnerCar(carId);
     const [step, setStep] = useState(3);
     const { control, reset, handleSubmit, formState: { errors, isValid, isSubmitting } } = useForm({
         resolver: zodResolver(vehiclePricingSchema), mode: "onChange",
@@ -28,6 +31,9 @@ export default function OwnerVehicleEdit({ carId }) {
     });
     const form = useWatch({ control });
     const [saved, setSaved] = useState(false);
+    const [queuedFiles, setQueuedFiles] = useState([]);
+    const [imgError, setImgError] = useState("");
+    const [imgBusy, setImgBusy] = useState(false);
     useEffect(() => {
         if (!data)
             return;
@@ -146,10 +152,139 @@ export default function OwnerVehicleEdit({ carId }) {
           </div>
         </form> : null}
 
-        {step === 4 ? <div className="flex flex-col gap-3">
-          <h2 className="text-lg font-bold text-charcoal">Hình ảnh niêm yết</h2>
-          {data.primaryImageUrl ? <img src={data.primaryImageUrl} alt={`${data.brand} ${data.model}`} className="h-56 w-full rounded-2xl object-cover"/> : <p className="text-sm text-muted-gray">Xe chưa có ảnh đại diện.</p>}
-          <p className="text-sm text-muted-gray">Ảnh này đang dùng trên thẻ xe. Đổi ảnh sẽ gắn với hồ sơ duyệt của CarDB.</p>
+        {step === 4 ? <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-lg font-bold text-charcoal">Hình ảnh niêm yết ({data.images?.length ?? 0}/10)</h2>
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-card-border bg-bg-light px-3 py-2 text-xs font-bold text-charcoal hover:bg-accent-soft">
+              <Icon name="upload" className="text-[16px]"/>
+              Chọn ảnh từ máy
+              <input
+                type="file"
+                multiple
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={event => {
+                  const picked = Array.from(event.target.files ?? []);
+                  event.target.value = "";
+                  if (!picked.length) return;
+                  const errs = [];
+                  const valid = [];
+                  for (const file of picked) {
+                    const err = validateImageFile(file);
+                    if (err) errs.push(err);
+                    else valid.push({ file, preview: URL.createObjectURL(file) });
+                  }
+                  setImgError(errs.join(" "));
+                  if (valid.length) setQueuedFiles(prev => [...prev, ...valid]);
+                }}
+              />
+            </label>
+          </div>
+          {imgError ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">{imgError}</p> : null}
+          {queuedFiles.length ? (
+            <div className="rounded-xl border border-brand-accent/40 bg-accent-soft/30 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-xs font-bold text-charcoal">Xem trước ảnh sắp tải lên ({queuedFiles.length})</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={imgBusy}
+                    onClick={() => {
+                      queuedFiles.forEach(item => URL.revokeObjectURL(item.preview));
+                      setQueuedFiles([]);
+                    }}
+                    className="rounded-lg border border-card-border bg-white px-2.5 py-1 text-xs font-bold text-charcoal"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    disabled={imgBusy}
+                    onClick={async () => {
+                      setImgBusy(true);
+                      setImgError("");
+                      try {
+                        await carService.uploadImages(data.id, queuedFiles.map(item => item.file));
+                        queuedFiles.forEach(item => URL.revokeObjectURL(item.preview));
+                        setQueuedFiles([]);
+                        await reload();
+                      } catch (err) {
+                        setImgError(err?.message || "Không tải ảnh lên được.");
+                      } finally {
+                        setImgBusy(false);
+                      }
+                    }}
+                    className="rounded-lg bg-brand-accent px-3 py-1 text-xs font-bold text-white disabled:opacity-60"
+                  >
+                    {imgBusy ? "Đang tải..." : "Lưu ảnh mới"}
+                  </button>
+                </div>
+              </div>
+              <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {queuedFiles.map((item, idx) => (
+                  <img key={idx} src={item.preview} alt={item.file.name} className="h-24 w-full rounded-lg object-cover border border-card-border" />
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {data.images?.length ? (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {data.images.map(image => (
+                <div key={image.id} className="overflow-hidden rounded-xl border border-card-border bg-white">
+                  <img src={resolveAssetUrl(image.imageUrl)} alt={`${data.brand} ${data.model}`} className="h-32 w-full object-cover" />
+                  <div className="flex items-center justify-between gap-2 p-2 text-xs">
+                    {image.isPrimary ? (
+                      <span className="rounded-full bg-brand-accent px-2 py-0.5 text-[10px] font-bold text-white">Ảnh chính</span>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={imgBusy}
+                        onClick={async () => {
+                          setImgBusy(true);
+                          setImgError("");
+                          try {
+                            await carService.setPrimaryImage(data.id, image.id);
+                            await reload();
+                          } catch (err) {
+                            setImgError(err?.message || "Không đặt ảnh chính được.");
+                          } finally {
+                            setImgBusy(false);
+                          }
+                        }}
+                        className="font-bold text-charcoal hover:underline"
+                      >
+                        Đặt ảnh chính
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={imgBusy}
+                      onClick={async () => {
+                        setImgBusy(true);
+                        setImgError("");
+                        try {
+                          await carService.removeImage(data.id, image.id);
+                          await reload();
+                        } catch (err) {
+                          setImgError(err?.message || "Không xóa được ảnh.");
+                        } finally {
+                          setImgBusy(false);
+                        }
+                      }}
+                      className="font-bold text-red-600 hover:underline"
+                    >
+                      Xóa
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : data.primaryImageUrl ? (
+            <img src={carImage(data)} alt={`${data.brand} ${data.model}`} className="h-56 w-full rounded-2xl object-cover"/>
+          ) : (
+            <p className="text-sm text-muted-gray">Xe chưa có ảnh đại diện.</p>
+          )}
+          <p className="text-sm text-muted-gray">Ảnh chính sẽ hiển thị trên trang tìm kiếm và chi tiết xe.</p>
         </div> : null}
       </section>
 
