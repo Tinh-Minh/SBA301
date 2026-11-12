@@ -97,10 +97,8 @@ export const endpoints = {
     transactions: {
         byIdSimulateGateway: (id) => `/api/transactions/${id}/simulate-gateway`,
         byIdVnpayUrl: (id) => `/api/transactions/${id}/vnpay-url`,
-        deposit: "/api/transactions/deposit",
         list: "/api/transactions",
         packagePayment: "/api/transactions/package-payment",
-        payment: "/api/transactions/payment",
         vnpayReturn: "/api/payments/vnpay/return",
     },
     userDocuments: {
