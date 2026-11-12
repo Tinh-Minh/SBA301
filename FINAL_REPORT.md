@@ -11,11 +11,11 @@
 
 | Hạng mục kiểm thử | Công cụ / Framework | Tổng số test | Đạt (Pass) | Thất bại (Fail) | Tỷ lệ thành công |
 |---|---|---|---|---|---|
-| **E2E & Tích hợp liên phân hệ** | Node.js + REST API Automation | 57 | 57 | 0 | **100%** |
+| **E2E & Tích hợp liên phân hệ** | Node.js + REST API Automation (`run_comprehensive_suite.cjs`) | 60 | 60 | 0 | **100%** |
 | **Giao diện người dùng thực tế (UI)** | Playwright (Microsoft Edge headless) | 6 | 6 | 0 | **100%** |
-| **Backend Unit & Integration Tests** | JUnit 5 + Spring Boot Test + Mockito | 100 | 100 | 0 | **100%** |
-| **Frontend Production Build** | Vite + Rolldown + TypeScript compiler | 1 build | Thành công | 0 | **100%** |
-| **TỔNG CỘNG** | | **163** | **163** | **0** | **100%** |
+| **Backend Unit & Integration Tests** | JUnit 5 + Spring Boot Test + Mockito (`.\mvnw.cmd test`) | 101 | 101 | 0 | **100%** |
+| **Frontend Production Build** | Vite + Rolldown + TypeScript compiler (`npm run build`) | 1 build | Thành công | 0 | **100%** |
+| **TỔNG CỘNG** | | **168** | **168** | **0** | **100%** |
 
 ---
 
@@ -23,7 +23,7 @@
 
 Sau khi kiểm tra hồi quy toàn diện từ con số 0 trên cơ sở dữ liệu thực tế PostgreSQL:
 
-### Phân hệ 1: Xác thực, Phân quyền & Bảo mật (15/15 PASS)
+### Phân hệ 1: Xác thực, Phân quyền & Bảo mật (16/16 PASS)
 - `TC-AUTH-01`: Quản trị viên (ADMIN) đăng nhập thành công, cấp JWT token đúng role `ADMIN`.
 - `TC-AUTH-02`: Chủ xe (OWNER) đăng nhập thành công, cấp JWT token đúng role `OWNER`.
 - `TC-AUTH-03`: Khách hàng (CUSTOMER) đã KYC đăng nhập thành công, cấp JWT token đúng role `CUSTOMER`.
@@ -37,7 +37,8 @@ Sau khi kiểm tra hồi quy toàn diện từ con số 0 trên cơ sở dữ li
 - `TC-AUTH-10`: Đăng ký tài khoản thiếu trường mật khẩu trả về `BAD_REQUEST` (HTTP 400).
 - `TC-AUTH-11`: Đăng ký tài khoản với mật khẩu quá ngắn (< 8 ký tự) trả về `BAD_REQUEST` (HTTP 400).
 - `TC-AUTH-12`: Truy cập các endpoint bảo vệ (`/api/customers/me`) khi chưa đăng nhập bị trả về HTTP 401.
-- `TC-AUTH-13`: Gửi token JWT giả mạo/hết hạn bị từ chối với HTTP 401.
+- `TC-AUTH-13`: Gửi token JWT giả mạo chuỗi rác bị từ chối với HTTP 401.
+- `TC-AUTH-13b`: Gửi token JWT thật nhưng đã quá hạn (`exp < now`) bị từ chối chính xác với `HTTP 401 INVALID_TOKEN`.
 - `TC-AUTH-14`: Khách hàng (CUSTOMER) cố tình gọi API của quản trị viên (`/api/admin/cars`) bị chặn `FORBIDDEN` (HTTP 403).
 
 ### Phân hệ 2: Quản lý người dùng, Hồ sơ & KYC (8/8 PASS)
@@ -72,13 +73,15 @@ Sau khi kiểm tra hồi quy toàn diện từ con số 0 trên cơ sở dữ li
 - `TC-TXN-03`: Thanh toán lại sau khi thất bại và giả lập thành công (`simulateSuccess = true`): kích hoạt gói và đẩy xe lên sàn `LISTED`.
 - `TC-CAR-11`: Xe sau khi thanh toán gói tin thành công tự động chuyển `listingStatus = LISTED`.
 
-### Phân hệ 5: Quy trình Đặt xe, Bàn giao & Đánh giá (10/10 PASS)
+### Phân hệ 5: Quy trình Đặt xe, Khiếu nại Biên bản & Bàn giao & Đánh giá (12/12 PASS)
 - `TC-BKG-01`: Tính báo giá tiền thuê xe theo giờ và ngày chính xác.
 - `TC-BKG-02`: Khách hàng gửi yêu cầu đặt xe thành công (`REQUESTED`).
 - `TC-BKG-03`: Chủ xe đánh dấu đã gọi điện thoại trao đổi với khách thuê xe (`ownerContactedAt`).
 - `TC-BKG-04`: Chủ xe chấp thuận đơn thuê: chuyển trạng thái đơn sang `CONFIRMED`.
 - `TC-BKG-05`: Chủ xe lập biên bản bàn giao nhận xe (Handover PICKUP) đủ 7 hạng mục ảnh bắt buộc (`PICKUP_PENDING`).
-- `TC-BKG-06`: Khách hàng kiểm tra và duyệt nhận xe: chuyển đơn sang đang thuê `IN_PROGRESS`.
+- `TC-BKG-05b`: **Xử lý tranh chấp biên bản nhận xe (Dispute Handover)**: Khách hàng từ chối 1 mục do ảnh mờ kèm `disputeNote`, biên bản chuyển chuẩn sang `DISPUTED`, đơn giữ nguyên `PICKUP_PENDING`.
+- `TC-BKG-05c`: **Chủ xe cập nhật lại biên bản (Revise Handover)**: Chủ xe chụp lại ảnh rõ nét cho đúng mục bị tranh chấp, tăng `revision` lên 2, biên bản chuyển về `SUBMITTED`.
+- `TC-BKG-06`: **Khách hàng duyệt biên bản sau khi sửa**: Khách duyệt mục vừa sửa thành công, đơn chuyển sang đang thuê `IN_PROGRESS`.
 - `TC-BKG-07`: Chủ xe lập biên bản hoàn trả xe (Handover RETURN) đủ 7 hạng mục ảnh (`RETURN_PENDING`).
 - `TC-BKG-08`: Khách hàng kiểm tra và xác nhận trả xe: đơn hoàn tất toàn bộ `COMPLETED`.
 - `TC-REV-01`: Khách hàng gửi đánh giá và chấm điểm sao cho xe sau khi chuyến đi kết thúc thành công.
@@ -107,6 +110,7 @@ Sau khi kiểm tra hồi quy toàn diện từ con số 0 trên cơ sở dữ li
 | Mã lỗi | File thay đổi | Tóm tắt sửa lỗi | Commit Git |
 |---|---|---|---|
 | **BUG-01** | `carrental-BE/src/main/java/com/carrental/service/impl/AuthServiceImpl.java` | Khắc phục lỗi HTTP 503 khi môi trường dev/local chưa cấu hình Mailjet API Key. Bắt ngoại lệ cấu hình mail, ghi log token xác thực thay vì để văng lỗi hệ thống, kích hoạt auto-verify email trong môi trường phát triển để không làm đứt gãy luồng đăng ký người dùng mới. | `ac037a4` |
+| **BUG-02** | `carrental-BE/src/main/java/com/carrental/CarRentalApplication.java`, `BookingExpirationSchedulerTest.java` | Thêm `@EnableScheduling` bị thiếu vào cấu hình chính của Spring Boot. Kích hoạt hai cron scheduler ngầm: `SubscriptionExpirationScheduler` (dọn dẹp gói tin hết hạn mỗi phút) và `BookingExpirationScheduler` (dọn dẹp đơn thuê quá hạn giờ đón mỗi phút). Thêm bộ test đơn vị xác minh hoạt động của scheduler. | `df84968` |
 
 ---
 
@@ -117,11 +121,11 @@ Sau khi kiểm tra hồi quy toàn diện từ con số 0 trên cơ sở dữ li
    - *Lý do*: Không đưa API key thật vào mã nguồn git nhằm tuân thủ bảo mật tuyệt đối.
 
 2. **Tối ưu hóa Code-Splitting cho Frontend (Vite Chunks)**:
-   - *Mô tả*: Cảnh báo của Vite về kích thước chunk của `RegisterPage.js` và `carScrollScene.js` lớn hơn 500kB.
-   - *Lý do*: Cần áp dụng dynamic import `React.lazy()` chia nhỏ các tài nguyên 3D/animation trong các sprint tới để tối ưu thời gian tải trang lần đầu (First Contentful Paint).
+   - *Mô tả*: Cảnh báo của Vite về kích thước chunk của `RegisterPage.js` (do chứa từ điển mật khẩu zxcvbn) và `carScrollScene.js` (do 3D model) lớn hơn 500kB.
+   - *Lý do*: Cần áp dụng dynamic import `React.lazy()` chia nhỏ các tài nguyên trong các sprint tới để tối ưu thời gian tải trang lần đầu (First Contentful Paint).
 
 ---
 
 ## 5. KẾT LUẬN
 
-Hệ thống **SBA Car Rental Platform** đã vượt qua toàn bộ 163 ca kiểm thử (100% tỷ lệ thành công) từ phân hệ API, bảo mật, nghiệp vụ thanh toán đến giao diện người dùng thực tế bằng trình duyệt Edge Playwright. Nhánh `car-slot` đã sẵn sàng để bàn giao và triển khai.
+Hệ thống **SBA Car Rental Platform** đã vượt qua toàn bộ **168 ca kiểm thử (100% tỷ lệ thành công)** từ phân hệ API, bảo mật, nghiệp vụ thanh toán đến giao diện người dùng thực tế bằng trình duyệt Edge Playwright. Nhánh `car-slot` đã sẵn sàng để bàn giao và triển khai.

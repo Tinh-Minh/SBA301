@@ -23,7 +23,22 @@
 
 ---
 
-### 2. Cấu hình Môi trường Local Backend & Cổng thanh toán giả lập
+### 2. BUG-02: Kích hoạt Scheduling cho các tác vụ ngầm tự động dọn dẹp gói đăng tin và đơn thuê hết hạn
+- **Mã lỗi**: `BUG-02`
+- **Mức độ**: `High`
+- **Commit Git**: `df84968 fix: BUG-02 enable scheduling for subscription and booking background expiration`
+- **File sửa**: 
+  - `carrental-BE/src/main/java/com/carrental/CarRentalApplication.java`
+  - `carrental-BE/src/test/java/com/carrental/scheduling/BookingExpirationSchedulerTest.java` (Tạo mới)
+- **Chi tiết thay đổi**:
+  - Thêm annotation `@EnableScheduling` vào lớp cấu hình chính `CarRentalApplication`.
+  - Bổ sung bộ kiểm thử đơn vị `BookingExpirationSchedulerTest.java` kiểm tra việc gọi service và bắt ngoại lệ an toàn của tác vụ `BookingExpirationScheduler`.
+- **Lý do**:
+  - Trước đây, `CarRentalApplication` thiếu `@EnableScheduling`, dẫn đến toàn bộ các bean có `@Scheduled` gồm `SubscriptionExpirationScheduler` (quét gói tin hết hạn mỗi phút) và `BookingExpirationScheduler` (quét đơn thuê quá giờ đón chưa được nhận mỗi phút) hoàn toàn không được Spring kích hoạt tại runtime. Việc kích hoạt giúp hệ thống vận hành tự động, chính xác theo chu kỳ thời gian.
+
+---
+
+### 3. Cấu hình Môi trường Local Backend & Cổng thanh toán giả lập
 - **File tạo**: `carrental-BE/.env`
 - **Chi tiết thay đổi**:
   - Cấu hình thông số kết nối PostgreSQL: `DB_URL=jdbc:postgresql://localhost:5432/carrental`, `DB_USERNAME=postgres`.
@@ -34,17 +49,17 @@
 
 ---
 
-### 3. Bộ kịch bản kiểm thử toàn diện tự động hóa (Comprehensive Automation Suite)
-- **File tạo/cập nhật**: `d:\SBA\run_comprehensive_suite.cjs`
+### 4. Bộ kịch bản kiểm thử toàn diện tự động hóa (Comprehensive Automation Suite)
+- **File cập nhật**: `d:\SBA\run_comprehensive_suite.cjs`
 - **Chi tiết thay đổi**:
-  - Xây dựng 63 ca kiểm thử bao phủ toàn diện 7 phân hệ chính:
-    1. Authentication, Token Expiration, Password Validation, Role Guard (TC-AUTH-01 đến TC-AUTH-14).
+  - Nâng cấp từ 63 lên 66 ca kiểm thử bao phủ toàn diện 7 phân hệ chính:
+    1. Authentication, Expired JWT Token rejection (TC-AUTH-13b), Password Validation, Role Guard (TC-AUTH-01 đến TC-AUTH-14).
     2. Quản lý hồ sơ người dùng & Nộp duyệt KYC CCCD kèm ảnh 2 mặt (TC-CUST-01 đến TC-CUST-05, TC-KYC-01 đến TC-KYC-03).
     3. Đăng ký xe mới, duyệt giấy đăng ký cavet, duyệt xe, ẩn biển số bảo mật (TC-CAR-01 đến TC-CAR-11).
     4. Gói cước đăng tin, tạo voucher, báo giá, thanh toán VNPAY thành công/thất bại (TC-PKG-01, TC-VOU-01, TC-SUB-01, TC-SUB-02, TC-TXN-01 đến TC-TXN-03).
-    5. Đặt xe, tính tiền, chủ xe liên hệ, duyệt đơn, biên bản giao xe PICKUP, biên bản trả xe RETURN, hoàn tất chuyến đi và đánh giá xe (TC-BKG-01 đến TC-BKG-08, TC-REV-01, TC-REV-02).
+    5. Đặt xe, tính tiền, chủ xe liên hệ, duyệt đơn, bàn giao xe PICKUP, **xử lý khiếu nại hiện trạng (Dispute Handover TC-BKG-05b), chủ xe chỉnh sửa (Revise Handover TC-BKG-05c), khách xác nhận sau khi sửa (TC-BKG-06)**, biên bản trả xe RETURN (TC-BKG-07, TC-BKG-08), hoàn tất chuyến đi và đánh giá xe (TC-REV-01, TC-REV-02).
     6. Hồ sơ đăng kiểm an toàn kỹ thuật xe, Bảng điều khiển Admin, Chủ xe và Khách hàng (TC-SAF-01 đến TC-SAF-03, TC-DASH-01 đến TC-DASH-03).
     7. Kiểm thử giao diện tự động bằng Playwright (TC-UI-01 đến TC-UI-06) xác minh Route Gate KYC, Explore xe, Quản trị xe và Bảng điều khiển quản trị viên.
   - Sử dụng Microsoft Edge engine chạy headless ổn định trên Windows.
 - **Lý do**:
-  - Đáp ứng yêu cầu kiểm thử hồi quy nghiêm ngặt từ con số 0 sau mỗi lần thay đổi mã nguồn.
+  - Thẩm định sâu các ca biên độ phức tạp (Untested Edge Cases) theo đúng yêu cầu kiểm thử hồi quy khắt khe.

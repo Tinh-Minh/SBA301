@@ -1,4 +1,5 @@
 const http = require('http');
+const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('d:/SBA/carrental-FE/node_modules/playwright');
@@ -267,6 +268,26 @@ async function run() {
         logTest('TC-AUTH-13', 'Security', 'Gửi token giả mạo trả 401 Unauthorized', pass, `HTTP ${res.status}`, 'HTTP 401 Unauthorized');
     } catch (e) {
         logTest('TC-AUTH-13', 'Security', 'Token giả trả 401', false, e.message, 'HTTP 401');
+    }
+
+    // 1.13b Real expired JWT token
+    try {
+        const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
+        const payload = Buffer.from(JSON.stringify({
+            sub: '1',
+            iss: 'sba301-rentcar',
+            aud: 'sba301-rentcar-client',
+            role: 'CUSTOMER',
+            exp: Math.floor(Date.now() / 1000) - 3600
+        })).toString('base64url');
+        const sig = crypto.createHmac('sha256', 'super-secret-jwt-key-for-carrental-system-32bytes-long!')
+            .update(header + '.' + payload).digest('base64url');
+        const expiredToken = header + '.' + payload + '.' + sig;
+        const res = await request('GET', '/api/customers/me', { Authorization: `Bearer ${expiredToken}` });
+        const pass = res.status === 401 && res.data?.code === 'INVALID_TOKEN';
+        logTest('TC-AUTH-13b', 'Security', 'Gửi token JWT đã hết hạn bị từ chối 401 INVALID_TOKEN', pass, `HTTP ${res.status}, code=${res.data?.code}`, 'HTTP 401 INVALID_TOKEN');
+    } catch (e) {
+        logTest('TC-AUTH-13b', 'Security', 'Token hết hạn', false, e.message, 'HTTP 401');
     }
 
     // 1.14 Customer cố tình truy cập API Admin (/api/admin/cars)
@@ -822,22 +843,62 @@ async function run() {
         }
     }
 
-    // 5.6 Khách hàng duyệt biên bản nhận xe -> Đơn chuyển sang IN_PROGRESS (đang thuê)
+    // 5.6a Khách hàng từ chối 1 mục hiện trạng (Dispute Handover)
     if (bookingId && pickupHandoverItems.length > 0) {
         try {
-            const decisions = pickupHandoverItems.map(item => ({
+            const firstItem = pickupHandoverItems[0];
+            const disputeDecisions = pickupHandoverItems.map(item => ({
                 itemId: item.id,
-                accepted: true,
-                disputeNote: null
+                accepted: item.id !== firstItem.id,
+                disputeNote: item.id === firstItem.id ? 'Gương phải bị trầy xước, cần chụp lại cận cảnh' : null
             }));
             const res = await request('POST', `/api/bookings/${bookingId}/handovers/PICKUP/respond`, {
                 Authorization: `Bearer ${customerToken}`
             }, {
-                decisions: decisions,
-                customerNote: 'Đã nhận xe đúng như bàn giao'
+                decisions: disputeDecisions,
+                customerNote: 'Yêu cầu chụp lại ảnh gương phải'
+            });
+            const pickupHandover = res.data?.data?.handovers?.find(h => h.type === 'PICKUP');
+            const pass = res.status === 200 && pickupHandover?.status === 'DISPUTED' && res.data?.data?.status === 'PICKUP_PENDING';
+            logTest('TC-BKG-05b', 'Booking - Dispute Handover', 'Khách từ chối 1 mục biên bản giao xe (chuyển DISPUTED)', pass, `HTTP ${res.status}, handoverStatus=${pickupHandover?.status}, bookingStatus=${res.data?.data?.status}`, 'HTTP 200 DISPUTED');
+        } catch (e) {
+            logTest('TC-BKG-05b', 'Booking - Dispute Handover', 'Dispute handover', false, e.message, 'HTTP 200');
+        }
+
+        // 5.6b Chủ xe chỉnh sửa lại mục bị từ chối (Revise Handover)
+        try {
+            const firstItem = pickupHandoverItems[0];
+            const res = await request('PUT', `/api/bookings/${bookingId}/handovers/PICKUP`, {
+                Authorization: `Bearer ${ownerToken}`
+            }, {
+                revisions: [{
+                    itemId: firstItem.id,
+                    photoUrl: '/api/uploads/files/pickup_front_revised.jpg',
+                    conditionNote: 'Đã chụp lại rõ nét vết trầy nhỏ'
+                }]
+            });
+            const pickupHandover = res.data?.data?.handovers?.find(h => h.type === 'PICKUP');
+            const pass = res.status === 200 && pickupHandover?.status === 'SUBMITTED' && pickupHandover?.revision === 2;
+            logTest('TC-BKG-05c', 'Booking - Revise Handover', 'Chủ xe chỉnh sửa lại mục bị tranh chấp (revision=2)', pass, `HTTP ${res.status}, revision=${pickupHandover?.revision}, status=${pickupHandover?.status}`, 'HTTP 200 SUBMITTED rev 2');
+        } catch (e) {
+            logTest('TC-BKG-05c', 'Booking - Revise Handover', 'Revise handover', false, e.message, 'HTTP 200');
+        }
+
+        // 5.6c Khách hàng chấp nhận mục đã sửa -> Đơn chuyển sang IN_PROGRESS (đang thuê)
+        try {
+            const firstItem = pickupHandoverItems[0];
+            const res = await request('POST', `/api/bookings/${bookingId}/handovers/PICKUP/respond`, {
+                Authorization: `Bearer ${customerToken}`
+            }, {
+                decisions: [{
+                    itemId: firstItem.id,
+                    accepted: true,
+                    disputeNote: null
+                }],
+                customerNote: 'Đồng ý với ảnh chụp bổ sung'
             });
             const pass = res.status === 200 && res.data?.data?.status === 'IN_PROGRESS';
-            logTest('TC-BKG-06', 'Booking - Customer Confirm Pickup', 'Khách xác nhận biên bản giao xe: đơn chuyển thành IN_PROGRESS', pass, `HTTP ${res.status}, status=${res.data?.data?.status}`, 'HTTP 200 IN_PROGRESS');
+            logTest('TC-BKG-06', 'Booking - Customer Confirm Pickup', 'Khách xác nhận biên bản giao xe sau khi sửa: đơn chuyển thành IN_PROGRESS', pass, `HTTP ${res.status}, status=${res.data?.data?.status}`, 'HTTP 200 IN_PROGRESS');
         } catch (e) {
             logTest('TC-BKG-06', 'Booking - Customer Confirm Pickup', 'Customer confirm pickup', false, e.message, 'HTTP 200');
         }
