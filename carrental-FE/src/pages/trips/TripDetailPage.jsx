@@ -128,7 +128,7 @@ function Trip({ id }) {
           {b.customerNote ? <p className="mt-2 text-[#666666]">Lời nhắn của khách: {b.customerNote}</p> : null}
           {role === "customer" && b.ownerContactedAt ? <p className="mt-2 text-[#065F46]">Chủ xe đã liên hệ lúc {formatDateTime(b.ownerContactedAt)}.</p> : null}
         </section>
-        {(role === "customer" || role === "owner") && ["REQUESTED", "CONFIRMED"].includes(b.status) ? <button type="button" onClick={() => setAsking("cancel")} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold text-[#B91C1C]">Huỷ đơn thuê</button> : null}
+        {((role === "customer" || role === "owner") && ["REQUESTED", "CONFIRMED"].includes(b.status)) || (role === "admin" && ["REQUESTED", "CONFIRMED", "PICKUP_PENDING", "IN_PROGRESS", "RETURN_PENDING"].includes(b.status)) ? <button type="button" onClick={() => setAsking("cancel")} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold text-[#B91C1C]">Huỷ đơn thuê</button> : null}
         <Link to={`/cars/${b.carId}`} className="text-center text-sm font-bold text-[#666666]">Xem trang xe</Link>
       </aside>
     </div>
