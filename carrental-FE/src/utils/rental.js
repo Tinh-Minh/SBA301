@@ -82,5 +82,5 @@ export const safetyLevelMeta = {
     SAFE: { label: "An toàn", tone: "success", icon: "verified" },
     ATTENTION: { label: "Cần lưu ý", tone: "warning", icon: "info" },
     UNSAFE: { label: "Không đạt / hết hạn", tone: "danger", icon: "warning" },
-    UNKNOWN: { label: "Chưa đủ thông tin", tone: "neutral", icon: "help" },
+    UNKNOWN: { label: "Chưa đủ thông tin", tone: "neutral", icon: "info" },
 };
