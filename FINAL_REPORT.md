@@ -11,11 +11,11 @@
 
 | Hạng mục kiểm thử | Công cụ / Lệnh thực thi | Tổng số ca | Đạt (Pass) | Thất bại (Fail) | Đánh giá |
 |---|---|---|---|---|---|
-| **Backend Unit & Integration Tests** | Maven Surefire (`.\mvnw.cmd test`) trên H2 | 116 | 116 | 0 | **100% PASS** (Thời gian: 25.8s) |
+| **Backend Unit & Integration Tests** | Maven Surefire (`.\mvnw.cmd test`) trên H2 | 116 | 116 | 0 | **100% PASS** (Thời gian: ~25s) |
 | **Frontend Production Build** | Vite (`npm run build`) | 1 build | Thành công | 0 | **BUILD SUCCESS** (497 modules) |
-| **E2E & Playwright Automation Verification** | `node e2e_verification.mjs` trên clean DB (`seeddb.sql`) | 33 | 33 | 0 | **100% PASS** |
+| **E2E & Playwright Automation Verification** | `node e2e_regression_suite.mjs` trên clean DB (`seeddb.sql`) | 34 | 34 | 0 | **100% PASS** |
 | **Kiểm tra hồi quy toàn hệ thống** | Cars, Packages, Vouchers, UserDocs, VNPay | 6 | 6 | 0 | **100% PASS** |
-| **TỔNG CỘNG** | | **156** | **156** | **0** | **HOÀN TOÀN ĐẠT CHUẨN** |
+| **TỔNG CỘNG** | | **157** | **157** | **0** | **HOÀN TOÀN ĐẠT CHUẨN** |
 
 ---
 

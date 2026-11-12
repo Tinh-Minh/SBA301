@@ -17,6 +17,7 @@ Dự án tiếp nhận và giải quyết triệt để 2 vấn đề trọng t�
 
 ### Commit Git:
 - `51134f3` — `fix(mail): load .env into spring boot, configure Mailjet and add startup check`
+- `b471527` — `fix(mail): add spring boot 3 imports and support inline comments on quoted values`
 
 ### Nguyên nhân gốc:
 1. **Spring Boot không tự động đọc file `.env`**: Spring Boot mặc định chỉ nạp `application.properties`/`application.yml` hoặc các biến môi trường của hệ điều hành / JVM system properties (`-D...`). Do đó, file `.env` đặt tại thư mục gốc backend không được tự động đưa vào Spring `Environment`.
@@ -65,6 +66,7 @@ Dự án tiếp nhận và giải quyết triệt để 2 vấn đề trọng t�
 
 ### Commit Git:
 - `62f6b51` — `fix(owner-upgrade): fix admin kyc discovery, submission validation, and owner promotion flow`
+- `3c082aa` — `fix(owner-upgrade): sync customer kyc status and restrict redundant submissions for owners`
 
 ### Nguyên nhân gốc:
 1. **Admin không tìm thấy hồ sơ người dùng PENDING**: Endpoint `GET /api/customers?kycStatus=PENDING` phía Admin không hoạt động chính xác do DTO `CustomerSummaryResponse` và `CustomerAdminResponse` bị thiếu trường `kycStatus`, đồng thời tầng Service chưa xử lý lọc `kycStatus` trong danh sách khách hàng.
@@ -111,39 +113,40 @@ Dự án tiếp nhận và giải quyết triệt để 2 vấn đề trọng t�
 - **Lệnh thực thi**: `npm run build`
 - **Kết quả**: **BUILD SUCCESS**, 497 modules transformed, không có lỗi cú pháp hay thiếu import.
 
-### 4.3. End-to-End & Playwright Automation Verification (`e2e_verification.mjs`)
-- **Lệnh thực thi**: `node e2e_verification.mjs` trên cơ sở dữ liệu PostgreSQL vừa reset sạch bằng `seeddb.sql`.
-- **Kết quả**: **33/33 test PASS (100%)**, 0 Failures:
+### 4.3. End-to-End & Playwright Automation Verification (`e2e_regression_suite.mjs`)
+- **Lệnh thực thi**: chạy kiểm thử tự động toàn diện qua Playwright và Node.js trên cơ sở dữ liệu PostgreSQL thực tế (`seeddb.sql`).
+- **Kết quả**: **34/34 test PASS (100%)**, 0 Failures:
   1. `BE Health UP`: API `/api/health` trả về `UP`.
-  2. `Admin Login`: Đăng nhập admin thành công.
-  3. `Customer Login`: Đăng nhập customer seed thành công.
-  4. `Register new customer & verify email`: Đăng ký tài khoản mới và xác minh email trong DB.
-  5. `New customer logged in`: Nhận JWT token hợp lệ.
-  6. `Initial KYC check`: `kycStatus=NONE`, số lượt còn lại `3/3`.
-  7. `Submission 1 (CITIZEN_ID)`: Nộp CCCD lần 1 thành công, trạng thái `PENDING`.
-  8. `Edge case: Submit while PENDING blocked`: BE chặn với `409 DOCUMENT_PENDING_EXISTS`.
-  9. `Edge case: Unauthenticated submit blocked`: BE chặn với `401 UNAUTHORIZED`.
+  2. `Admin Login`: Đăng nhập admin thành công với quyền `ADMIN`.
+  3. `Customer Register`: Đăng ký tài khoản customer mới thành công (gọi Mailjet thật).
+  4. `Customer Login`: Đăng nhập customer mới nhận JWT token hợp lệ.
+  5. `Initial KYC check`: `kycStatus=NONE`, số lượt còn lại `3/3`.
+  6. `Submission 1 (CITIZEN_ID)`: Nộp CCCD lần 1 thành công (HTTP 201 Created), trạng thái `PENDING`.
+  7. `Edge case: Submit while PENDING blocked`: BE chặn với `409 DOCUMENT_PENDING_EXISTS`.
+  8. `Edge case: Normal user calling admin API blocked`: BE chặn với `403 FORBIDDEN`.
+  9. `Edge case: Unauthenticated review blocked`: BE chặn với `401 UNAUTHORIZED`.
   10. `Admin KYC discovery`: Admin tìm thấy user trong danh sách `kycStatus=PENDING`.
-  11. `Edge case: Normal user calling admin review blocked`: BE chặn với `403 ACCESS_DENIED`.
+  11. `Admin view detail`: Admin xem chi tiết user thấy `kycStatus=PENDING`.
   12. `Edge case: Admin reject without reason blocked`: BE chặn với `400 INVALID_REQUEST`.
-  13. `Admin reject attempt 1`: Từ chối kèm lý do hợp lệ, gửi mail thông báo.
+  13. `Admin reject attempt 1`: Từ chối kèm lý do hợp lệ, gửi mail thật qua Mailjet.
   14. `User sees REJECTED status & quota 2 remaining`: User thấy trạng thái và còn `2/3` lượt.
-  15. `Attempt 2 rejected`: Nộp lần 2 và bị từ chối, còn `1/3` lượt.
-  16. `Attempt 3 rejected`: Nộp lần 3 và bị từ chối, còn `0/3` lượt.
+  15. `Attempt 2 rejected`: Nộp lần 2 và bị từ chối, còn `1/3` lượt (gửi mail thật).
+  16. `Attempt 3 rejected`: Nộp lần 3 và bị từ chối, còn `0/3` lượt (gửi mail thật).
   17. `Edge case: 4th submission strictly blocked by BE`: BE chặn với `400 OWNER_UPGRADE_LIMIT_EXCEEDED`.
-  18. `Happy path: User submitted valid CCCD`: User mới nộp hồ sơ CCCD hợp lệ.
-  19. `Admin approved KYC`: Admin duyệt thành công, gửi email chúc mừng nâng cấp.
-  20. `User role upgraded to OWNER in BE`: Role của user tự động chuyển thành `OWNER`.
-  21. `UI: Home/Explore loaded`: Trang chủ tải mượt mà.
-  22. `UI: Login successful via web interface`: Trình duyệt Playwright đăng nhập thành công.
-  23. `UI: User sees Owner verified banner on /account/verification`: Giao diện hiển thị đúng vai trò Chủ xe.
-  24. `UI: Upgraded user can access /owner/dashboard without blocker`: User đã nâng cấp truy cập được kênh chủ xe.
-  25. `UI: 4th attempt blocked button & quota warning displayed on frontend`: Hiển thị cảnh báo hết lượt nộp và vô hiệu hóa nút gửi.
-  26. `UI: Admin Users & KYC page loaded`: Màn hình quản trị người dùng tải chính xác.
-  27. `UI Playwright automated session completed successfully`: Toàn bộ kịch bản browser chạy trọn vẹn.
-  28. `Regression: Public Cars search`: Tìm kiếm xe công khai trả về danh sách xe.
-  29. `Regression: Public Car detail (id=1)`: Xem chi tiết xe thành công.
-  30. `Regression: Listing packages catalog (/api/packages)`: Danh mục gói niêm yết hoạt động.
-  31. `Regression: Admin vouchers list (/api/vouchers)`: Admin truy vấn danh sách voucher.
-  32. `Regression: Customer available vouchers`: Khách hàng xem danh sách voucher áp dụng cho gói.
-  33. `Regression: Admin user documents list (scope=all)`: Admin truy vấn toàn bộ giấy tờ người dùng.
+  18. `UI Playwright: Quota indicator`: Hiển thị chính xác `Đã gửi 3/3 lần • Còn lại 0 lần`.
+  19. `UI Playwright: Quota alert banner`: Hiển thị cảnh báo đã sử dụng hết tối đa 3/3 lần gửi.
+  20. `UI Playwright: Submit button disabled`: Nút gửi hồ sơ bị khóa hoàn toàn (`disabled=true`).
+  21. `UI Playwright: Submit button label`: Nút hiển thị nhãn `Đã đạt giới hạn (3/3)`.
+  22. `Happy path: Valid submission`: User mới nộp hồ sơ CCCD hợp lệ thành công.
+  23. `Admin approved KYC`: Admin duyệt thành công, gửi email chúc mừng nâng cấp qua Mailjet.
+  24. `Role promotion in DB`: Role tự động nâng cấp thành `OWNER` và `kycStatus=VERIFIED`.
+  25. `UI Playwright: Owner dashboard`: Chủ xe truy cập `/owner/dashboard` thành công không bị chặn.
+  26. `UI Playwright: Verification page`: Trang xác minh hiển thị huy hiệu Chủ xe đã xác minh thành công.
+  27. `Owner redundant submission blocked`: Chủ xe đã xác thực nộp lại CCCD bị BE chặn `400 INVALID_REQUEST`.
+  28. `Regression: Cars search`: API tìm kiếm xe công khai hoạt động bình thường.
+  29. `Regression: Packages catalog`: API danh mục gói niêm yết xe hoạt động bình thường.
+  30. `Regression: Admin vouchers`: API danh sách voucher của Admin hoạt động chuẩn phân quyền.
+  31. `Regression: User documents`: API giấy tờ người dùng (`scope=mine`) trả về đủ các hồ sơ kèm lý do từ chối.
+  32. `Re-login role verification`: Đăng nhập lại nhận được token JWT với quyền `OWNER` mới.
+  33. `Regression: VNPay gateway payment`: Endpoint khởi tạo thanh toán kiểm tra quyền sở hữu và phản hồi đúng quy chuẩn.
+  34. `Playwright automated session completed successfully`: Toàn bộ kịch bản trình duyệt hoàn tất không lỗi.
