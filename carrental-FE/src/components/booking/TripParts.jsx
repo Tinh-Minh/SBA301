@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { formatDateTime } from "@/utils/datetime.js";
-import { formatMoney } from "@/utils/labels.js";
+import { formatMoney, resolveAssetUrl } from "@/utils/labels.js";
 import { bookingStatusMeta, durationLabel } from "@/utils/rental.js";
 
 const steps = [
@@ -35,7 +35,7 @@ export function TripTimeline({ booking }) {
 /** Thẻ đơn thuê trong danh sách. */
 export function TripCard({ booking, role, highlight }) {
     return <Link to={`/trips/${booking.id}`} className={`flex gap-4 rounded-2xl border bg-white p-4 shadow-sm transition hover:border-[#FC6C26] ${highlight ? "border-[#FDBA8C]" : "border-[#E9E9E7]"}`}>
-    <img src={booking.carImageUrl || "/images/pricing-sedan.webp"} alt="" className="hidden h-20 w-28 shrink-0 rounded-xl object-cover sm:block"/>
+    <img src={resolveAssetUrl(booking.carImageUrl) || "/images/pricing-sedan.webp"} alt="" className="hidden h-20 w-28 shrink-0 rounded-xl object-cover sm:block"/>
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p className="font-bold text-[#292929]">{booking.carName} <span className="font-mono text-xs font-normal text-[#666666]">{booking.bookingCode}</span></p>

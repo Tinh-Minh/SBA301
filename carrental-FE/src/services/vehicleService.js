@@ -1,5 +1,6 @@
 import { endpoints } from "@/services/endpoints.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
+import { uploadImages } from "@/services/tripService.js";
 import { normalizeCar } from "@/utils/apiResponse.js";
 import { isApprovedCar } from "@/utils/owner.js";
 
@@ -46,23 +47,23 @@ async function getCar(id) {
 }
 
 export const carService = {
-    /** POST /api/cars — xe mới luôn ở PENDING_APPROVAL; ảnh gửi tiếp qua POST /api/cars/{id}/images. */
+    /** POST /api/cars — tải ảnh multipart trước (nếu có) để tránh tạo xe mồ côi khi ảnh lỗi, giữ đúng thứ tự ảnh đại diện. */
     async create(draft) {
-        const created = await request(endpoints.cars.list, { method: "POST", json: { licensePlate: draft.licensePlate.trim().toUpperCase(), ...carPayload(draft) } });
         const photoEntries = Array.isArray(draft.photoEntries) ? draft.photoEntries : [];
+        let orderedUrls = [];
         if (photoEntries.length) {
             const fileEntries = photoEntries.filter(entry => entry.file);
-            const urlEntries = photoEntries.filter(entry => !entry.file && entry.url?.trim()).map(entry => entry.url.trim());
-            const primaryIsFile = Boolean(photoEntries[0]?.file);
-            if (fileEntries.length)
-                await this.uploadImages(created.id, fileEntries.map(entry => entry.file), primaryIsFile ? 0 : null);
-            if (urlEntries.length)
-                await this.addImages(created.id, urlEntries, { firstIsPrimary: !primaryIsFile && !fileEntries.length });
+            const uploadedUrls = fileEntries.length ? await uploadImages(fileEntries.map(entry => entry.file)) : [];
+            let fileCursor = 0;
+            orderedUrls = photoEntries
+                .map(entry => (entry.file ? uploadedUrls[fileCursor++] : entry.url?.trim()))
+                .filter(Boolean);
         } else {
-            const imageUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
-            if (imageUrls.length)
-                await this.addImages(created.id, imageUrls);
+            orderedUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
         }
+        const created = await request(endpoints.cars.list, { method: "POST", json: { licensePlate: draft.licensePlate.trim().toUpperCase(), ...carPayload(draft) } });
+        if (orderedUrls.length)
+            await this.addImages(created.id, orderedUrls);
         return getCar(created.id);
     },
     /** GET /api/cars/my-cars (tóm tắt) + GET /api/cars/{id} để có đủ địa chỉ, cọc, km... */

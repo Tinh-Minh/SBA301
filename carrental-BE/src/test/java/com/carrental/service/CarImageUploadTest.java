@@ -78,6 +78,11 @@ class CarImageUploadTest {
         mvc.perform(multipart("/api/uploads/images")
                         .file(new MockMultipartFile("file", "back.webp", "image/webp", webpBytes)))
                 .andExpect(status().isOk());
+
+        byte[] vp8l = minimalValidWebpHeader("WEBPVP8L");
+        mvc.perform(multipart("/api/uploads/images")
+                        .file(new MockMultipartFile("file", "lossless.webp", "image/webp", vp8l)))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -179,9 +184,13 @@ class CarImageUploadTest {
     }
 
     private static byte[] minimalValidWebpHeader() {
+        return minimalValidWebpHeader("WEBPVP8 ");
+    }
+
+    private static byte[] minimalValidWebpHeader(String fourCcPlusChunk) {
         byte[] bytes = new byte[24];
         byte[] riff = "RIFF".getBytes(StandardCharsets.US_ASCII);
-        byte[] webp = "WEBPVP8 ".getBytes(StandardCharsets.US_ASCII);
+        byte[] webp = fourCcPlusChunk.getBytes(StandardCharsets.US_ASCII);
         System.arraycopy(riff, 0, bytes, 0, 4);
         System.arraycopy(webp, 0, bytes, 8, 8);
         return bytes;

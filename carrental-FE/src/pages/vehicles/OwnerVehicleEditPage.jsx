@@ -222,7 +222,21 @@ export default function OwnerVehicleEdit({ carId }) {
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {queuedFiles.map((item, idx) => (
-                  <img key={idx} src={item.preview} alt={item.file.name} className="h-24 w-full rounded-lg object-cover border border-card-border" />
+                  <div key={`${item.file.name}-${idx}`} className="relative overflow-hidden rounded-lg border border-card-border bg-white">
+                    <img src={item.preview} alt={item.file.name} className="h-24 w-full object-cover" />
+                    <button
+                      type="button"
+                      disabled={imgBusy}
+                      aria-label={`Bỏ ảnh ${item.file.name}`}
+                      onClick={() => {
+                        URL.revokeObjectURL(item.preview);
+                        setQueuedFiles(prev => prev.filter((_, i) => i !== idx));
+                      }}
+                      className="absolute right-1 top-1 rounded-full bg-charcoal/80 px-1.5 py-0.5 text-[10px] font-bold text-white hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>

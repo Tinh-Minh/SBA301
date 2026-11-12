@@ -9,7 +9,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { tripService } from "@/services/tripService.js";
 import { formatDateTime } from "@/utils/datetime.js";
-import { formatMoney } from "@/utils/labels.js";
+import { formatMoney, resolveAssetUrl } from "@/utils/labels.js";
 import { carStatusMeta } from "@/utils/owner.js";
 
 /** Bảng theo dõi riêng của một xe: tình trạng, dòng tiền, đơn nhận được, hồ sơ an toàn. */
@@ -24,7 +24,7 @@ export default function OwnerCarOverviewPage() {
     return <div className="flex min-w-0 flex-col gap-5">
     <OwnerCrumb homeHref={ownerRoutes.dashboard} parent={{ href: ownerRoutes.vehicles, label: "Xe của tôi" }} current={c.carName}/>
     <header className="flex flex-wrap items-center gap-4 rounded-2xl border border-card-border bg-white p-5 shadow-sm">
-      {c.imageUrl ? <img src={c.imageUrl} alt="" className="h-20 w-32 rounded-xl object-cover"/> : null}
+      {c.imageUrl ? <img src={resolveAssetUrl(c.imageUrl)} alt="" className="h-20 w-32 rounded-xl object-cover"/> : null}
       <div className="min-w-0 flex-1"><h1 className="text-xl font-bold text-charcoal">{c.carName}</h1><p className="font-mono text-sm text-muted-gray">{c.licensePlate}</p></div>
       <StatusBadge meta={carStatusMeta[c.carStatus]}/>
       <Link to={ownerRoutes.vehicleEdit(carId)} className="rounded-xl border border-card-border px-3 py-2 text-xs font-bold">Sửa thông tin xe</Link>

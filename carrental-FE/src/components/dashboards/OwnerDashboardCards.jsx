@@ -1,6 +1,7 @@
 import { Link } from "react-router";
 import { Icon } from "@/components/Icon.jsx";
 import { carSubtitle, formatActivityTime, formatRentalPeriod, formatVnd, kycStatusMeta } from "@/utils/owner.js";
+import { carImage } from "@/utils/labels.js";
 
 import { ownerRoutes } from "@/routes/paths.js";
 
@@ -69,7 +70,7 @@ export function VehicleCard({ item }) {
     const title = `${car.brand} ${car.model}`;
     return <article className="group flex flex-col overflow-hidden rounded-2xl border border-card-border bg-white shadow-sm transition-all hover:border-gray-300 hover:shadow-md">
     <div className="relative h-44 w-full overflow-hidden">
-      <img src={car.primaryImageUrl ?? "/images/cardb-e5cfa07014e754d6.webp"} alt={title} className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async"/>
+      <img src={carImage(car)} alt={title} className="h-44 w-full object-cover transition-transform duration-500 group-hover:scale-105" loading="lazy" decoding="async"/>
       <div className="absolute left-3 top-3">
         {approved ? <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-200/50 bg-white/80 px-2.5 py-1 text-xs font-semibold text-emerald-accent shadow-sm backdrop-blur-md">
           <span aria-hidden="true" className="size-1.5 rounded-full bg-emerald-accent"/>
