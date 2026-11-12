@@ -20,6 +20,8 @@ export function normalizeCar(car) {
         depositAmount: money(car.depositAmount),
         extraKmFee: money(car.extraKmFee),
         kmLimitPerDay: car.kmLimitPerDay ?? null,
+        lateFeePerHour: car.lateFeePerHour == null ? null : money(car.lateFeePerHour),
+        weekendPricePerDay: car.weekendPricePerDay == null ? null : money(car.weekendPricePerDay),
     };
 }
 

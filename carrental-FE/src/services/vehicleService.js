@@ -36,6 +36,8 @@ function carPayload(draft) {
         depositAmount: numberOrNull(draft.depositAmount) ?? 0,
         kmLimitPerDay: numberOrNull(draft.kmLimitPerDay),
         extraKmFee: numberOrNull(draft.extraKmFee),
+        weekendPricePerDay: numberOrNull(draft.weekendPricePerDay),
+        lateFeePerHour: numberOrNull(draft.lateFeePerHour),
     };
 }
 

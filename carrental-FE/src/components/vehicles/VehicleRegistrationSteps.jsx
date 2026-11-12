@@ -238,11 +238,11 @@ export function StepTwo({ form, errors = {}, onChange }) {
     </section>
   </div>;
 }
-export function StepThree({ form, dayPrice, weekend, fee, errors = {}, onChange }) {
+export function StepThree({ form, dayPrice, weekend, deposit, errors = {}, onChange }) {
     return <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.3fr)_300px]">
     <section className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="flex items-center gap-2 text-base font-bold text-charcoal"><Icon name="payments" className="text-[20px] text-brand-accent"/> Cài đặt bảng giá và tiền cọc</h2>
-      <p className="mt-1 text-sm text-muted-gray">Đơn giá ngày thường được lưu làm giá niêm yết. Tiền cọc chủ xe tự thu khi ký C10-A.</p>
+      <p className="mt-1 text-sm text-muted-gray">Đây là các điều khoản hiển thị cho khách khi gửi yêu cầu đặt xe. CarDB không thu hộ tiền thuê: khách thanh toán và đặt cọc trực tiếp cho chủ xe khi nhận xe.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <Field label="Đơn giá ngày thường (VND)" error={errors.pricePerDay}>
           <input inputMode="numeric" className={inputCls(errors.pricePerDay)} value={grouped(form.pricePerDay)} placeholder="Tối thiểu 10.000đ" onChange={event => onChange({ pricePerDay: digitsOf(event.target.value) })}/>
@@ -262,23 +262,23 @@ export function StepThree({ form, dayPrice, weekend, fee, errors = {}, onChange 
         <Field label="Phí quá km (VND)" error={errors.extraKmFee}>
           <input inputMode="numeric" className={inputCls(errors.extraKmFee)} value={grouped(form.extraKmFee)} placeholder="0 - 1.000.000đ" onChange={event => onChange({ extraKmFee: digitsOf(event.target.value) })}/>
         </Field>
-        <Field label="Phí trễ giờ (VND)" error={errors.lateFee}>
+        <Field label="Phí trễ giờ (VND / giờ)" error={errors.lateFee}>
           <input inputMode="numeric" className={inputCls(errors.lateFee)} value={grouped(form.lateFee)} placeholder="Không bắt buộc" onChange={event => onChange({ lateFee: digitsOf(event.target.value) })}/>
         </Field>
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-muted-gray">Khách hủy muộn hơn mốc đã chọn đền bù theo hợp đồng thuê. Phí trễ giờ chủ xe đối soát khi trả xe, không trừ vào payout.</p>
+      <p className="mt-4 text-xs leading-relaxed text-muted-gray">Tiền thuê tính theo ngày (24 giờ) và giờ lẻ: giá giờ = 1/10 giá ngày, thuê lẻ từ 10 giờ tính tròn 1 ngày. Phí quá km và phí trễ giờ do hai bên đối soát trong biên bản trả xe.</p>
     </section>
     <aside className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">Bảng tính thu nhập</p>
+      <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">Bảng giá niêm yết</p>
       <h2 className="mt-2 font-bold text-charcoal">{form.brand} {form.model}</h2>
       <p className="font-mono text-xs text-muted-gray">{form.licensePlate || "Chưa có biển số"} • {form.seats} chỗ</p>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
         <div className="flex justify-between gap-3"><dt className="text-muted-gray">Ngày thường</dt><dd><Money amount={dayPrice ?? 0}/></dd></div>
-        <div className="flex justify-between gap-3"><dt className="text-muted-gray">Phí CarDB 10%</dt><dd><Money amount={fee} sign="-"/></dd></div>
-        <div className="flex justify-between gap-3 border-t border-card-border pt-2 font-bold"><dt>Thực nhận / ngày</dt><dd><Money amount={Math.max(0, (dayPrice ?? 0) - fee)} className="text-status-success-ink"/></dd></div>
-        <div className="flex justify-between gap-3 text-xs"><dt className="text-muted-gray">Cuối tuần</dt><dd>{weekend ? formatVnd(weekend) : "—"}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted-gray">Cuối tuần (T7, CN)</dt><dd>{weekend ? formatVnd(weekend) : "—"}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted-gray">Giờ lẻ</dt><dd>{dayPrice ? `${formatVnd(Math.ceil(dayPrice / 10 / 1000) * 1000)}/giờ` : "—"}</dd></div>
+        <div className="flex justify-between gap-3 border-t border-card-border pt-2 font-bold"><dt>Tiền cọc</dt><dd>{deposit ? formatVnd(deposit) : "Miễn cọc"}</dd></div>
       </dl>
-      <p className="mt-4 rounded-xl bg-bg-light px-3 py-2 text-xs leading-relaxed text-muted-gray">Tiền thuê chuyển về tài khoản liên kết sau khi ký C10-B. Tiền cọc không nằm trong số thực nhận.</p>
+      <p className="mt-4 rounded-xl bg-bg-light px-3 py-2 text-xs leading-relaxed text-muted-gray">Chủ xe nhận toàn bộ tiền thuê trực tiếp từ khách. Chi phí trên CarDB chỉ là gói đăng tin để xe hiển thị trên sàn.</p>
     </aside>
   </div>;
 }
