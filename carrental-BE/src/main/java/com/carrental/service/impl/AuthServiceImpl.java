@@ -277,6 +277,9 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         }
         customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        // Vô hiệu mọi token đã cấp trước lần đổi mật khẩu này (làm tròn xuống giây vì iat của JWT tính theo giây)
+        customer.setPasswordChangedAt(java.time.LocalDateTime.ofInstant(
+                clock.instant().truncatedTo(ChronoUnit.SECONDS), java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
         log.info("auth-change-password customerId={}", customer.getId());
     }
 

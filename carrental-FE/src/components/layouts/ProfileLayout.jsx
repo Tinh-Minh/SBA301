@@ -30,7 +30,7 @@ export function ProfileLayout({ active, title, description, actions, children, l
         </div>
         {actions ? <div className="profile-heading-actions shrink-0 md:max-w-[35%]">{actions}</div> : null}
       </header>
-      <div className="profile-columns grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+      <div className="profile-columns grid grid-cols-[minmax(0,1fr)] lg:grid-cols-12 gap-space-lg items-start">
         <ProfileSidebar active={active} className="lg:col-span-4 xl:col-span-3"/>
         <section className="profile-content min-w-0 lg:col-span-8 xl:col-span-9 flex flex-col gap-space-lg" data-purpose={active === "banks" ? "bank-account-content" : "profile-content"}>
           {live ? <RequireAuth>{children}</RequireAuth> : children}

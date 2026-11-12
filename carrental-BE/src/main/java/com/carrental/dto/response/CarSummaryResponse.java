@@ -66,7 +66,7 @@ public record CarSummaryResponse(
                 car.getContactZalo(),
                 car.getStatus(),
                 car.getListingStatus(),
-                BigDecimal.ZERO,
+                com.carrental.util.RentalPricing.hourlyRate(dayPrice),
                 dayPrice,
                 primaryImageUrl
         );

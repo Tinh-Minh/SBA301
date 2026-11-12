@@ -94,6 +94,11 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             if (owner.getStatus() != CustomerStatus.ACTIVE || owner.getRole() != account.role()) {
                 throw new AppException(ErrorCode.INVALID_TOKEN);
             }
+            // Không nhận thêm hồ sơ cùng loại khi hồ sơ trước còn chờ duyệt (tránh spam hàng chờ của admin)
+            if (documents.existsByCustomerIdAndDocTypeAndVerifyStatus(
+                    owner.getId(), command.metadata().docType(), VerificationStatus.PENDING)) {
+                throw new AppException(ErrorCode.DOCUMENT_PENDING_EXISTS);
+            }
             UserDocument document = command.metadata().toEntity(owner,
                     receipts.get(0).locator(), receipts.size() == 2 ? receipts.get(1).locator() : null);
             return UserDocumentDetailResponse.from(documents.saveAndFlush(document));

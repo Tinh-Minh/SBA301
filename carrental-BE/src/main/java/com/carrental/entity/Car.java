@@ -85,6 +85,22 @@ public class Car extends BaseEntity {
     @Column(name = "rental_price_per_month", precision = 14, scale = 0)
     private BigDecimal rentalPricePerMonth;
 
+    // Điều khoản thuê do chủ xe niêm yết (dùng khi khách gửi yêu cầu đặt xe)
+    @Column(name = "weekend_price_per_day", precision = 14, scale = 0)
+    private BigDecimal weekendPricePerDay;
+
+    @Column(name = "deposit_amount", precision = 14, scale = 0)
+    private BigDecimal depositAmount;
+
+    @Column(name = "km_limit_per_day")
+    private Integer kmLimitPerDay;
+
+    @Column(name = "extra_km_fee", precision = 14, scale = 0)
+    private BigDecimal extraKmFee;
+
+    @Column(name = "late_fee_per_hour", precision = 14, scale = 0)
+    private BigDecimal lateFeePerHour;
+
     // Thông tin liên hệ công khai trên tin đăng
     @Column(name = "contact_name", length = 150)
     private String contactName;
@@ -100,6 +116,10 @@ public class Car extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private CarStatus status = CarStatus.PENDING_APPROVAL;
+
+    // Lý do admin từ chối hồ sơ gần nhất (xoá khi xe được gửi duyệt lại hoặc được duyệt)
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
 
     // Trạng thái hiển thị rao vặt (được cấp bởi gói subscription)
     @Enumerated(EnumType.STRING)

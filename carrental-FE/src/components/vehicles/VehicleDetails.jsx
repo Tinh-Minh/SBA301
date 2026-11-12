@@ -13,6 +13,14 @@ import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, transmis
 import { formatDateTime } from "@/utils/datetime.js";
 import { carService } from "@/services/vehicleService.js";
 import { reviewService } from "@/services/reviewService.js";
+import { Icon } from "@/components/Icon.jsx";
+import { BookingPanel } from "@/components/booking/BookingPanel.jsx";
+import { SafetyBadge, SafetyPanel, useSafety } from "@/components/booking/SafetyPanel.jsx";
+
+function SafetyBadgeFor({ carId }) {
+    const { data } = useSafety(carId);
+    return data ? <SafetyBadge level={data.level}/> : null;
+}
 
 export function Detail({ carId }) {
     const load = useCallback(async () => {
@@ -23,7 +31,13 @@ export function Detail({ carId }) {
     const detail = useApiQuery(["vehicles", "public-detail", { carId }], load, { requiresAuth: false });
 
     if (!detail.data)
-        return <LiveState loading={detail.loading} error={detail.error} label="thông tin xe" onRetry={detail.reload}/>;
+        return detail.error?.status === 404
+            ? <div className="rounded-2xl border border-[#E9E9E7] bg-white p-10 text-center">
+                <p className="text-lg font-bold text-[#292929]">Xe không tồn tại hoặc không còn hiển thị</p>
+                <p className="mt-1 text-sm text-[#666666]">Tin đăng có thể đã hết hạn hoặc đang chờ duyệt.</p>
+                <Link to="/explore" className="mt-4 inline-flex rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Tìm xe khác</Link>
+              </div>
+            : <LiveState loading={detail.loading} error={detail.error} label="thông tin xe" onRetry={detail.reload}/>;
 
     return <Body car={detail.data.car} />;
 }
@@ -59,9 +73,7 @@ function Body({ car }) {
                         <h1 className="text-2xl font-bold text-[#292929]">
                             {car.brand} {car.model} {car.manufactureYear ?? ""}
                         </h1>
-                        <span className="rounded-full bg-[#EBF5FF] px-3 py-1 text-xs font-semibold text-[#1E40AF]">
-                            Đã kiểm định
-                        </span>
+                        <SafetyBadgeFor carId={car.id}/>
                     </div>
 
                     <p className="text-sm text-[#666666]">
@@ -96,82 +108,27 @@ function Body({ car }) {
                 </div>
             </article>
 
-            {/* Cột phải: Thông tin liên hệ & Giá thuê tham khảo */}
+            <div className="flex flex-col gap-4">
+            <BookingPanel car={car}/>
             <aside className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
-                <h2 className="text-lg font-bold text-[#292929]">Mức giá tham khảo</h2>
-                
-                <div className="mt-3 rounded-xl bg-[#FFF7F2] p-4">
-                    <div className="flex items-baseline justify-between">
-                        <span className="text-sm text-[#666666]">Thuê theo ngày:</span>
-                        <span className="text-2xl font-black text-[#FC6C26]">{formatMoney(dayPrice)}</span>
-                    </div>
-                    {monthPrice ? (
-                        <div className="mt-2 flex items-baseline justify-between border-t border-[#FED7AA] pt-2">
-                            <span className="text-sm text-[#666666]">Thuê theo tháng:</span>
-                            <span className="text-lg font-bold text-[#292929]">{formatMoney(monthPrice)}</span>
-                        </div>
-                    ) : null}
-                    <p className="mt-2 text-xs text-[#9A3412]">
-                        * Giá trên là giá tham khảo. Bạn có thể liên hệ trực tiếp với chủ xe để thương lượng thêm.
-                    </p>
-                </div>
-
-                <div className="mt-6 border-t border-[#E9E9E7] pt-5">
-                    <h3 className="text-sm font-bold text-[#292929] uppercase tracking-wide">
-                        Thông tin người cho thuê
-                    </h3>
-                    
-                    <div className="mt-3 flex items-center gap-3">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FC6C26] font-bold text-white text-lg">
-                            {contactName.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <p className="font-bold text-[#292929]">{contactName}</p>
-                            <span className="inline-flex items-center text-xs text-[#059669] font-medium">
-                                ✓ Chủ xe đã xác thực danh tính
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="mt-5 grid gap-3">
-                        {phone ? (
-                            <a
-                                href={`tel:${phone}`}
-                                className="flex items-center justify-center gap-2 rounded-xl bg-[#FC6C26] py-3 px-4 font-bold text-white shadow-sm hover:bg-[#e05615] transition"
-                            >
-                                <span>📞</span>
-                                <span>Gọi ngay: {phone}</span>
-                            </a>
-                        ) : null}
-
-                        {zalo ? (
-                            <a
-                                href={`https://zalo.me/${zalo.replace(/\s+/g, '')}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center justify-center gap-2 rounded-xl border border-[#0068FF] bg-[#F0F6FF] py-3 px-4 font-bold text-[#0068FF] hover:bg-[#E1EDFF] transition"
-                            >
-                                <span>💬</span>
-                                <span>Nhắn tin qua Zalo</span>
-                            </a>
-                        ) : null}
-                    </div>
-
-                    <div className="mt-6 rounded-xl bg-[#F9FAFB] p-3 text-xs text-[#6B7280] leading-relaxed">
-                        <p className="font-semibold text-[#374151] mb-1">💡 Hướng dẫn thuê xe an toàn:</p>
-                        <p>1. Liên hệ trước để chốt lịch và các giấy tờ cần xuất trình.</p>
-                        <p>2. Kiểm tra kỹ tình trạng ngoại quan và giấy tờ xe khi nhận xe.</p>
-                        <p>3. Ký hợp đồng hoặc biên bản thỏa thuận bàn giao giữa 2 bên.</p>
-                    </div>
-
-                    <div className="mt-4 text-center">
-                        <Link to="/explore" className="text-xs font-semibold text-[#666666] hover:text-[#FC6C26]">
-                            ← Xem các tin đăng xe khác
-                        </Link>
+                <h2 className="text-sm font-bold uppercase tracking-wide text-[#292929]">Chủ xe</h2>
+                <div className="mt-3 flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#FC6C26] text-lg font-bold text-white">{contactName.charAt(0).toUpperCase()}</div>
+                    <div>
+                        <p className="font-bold text-[#292929]">{contactName}</p>
+                        <span className="text-xs font-medium text-[#059669]">✓ Đã xác thực danh tính</span>
                     </div>
                 </div>
+                <div className="mt-4 grid grid-cols-2 gap-2">
+                    {phone ? <a href={`tel:${phone}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E9E9E7] py-2.5 text-sm font-bold text-[#292929]"><Icon name="call" className="text-[18px]"/>{phone}</a> : null}
+                    {zalo ? <a href={`https://zalo.me/${zalo.replace(/\s+/g, "")}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl border border-[#0068FF] bg-[#F0F6FF] py-2.5 text-sm font-bold text-[#0068FF]">Zalo</a> : null}
+                </div>
+                {monthPrice ? <p className="mt-3 text-xs text-[#666666]">Thuê theo tháng: liên hệ chủ xe, giá tham khảo {formatMoney(monthPrice)}/tháng.</p> : null}
+                <Link to="/explore" className="mt-3 block text-center text-xs font-semibold text-[#666666] hover:text-[#FC6C26]">← Xem xe khác</Link>
             </aside>
+            </div>
         </div>
+        <SafetyPanel carId={car.id} />
         <CarReviews carId={car.id} />
         </div>
     );
@@ -196,10 +153,10 @@ function CarReviews({ carId }) {
             form.reset({ rating: 5, comment: "" });
         }
     }
-    return <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+    return <section id="reviews" className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <h2 className="text-lg font-bold text-[#292929]">Đánh giá {data ? `• ${Number(data.averageRating || 0).toFixed(1)}/5 (${data.totalReviews})` : ""}</h2>
-      {loggedIn ? <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Viết đánh giá</button> : <Link to={`/login?next=/cars/${carId}`} className="text-sm font-bold text-[#FC6C26]">Đăng nhập để đánh giá</Link>}
+      <h2 className="text-lg font-bold text-[#292929]">Đánh giá từ khách đã thuê {data ? `• ${Number(data.averageRating || 0).toFixed(1)}/5 (${data.totalReviews})` : ""}</h2>
+      {loggedIn ? <button type="button" title="Chỉ khách đã hoàn tất chuyến thuê xe này mới đánh giá được" onClick={() => setOpen(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Viết đánh giá</button> : <Link to={`/login?next=/cars/${carId}`} className="text-sm font-bold text-[#FC6C26]">Đăng nhập để đánh giá</Link>}
     </div>
     <LiveState loading={summary.loading && !data} error={summary.error} empty={!!data && !data.reviews?.length} label="đánh giá" onRetry={summary.reload}/>
     <ul className="mt-3 flex flex-col gap-3">{(data?.reviews ?? []).map(review => <li key={review.id} className="rounded-xl bg-[#F7F7F5] p-3 text-sm">

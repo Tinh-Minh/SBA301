@@ -7,6 +7,8 @@ const AdminUsersPage = lazy(() => import("@/pages/account/AdminUsersPage.jsx"));
 const AdminVehiclesPage = lazy(() => import("@/pages/vehicles/AdminVehiclesPage.jsx"));
 const AdminVouchersPage = lazy(() => import("@/pages/vouchers/AdminVouchersPage.jsx"));
 const AdminPackagesPage = lazy(() => import("@/pages/pricing/AdminPackagesPage.jsx"));
+const AdminBookingsPage = lazy(() => import("@/pages/admin/AdminBookingsPage.jsx"));
+const AdminSafetyPage = lazy(() => import("@/pages/admin/AdminSafetyPage.jsx"));
 import { page, AliasRedirect } from "@/routes/elements.jsx";
 import { Outlet, useLocation } from "react-router";
 import AdminLayout from "@/components/layouts/AdminLayout.jsx";
@@ -21,6 +23,8 @@ const adminNavigation = [
     { code: "A01", href: adminRoutes.dashboard, label: "Tổng quan", icon: "grid_view" },
     { code: "A02", href: adminRoutes.users, label: "Người dùng & KYC", icon: "verified_user", badgeKey: "kyc", badgeSuffix: "chờ", badgeTone: "warning" },
     { code: "A03", href: adminRoutes.vehicles, label: "Duyệt xe", icon: "directions_car", badgeKey: "cars", badgeSuffix: "xe", badgeTone: "warning" },
+    { code: "A09", href: "/admin/bookings", label: "Đơn thuê xe", icon: "assignment" },
+    { code: "A10", href: "/admin/safety", label: "Hồ sơ an toàn xe", icon: "shield" },
     { code: "A04", href: adminRoutes.vouchers, label: "Voucher", icon: "confirmation_number" },
     { code: "A05", href: adminRoutes.subscriptions, label: "Quản lý Đăng tin", icon: "workspace_premium" },
     { code: "A08", href: adminRoutes.packages, label: "Cấu hình Gói cước", icon: "sell" },
@@ -44,7 +48,9 @@ export const adminPages = [
     page("admin/dashboard", <AdminDashboardPage />, "Tổng quan quản trị"),
     page("admin/disputes", <AliasRedirect to="/admin/reviews" />),
     page("admin/reviews", <AdminReviewsPage />, "Đánh giá xe"),
-    page("admin/orders", <AliasRedirect to="/admin/subscriptions" />),
+    page("admin/orders", <AliasRedirect to="/admin/bookings" />),
+    page("admin/bookings", <AdminBookingsPage />, "Đơn thuê xe"),
+    page("admin/safety", <AdminSafetyPage />, "Hồ sơ an toàn xe"),
     page("admin/subscriptions", <AdminSubscriptionsPage />, "Gói đăng tin toàn hệ thống"),
     page("admin/payouts", <AdminPayoutsPage />, "Giao dịch & Chi trả"),
     page("admin/users", <AdminUsersPage />, "Người dùng & KYC"),

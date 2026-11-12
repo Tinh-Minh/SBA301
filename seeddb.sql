@@ -10,6 +10,10 @@ BEGIN;
 -- ---------------------------------------------------------------------
 -- 0. XÓA SẠCH DỮ LIỆU & BẢNG CŨ (CLEAN DROP)
 -- ---------------------------------------------------------------------
+DROP TABLE IF EXISTS handover_items CASCADE;
+DROP TABLE IF EXISTS handovers CASCADE;
+DROP TABLE IF EXISTS bookings CASCADE;
+DROP TABLE IF EXISTS car_safety_records CASCADE;
 DROP TABLE IF EXISTS reviews CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;
 DROP TABLE IF EXISTS car_documents CASCADE;
@@ -59,6 +63,7 @@ CREATE TABLE customers (
     email           VARCHAR(150) NOT NULL,
     phone           VARCHAR(20)  NOT NULL UNIQUE,
     password_hash   VARCHAR(255) NOT NULL,
+    password_changed_at TIMESTAMP,
     date_of_birth   DATE,
     address         VARCHAR(300),
     avatar_url      VARCHAR(500),
@@ -175,6 +180,11 @@ CREATE TABLE cars (
     
     rental_price_per_day   NUMERIC(14,0) CHECK (rental_price_per_day >= 0),
     rental_price_per_month NUMERIC(14,0) CHECK (rental_price_per_month >= 0),
+    weekend_price_per_day  NUMERIC(14,0) CHECK (weekend_price_per_day >= 0),
+    deposit_amount         NUMERIC(14,0) CHECK (deposit_amount >= 0),
+    km_limit_per_day       INT CHECK (km_limit_per_day > 0),
+    extra_km_fee           NUMERIC(14,0) CHECK (extra_km_fee >= 0),
+    late_fee_per_hour      NUMERIC(14,0) CHECK (late_fee_per_hour >= 0),
     
     contact_name         VARCHAR(150),
     contact_phone        VARCHAR(20),
@@ -185,6 +195,7 @@ CREATE TABLE cars (
     listing_status       VARCHAR(20)  NOT NULL DEFAULT 'UNLISTED'
                          CHECK (listing_status IN ('UNLISTED', 'LISTED', 'EXPIRED')),
                          
+    reject_reason        VARCHAR(500),
     current_subscription_id BIGINT,
     created_at           TIMESTAMP    NOT NULL DEFAULT vn_now(),
     updated_at           TIMESTAMP    NOT NULL DEFAULT vn_now()

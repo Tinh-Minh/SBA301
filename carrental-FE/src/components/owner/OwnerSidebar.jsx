@@ -15,7 +15,7 @@ export function OwnerSidebar({ user, path, navigation, homeHref, counts }) {
       <h2 className="truncate text-lg font-bold text-charcoal">{user?.fullName ?? "Chưa đăng nhập"}</h2>
       <div className="flex items-center justify-between pt-1">
         <span className="font-mono text-xs text-muted-gray">{user ? `Mã TK #${user.id}` : "—"}</span>
-        <span className="whitespace-nowrap rounded-full bg-card-border/60 px-2 py-0.5 text-[11px] font-semibold text-charcoal">{counts.cars === null ? "Chủ xe" : `${counts.cars} xe niêm yết`}</span>
+        <span className="whitespace-nowrap rounded-full bg-card-border/60 px-2 py-0.5 text-[11px] font-semibold text-charcoal">{counts.cars === null ? "Chủ xe" : `${counts.cars} xe`}</span>
       </div>
     </div>
 

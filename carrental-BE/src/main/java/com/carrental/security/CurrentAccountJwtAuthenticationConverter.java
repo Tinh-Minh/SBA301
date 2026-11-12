@@ -41,6 +41,12 @@ public class CurrentAccountJwtAuthenticationConverter implements Converter<Jwt, 
         if (customer.getStatus() != CustomerStatus.ACTIVE || customer.getRole() == null) {
             throw new InvalidCurrentAccountException();
         }
+        // Token cấp trước lần đổi mật khẩu gần nhất không còn hiệu lực
+        if (customer.getPasswordChangedAt() != null && jwt.getIssuedAt() != null
+                && jwt.getIssuedAt().isBefore(customer.getPasswordChangedAt()
+                        .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toInstant())) {
+            throw new InvalidCurrentAccountException();
+        }
         CurrentAccount principal = new CurrentAccount(customerId, customer.getRole());
         return UsernamePasswordAuthenticationToken.authenticated(principal, null,
                 List.of(new SimpleGrantedAuthority("ROLE_" + customer.getRole().name())));

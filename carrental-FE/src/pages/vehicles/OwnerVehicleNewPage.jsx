@@ -9,7 +9,6 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { OwnerCrumb } from "@/components/owner/OwnerScreen.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { calculatePlatformFee, formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { carService } from "@/services/vehicleService.js";
 import { useAuth } from "@/hooks/useAuth.js";
@@ -63,7 +62,6 @@ export default function OwnerVehicleNew() {
     const dayPrice = parseVndInput(form.pricePerDay);
     const weekend = parseVndInput(form.weekendPrice);
     const deposit = parseVndInput(form.depositAmount);
-    const fee = dayPrice ? calculatePlatformFee(dayPrice, 10) : 0;
     const photoCount = Object.keys(photos).length;
     const stepResults = vehicleStepSchemas.map(schema => validateInput(schema, form));
     const ready = stepResults.map(result => result.success);
@@ -126,8 +124,6 @@ export default function OwnerVehicleNew() {
         const details = [
             form.powerNote.trim() ? `${form.fuelType === "ELECTRIC" ? "Pin/công suất" : "Động cơ"}: ${form.powerNote.trim()}` : "",
             form.rangeKm ? `Tầm vận hành: ${form.rangeKm} km` : "",
-            weekend ? `Giá cuối tuần: ${formatVnd(weekend)}` : "",
-            form.lateFee ? `Phí trễ giờ: ${formatVnd(Number(form.lateFee))}/giờ` : "",
             form.segment === OTHER && form.customSegment.trim() ? `Phân khúc: ${form.customSegment.trim()}` : "",
             form.cancellation,
         ].filter(Boolean).join(". ");
@@ -150,6 +146,8 @@ export default function OwnerVehicleNew() {
             depositAmount: values.depositAmount,
             kmLimitPerDay: values.kmLimitPerDay,
             extraKmFee: values.extraKmFee,
+            weekendPricePerDay: weekend,
+            lateFeePerHour: form.lateFee ? Number(form.lateFee) : null,
             imageUrls: ordered,
         });
         if (!car)
@@ -198,7 +196,7 @@ export default function OwnerVehicleNew() {
 
     {step === 1 ? <StepOne form={form} errors={visibleStepErrors} cavet={cavet} inspection={inspection} onChange={set} onBrand={chooseBrand} onSegment={chooseSegment} onCity={chooseCity} onCavet={files => setCavet(files)} onInspection={setInspection}/> : null}
     {step === 2 ? <StepTwo form={form} errors={visibleStepErrors} onChange={set}/> : null}
-    {step === 3 ? <StepThree form={form} errors={visibleStepErrors} dayPrice={dayPrice} weekend={weekend} fee={fee} onChange={set}/> : null}
+    {step === 3 ? <StepThree form={form} errors={visibleStepErrors} dayPrice={dayPrice} weekend={weekend} deposit={deposit} onChange={set}/> : null}
     {step === 4 ? <StepFour form={form} photos={photos} photoCount={photoCount} dayPrice={dayPrice} deposit={deposit} agreed={agreed} onAgree={setAgreed} onPhoto={addPhoto} onZoom={setZoom} hasCavet={Boolean(cavet.trim())} hasInspection={Boolean(inspection.trim())}/> : null}
 
     {step <= 3 && gaps.length ? <p className="text-sm text-muted-gray">{gaps.join(" ")}</p> : null}

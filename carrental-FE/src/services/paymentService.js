@@ -2,10 +2,6 @@ import { endpoints } from "@/services/endpoints.js";
 import { request, toPage } from "@/services/api.js";
 
 export const transactionService = {
-    /** POST /api/transactions/payment — trả về giao dịch PENDING kèm `paymentUrl` VNPay sandbox. */
-    createPayment: ({ orderId, amount, method = "VNPAY" }) => request(endpoints.transactions.payment, { method: "POST", json: { orderId: Number(orderId), amount: amount ?? null, method } }),
-    /** POST /api/transactions/deposit */
-    createDeposit: ({ orderId, amount, method = "VNPAY" }) => request(endpoints.transactions.deposit, { method: "POST", json: { orderId: Number(orderId), amount: amount ?? null, method } }),
     /** POST /api/transactions/{id}/simulate-gateway — giả lập cổng thanh toán (môi trường thử nghiệm). */
     simulate: (id, success = true) => request(endpoints.transactions.byIdSimulateGateway(id), { method: "POST", json: { simulateSuccess: success, providerRef: `SIM-${Date.now()}` } }),
     /** GET /api/transactions/{id}/vnpay-url */

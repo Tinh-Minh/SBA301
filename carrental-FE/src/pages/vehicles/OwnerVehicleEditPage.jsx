@@ -9,7 +9,7 @@ import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
 import { OwnerCrumb, OwnerHeading, OwnerState } from "@/components/owner/OwnerScreen.jsx";
 import { useOwnerCar } from "@/hooks/useVehicles.js";
-import { calculatePlatformFee, carSubtitle, formatVnd } from "@/utils/owner.js";
+import { carSubtitle, formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
 
 const steps = [
@@ -39,7 +39,6 @@ export default function OwnerVehicleEdit({ carId }) {
         });
     }, [data, reset]);
     const price = form ? parseVndInput(form.pricePerDay) : null;
-    const fee = price === null ? 0 : calculatePlatformFee(price, 10);
     const onSave = handleSubmit(async values => {
         setSaved(false);
         const result = await save.run(values);
@@ -73,7 +72,7 @@ export default function OwnerVehicleEdit({ carId }) {
           <h2 className="text-lg font-bold text-charcoal">Thông tin & giấy tờ</h2>
           <p className="text-muted-gray">Biển số <span className="font-mono font-bold text-charcoal">{data.licensePlate}</span> • {data.brand} {data.model} • {data.manufactureYear}</p>
           <p className="text-muted-gray">Điểm giao xe: {data.pickupAddress}</p>
-          <p className="rounded-xl bg-status-green-bg px-4 py-3 text-status-success-ink">Hồ sơ xe dùng cho biên bản bàn giao C10-A. Trạng thái hiện tại: {data.status === "PENDING_APPROVAL" ? "đang chờ CarDB duyệt" : data.status === "ACTIVE" ? "đã được niêm yết" : "không đang niêm yết"}.</p>
+          <p className="rounded-xl bg-status-green-bg px-4 py-3 text-status-success-ink">Thông tin này được dùng cho tin đăng và biên bản bàn giao xe. Trạng thái hiện tại: {data.status === "PENDING_APPROVAL" ? "đang chờ CarDB duyệt" : data.status === "ACTIVE" ? "đã được duyệt" : data.status === "REJECTED" ? "bị từ chối, sửa hồ sơ để gửi duyệt lại" : "đang tạm dừng"}.</p>
         </div> : null}
 
         {step === 2 ? <div className="flex flex-col gap-3 text-sm">
@@ -110,7 +109,7 @@ export default function OwnerVehicleEdit({ carId }) {
                 {fieldState.error?.message ? <span role="alert" className="text-xs font-medium text-red-600">{fieldState.error.message}</span> : null}
               </>
             )}/>
-            <span className="text-xs font-normal text-muted-gray">Chủ xe thu trực tiếp khi ký C10-A. Khoản này không vào escrow.</span>
+            <span className="text-xs font-normal text-muted-gray">Chủ xe thu trực tiếp khi giao xe và hoàn lại khi nhận xe về. Nhập 0 nếu miễn cọc.</span>
           </label>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="flex flex-col gap-1.5 text-sm font-semibold text-charcoal">
@@ -132,7 +131,7 @@ export default function OwnerVehicleEdit({ carId }) {
               )}/>
             </label>
           </div>
-          <p className="rounded-xl bg-bg-light px-4 py-3 text-xs leading-relaxed text-muted-gray">Khách hủy trước 24 giờ được miễn phí theo chuẩn đối tác. Hủy muộn hơn đền bù theo hợp đồng thuê, không làm đổi công thức payout.</p>
+          <p className="rounded-xl bg-bg-light px-4 py-3 text-xs leading-relaxed text-muted-gray">Tiền thuê tính theo ngày (24 giờ) và giờ lẻ: giá giờ = 1/10 giá ngày, thuê lẻ từ 10 giờ tính tròn 1 ngày. Khách thanh toán trực tiếp cho chủ xe khi nhận xe.</p>
           <FormErrors errors={errors} />
           {save.error ? <p className="text-sm text-on-error-container">{save.error.message}</p> : null}
           {saved ? <p className="text-sm font-semibold text-status-success-ink">Đã lưu bảng giá.</p> : null}
@@ -155,16 +154,16 @@ export default function OwnerVehicleEdit({ carId }) {
       </section>
 
       <aside className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">Bảng tính thu nhập</p>
+        <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">Bảng giá niêm yết</p>
         <h2 className="mt-2 text-base font-bold text-charcoal">{data.brand} {data.model}</h2>
         <p className="font-mono text-xs text-muted-gray">{data.licensePlate}</p>
         <p className="mt-1 text-xs text-muted-gray">{carSubtitle(data)}</p>
         <dl className="mt-4 flex flex-col gap-2 text-sm">
           <div className="flex justify-between gap-3"><dt className="text-muted-gray">Đơn giá / ngày</dt><dd><Money amount={price ?? 0}/></dd></div>
-          <div className="flex justify-between gap-3"><dt className="text-muted-gray">Phí CarDB 10%</dt><dd><Money amount={fee} sign="-"/></dd></div>
-          <div className="flex justify-between gap-3 border-t border-card-border pt-2 font-bold"><dt>Thực nhận / ngày</dt><dd><Money amount={Math.max(0, (price ?? 0) - fee)} className="text-status-success-ink"/></dd></div>
+          <div className="flex justify-between gap-3"><dt className="text-muted-gray">Giờ lẻ</dt><dd>{price ? `${formatVnd(Math.ceil(price / 10 / 1000) * 1000)}/giờ` : "—"}</dd></div>
+          <div className="flex justify-between gap-3 border-t border-card-border pt-2 font-bold"><dt>Tiền cọc</dt><dd>{data.depositAmount ? formatVnd(data.depositAmount) : "Miễn cọc"}</dd></div>
         </dl>
-        <p className="mt-4 rounded-xl bg-bg-light px-3 py-2 text-xs leading-relaxed text-muted-gray">Tiền thuê chuyển về tài khoản đã liên kết trong 24 giờ sau khi hai bên ký biên bản trả xe C10-B. Tiền cọc không nằm trong khoản này.</p>
+        <p className="mt-4 rounded-xl bg-bg-light px-3 py-2 text-xs leading-relaxed text-muted-gray">Chủ xe nhận toàn bộ tiền thuê trực tiếp từ khách. Chi phí trên CarDB chỉ là gói đăng tin để xe hiển thị trên sàn.</p>
       </aside>
     </div> : null}
   </div>;

@@ -17,6 +17,8 @@ public class CarImageRequest {
 
     @NotBlank(message = "Đường dẫn ảnh không được để trống")
     @Size(max = 500, message = "Đường dẫn ảnh tối đa 500 ký tự")
+    @jakarta.validation.constraints.Pattern(regexp = "^(https?://|/(?!/))\\S+$",
+            message = "Đường dẫn chỉ được bắt đầu bằng http://, https:// hoặc là đường dẫn nội bộ dạng /...")
     private String imageUrl;
 
     @Builder.Default

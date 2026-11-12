@@ -32,6 +32,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final CarRepository carRepository;
+    private final com.carrental.repository.BookingRepository bookingRepository;
     private final CurrentUserService currentUserService;
 
     @Override
@@ -43,8 +44,19 @@ public class ReviewServiceImpl implements ReviewService {
         Car car = carRepository.findById(request.getCarId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + request.getCarId()));
 
+        // Xe chưa được duyệt / bị từ chối không hiển thị công khai nên không nhận đánh giá
+        if (car.getStatus() != com.carrental.enums.CarStatus.ACTIVE) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + request.getCarId());
+        }
+
         if (car.getOwner() != null && car.getOwner().getId().equals(customer.getId())) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Bạn không thể tự đánh giá xe của chính mình");
+        }
+
+        // Chỉ người đã hoàn tất chuyến thuê xe này trên CarDB mới được đánh giá
+        if (!bookingRepository.existsByCarIdAndCustomerIdAndStatus(car.getId(), customer.getId(),
+                com.carrental.enums.BookingStatus.COMPLETED)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ có thể đánh giá xe sau khi hoàn tất chuyến thuê xe này");
         }
 
         if (reviewRepository.existsByCarIdAndCustomerId(car.getId(), customer.getId())) {
@@ -92,6 +104,15 @@ public class ReviewServiceImpl implements ReviewService {
         Specification<Review> spec = buildFilterSpecification(carId, customerId);
         Page<Review> page = reviewRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(ReviewResponse::from));
+    }
+
+    @Override
+    @Transactional
+    public void deleteByAdmin(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id));
+        reviewRepository.delete(review);
+        log.info("Admin gỡ đánh giá id={} của xe id={}", id, review.getCar().getId());
     }
 
     private Specification<Review> buildFilterSpecification(Long carId, Long customerId) {

@@ -41,6 +41,7 @@ class FeaturesValidationTest {
     @Mock private CarRepository carRepository;
     @Mock private ListingPackageRepository listingPackageRepository;
     @Mock private ReviewRepository reviewRepository;
+    @Mock private com.carrental.repository.BookingRepository bookingRepository;
     @Mock private VNPayService vnPayService;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private CurrentUserService currentUserService;
@@ -60,7 +61,7 @@ class FeaturesValidationTest {
     void setUp() {
         transactionService = new TransactionServiceImpl(
                 transactionRepository, carSubscriptionRepository, vnPayService, currentUserService);
-        reviewService = new ReviewServiceImpl(reviewRepository, carRepository, currentUserService);
+        reviewService = new ReviewServiceImpl(reviewRepository, carRepository, bookingRepository, currentUserService);
         dashboardService = new DashboardServiceImpl(transactionRepository, carRepository, listingPackageRepository);
 
         owner = Customer.builder().fullName("Nguyễn Văn Chủ").email("owner@test.com").phone("0901111111")
@@ -70,7 +71,8 @@ class FeaturesValidationTest {
         customer = Customer.builder().fullName("Trần Khách Hàng").email("customer@test.com").phone("0902222222").role(Role.CUSTOMER).build();
         customer.setId(2L);
 
-        car = Car.builder().owner(owner).licensePlate("51F-99999").brand("Toyota").model("Camry").build();
+        car = Car.builder().owner(owner).licensePlate("51F-99999").brand("Toyota").model("Camry")
+                .status(com.carrental.enums.CarStatus.ACTIVE).build();
         car.setId(10L);
 
         pkg = ListingPackage.builder().name("Gói Tiêu Chuẩn (30 Ngày)").code("PKG_STANDARD").price(BigDecimal.valueOf(180000)).durationDays(30).priorityLevel(2).build();
@@ -175,6 +177,7 @@ class FeaturesValidationTest {
         when(transactionRepository.findById(500L)).thenReturn(Optional.of(tx));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+        transactionService.setSimulateGatewayEnabled(true);
         TransactionResponse response = transactionService.simulateGateway(500L);
 
         assertNotNull(response);
@@ -201,6 +204,9 @@ class FeaturesValidationTest {
         savedReview.setId(1L);
 
         when(reviewRepository.save(any(Review.class))).thenReturn(savedReview);
+        // Khách đã hoàn tất chuyến thuê xe này
+        when(bookingRepository.existsByCarIdAndCustomerIdAndStatus(10L, customer.getId(),
+                com.carrental.enums.BookingStatus.COMPLETED)).thenReturn(true);
 
         CreateReviewRequest request = CreateReviewRequest.builder()
                 .carId(10L)

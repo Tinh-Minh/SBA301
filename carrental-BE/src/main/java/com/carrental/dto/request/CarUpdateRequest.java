@@ -102,6 +102,27 @@ public class CarUpdateRequest {
     @Digits(integer = 14, fraction = 0, message = "Giá thuê theo ngày không có số lẻ")
     private BigDecimal pricePerDay;
 
+    // Điều khoản thuê do chủ xe niêm yết
+    @DecimalMin(value = "0", message = "Giá cuối tuần phải >= 0")
+    @Digits(integer = 14, fraction = 0, message = "Giá cuối tuần không có số lẻ")
+    private BigDecimal weekendPricePerDay;
+
+    @DecimalMin(value = "0", message = "Tiền cọc phải >= 0")
+    @Digits(integer = 14, fraction = 0, message = "Tiền cọc không có số lẻ")
+    private BigDecimal depositAmount;
+
+    @Min(value = 10, message = "Giới hạn km/ngày tối thiểu là 10")
+    @Max(value = 5000, message = "Giới hạn km/ngày tối đa là 5000")
+    private Integer kmLimitPerDay;
+
+    @DecimalMin(value = "0", message = "Phí quá km phải >= 0")
+    @Digits(integer = 14, fraction = 0, message = "Phí quá km không có số lẻ")
+    private BigDecimal extraKmFee;
+
+    @DecimalMin(value = "0", message = "Phí trễ giờ phải >= 0")
+    @Digits(integer = 14, fraction = 0, message = "Phí trễ giờ không có số lẻ")
+    private BigDecimal lateFeePerHour;
+
     public void applyTo(Car car) {
         car.setBrand(this.brand);
         car.setModel(this.model);
@@ -128,6 +149,22 @@ public class CarUpdateRequest {
         }
         if (this.rentalPricePerMonth != null) {
             car.setRentalPricePerMonth(this.rentalPricePerMonth);
+        }
+        // Điều khoản thuê: chỉ ghi đè khi client gửi lên (giữ nguyên giá trị cũ nếu bỏ trống)
+        if (this.weekendPricePerDay != null) {
+            car.setWeekendPricePerDay(this.weekendPricePerDay);
+        }
+        if (this.depositAmount != null) {
+            car.setDepositAmount(this.depositAmount);
+        }
+        if (this.kmLimitPerDay != null) {
+            car.setKmLimitPerDay(this.kmLimitPerDay);
+        }
+        if (this.extraKmFee != null) {
+            car.setExtraKmFee(this.extraKmFee);
+        }
+        if (this.lateFeePerHour != null) {
+            car.setLateFeePerHour(this.lateFeePerHour);
         }
         if (this.contactName != null) {
             car.setContactName(this.contactName);

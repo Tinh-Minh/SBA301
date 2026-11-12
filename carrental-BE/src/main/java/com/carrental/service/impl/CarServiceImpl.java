@@ -65,7 +65,8 @@ public class CarServiceImpl implements CarService {
             CurrentUserService.requireVerifiedOwner(owner);
 
             Car car = request.toEntity();
-            if (carRepository.existsByLicensePlateIgnoreCase(car.getLicensePlate())) {
+            if (carRepository.existsByLicensePlateIgnoreCase(car.getLicensePlate())
+                    || carRepository.existsByNormalizedLicensePlate(normalizePlate(car.getLicensePlate()))) {
                 throw new AppException(HttpStatus.CONFLICT, "Biển số xe đã tồn tại trên hệ thống: " + car.getLicensePlate());
             }
 
@@ -107,6 +108,7 @@ public class CarServiceImpl implements CarService {
             if (car.getStatus() == CarStatus.REJECTED) {
                 car.getStatus().validateTransitionTo(CarStatus.PENDING_APPROVAL);
                 car.setStatus(CarStatus.PENDING_APPROVAL);
+                car.setRejectReason(null);
                 log.info("Car id={} được gửi duyệt lại (REJECTED -> PENDING_APPROVAL)", carId);
             }
 
@@ -216,6 +218,12 @@ public class CarServiceImpl implements CarService {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Chủ xe chỉ có thể tạm dừng (INACTIVE) hoặc kích hoạt lại (ACTIVE) xe");
             }
 
+            // Chủ xe chỉ được bật/tắt xe ĐÃ được admin duyệt. Xe đang chờ duyệt hoặc bị từ chối
+            // phải đi qua luồng duyệt của admin, không được tự chuyển sang ACTIVE.
+            if (car.getStatus() != CarStatus.ACTIVE && car.getStatus() != CarStatus.INACTIVE) {
+                throw new AppException(HttpStatus.CONFLICT, "Xe chưa được quản trị viên duyệt nên chưa thể tự đổi trạng thái");
+            }
+
             car.getStatus().validateTransitionTo(newStatus);
             car.setStatus(newStatus);
             return toResponse(carRepository.saveAndFlush(car));
@@ -255,6 +263,16 @@ public class CarServiceImpl implements CarService {
             ListingStatus listingStatus,
             Pageable pageable
     ) {
+        return searchCars(city, carType, brand, seats, minPrice, maxPrice, listingStatus, null, null, java.util.Set.of(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CarSummaryResponse> searchCars(
+            String city, CarType carType, String brand, Integer seats, BigDecimal minPrice, BigDecimal maxPrice,
+            ListingStatus listingStatus, com.carrental.enums.Transmission transmission,
+            com.carrental.enums.FuelType fuelType, java.util.Set<Long> excludedCarIds, Pageable pageable
+    ) {
         log.info("Search cars city={}, carType={}, brand={}, seats={}, minPrice={}, maxPrice={}, listingStatus={}",
                 city, carType, brand, seats, minPrice, maxPrice, listingStatus);
         try {
@@ -290,6 +308,15 @@ public class CarServiceImpl implements CarService {
                 if (maxPrice != null) {
                     ps.add(cb.lessThanOrEqualTo(root.get("rentalPricePerDay"), maxPrice));
                 }
+                if (transmission != null) {
+                    ps.add(cb.equal(root.get("transmission"), transmission));
+                }
+                if (fuelType != null) {
+                    ps.add(cb.equal(root.get("fuelType"), fuelType));
+                }
+                if (excludedCarIds != null && !excludedCarIds.isEmpty()) {
+                    ps.add(cb.not(root.get("id").in(excludedCarIds)));
+                }
                 return cb.and(ps.toArray(new Predicate[0]));
             };
 
@@ -310,6 +337,18 @@ public class CarServiceImpl implements CarService {
         try {
             Car car = findCarOrThrow(carId);
             car.getStatus().validateTransitionTo(CarStatus.ACTIVE);
+
+            // Chỉ duyệt xe khi giấy đăng ký xe (cà vẹt) đã được xác minh
+            boolean registrationVerified = carDocumentRepository
+                    .findByCarIdAndDocType(carId, com.carrental.enums.CarDocumentType.REGISTRATION)
+                    .map(doc -> doc.getVerifyStatus() == VerificationStatus.APPROVED)
+                    .orElse(false);
+            if (!registrationVerified) {
+                throw new AppException(HttpStatus.CONFLICT,
+                        "Xe chưa có giấy đăng ký xe được xác minh nên chưa thể duyệt. Hãy xác minh giấy tờ xe trước");
+            }
+
+            car.setRejectReason(null);
             car.setStatus(CarStatus.ACTIVE);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
@@ -332,6 +371,7 @@ public class CarServiceImpl implements CarService {
             Car car = findCarOrThrow(carId);
             car.getStatus().validateTransitionTo(CarStatus.REJECTED);
             car.setStatus(CarStatus.REJECTED);
+            car.setRejectReason(reason);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Từ chối xe thất bại carId={}: {}", carId, e.getMessage());
@@ -556,6 +596,11 @@ public class CarServiceImpl implements CarService {
             log.error("Lỗi không mong muốn khi duyệt giấy tờ xe docId={}", documentId, e);
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể phê duyệt giấy tờ xe");
         }
+    }
+
+    /** Bỏ gạch nối, dấu chấm, khoảng trắng và viết hoa để so trùng biển số. */
+    static String normalizePlate(String plate) {
+        return plate == null ? "" : plate.replaceAll("[-.\\s]", "").toUpperCase(java.util.Locale.ROOT);
     }
 
     private Car findCarOrThrow(Long carId) {

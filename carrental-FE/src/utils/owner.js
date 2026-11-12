@@ -124,7 +124,7 @@ export const kycStatusMeta = {
 };
 export const carStatusMeta = {
     PENDING_APPROVAL: { label: "Chờ duyệt", tone: "warning" },
-    ACTIVE: { label: "Đang cho thuê", tone: "success" },
+    ACTIVE: { label: "Đã duyệt", tone: "success" },
     INACTIVE: { label: "Tạm ngưng", tone: "neutral" },
     REJECTED: { label: "Bị từ chối", tone: "danger" },
 };

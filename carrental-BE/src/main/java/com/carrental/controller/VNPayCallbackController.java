@@ -18,6 +18,9 @@ public class VNPayCallbackController {
 
     private final VNPayService vnPayService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
+
     @GetMapping(value = "/return")
     public ResponseEntity<?> handleVNPayReturn(
             @RequestParam Map<String, String> params,
@@ -32,7 +35,7 @@ public class VNPayCallbackController {
                     .body(ApiResponse.ok("Xử lý kết quả VNPay thành công", response));
         }
 
-        String html = VNPayHtmlRenderer.renderResultHtml(response, params);
+        String html = VNPayHtmlRenderer.renderResultHtml(response, params, frontendUrl);
         return ResponseEntity.ok().contentType(MediaType.TEXT_HTML).body(html);
     }
 

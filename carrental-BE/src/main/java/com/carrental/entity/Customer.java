@@ -29,6 +29,10 @@ public class Customer extends BaseEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
+    /** Thời điểm đổi mật khẩu gần nhất (giờ VN). Token cấp trước thời điểm này bị vô hiệu. */
+    @Column(name = "password_changed_at")
+    private java.time.LocalDateTime passwordChangedAt;
+
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 

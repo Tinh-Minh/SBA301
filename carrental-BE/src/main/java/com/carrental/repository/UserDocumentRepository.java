@@ -29,6 +29,9 @@ public interface UserDocumentRepository extends JpaRepository<UserDocument, Long
 
     List<UserDocument> findByCustomerId(Long customerId);
 
+    boolean existsByCustomerIdAndDocTypeAndVerifyStatus(
+            Long customerId, DocumentType docType, VerificationStatus verifyStatus);
+
     boolean existsByDocTypeAndDocNumberAndVerifyStatus(
             DocumentType docType, String docNumber, VerificationStatus verifyStatus);
 

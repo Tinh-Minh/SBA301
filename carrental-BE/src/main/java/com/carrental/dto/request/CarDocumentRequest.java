@@ -23,6 +23,8 @@ public class CarDocumentRequest {
 
     @NotBlank(message = "Đường dẫn file giấy tờ không được để trống")
     @Size(max = 500, message = "Đường dẫn file giấy tờ tối đa 500 ký tự")
+    @jakarta.validation.constraints.Pattern(regexp = "^(https?://|/(?!/))\\S+$",
+            message = "Đường dẫn chỉ được bắt đầu bằng http://, https:// hoặc là đường dẫn nội bộ dạng /...")
     private String fileUrl;
 
     private LocalDate expiresAt;
