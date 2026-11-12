@@ -13,26 +13,35 @@ import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.CustomerSummaryResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.entity.Customer;
+import com.carrental.entity.UserDocument;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
+import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
 import com.carrental.service.CustomerService;
 import com.carrental.util.RequestChecks;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -53,14 +62,23 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerProperties properties;
     private final Clock clock;
     private final AuthService authService;
+    private final UserDocumentRepository documents;
 
     public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
             CustomerProperties properties, Clock clock, AuthService authService) {
+        this(customers, entityManager, properties, clock, authService, null);
+    }
+
+    @Autowired
+    public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
+            CustomerProperties properties, Clock clock, AuthService authService,
+            UserDocumentRepository documents) {
         this.customers = customers;
         this.entityManager = entityManager;
         this.properties = properties;
         this.clock = clock;
         this.authService = authService;
+        this.documents = documents;
     }
 
     @Override
@@ -117,14 +135,30 @@ public class CustomerServiceImpl implements CustomerService {
     @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<CustomerSummaryResponse> listCustomers(CustomerListQuery query) {
         Page<Customer> page = customers.findAll(customerSpecification(query), query.pageable());
-        return PageResponse.from(page.map(CustomerSummaryResponse::from));
+        if (page.isEmpty() || documents == null) {
+            return PageResponse.from(page.map(CustomerSummaryResponse::from));
+        }
+        List<Long> customerIds = page.getContent().stream().map(Customer::getId).toList();
+        Set<Long> pendingCustomerIds = new HashSet<>(documents.findCustomerIdsWithPendingIdentity(
+                customerIds, UserDocumentServiceImpl.IDENTITY_DOC_TYPES, VerificationStatus.PENDING));
+        return PageResponse.from(page.map(c -> {
+            KycStatus effective = c.getKycStatus() == KycStatus.NONE && pendingCustomerIds.contains(c.getId())
+                    ? KycStatus.PENDING
+                    : c.getKycStatus();
+            return CustomerSummaryResponse.from(c, effective);
+        }));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public CustomerAdminResponse getCustomer(long id) {
-        return customers.findById(id).map(CustomerAdminResponse::from)
-                .orElseThrow(RequestChecks::notFound);
+        Customer c = customers.findById(id).orElseThrow(RequestChecks::notFound);
+        boolean hasPending = documents != null && documents.existsByCustomerIdAndDocTypeInAndVerifyStatus(
+                c.getId(), UserDocumentServiceImpl.IDENTITY_DOC_TYPES, VerificationStatus.PENDING);
+        KycStatus effective = c.getKycStatus() == KycStatus.NONE && hasPending
+                ? KycStatus.PENDING
+                : c.getKycStatus();
+        return CustomerAdminResponse.from(c, effective);
     }
 
     @Override
@@ -220,7 +254,21 @@ public class CustomerServiceImpl implements CustomerService {
         return (root, criteriaQuery, builder) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             if (query.status() != null) predicates.add(builder.equal(root.get("status"), query.status()));
-            if (query.kycStatus() != null) predicates.add(builder.equal(root.get("kycStatus"), query.kycStatus()));
+            if (query.kycStatus() != null) {
+                if (query.kycStatus() == KycStatus.PENDING) {
+                    Subquery<Long> pendingDocs = criteriaQuery.subquery(Long.class);
+                    Root<UserDocument> docRoot = pendingDocs.from(UserDocument.class);
+                    pendingDocs.select(docRoot.get("customer").get("id"))
+                            .where(
+                                    builder.equal(docRoot.get("verifyStatus"), VerificationStatus.PENDING),
+                                    docRoot.get("docType").in(UserDocumentServiceImpl.IDENTITY_DOC_TYPES));
+                    predicates.add(builder.or(
+                            builder.equal(root.get("kycStatus"), KycStatus.PENDING),
+                            root.get("id").in(pendingDocs)));
+                } else {
+                    predicates.add(builder.equal(root.get("kycStatus"), query.kycStatus()));
+                }
+            }
             if (query.role() != null) predicates.add(builder.equal(root.get("role"), query.role()));
             if (query.keyword() != null) {
                 String pattern = "%" + escapeLike(query.keyword().toLowerCase(Locale.ROOT)) + "%";

@@ -20,8 +20,12 @@ public record CustomerSummaryResponse(
         LocalDateTime updatedAt) {
 
     public static CustomerSummaryResponse from(Customer customer) {
+        return from(customer, customer.getKycStatus());
+    }
+
+    public static CustomerSummaryResponse from(Customer customer, KycStatus effectiveKycStatus) {
         return new CustomerSummaryResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
-                customer.getPhone(), customer.getRole(), customer.getStatus(), customer.getKycStatus(),
+                customer.getPhone(), customer.getRole(), customer.getStatus(), effectiveKycStatus,
                 customer.getEmailVerified(), customer.getCreatedAt(), customer.getUpdatedAt());
     }
 }
