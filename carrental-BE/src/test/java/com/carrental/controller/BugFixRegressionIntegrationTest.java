@@ -275,6 +275,20 @@ class BugFixRegressionIntegrationTest {
                 .param("sortBy", "rentalPricePerDay").param("direction", "asc")).andExpect(status().isOk());
     }
 
+    // ===================================================================== F4-04 / F4-05
+
+    @Test
+    void packagePaymentDefaultsToVnpayAndUsesProperErrorCodes() throws Exception {
+        Long subId = create(null);
+        as(ownerId, post("/api/transactions/package-payment").content("{\"subscriptionId\":" + subId + "}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.method").value("VNPAY"));
+        as(ownerId, post("/api/transactions/package-payment").content("{\"subscriptionId\":999999}"))
+                .andExpect(status().isNotFound());
+        as(otherId, post("/api/transactions/package-payment").content("{\"subscriptionId\":" + subId + "}"))
+                .andExpect(status().isForbidden());
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {
