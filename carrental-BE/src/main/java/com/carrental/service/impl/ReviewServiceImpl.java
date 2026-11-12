@@ -3,11 +3,13 @@ package com.carrental.service.impl;
 import com.carrental.dto.request.CreateReviewRequest;
 import com.carrental.dto.response.CarReviewSummaryResponse;
 import com.carrental.dto.response.PageResponse;
+import com.carrental.dto.response.ReviewEligibilityResponse;
 import com.carrental.dto.response.ReviewResponse;
 import com.carrental.entity.Car;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Review;
 import com.carrental.exception.AppException;
+import com.carrental.repository.BookingRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.ReviewRepository;
 import com.carrental.service.CurrentUserService;
@@ -33,6 +35,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final ReviewRepository reviewRepository;
     private final CarRepository carRepository;
     private final com.carrental.repository.BookingRepository bookingRepository;
+    private final BookingRepository bookingRepository;
     private final CurrentUserService currentUserService;
 
     @Override
@@ -113,6 +116,39 @@ public class ReviewServiceImpl implements ReviewService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id));
         reviewRepository.delete(review);
         log.info("Admin gỡ đánh giá id={} của xe id={}", id, review.getCar().getId());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public ReviewEligibilityResponse checkEligibility(Long carId) {
+        Customer customer;
+        try {
+            customer = currentUserService.getCurrentUser();
+        } catch (Exception e) {
+            return new ReviewEligibilityResponse(false, "Vui lòng đăng nhập để đánh giá xe", false, false, false);
+        }
+
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId));
+
+        boolean isOwner = car.getOwner() != null && car.getOwner().getId().equals(customer.getId());
+        if (isOwner) {
+            return new ReviewEligibilityResponse(false, "Bạn không thể tự đánh giá xe của chính mình", false, false, true);
+        }
+
+        boolean hasCompletedTrip = bookingRepository.existsByCarIdAndCustomerIdAndStatus(
+                car.getId(), customer.getId(), com.carrental.enums.BookingStatus.COMPLETED);
+        boolean alreadyReviewed = reviewRepository.existsByCarIdAndCustomerId(car.getId(), customer.getId());
+
+        if (alreadyReviewed) {
+            return new ReviewEligibilityResponse(false, "Bạn đã gửi đánh giá cho chiếc xe này rồi", hasCompletedTrip, true, false);
+        }
+
+        if (!hasCompletedTrip) {
+            return new ReviewEligibilityResponse(false, "Chỉ khách hàng đã hoàn tất chuyến thuê xe này mới có quyền đánh giá", false, false, false);
+        }
+
+        return new ReviewEligibilityResponse(true, null, true, false, false);
     }
 
     private Specification<Review> buildFilterSpecification(Long carId, Long customerId) {

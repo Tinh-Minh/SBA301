@@ -9,6 +9,8 @@ export const reviewService = {
     }),
     /** GET /api/cars/{carId}/reviews */
     byCar: (carId) => request(`/api/cars/${carId}/reviews`, { auth: false }),
+    /** GET /api/cars/{carId}/reviews/eligibility */
+    checkEligibility: (carId) => request(`/api/cars/${carId}/reviews/eligibility`),
     /** GET /api/reviews?customerId= */
     mine: async (customerId) => toPage(await request(endpoints.reviews.list, { query: { customerId, page: 0, size: 50, sort: "id,desc" } })).content,
 };

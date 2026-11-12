@@ -3,6 +3,7 @@ package com.carrental.service;
 import com.carrental.dto.request.CreateReviewRequest;
 import com.carrental.dto.response.CarReviewSummaryResponse;
 import com.carrental.dto.response.PageResponse;
+import com.carrental.dto.response.ReviewEligibilityResponse;
 import com.carrental.dto.response.ReviewResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -22,4 +23,7 @@ public interface ReviewService {
 
     /** Admin gỡ đánh giá vi phạm / rác. */
     void deleteByAdmin(Long id);
+
+    /** Kiểm tra xem tài khoản hiện tại có đủ điều kiện đánh giá xe hay không. */
+    ReviewEligibilityResponse checkEligibility(Long carId);
 }

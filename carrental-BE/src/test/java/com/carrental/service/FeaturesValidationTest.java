@@ -244,10 +244,10 @@ class FeaturesValidationTest {
     @DisplayName("F4 - Xem tóm tắt đánh giá xe kèm điểm trung bình")
     void testGetReviewsByCarId() {
         when(carRepository.existsById(10L)).thenReturn(true);
-        Review r1 = Review.builder().car(car).customer(customer).rating(5).comment("Tuyệt vời").build();
-        Review r2 = Review.builder().car(car).customer(customer).rating(4).comment("Khá tốt").build();
+        Review r1 = Review.builder().car(car).customer(customer).rating(5).comment("Tuyệt vời").status(ReviewStatus.APPROVED).build();
+        Review r2 = Review.builder().car(car).customer(customer).rating(4).comment("Khá tốt").status(ReviewStatus.APPROVED).build();
 
-        when(reviewRepository.findByCarIdOrderByCreatedAtDesc(10L)).thenReturn(List.of(r1, r2));
+        when(reviewRepository.findByCarIdAndStatusOrderByCreatedAtDesc(10L, ReviewStatus.APPROVED)).thenReturn(List.of(r1, r2));
         when(reviewRepository.getAverageRatingByCarId(10L)).thenReturn(4.5);
 
         CarReviewSummaryResponse summary = reviewService.getReviewsByCarId(10L);
@@ -257,6 +257,25 @@ class FeaturesValidationTest {
         assertEquals(4.5, summary.averageRating());
         assertEquals(2, summary.totalReviews());
         assertEquals(2, summary.reviews().size());
+    }
+
+    @Test
+    @DisplayName("F4 - Khách chưa thuê hoặc chưa hoàn tất chuyến thuê xe thì không thể đánh giá")
+    void testCreateReview_CannotReviewWithoutCompletedTrip() {
+        when(currentUserService.getCurrentUser()).thenReturn(customer);
+        when(carRepository.findById(10L)).thenReturn(Optional.of(car));
+        when(bookingRepository.existsByCarIdAndCustomerIdAndStatus(10L, customer.getId(),
+                com.carrental.enums.BookingStatus.COMPLETED)).thenReturn(false);
+
+        CreateReviewRequest request = CreateReviewRequest.builder()
+                .carId(10L)
+                .rating(5)
+                .comment("Xe chạy rất êm")
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> reviewService.createReview(request));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertTrue(ex.getMessage().contains("hoàn tất"));
     }
 
     @Test

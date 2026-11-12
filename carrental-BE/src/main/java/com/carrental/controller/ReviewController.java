@@ -4,6 +4,7 @@ import com.carrental.dto.request.CreateReviewRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.CarReviewSummaryResponse;
 import com.carrental.dto.response.PageResponse;
+import com.carrental.dto.response.ReviewEligibilityResponse;
 import com.carrental.dto.response.ReviewResponse;
 import com.carrental.service.ReviewService;
 import com.carrental.util.PageRequestFactory;
@@ -28,6 +29,11 @@ public class ReviewController {
     @GetMapping("/api/cars/{carId}/reviews")
     public ApiResponse<CarReviewSummaryResponse> getCarReviews(@PathVariable Long carId) {
         return ApiResponse.ok(reviewService.getReviewsByCarId(carId));
+    }
+
+    @GetMapping("/api/cars/{carId}/reviews/eligibility")
+    public ApiResponse<ReviewEligibilityResponse> checkEligibility(@PathVariable Long carId) {
+        return ApiResponse.ok(reviewService.checkEligibility(carId));
     }
 
     @GetMapping("/api/reviews/{id}")
