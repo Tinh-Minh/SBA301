@@ -37,5 +37,12 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
     @EntityGraph(attributePaths = {"owner"})
     Optional<Car> findWithOwnerById(Long id);
 
+    /** Khoá dòng xe để tuần tự hoá các thao tác đặt lịch trên cùng một xe. */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select c from Car c where c.id = :id")
+    Optional<Car> findWithLockById(@org.springframework.data.repository.query.Param("id") Long id);
+
+    java.util.List<Car> findAllByOwnerIdOrderByIdAsc(Long ownerId);
+
     long countByListingStatus(com.carrental.enums.ListingStatus listingStatus);
 }

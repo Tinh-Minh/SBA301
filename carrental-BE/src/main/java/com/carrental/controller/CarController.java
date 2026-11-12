@@ -40,6 +40,7 @@ import java.util.Set;
 public class CarController {
 
     private final CarService carService;
+    private final com.carrental.service.BookingService bookingService;
 
     private static final Set<String> ALLOWED_CAR_SORT_FIELDS = Set.of(
             "createdAt", "rentalPricePerDay", "rentalPricePerMonth", "brand", "seats"
@@ -60,6 +61,10 @@ public class CarController {
             @RequestParam(required = false) Integer seats,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) String transmission,
+            @RequestParam(required = false) String fuelType,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime pickupAt,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE_TIME) java.time.LocalDateTime returnAt,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
@@ -69,7 +74,15 @@ public class CarController {
         Pageable pageable = PageRequestFactory.of(page, size, sortBy, direction, ALLOWED_CAR_SORT_FIELDS, "createdAt");
         // API công khai luôn chỉ trả xe đang hiển thị (LISTED): không nhận listingStatus từ client
         // để tránh lộ xe UNLISTED/EXPIRED ra ngoài.
-        return ApiResponse.ok(carService.searchCars(city, carType, brand, seats, minPrice, maxPrice, ListingStatus.LISTED, pageable));
+        // Khi khách chọn thời gian nhận/trả: kiểm tra hợp lệ và loại các xe đã kín lịch trong khoảng đó.
+        java.util.Set<Long> busy = java.util.Set.of();
+        if (pickupAt != null || returnAt != null) {
+            bookingService.validateWindow(pickupAt, returnAt);
+            busy = bookingService.busyCarIds(pickupAt, returnAt);
+        }
+        return ApiResponse.ok(carService.searchCars(city, carType, brand, seats, minPrice, maxPrice, ListingStatus.LISTED,
+                parseEnum(com.carrental.enums.Transmission.class, transmission, "transmission"),
+                parseEnum(com.carrental.enums.FuelType.class, fuelType, "fuelType"), busy, pageable));
     }
 
     /** Từ chối tham số tìm kiếm vô nghĩa thay vì âm thầm bỏ qua. */
@@ -95,6 +108,15 @@ public class CarController {
         }
         if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
             throw badParam("Giá tối thiểu không được lớn hơn giá tối đa");
+        }
+    }
+
+    private static <E extends Enum<E>> E parseEnum(Class<E> type, String value, String name) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            return Enum.valueOf(type, value.trim().toUpperCase(java.util.Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw badParam("Tham số '" + name + "' không hợp lệ");
         }
     }
 

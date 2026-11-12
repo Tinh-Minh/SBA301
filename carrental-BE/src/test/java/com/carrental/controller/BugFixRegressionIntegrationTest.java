@@ -120,7 +120,7 @@ class BugFixRegressionIntegrationTest {
         now = LocalDateTime.now(VN);
         clock.setTo(now);
         tx.executeWithoutResult(s -> {
-            for (String entity : List.of("Transaction", "Review", "CarSubscription", "CarImage", "CarDocument", "Car",
+            for (String entity : List.of("HandoverItem", "Handover", "Booking", "CarSafetyRecord", "Transaction", "Review", "CarSubscription", "CarImage", "CarDocument", "Car",
                     "ListingPackage", "Voucher", "Customer")) {
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }
@@ -303,9 +303,11 @@ class BugFixRegressionIntegrationTest {
 
     @Test
     void onlyAdminCanRemoveAReview() throws Exception {
-        String body = as(plainCustomerId, post("/api/reviews").content("{\"carId\":" + carId + ",\"rating\":1,\"comment\":\"x\"}"))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        Long reviewId = ((Number) JsonPath.read(body, "$.data.id")).longValue();
+        // Đánh giá rác (ghi thẳng vào DB, vì API chỉ nhận đánh giá của người đã hoàn tất chuyến)
+        Long reviewId = tx.execute(st -> persist(com.carrental.entity.Review.builder()
+                .car(entityManager.find(Car.class, carId))
+                .customer(entityManager.find(Customer.class, plainCustomerId))
+                .rating(1).comment("x").build()).getId());
         as(plainCustomerId, delete("/api/admin/reviews/" + reviewId)).andExpect(status().isForbidden());
         as(ownerId, delete("/api/admin/reviews/" + reviewId)).andExpect(status().isForbidden());
         as(adminId, delete("/api/admin/reviews/" + reviewId)).andExpect(status().isOk());

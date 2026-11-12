@@ -32,6 +32,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final CarRepository carRepository;
+    private final com.carrental.repository.BookingRepository bookingRepository;
     private final CurrentUserService currentUserService;
 
     @Override
@@ -50,6 +51,12 @@ public class ReviewServiceImpl implements ReviewService {
 
         if (car.getOwner() != null && car.getOwner().getId().equals(customer.getId())) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Bạn không thể tự đánh giá xe của chính mình");
+        }
+
+        // Chỉ người đã hoàn tất chuyến thuê xe này trên CarDB mới được đánh giá
+        if (!bookingRepository.existsByCarIdAndCustomerIdAndStatus(car.getId(), customer.getId(),
+                com.carrental.enums.BookingStatus.COMPLETED)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ có thể đánh giá xe sau khi hoàn tất chuyến thuê xe này");
         }
 
         if (reviewRepository.existsByCarIdAndCustomerId(car.getId(), customer.getId())) {

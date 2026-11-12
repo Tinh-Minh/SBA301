@@ -8,6 +8,9 @@
 -- ---------------------------------------------------------------------
 -- 0. XÓA SẠCH DỮ LIỆU & BẢNG CŨ (CLEAN DROP)
 -- ---------------------------------------------------------------------
+DROP TABLE IF EXISTS handover_items CASCADE;
+DROP TABLE IF EXISTS handovers CASCADE;
+DROP TABLE IF EXISTS bookings CASCADE;
 DROP TABLE IF EXISTS car_safety_records CASCADE;
 DROP TABLE IF EXISTS reviews CASCADE;
 DROP TABLE IF EXISTS transactions CASCADE;

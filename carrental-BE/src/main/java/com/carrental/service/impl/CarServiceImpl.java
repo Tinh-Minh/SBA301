@@ -263,6 +263,16 @@ public class CarServiceImpl implements CarService {
             ListingStatus listingStatus,
             Pageable pageable
     ) {
+        return searchCars(city, carType, brand, seats, minPrice, maxPrice, listingStatus, null, null, java.util.Set.of(), pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CarSummaryResponse> searchCars(
+            String city, CarType carType, String brand, Integer seats, BigDecimal minPrice, BigDecimal maxPrice,
+            ListingStatus listingStatus, com.carrental.enums.Transmission transmission,
+            com.carrental.enums.FuelType fuelType, java.util.Set<Long> excludedCarIds, Pageable pageable
+    ) {
         log.info("Search cars city={}, carType={}, brand={}, seats={}, minPrice={}, maxPrice={}, listingStatus={}",
                 city, carType, brand, seats, minPrice, maxPrice, listingStatus);
         try {
@@ -297,6 +307,15 @@ public class CarServiceImpl implements CarService {
                 }
                 if (maxPrice != null) {
                     ps.add(cb.lessThanOrEqualTo(root.get("rentalPricePerDay"), maxPrice));
+                }
+                if (transmission != null) {
+                    ps.add(cb.equal(root.get("transmission"), transmission));
+                }
+                if (fuelType != null) {
+                    ps.add(cb.equal(root.get("fuelType"), fuelType));
+                }
+                if (excludedCarIds != null && !excludedCarIds.isEmpty()) {
+                    ps.add(cb.not(root.get("id").in(excludedCarIds)));
                 }
                 return cb.and(ps.toArray(new Predicate[0]));
             };

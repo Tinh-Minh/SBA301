@@ -70,4 +70,10 @@ public interface CarService {
     List<CarDocumentResponse> getCarDocuments(Long carId);
 
     CarDocumentResponse verifyCarDocumentByAdmin(Long carId, Long documentId, CarDocumentVerifyRequest request);
+
+    /** Tìm kiếm công khai có lọc hộp số, nhiên liệu và loại các xe đã kín lịch. */
+    PageResponse<CarSummaryResponse> searchCars(String city, CarType carType, String brand, Integer seats,
+            java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice, ListingStatus listingStatus,
+            com.carrental.enums.Transmission transmission, com.carrental.enums.FuelType fuelType,
+            java.util.Set<Long> excludedCarIds, org.springframework.data.domain.Pageable pageable);
 }
