@@ -26,10 +26,10 @@ public class VNPayConfig {
     @Value("${vnpay.return-url:http://localhost:3000/thanh-toan}")
     private String returnUrl;
 
-    @Value("${vnpay.tmn-code:${VNPAY_TMN_CODE:UWOEOW84}}")
+    @Value("${vnpay.tmn-code:${VNPAY_TMN_CODE:}}")
     private String tmnCode;
 
-    @Value("${vnpay.hash-secret:${VNPAY_HASH_SECRET:MVAVXHAMRBICGXOCXCVBVWDWZOEFARUM}}")
+    @Value("${vnpay.hash-secret:${VNPAY_HASH_SECRET:}}")
     private String hashSecret;
 
     @Value("${vnpay.version:2.1.0}")
