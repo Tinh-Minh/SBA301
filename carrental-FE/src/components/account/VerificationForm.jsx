@@ -15,7 +15,7 @@ export function SubmitForm({
     maxUpgradeAttempts = 3,
     upgradeAttemptsRemaining = 3,
 }) {
-    const [form, setForm] = useState(empty);
+    const [form, setForm] = useState(() => ({ ...empty, docType: isOwner ? "DRIVER_LICENSE" : "CITIZEN_ID" }));
     const [frontImage, setFront] = useState(null);
     const [backImage, setBack] = useState(null);
     const [successMessage, setSuccessMessage] = useState("");
@@ -23,22 +23,25 @@ export function SubmitForm({
     const backInput = useRef(null);
     const update = (key) => (event) => setForm(current => ({ ...current, [key]: event.target.value }));
     const isIdentityDoc = form.docType === "CITIZEN_ID" || form.docType === "PASSPORT";
+    const ownerIdentityBlocked = isOwner && isIdentityDoc;
     const limitBlocked = isIdentityDoc && !isOwner && upgradeAttemptsRemaining <= 0;
     const pendingBlocked = isIdentityDoc ? hasPendingUpgrade : hasPendingDriverLicense;
-    const blockedMessage = limitBlocked
-        ? `Bạn đã sử dụng hết tối đa ${maxUpgradeAttempts}/${maxUpgradeAttempts} lần gửi yêu cầu nâng cấp chủ xe (kể cả các lần đã bị từ chối). Không thể gửi thêm yêu cầu mới.`
-        : pendingBlocked
-            ? (isIdentityDoc
-                ? "Bạn đang có yêu cầu nâng cấp chủ xe (CCCD/Hộ chiếu) ở trạng thái chờ duyệt (PENDING). Vui lòng chờ Admin xử lý trước khi gửi lại."
-                : "Bạn đang có hồ sơ Giấy phép lái xe chờ duyệt (PENDING). Vui lòng chờ kết quả trước khi gửi lại.")
-            : "";
+    const blockedMessage = ownerIdentityBlocked
+        ? "Tài khoản của bạn đã là Chủ xe (OWNER) và đã được xác thực danh tính. Không cần gửi lại yêu cầu nâng cấp."
+        : limitBlocked
+            ? `Bạn đã sử dụng hết tối đa ${maxUpgradeAttempts}/${maxUpgradeAttempts} lần gửi yêu cầu nâng cấp chủ xe (kể cả các lần đã bị từ chối). Không thể gửi thêm yêu cầu mới.`
+            : pendingBlocked
+                ? (isIdentityDoc
+                    ? "Bạn đang có yêu cầu nâng cấp chủ xe (CCCD/Hộ chiếu) ở trạng thái chờ duyệt (PENDING). Vui lòng chờ Admin xử lý trước khi gửi lại."
+                    : "Bạn đang có hồ sơ Giấy phép lái xe chờ duyệt (PENDING). Vui lòng chờ kết quả trước khi gửi lại.")
+                : "";
 
     const submit = useApiMutation(async () => {
         if (blockedMessage)
             throw new Error(blockedMessage);
         setSuccessMessage("");
         await userDocumentService.submit({ ...form, frontImage, backImage });
-        setForm(empty);
+        setForm({ ...empty, docType: isOwner ? "DRIVER_LICENSE" : "CITIZEN_ID" });
         setFront(null);
         setBack(null);
         if (frontInput.current) frontInput.current.value = "";
@@ -77,7 +80,7 @@ export function SubmitForm({
     {submit.error ? <p role="alert" className="sm:col-span-2 text-sm text-[#B91C1C]">{submit.error.message}</p> : null}
     <div className="sm:col-span-2">
       <Primary type="submit" disabled={submit.running || Boolean(blockedMessage)}>
-        {submit.running ? "Đang gửi…" : limitBlocked ? `Đã đạt giới hạn (${maxUpgradeAttempts}/${maxUpgradeAttempts})` : pendingBlocked ? "Đang có hồ sơ chờ duyệt" : "Gửi hồ sơ"}
+        {submit.running ? "Đang gửi…" : ownerIdentityBlocked ? "Đã là Chủ xe (OWNER)" : limitBlocked ? `Đã đạt giới hạn (${maxUpgradeAttempts}/${maxUpgradeAttempts})` : pendingBlocked ? "Đang có hồ sơ chờ duyệt" : "Gửi hồ sơ"}
       </Primary>
     </div>
   </form>;

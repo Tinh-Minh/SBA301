@@ -134,6 +134,10 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             }
             DocumentType docType = command.metadata().docType();
             if (IDENTITY_DOC_TYPES.contains(docType)) {
+                if (owner.getRole() == Role.OWNER || owner.getKycStatus() == KycStatus.VERIFIED) {
+                    throw new AppException(ErrorCode.INVALID_REQUEST,
+                            "Tài khoản đã là Chủ xe (OWNER) và đã được xác thực danh tính, không cần gửi lại yêu cầu nâng cấp");
+                }
                 // Không nhận thêm yêu cầu nâng cấp chủ xe khi đang có hồ sơ định danh PENDING.
                 if (documents.existsByCustomerIdAndDocTypeInAndVerifyStatus(
                         owner.getId(), IDENTITY_DOC_TYPES, VerificationStatus.PENDING)) {
@@ -146,6 +150,8 @@ public class UserDocumentServiceImpl implements UserDocumentService {
                     throw new AppException(ErrorCode.OWNER_UPGRADE_LIMIT_EXCEEDED,
                             "Bạn đã sử dụng hết tối đa 3 lần gửi yêu cầu nâng cấp chủ xe (bao gồm cả các lần đã bị từ chối)");
                 }
+                owner.setKycStatus(KycStatus.PENDING);
+                customers.save(owner);
             } else if (documents.existsByCustomerIdAndDocTypeAndVerifyStatus(
                     owner.getId(), docType, VerificationStatus.PENDING)) {
                 throw new AppException(ErrorCode.DOCUMENT_PENDING_EXISTS);

@@ -142,7 +142,7 @@ public class CustomerServiceImpl implements CustomerService {
         Set<Long> pendingCustomerIds = new HashSet<>(documents.findCustomerIdsWithPendingIdentity(
                 customerIds, UserDocumentServiceImpl.IDENTITY_DOC_TYPES, VerificationStatus.PENDING));
         return PageResponse.from(page.map(c -> {
-            KycStatus effective = c.getKycStatus() == KycStatus.NONE && pendingCustomerIds.contains(c.getId())
+            KycStatus effective = c.getKycStatus() != KycStatus.VERIFIED && pendingCustomerIds.contains(c.getId())
                     ? KycStatus.PENDING
                     : c.getKycStatus();
             return CustomerSummaryResponse.from(c, effective);
@@ -155,7 +155,7 @@ public class CustomerServiceImpl implements CustomerService {
         Customer c = customers.findById(id).orElseThrow(RequestChecks::notFound);
         boolean hasPending = documents != null && documents.existsByCustomerIdAndDocTypeInAndVerifyStatus(
                 c.getId(), UserDocumentServiceImpl.IDENTITY_DOC_TYPES, VerificationStatus.PENDING);
-        KycStatus effective = c.getKycStatus() == KycStatus.NONE && hasPending
+        KycStatus effective = c.getKycStatus() != KycStatus.VERIFIED && hasPending
                 ? KycStatus.PENDING
                 : c.getKycStatus();
         return CustomerAdminResponse.from(c, effective);

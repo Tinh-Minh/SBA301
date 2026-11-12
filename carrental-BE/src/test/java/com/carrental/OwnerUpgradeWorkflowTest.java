@@ -187,9 +187,19 @@ class OwnerUpgradeWorkflowTest {
         assertThat(afterReject1.getRole()).isEqualTo(Role.CUSTOMER);
         assertThat(afterReject1.getKycStatus()).isEqualTo(KycStatus.REJECTED);
 
-        // 7. Submit attempt #2 and Admin rejects with reason
+        // 7. Submit attempt #2 and verify status becomes PENDING again for previously-rejected user
         UserDocumentDetailResponse doc2 = documentService.submit(userAccount, makeCommand("001095000003"));
         assertThat(doc2.verifyStatus()).isEqualTo(VerificationStatus.PENDING);
+
+        org.springframework.security.core.context.SecurityContextHolder.getContext().setAuthentication(
+                new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
+                        adminAccount, null, java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_ADMIN"))));
+        CustomerAdminResponse adminView = customerService.getCustomer(user.getId());
+        assertThat(adminView.kycStatus()).isEqualTo(KycStatus.PENDING);
+        PageResponse<CustomerSummaryResponse> pendingList2 = customerService.listCustomers(pendingQuery);
+        assertThat(pendingList2.content()).anyMatch(c -> c.id().equals(user.getId()) && c.kycStatus() == KycStatus.PENDING);
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+
         ReviewUserDocumentRequest rejectReq2 = new ReviewUserDocumentRequest();
         rejectReq2.setVerifyStatus(JsonNodeFactory.instance.textNode("REJECTED"));
         rejectReq2.setRejectReason(JsonNodeFactory.instance.textNode("Ảnh mặt sau bị mất góc"));
@@ -232,5 +242,11 @@ class OwnerUpgradeWorkflowTest {
         Customer upgraded = customers.findById(happyUser.getId()).orElseThrow();
         assertThat(upgraded.getRole()).isEqualTo(Role.OWNER);
         assertThat(upgraded.getKycStatus()).isEqualTo(KycStatus.VERIFIED);
+
+        // 11. Already upgraded OWNER cannot submit another identity upgrade document
+        CurrentAccount upgradedAccount = new CurrentAccount(happyUser.getId(), Role.OWNER);
+        assertThatThrownBy(() -> documentService.submit(upgradedAccount, makeCommand("001095000007")))
+                .isInstanceOf(AppException.class)
+                .satisfies(e -> assertThat(((AppException) e).errorCode()).isEqualTo(ErrorCode.INVALID_REQUEST));
     }
 }
