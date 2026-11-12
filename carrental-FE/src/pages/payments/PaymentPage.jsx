@@ -51,6 +51,12 @@ function VNPayReturnResult({ searchParams }) {
                         <span className="text-[#666666]">Mã giao dịch:</span>
                         <span className="font-bold">#{result.id}</span>
                     </div>
+                    {result.packageName ? (
+                        <div className="flex justify-between gap-3">
+                            <span className="text-[#666666]">Gói / xe:</span>
+                            <span className="text-right font-bold">{result.packageName}<br/><span className="font-normal text-[#666666]">{result.carName} {result.carLicensePlate}</span></span>
+                        </div>
+                    ) : null}
                     {result.subscriptionCode ? (
                         <div className="flex justify-between">
                             <span className="text-[#666666]">Mã gói:</span>
@@ -65,7 +71,7 @@ function VNPayReturnResult({ searchParams }) {
                     )}
                     <div className="flex justify-between">
                         <span className="text-[#666666]">Trạng thái:</span>
-                        <span className={`font-bold ${isSuccess ? "text-[#047857]" : "text-[#EF4444]"}`}>{result.status}</span>
+                        <span className={`font-bold ${isSuccess ? "text-[#047857]" : "text-[#EF4444]"}`}>{{ SUCCESS: "Thành công", FAILED: "Thất bại", PENDING: "Đang chờ" }[result.status] ?? result.status}</span>
                     </div>
                 </div>
             ) : null}
