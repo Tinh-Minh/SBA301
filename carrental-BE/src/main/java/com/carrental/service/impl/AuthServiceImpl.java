@@ -184,16 +184,7 @@ public class AuthServiceImpl implements AuthService {
         customers.findByEmailIgnoreCase(normalizedEmail)
                 .filter(customer -> customer.getRole() == Role.CUSTOMER)
                 .filter(customer -> !Boolean.TRUE.equals(customer.getEmailVerified()))
-                .ifPresent(customer -> {
-                    Instant now = clock.instant();
-                    if (!claimResend(normalizedEmail, now)) return;
-                    try {
-                        sendVerificationEmail(customer);
-                    } catch (RuntimeException exception) {
-                        releaseResend(normalizedEmail, now);
-                        throw exception;
-                    }
-                });
+                .ifPresent(this::sendVerificationEmail);
     }
 
     private boolean claimResend(String email, Instant now) {
@@ -214,6 +205,18 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void sendVerificationEmail(Customer customer) {
+        String normalizedEmail = AuthInputNormalizer.email(customer.getEmail());
+        Instant attemptedAt = clock.instant();
+        if (!claimResend(normalizedEmail, attemptedAt)) return;
+        try {
+            sendVerificationEmailNow(customer);
+        } catch (RuntimeException exception) {
+            releaseResend(normalizedEmail, attemptedAt);
+            throw exception;
+        }
+    }
+
+    private void sendVerificationEmailNow(Customer customer) {
         JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
         if (mailFrom == null || mailFrom.isBlank()
                 || mailUsername == null || mailUsername.isBlank()
@@ -316,6 +319,58 @@ public class AuthServiceImpl implements AuthService {
         }
         customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         log.info("auth-change-password customerId={}", customer.getId());
+    }
+
+    @Override
+    public void notifyOwnerApproved(long customerId, String email, String fullName) {
+        try {
+            JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+            if (mailFrom == null || mailFrom.isBlank()
+                    || mailUsername == null || mailUsername.isBlank()
+                    || mailPassword == null || mailPassword.isBlank()
+                    || mailSender == null) {
+                throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
+            }
+            String safeName = fullName == null || fullName.isBlank() ? "bạn" : fullName;
+            String html = ownerApprovedEmailHtml(safeName);
+            String plainText = "Xin chào " + safeName + ",\n\n"
+                    + "Hồ sơ xác minh của bạn đã được duyệt. Tài khoản hiện đã có quyền Chủ xe trên CarDB.\n\n"
+                    + "Bạn có thể đăng nhập để tiếp tục đăng tin và quản lý xe của mình.\n\n"
+                    + "Trân trọng,\nCarDB";
+            var message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, StandardCharsets.UTF_8.name());
+            helper.setFrom(mailFrom, "CarDB");
+            helper.setTo(email);
+            helper.setSubject("CarDB | Hồ sơ Chủ xe đã được duyệt");
+            helper.setText(plainText, html);
+            mailSender.send(message);
+            log.info("owner-approval-email customerId={}", customerId);
+        } catch (MessagingException | UnsupportedEncodingException | RuntimeException exception) {
+            log.warn("Owner approval email unavailable traceId={} exceptionType={}",
+                    RequestTraceFilter.currentTraceId(), exception.getClass().getSimpleName());
+        }
+    }
+
+    private String ownerApprovedEmailHtml(String fullName) {
+        return """
+                <!doctype html>
+                <html lang="vi">
+                  <body style="margin:0;padding:32px 12px;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;color:#292d32;">
+                    <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e7e9ec;border-radius:12px;">
+                      <tr><td style="padding:32px 36px 12px;"><div style="font-size:25px;font-weight:700;letter-spacing:-1px;color:#252a30;">Car<span style="color:#ed7138;">DB</span></div></td></tr>
+                      <tr><td style="padding:18px 36px 36px;">
+                        <p style="margin:0 0 10px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#ed7138;">Hồ sơ đã được duyệt</p>
+                        <h1 style="margin:0 0 18px;font-size:27px;line-height:1.3;color:#252a30;">Chào mừng Chủ xe CarDB</h1>
+                        <p style="margin:0 0 12px;font-size:16px;line-height:1.6;">Xin chào %s,</p>
+                        <p style="margin:0 0 18px;font-size:15px;line-height:1.7;color:#555d66;">Hồ sơ xác minh của bạn đã được duyệt. Tài khoản CarDB của bạn hiện đã được cấp quyền <strong>Chủ xe</strong>.</p>
+                        <p style="margin:0;font-size:15px;line-height:1.7;color:#555d66;">Hãy đăng nhập để tiếp tục đăng tin và quản lý xe của mình.</p>
+                        <p style="margin:24px 0 0;padding-top:18px;border-top:1px solid #eceef0;font-size:13px;line-height:1.6;color:#737b84;">Nếu bạn cần hỗ trợ, vui lòng liên hệ đội ngũ CarDB.</p>
+                      </td></tr>
+                    </table>
+                    <p style="margin:16px auto 0;max-width:600px;text-align:center;font-size:12px;color:#8b929a;">CarDB · Hỗ trợ khách hàng</p>
+                  </body>
+                </html>
+                """.formatted(HtmlUtils.htmlEscape(fullName));
     }
 
     private boolean isAccountUniqueViolation(Throwable exception) {

@@ -38,6 +38,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -208,12 +210,32 @@ public class CustomerServiceImpl implements CustomerService {
             }
         }
         Role oldRole = target.getRole();
+        boolean ownerPromoted = oldRole != requestedRole && requestedRole == Role.OWNER;
         if (oldRole != requestedRole) {
             target.setRole(requestedRole);
             customers.flush();
             log.info("customer-role actorId={} targetId={} {} -> {}", actorRow.getId(), target.getId(), oldRole, requestedRole);
         }
+        if (ownerPromoted) notifyOwnerApprovedAfterCommit(target);
         return CustomerAdminResponse.from(target);
+    }
+
+    private void notifyOwnerApprovedAfterCommit(Customer customer) {
+        long customerId = customer.getId();
+        String email = customer.getEmail();
+        String fullName = customer.getFullName();
+        Runnable notification = () -> authService.notifyOwnerApproved(customerId, email, fullName);
+        if (TransactionSynchronizationManager.isSynchronizationActive()
+                && TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    notification.run();
+                }
+            });
+        } else {
+            notification.run();
+        }
     }
 
     private Specification<Customer> customerSpecification(CustomerListQuery query) {

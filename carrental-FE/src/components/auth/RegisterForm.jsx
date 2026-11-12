@@ -9,6 +9,8 @@ import { registrationSchema } from "@/utils/schemas/registration.js";
 import { Link, useNavigate } from "react-router";
 
 const fieldClass = "auth-field";
+const PENDING_EMAIL_KEY = "cardb:pending-verification-email";
+const VERIFICATION_LAST_SENT_AT_KEY = "cardb:verification-last-sent-at";
 
 export function RegisterForm() {
     const navigate = useNavigate();
@@ -27,7 +29,8 @@ export function RegisterForm() {
         try {
             await createAccount(values);
             const email = values.email.trim();
-            window.sessionStorage.setItem("cardb:pending-verification-email", email);
+            window.sessionStorage.setItem(PENDING_EMAIL_KEY, email);
+            window.sessionStorage.setItem(VERIFICATION_LAST_SENT_AT_KEY, String(Date.now()));
             navigate("/verify-email", { state: { email } });
         } catch (error) {
             setError("root.server", { message: error.message });

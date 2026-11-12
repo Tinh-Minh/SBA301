@@ -13,4 +13,5 @@ public interface AuthService {
     void verifyEmail(String token);
     void resendVerification(String email);
     void changePassword(CurrentAccount account, ChangePasswordRequest request);
+    void notifyOwnerApproved(long customerId, String email, String fullName);
 }

@@ -22,6 +22,7 @@ import com.carrental.entity.UserDocument;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
+import com.carrental.service.AuthService;
 import com.carrental.service.impl.UserDocumentServiceImpl;
 import com.carrental.service.KycService;
 import com.carrental.storage.LocalPrivateDocumentStorage;
@@ -89,7 +90,7 @@ class UserDocumentTransactionTest {
         });
         PlatformTransactionManager transactions = new CompletionTransactionManager(completionStatus, failCommit);
         UserDocumentServiceImpl service = new UserDocumentServiceImpl(customers, documents, storage,
-                mock(KycService.class), Clock.systemDefaultZone());
+                mock(KycService.class), Clock.systemDefaultZone(), mock(AuthService.class));
         UserDocumentSubmissionRequest metadata = new UserDocumentSubmissionRequest(DocumentType.CITIZEN_ID,
                 "SYNTHETIC-" + UUID.randomUUID().toString().substring(0, 8), null, LocalDate.of(2000, 1, 1),
                 null, null, null, null);
