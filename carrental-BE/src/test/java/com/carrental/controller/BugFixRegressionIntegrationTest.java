@@ -299,6 +299,21 @@ class BugFixRegressionIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    // ===================================================================== F4-03
+
+    @Test
+    void onlyAdminCanRemoveAReview() throws Exception {
+        String body = as(plainCustomerId, post("/api/reviews").content("{\"carId\":" + carId + ",\"rating\":1,\"comment\":\"x\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        Long reviewId = ((Number) JsonPath.read(body, "$.data.id")).longValue();
+        as(plainCustomerId, delete("/api/admin/reviews/" + reviewId)).andExpect(status().isForbidden());
+        as(ownerId, delete("/api/admin/reviews/" + reviewId)).andExpect(status().isForbidden());
+        as(adminId, delete("/api/admin/reviews/" + reviewId)).andExpect(status().isOk());
+        as(adminId, delete("/api/admin/reviews/" + reviewId)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/cars/" + carId + "/reviews"))
+                .andExpect(jsonPath("$.data.totalReviews").value(0));
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {

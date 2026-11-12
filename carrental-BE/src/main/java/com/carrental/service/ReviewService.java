@@ -19,4 +19,7 @@ public interface ReviewService {
     default PageResponse<ReviewResponse> getPagedReviews(Long carId, Long customerId, Pageable pageable) {
         return getPaged(carId, customerId, pageable);
     }
+
+    /** Admin gỡ đánh giá vi phạm / rác. */
+    void deleteByAdmin(Long id);
 }

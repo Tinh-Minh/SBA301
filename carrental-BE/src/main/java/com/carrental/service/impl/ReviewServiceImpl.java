@@ -99,6 +99,15 @@ public class ReviewServiceImpl implements ReviewService {
         return PageResponse.from(page.map(ReviewResponse::from));
     }
 
+    @Override
+    @Transactional
+    public void deleteByAdmin(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id));
+        reviewRepository.delete(review);
+        log.info("Admin gỡ đánh giá id={} của xe id={}", id, review.getCar().getId());
+    }
+
     private Specification<Review> buildFilterSpecification(Long carId, Long customerId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();

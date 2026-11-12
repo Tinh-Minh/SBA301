@@ -45,4 +45,12 @@ public class ReviewController {
         Pageable pageable = PageRequestFactory.of(page, size, sort);
         return ApiResponse.ok(reviewService.getPaged(carId, customerId, pageable));
     }
+
+    // Admin gỡ đánh giá rác / vi phạm
+    @PreAuthorize("hasRole('ADMIN')")
+    @org.springframework.web.bind.annotation.DeleteMapping("/api/admin/reviews/{id}")
+    public ApiResponse<Void> deleteByAdmin(@PathVariable Long id) {
+        reviewService.deleteByAdmin(id);
+        return ApiResponse.ok("Đã gỡ đánh giá", null);
+    }
 }
