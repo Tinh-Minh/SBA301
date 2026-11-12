@@ -7,3 +7,4 @@ public record ReviewEligibilityResponse(
         boolean alreadyReviewed,
         boolean isOwner
 ) {}
+
