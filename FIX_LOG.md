@@ -1,65 +1,86 @@
 # NHẬT KÝ SỬA LỖI - FIX_LOG.md
 **Dự án**: SBA Car Rental Platform  
-**Phiên bản nhánh**: `car-slot`  
+**Phiên bản nhánh**: `fix/upload-kyc-upgrade-issues` (tách từ `car-slot` @ `d6d081d`)  
 **Ngày cập nhật**: 2026-11-12  
 
 ---
 
-## Danh mục sửa lỗi chi tiết
+## Phần A: Các thay đổi mới trên nhánh `fix/upload-kyc-upgrade-issues`
+
+### 1. Vấn đề 1 — Upload ảnh xe từ máy cục bộ, validate định dạng/dung lượng, xem trước và hiển thị đồng bộ
+- **Commit Git**: `73525ed` — `feat(car-upload): support local multipart image upload, validation, preview and rendering`
+- **Nguyên nhân gốc**:
+  - Form tạo/sửa xe ở FE chỉ nhập/giả định chuỗi URL, chưa xử lý tải tệp ảnh cục bộ qua multipart khi tạo/cập nhật xe.
+  - Upload công khai chưa chuẩn hóa qua một service dùng chung cho kiểm tra kích thước tối đa 5MB, định dạng tệp và magic bytes thực tế trước khi lưu vào đĩa/DB.
+- **File thay đổi**:
+  - **Backend**:
+    - `carrental-BE/src/main/java/com/carrental/service/PublicImageStorageService.java` *(mới)*: Validate tệp không rỗng, dung lượng tối đa `5MB` (`413 PAYLOAD_TOO_LARGE`), phần mở rộng hợp lệ (`jpg`/`jpeg`/`png`/`webp`), magic bytes thực tế (JPEG/PNG/WebP kể cả header RIFF + VP8/VP8L/VP8X, sai trả `415 UNSUPPORTED_MEDIA_TYPE`), lưu tệp UUID vào thư mục uploads và hỗ trợ rollback xóa tệp khi DB thất bại (`storeImages`).
+    - `carrental-BE/src/main/java/com/carrental/controller/UploadController.java`: Ủy quyền `/api/uploads/images` và `/api/uploads/files/{fileName}` cho `PublicImageStorageService`, bổ sung `POST /api/uploads/images/batch`.
+    - `carrental-BE/src/main/java/com/carrental/service/CarService.java`, `CarServiceImpl.java`, `CarController.java`: Bổ sung endpoint multipart `POST /api/cars/{id}/images` (`consumes = MULTIPART_FORM_DATA_VALUE`) nhận `files` và `primaryIndex`, giữ tương thích endpoint JSON `APPLICATION_JSON_VALUE`, dọn tệp nếu giao dịch DB rollback.
+    - `carrental-BE/src/test/java/com/carrental/service/CarImageUploadTest.java` *(mới)*: Kiểm thử 4 ca upload nhiều ảnh, từ chối tệp > 5MB, từ chối sai định dạng / giả mạo extension, và đọc lại qua `/api/uploads/files/{name}`.
+  - **Frontend**:
+    - `carrental-FE/src/utils/validateInput.js`, `carrental-FE/src/utils/schemas/vehicle.js`: Validate file JPG/PNG/WebP <= 5MB (`validateImageFile`) và chuẩn hóa input media.
+    - `carrental-FE/src/utils/labels.js`, `carrental-FE/src/utils/apiResponse.js`: Bổ sung `resolveAssetUrl` và chuẩn hóa URL ảnh xe trong `carImage` / `normalizeCar`.
+    - `carrental-FE/src/services/tripService.js`, `carrental-FE/src/services/vehicleService.js`: Thêm hàm upload multipart ảnh xe (`uploadImages`) và tích hợp vào `carService.create` khi tạo xe mới kèm `photoEntries`.
+    - `carrental-FE/src/components/vehicles/VehicleRegistrationSteps.jsx`, `OwnerVehicleNewPage.jsx`, `OwnerVehicleEditPage.jsx`: Cho phép chọn nhiều ảnh từ máy, hiển thị ảnh xem trước (`blob:`) **trước khi lưu**, đổi ảnh chính, xóa ảnh, hiển thị cảnh báo lỗi khi chọn sai định dạng hoặc quá 5MB (ở cả Bước 1 giấy tờ xe và Bước 4 bộ ảnh niêm yết).
+    - `carrental-FE/src/components/vehicles/VehicleDetails.jsx`: Cho phép click thumbnail ảnh xe để chuyển ảnh chính ở trang chi tiết xe.
+- **Lý do**:
+  - Đáp ứng trọn vẹn luồng chọn ảnh thật từ máy, validate chặt ở cả FE và BE, xem trước ngay trên giao diện trước khi gửi và hiển thị đúng ở danh sách xe chủ xe, trang Explore và trang chi tiết xe.
+
+---
+
+### 2. Vấn đề 2 — Giới hạn tối đa 3 lần xin nâng cấp chủ xe, chặn gửi khi đang PENDING, gửi mail thông báo khi duyệt/từ chối
+- **Commit Git**: `0b9d5aa` — `feat(owner-upgrade): enforce 3-attempt limit, pending lockout, and review email notifications`
+- **Nguyên nhân gốc**:
+  - BE mới chặn gửi trùng cùng `docType` đang `PENDING`, chưa chặn gửi chéo giữa `CITIZEN_ID` và `PASSPORT` khi đang có yêu cầu nâng cấp `PENDING`, chưa có giới hạn 3 lần gửi yêu cầu nâng cấp chủ xe (tính cả các lần đã bị từ chối), và chưa gửi email thông báo kết quả duyệt/từ chối cho người dùng.
+- **File thay đổi**:
+  - **Backend**:
+    - `carrental-BE/src/main/java/com/carrental/exception/ErrorCode.java`: Thêm mã lỗi `OWNER_UPGRADE_LIMIT_EXCEEDED` (`HTTP 400 Bad Request`).
+    - `carrental-BE/src/main/java/com/carrental/repository/UserDocumentRepository.java`: Thêm `existsByCustomerIdAndDocTypeInAndVerifyStatus` và `countByCustomerIdAndDocTypeIn` cho nhóm giấy tờ định danh nâng cấp chủ xe (`CITIZEN_ID`, `PASSPORT`).
+    - `carrental-BE/src/main/java/com/carrental/service/impl/UserDocumentServiceImpl.java`:
+      - Kiểm tra ở tầng BE: nếu đang có yêu cầu nâng cấp `PENDING` (`CITIZEN_ID`/`PASSPORT`) thì trả `409 DOCUMENT_PENDING_EXISTS`; nếu tổng số lần đã gửi >= 3 (tính mọi trạng thái gồm `REJECTED`) thì trả `400 OWNER_UPGRADE_LIMIT_EXCEEDED` kèm thông báo rõ ràng.
+      - Khi admin duyệt (`APPROVED`) hoặc từ chối (`REJECTED`), gọi `sendReviewNotificationEmail` qua `JavaMailSender` (duyệt: gửi mail chúc mừng nâng cấp thành chủ xe; từ chối: gửi mail kèm lý do từ chối và số lượt còn lại). Khi chưa cấu hình mail hoặc gửi mail ném ngoại lệ `RuntimeException`, hệ thống bắt lỗi an toàn, ghi log `document-review-email-skipped` / `document-review-email-failed` (không làm lộ email hay lý do trong log) và **không rollback** kết quả duyệt trong DB. Giữ constructor 5 tham số tương thích các unit test cũ.
+    - `carrental-BE/src/main/java/com/carrental/dto/response/KycSummaryResponse.java`, `KycServiceImpl.java`: Bổ sung `upgradeAttemptsUsed`, `maxUpgradeAttempts`, `upgradeAttemptsRemaining`, `hasPendingUpgradeRequest`.
+    - `carrental-BE/src/test/java/com/carrental/service/impl/OwnerUpgradeLimitAndEmailTest.java` *(mới)*: 4 ca kiểm thử cho chặn `PENDING`, chặn lần thứ 4, gửi mail duyệt/từ chối kèm lý do, và khả năng chịu lỗi khi `MailSendException` xảy ra.
+  - **Frontend**:
+    - `carrental-FE/src/hooks/useAccount.js`: Bổ sung `useMyKyc`.
+    - `carrental-FE/src/components/account/VerificationForm.jsx`, `carrental-FE/src/pages/account/VerificationPage.jsx`: Hiển thị banner thông báo rõ ràng và vô hiệu hóa nút gửi hồ sơ khi đang có yêu cầu `PENDING` hoặc đã dùng hết `3/3` lượt.
+- **Lý do**:
+  - Đảm bảo quy tắc nghiệp vụ được thực thi cứng ở BE (không chỉ ẩn ở FE), tránh spam yêu cầu và thông báo kịp thời kết quả thẩm định tới người dùng bất kể dịch vụ mail có sự cố tạm thời.
+
+---
+
+### 3. Vấn đề 3 — Lý do từ chối của Admin không hiển thị ở phía User và hiển thị hạn mức lượt gửi
+- **Commit Git**: `664f32c` — `fix(kyc-reason): expose rejectReason and upgrade attempt quota on user verification status`
+- **Nguyên nhân gốc**:
+  - Phía Admin (`AdminUsersPage.jsx` → `UserDetail.jsx`) đã gửi `rejectReason` lên API, BE đã lưu `reject_reason` vào bảng `user_documents` và trả trong `UserDocumentDetailResponse`, **nhưng bị đứt chuỗi ở endpoint danh sách của người dùng**: `VerificationPage.jsx` gọi `GET /api/user-documents?scope=mine` trả về `UserDocumentSummaryResponse`, vốn **không có trường `rejectReason`** (và `verifiedAt`), khiến FE user không nhận được lý do từ chối để render.
+- **File thay đổi**:
+  - **Backend**:
+    - `carrental-BE/src/main/java/com/carrental/dto/response/UserDocumentSummaryResponse.java`: Bổ sung trường `rejectReason` và `verifiedAt` vào record + mapper `from(...)`.
+    - `carrental-BE/src/test/java/com/carrental/service/impl/UserDocumentSummaryReasonTest.java` *(mới)*: Kiểm thử `UserDocumentSummaryResponse.from(...)` bảo toàn đúng `rejectReason` và `verifiedAt`.
+  - **Frontend**:
+    - `carrental-FE/src/services/accountService.js`: Sắp xếp danh sách hồ sơ của tôi theo `createdAt,desc` để lần gửi mới nhất luôn hiển thị đầu tiên.
+    - `carrental-FE/src/pages/account/VerificationPage.jsx`: Hiển thị nổi bật huy hiệu số lượt (`Đã gửi X/3 lần • Còn lại Y lần`) và khung đỏ hiển thị đầy đủ lý do từ chối của quản trị viên trên từng hồ sơ bị `REJECTED`.
+    - `carrental-FE/src/components/account/UserDetail.jsx`: Hiển thị `doc.rejectReason` ngay trên chi tiết hồ sơ phía quản trị viên sau khi từ chối.
+- **Lý do**:
+  - Nối liền chuỗi dữ liệu từ lúc Admin nhập lý do từ chối → lưu DB → trả về DTO cho User → render rõ ràng kèm hạn mức số lần đã gửi/còn lại.
+
+---
+
+### 4. Bộ kiểm thử tự động bổ sung cho 3 vấn đề (`test_issues_1_2_3.cjs`)
+- **File tạo/cập nhật**: `d:\SBA\test_issues_1_2_3.cjs`, `d:\SBA\.gitignore`
+- **Chi tiết**:
+  - Gồm 33 ca kiểm thử (17 ca API + 16 ca Playwright trên Microsoft Edge headless) bao phủ luồng đúng và các ca lỗi: file > 5MB, file sai định dạng / giả mạo nội dung, ảnh xem trước `blob:` trước khi lưu, ảnh hiển thị trên Owner Vehicles / Car Detail (kèm click thumbnail đổi ảnh) / Explore, chặn gửi khi đang `PENDING`, chặn lần thứ 4 ở cả BE & FE, từ chối thiếu lý do bị chặn 400 / nút xác nhận bị vô hiệu hóa, user xem được lý do từ chối và số lượt `X/3`.
+
+---
+
+## Phần B: Nhật ký trước đó trên nhánh `car-slot`
 
 ### 1. BUG-01: Ngăn chặn lỗi HTTP 503 khi đăng ký tài khoản trong môi trường chưa cấu hình Mailjet
-- **Mã lỗi**: `BUG-01`
-- **Mức độ**: `Critical`
-- **Commit Git**: `ac037a4 fix: BUG-01 prevent 503 error on registration when mail service is unconfigured`
-- **File sửa**: `carrental-BE/src/main/java/com/carrental/service/impl/AuthServiceImpl.java`
-- **Chi tiết thay đổi**:
-  - Trong phương thức `sendVerificationEmail(Customer customer)`:
-    - Khi biến môi trường `mailjet.api-key` hoặc `mailjet.secret-key` bị trống (chưa cấu hình ở môi trường dev/local/staging), hệ thống bắt ngoại lệ cấu hình mail thay vì để văng `AppException(HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.DEPENDENCY_UNAVAILABLE)`.
-    - Sinh mã xác nhận token (`emailVerificationTokenRepository.save(...)`).
-    - Ghi log URL xác thực email ra logger (`http://localhost:3000/verify-email?token=...`) để lập trình viên và kiểm thử viên có thể kích hoạt tài khoản thủ công hoặc tự động.
-    - Trong chế độ môi trường kiểm thử/cục bộ, tự động đánh dấu `customer.setEmailVerified(true)` để người dùng có thể tiếp tục sử dụng hệ thống ngay lập tức mà không bị nghẽn quy trình.
-- **Lý do**:
-  - Tránh chặn đứng luồng đăng ký người dùng mới (onboarding flow) khi hệ thống chạy trong môi trường kiểm thử, máy dev hoặc CI/CD pipeline không kết nối được dịch vụ gửi mail bên thứ ba.
-
----
+- **Commit Git**: `ac037a4` — `carrental-BE/src/main/java/com/carrental/service/impl/AuthServiceImpl.java`
 
 ### 2. BUG-02: Kích hoạt Scheduling cho các tác vụ ngầm tự động dọn dẹp gói đăng tin và đơn thuê hết hạn
-- **Mã lỗi**: `BUG-02`
-- **Mức độ**: `High`
-- **Commit Git**: `df84968 fix: BUG-02 enable scheduling for subscription and booking background expiration`
-- **File sửa**: 
-  - `carrental-BE/src/main/java/com/carrental/CarRentalApplication.java`
-  - `carrental-BE/src/test/java/com/carrental/scheduling/BookingExpirationSchedulerTest.java` (Tạo mới)
-- **Chi tiết thay đổi**:
-  - Thêm annotation `@EnableScheduling` vào lớp cấu hình chính `CarRentalApplication`.
-  - Bổ sung bộ kiểm thử đơn vị `BookingExpirationSchedulerTest.java` kiểm tra việc gọi service và bắt ngoại lệ an toàn của tác vụ `BookingExpirationScheduler`.
-- **Lý do**:
-  - Trước đây, `CarRentalApplication` thiếu `@EnableScheduling`, dẫn đến toàn bộ các bean có `@Scheduled` gồm `SubscriptionExpirationScheduler` (quét gói tin hết hạn mỗi phút) và `BookingExpirationScheduler` (quét đơn thuê quá giờ đón chưa được nhận mỗi phút) hoàn toàn không được Spring kích hoạt tại runtime. Việc kích hoạt giúp hệ thống vận hành tự động, chính xác theo chu kỳ thời gian.
+- **Commit Git**: `df84968` — `carrental-BE/src/main/java/com/carrental/CarRentalApplication.java`, `BookingExpirationSchedulerTest.java`
 
----
-
-### 3. Cấu hình Môi trường Local Backend & Cổng thanh toán giả lập
-- **File tạo**: `carrental-BE/.env`
-- **Chi tiết thay đổi**:
-  - Cấu hình thông số kết nối PostgreSQL: `DB_URL=jdbc:postgresql://localhost:5432/carrental`, `DB_USERNAME=postgres`.
-  - Cấu hình cổng thanh toán giả lập: `APP_PAYMENT_SIMULATE_GATEWAY_ENABLED=true` cho phép giả lập thanh toán VNPAY trực tiếp thông qua API `/api/transactions/{id}/simulate-gateway`.
-  - Cấu hình múi giờ hệ thống: `APP_TIME_ZONE=Asia/Ho_Chi_Minh`.
-- **Lý do**:
-  - Phục vụ việc chạy kiểm thử tự động toàn diện từ con số 0 trên cơ sở dữ liệu thực tế.
-
----
-
-### 4. Bộ kịch bản kiểm thử toàn diện tự động hóa (Comprehensive Automation Suite)
-- **File cập nhật**: `d:\SBA\run_comprehensive_suite.cjs`
-- **Chi tiết thay đổi**:
-  - Nâng cấp từ 63 lên 66 ca kiểm thử bao phủ toàn diện 7 phân hệ chính:
-    1. Authentication, Expired JWT Token rejection (TC-AUTH-13b), Password Validation, Role Guard (TC-AUTH-01 đến TC-AUTH-14).
-    2. Quản lý hồ sơ người dùng & Nộp duyệt KYC CCCD kèm ảnh 2 mặt (TC-CUST-01 đến TC-CUST-05, TC-KYC-01 đến TC-KYC-03).
-    3. Đăng ký xe mới, duyệt giấy đăng ký cavet, duyệt xe, ẩn biển số bảo mật (TC-CAR-01 đến TC-CAR-11).
-    4. Gói cước đăng tin, tạo voucher, báo giá, thanh toán VNPAY thành công/thất bại (TC-PKG-01, TC-VOU-01, TC-SUB-01, TC-SUB-02, TC-TXN-01 đến TC-TXN-03).
-    5. Đặt xe, tính tiền, chủ xe liên hệ, duyệt đơn, bàn giao xe PICKUP, **xử lý khiếu nại hiện trạng (Dispute Handover TC-BKG-05b), chủ xe chỉnh sửa (Revise Handover TC-BKG-05c), khách xác nhận sau khi sửa (TC-BKG-06)**, biên bản trả xe RETURN (TC-BKG-07, TC-BKG-08), hoàn tất chuyến đi và đánh giá xe (TC-REV-01, TC-REV-02).
-    6. Hồ sơ đăng kiểm an toàn kỹ thuật xe, Bảng điều khiển Admin, Chủ xe và Khách hàng (TC-SAF-01 đến TC-SAF-03, TC-DASH-01 đến TC-DASH-03).
-    7. Kiểm thử giao diện tự động bằng Playwright (TC-UI-01 đến TC-UI-06) xác minh Route Gate KYC, Explore xe, Quản trị xe và Bảng điều khiển quản trị viên.
-  - Sử dụng Microsoft Edge engine chạy headless ổn định trên Windows.
-- **Lý do**:
-  - Thẩm định sâu các ca biên độ phức tạp (Untested Edge Cases) theo đúng yêu cầu kiểm thử hồi quy khắt khe.
+### 3. Cấu hình môi trường local & bộ kiểm thử hồi quy `run_comprehensive_suite.cjs`
+- **Commit Git**: `d6d081d` — `run_comprehensive_suite.cjs` (66 ca kiểm thử toàn hệ thống).

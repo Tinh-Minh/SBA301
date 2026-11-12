@@ -12,5 +12,6 @@
 !/FIX_LOG.md
 !/FINAL_REPORT.md
 !/run_comprehensive_suite.cjs
+!/test_issues_1_2_3.cjs
 !/.gitignore
 /.idea/
