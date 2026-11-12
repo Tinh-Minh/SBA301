@@ -328,9 +328,9 @@ export function StepFour({ form, photos, photoCount, dayPrice, deposit, agreed, 
       <p className="mt-3 text-xs text-muted-gray">{form.pickupAddress ? `${form.pickupAddress}, ${form.city}` : "Chưa có địa chỉ giao xe"}</p>
       <ul className="mt-3 flex flex-col gap-1 text-xs text-charcoal">
         <li>{form.pickupAddress ? "Bãi giao nhận đã khai" : "Thiếu địa chỉ giao xe"}</li>
-        <li>{hasCavet && hasInspection ? "Cavet và đăng kiểm đã chọn" : "Thiếu giấy tờ"}</li>
+        <li>{hasCavet ? (hasInspection ? "Cà vẹt và đăng kiểm đã cung cấp" : "Đã có cà vẹt, chưa có đăng kiểm (bổ sung sau được)") : "Thiếu giấy đăng ký xe (cà vẹt)"}</li>
         <li>{dayPrice ? "Giá và hạn km đã thiết lập" : "Chưa có giá thuê"}</li>
-        <li>{photoCount}/6 góc ảnh</li>
+        <li>{photoCount}/6 góc ảnh (bắt buộc ảnh góc trước)</li>
       </ul>
       <label className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-charcoal">
         <input type="checkbox" className="mt-0.5" checked={agreed} onChange={event => onAgree(event.target.checked)}/>
