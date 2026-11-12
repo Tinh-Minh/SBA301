@@ -18,7 +18,7 @@ export function RegisterForm() {
     const { register, control, handleSubmit, setError, formState: { errors, isSubmitting, isValid } } = useForm({
         resolver: zodResolver(registrationSchema),
         mode: "onChange",
-        defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "", terms: true },
+        defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "", terms: false },
     });
     const watched = useWatch({ control, name: ["fullName", "email", "phone", "password"] });
     const [fullName = "", email = "", phone = "", password = ""] = watched ?? [];
