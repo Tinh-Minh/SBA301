@@ -5,6 +5,7 @@ import { formatDate, toLocalDate } from "@/utils/datetime.js";
 import { kycStatusLabels } from "@/utils/labels.js";
 import { updateSessionAccount } from "@/utils/session.js";
 import { changePassword } from "@/services/accountService.js";
+import { authenticate } from "@/services/authService.js";
 import { updateMyProfile } from "@/services/accountService.js";
 
 const profileInputClass = "w-full rounded-xl border border-[#767676] bg-white px-3 py-2 text-sm text-[#292929] placeholder:text-[#666666] focus-visible:outline-[#B9430C] focus-visible:border-[#B9430C]";
@@ -40,9 +41,12 @@ export function Editor({ profile, kyc, onSaved }) {
     const password = useApiMutation(async () => {
         setPasswordNote("");
         await changePassword({ currentPassword, newPassword });
+        // Backend vô hiệu mọi token cấp trước khi đổi mật khẩu, nên đăng nhập lại
+        // bằng mật khẩu mới để phiên hiện tại không bị đăng xuất đột ngột.
+        await authenticate({ email: profile.email, password: newPassword });
         setCurrentPassword("");
         setNewPassword("");
-        setPasswordNote("Đã đổi mật khẩu.");
+        setPasswordNote("Đã đổi mật khẩu. Các thiết bị khác sẽ phải đăng nhập lại.");
     });
     return <div className="flex flex-col gap-4"><section aria-busy={save.running} className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-3">

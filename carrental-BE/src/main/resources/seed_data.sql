@@ -51,6 +51,7 @@ CREATE TABLE customers (
     email           VARCHAR(150) NOT NULL,
     phone           VARCHAR(20)  NOT NULL UNIQUE,
     password_hash   VARCHAR(255) NOT NULL,
+    password_changed_at TIMESTAMP,
     date_of_birth   DATE,
     address         VARCHAR(300),
     avatar_url      VARCHAR(500),
