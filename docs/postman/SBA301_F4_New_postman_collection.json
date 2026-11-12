@@ -1,0 +1,696 @@
+{
+  "info": {
+    "_postman_id": "f4new-carrental-collection-2026-uuid",
+    "name": "SBA301 - Function 4 (F4new) - Thanh toán gói, Đánh giá & Doanh thu",
+    "description": "Bộ Postman Collection kiểm thử đầy đủ các nghiệp vụ Function 4 mới (Mô hình Cổng rao vặt & Gói đăng tin):\n1. Thanh toán gói đăng tin qua cổng VNPay Sandbox (tự động kích hoạt Subscription & Xe LISTED).\n2. Đánh giá uy tín (Reviews) gắn trực tiếp với Xe (chống tự đánh giá, chống trùng lặp, tính điểm trung bình public).\n3. Báo cáo Doanh thu Admin (Financial Dashboard - Tổng doanh thu 100% sàn, thống kê theo gói, danh sách giao dịch).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ownerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "customerToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ownerId",
+      "value": "8",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "9",
+      "type": "string"
+    },
+    {
+      "key": "carId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "subscriptionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "transactionId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "reviewId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "0. Xác thực & Đăng nhập (Auth Login)",
+      "description": "Đăng nhập các vai trò để tự động lưu JWT token vào biến collection.",
+      "item": [
+        {
+          "name": "0.1 Đăng nhập Chủ xe (Owner: chuxe@gmail.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Đăng nhập Chủ xe thành công (HTTP 200)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set(\"ownerToken\", jsonData.data.accessToken);",
+                  "    pm.collectionVariables.set(\"authToken\", jsonData.data.accessToken);",
+                  "    var id = jsonData.data.account ? jsonData.data.account.id : (jsonData.data.customer ? jsonData.data.customer.id : null);",
+                  "    if (id) pm.collectionVariables.set(\"ownerId\", String(id));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrPhone\": \"chuxe@gmail.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "0.2 Đăng nhập Khách thuê (Customer: khach@gmail.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Đăng nhập Khách thuê thành công (HTTP 200)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set(\"customerToken\", jsonData.data.accessToken);",
+                  "    var id = jsonData.data.account ? jsonData.data.account.id : (jsonData.data.customer ? jsonData.data.customer.id : null);",
+                  "    if (id) pm.collectionVariables.set(\"customerId\", String(id));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrPhone\": \"khach@gmail.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "0.3 Đăng nhập Quản trị viên (Admin: admin@carrental.com)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Đăng nhập Admin thành công (HTTP 200)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.collectionVariables.set(\"adminToken\", jsonData.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailOrPhone\": \"admin@carrental.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Thanh toán Gói Đăng Tin (Package Payments & VNPay)",
+      "description": "Các API tạo thanh toán mua gói cước tin đăng (F3/F4), lấy link VNPay Sandbox, giả lập cổng thanh toán Simulate Gateway.",
+      "item": [
+        {
+          "name": "1.1 Tạo giao dịch thanh toán gói qua VNPay",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Trả về trạng thái PENDING & có paymentUrl\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.status).to.eql(\"PENDING\");",
+                  "    pm.expect(jsonData.data.paymentUrl).to.be.a(\"string\");",
+                  "    pm.expect(jsonData.data.paymentUrl).to.include(\"vnpayment.vn\");",
+                  "});",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"transactionId\", String(jsonData.data.id));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscriptionId\": {{subscriptionId}},\n  \"method\": \"VNPAY\",\n  \"bankCode\": \"NCB\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/package-payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "package-payment"]
+            }
+          }
+        },
+        {
+          "name": "1.2 Tạo giao dịch thanh toán gói qua Chuyển khoản (Bank Transfer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Tạo giao dịch thành công trạng thái PENDING\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.method).to.eql(\"BANK_TRANSFER\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscriptionId\": {{subscriptionId}},\n  \"method\": \"BANK_TRANSFER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/package-payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "package-payment"]
+            }
+          }
+        },
+        {
+          "name": "1.3 Lấy lại link redirect VNPay Sandbox",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Có link thanh toán VNPay\", function () {",
+                  "    pm.expect(jsonData.data.paymentUrl).to.be.a(\"string\");",
+                  "    pm.expect(jsonData.data.paymentUrl).to.include(\"vnpay\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/{{transactionId}}/vnpay-url?bankCode=NCB",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "{{transactionId}}", "vnpay-url"],
+              "query": [{ "key": "bankCode", "value": "NCB" }]
+            }
+          }
+        },
+        {
+          "name": "1.4 Xem chi tiết giao dịch",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Trả về đầy đủ thông tin giao dịch\", function () {",
+                  "    pm.expect(jsonData.data.id).to.eql(Number(pm.collectionVariables.get(\"transactionId\")));",
+                  "    pm.expect(jsonData.data.amount).to.be.a(\"number\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/{{transactionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "{{transactionId}}"]
+            }
+          }
+        },
+        {
+          "name": "1.5 Danh sách giao dịch phân trang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Trả về danh sách content dạng mảng\", function () {",
+                  "    pm.expect(jsonData.data.content).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?page=0&size=10&sort=id,desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" },
+                { "key": "sort", "value": "id,desc" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "1.6 [Negative] Chặn Admin không được tạo thanh toán gói cước",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Chặn Admin tạo thanh toán với HTTP 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscriptionId\": {{subscriptionId}},\n  \"method\": \"VNPAY\",\n  \"bankCode\": \"NCB\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions/package-payment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions", "package-payment"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Đánh giá Uy tín Xe / Chủ xe (Reviews)",
+      "description": "Các API tạo đánh giá theo xe (1-5 sao), xem tổng hợp nhận xét & điểm trung bình của xe, kèm các test chặn lỗi logic.",
+      "item": [
+        {
+          "name": "2.1 Khách gửi đánh giá 5 sao cho xe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Gửi đánh giá thành công (HTTP 200)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Thông tin review khớp request\", function () {",
+                  "    pm.expect(jsonData.data.rating).to.eql(5);",
+                  "    pm.expect(jsonData.data.carId).to.eql(Number(pm.collectionVariables.get(\"carId\")));",
+                  "});",
+                  "if (jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set(\"reviewId\", String(jsonData.data.id));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": {{carId}},\n  \"rating\": 5,\n  \"comment\": \"Xe đi rất êm ái, máy lạnh sâu, chủ xe hỗ trợ nhiệt tình!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "2.2 Xem tóm tắt đánh giá & điểm trung bình xe (Public API)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Có điểm trung bình và danh sách nhận xét\", function () {",
+                  "    pm.expect(jsonData.data.averageRating).to.be.a(\"number\");",
+                  "    pm.expect(jsonData.data.totalReviews).to.be.a(\"number\");",
+                  "    pm.expect(jsonData.data.reviews).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/cars/{{carId}}/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cars", "{{carId}}", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "2.3 Xem chi tiết đánh giá theo ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Review id khớp\", function () {",
+                  "    pm.expect(jsonData.data.id).to.eql(Number(pm.collectionVariables.get(\"reviewId\")));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews/{{reviewId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews", "{{reviewId}}"]
+            }
+          }
+        },
+        {
+          "name": "2.4 Xem danh sách đánh giá phân trang",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP 200 OK\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews?carId={{carId}}&page=0&size=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"],
+              "query": [
+                { "key": "carId", "value": "{{carId}}" },
+                { "key": "page", "value": "0" },
+                { "key": "size", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.5 [Negative] Chặn chủ xe tự đánh giá xe của chính mình",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Chặn thành công với HTTP 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Thông báo lỗi rõ ràng\", function () {",
+                  "    pm.expect(jsonData.message).to.include(\"tự đánh giá\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{ownerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": {{carId}},\n  \"rating\": 5,\n  \"comment\": \"Xe của tôi tuyệt vời nhất quả đất!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"]
+            }
+          }
+        },
+        {
+          "name": "2.6 [Negative] Chặn khách gửi đánh giá trùng lặp lần 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Chặn trùng lặp với HTTP 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Thông báo đã đánh giá rồi\", function () {",
+                  "    pm.expect(jsonData.message).to.include(\"đã gửi đánh giá\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carId\": {{carId}},\n  \"rating\": 4,\n  \"comment\": \"Thử gửi đánh giá lần 2 trùng lặp\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/reviews",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "reviews"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Báo cáo Doanh thu Admin (Financial Dashboard)",
+      "description": "Các API thống kê doanh thu bán gói của sàn (100% về sàn, không cần đối soát chi trả), số bài đăng đang LISTED, gói bán chạy nhất.",
+      "item": [
+        {
+          "name": "3.1 Báo cáo doanh thu tổng quan bán gói (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Admin xem dashboard thành công (HTTP 200)\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Đầy đủ chỉ số tài chính\", function () {",
+                  "    pm.expect(jsonData.data.totalRevenue).to.be.a(\"number\");",
+                  "    pm.expect(jsonData.data.activeListingsCount).to.be.a(\"number\");",
+                  "    pm.expect(jsonData.data.totalPackagesSold).to.be.a(\"number\");",
+                  "    pm.expect(jsonData.data.packageStats).to.be.an(\"array\");",
+                  "    pm.expect(jsonData.data.recentTransactions).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard/revenue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "dashboard", "revenue"]
+            }
+          }
+        },
+        {
+          "name": "3.2 [Security] Chặn người dùng thường truy cập Dashboard Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Chặn quyền truy cập với HTTP 403 Forbidden\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }]
+            },
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/dashboard/revenue",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "dashboard", "revenue"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

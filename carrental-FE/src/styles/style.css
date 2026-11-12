@@ -1,0 +1,294 @@
+@import "tailwindcss";
+@config "../../tailwind.config.js";
+
+/* ===== Màu (từ colors.css) ===== */
+/* CarDB shared Tailwind color tokens. */
+:root {
+  --color-cinematic: 0 0 0;
+  --color-brand-darkest: 0 20 18;
+  --color-brand-dark: 4 28 25;
+  --color-brand-card: 6 38 34;
+  --color-brand-cardBorder: 11 61 54;
+  --color-brand-borderHighlight: 21 106 92;
+  --color-brand-teal: 0 223 182;
+  --color-brand-tealHover: 0 247 204;
+  --color-brand-emeraldMuted: 9 54 48;
+  --color-brand-textMuted: 113 155 147;
+  --color-brand-textDim: 74 111 104;
+  --color-page-bg: 255 255 255;
+  --color-section-bg: 247 247 245;
+  --color-card-bg: 255 255 255;
+  --color-text-primary: 41 41 41;
+  --color-text-secondary: 102 102 102;
+  --color-border-light: 233 233 231;
+  --color-brand-accent: 252 108 38;
+  --color-accent-soft: 255 243 235;
+  --color-pill-bg: 240 241 239;
+  --color-surface: 252 249 248;
+  --color-surface-container-high: 234 231 231;
+  --color-surface-container-low: 247 247 245;
+  --color-surface-container-lowest: 255 255 255;
+  --color-surface-container: 240 237 237;
+  --color-surface-container-highest: 228 226 225;
+  --color-surface-dim: 220 217 217;
+  --color-surface-bright: 252 249 248;
+  --color-background: 252 249 248;
+  --color-on-surface: 41 41 41;
+  --color-on-surface-variant: 102 102 102;
+  --color-on-background: 41 41 41;
+  --color-primary: 252 108 38;
+  --color-primary-container: 229 91 27;
+  --color-on-primary: 255 255 255;
+  --color-on-primary-container: 255 255 255;
+  --color-secondary: 131 85 0;
+  --color-secondary-container: 254 174 44;
+  --color-outline: 141 113 102;
+  --color-outline-variant: 233 233 231;
+  --color-tertiary: 0 101 141;
+  --color-error: 186 26 26;
+  --color-card-border: 233 233 231;
+  --color-primary-text: 41 41 41;
+  --color-secondary-text: 102 102 102;
+  --color-brand-primary: 252 108 38;
+  --color-brand-hover: 185 67 12;
+  --color-primary-fixed: 255 219 206;
+  --color-tertiary-container: 0 163 224;
+  --color-on-error: 255 255 255;
+  --color-on-tertiary-fixed: 0 30 45;
+  --color-on-primary-fixed-variant: 126 44 0;
+  --color-inverse-on-surface: 243 240 239;
+  --color-surface-variant: 228 226 225;
+  --color-on-tertiary-fixed-variant: 0 76 107;
+  --color-surface-tint: 255 243 235;
+  --color-tertiary-fixed-dim: 129 207 255;
+  --color-on-primary-fixed: 55 14 0;
+  --color-on-error-container: 147 0 10;
+  --color-on-secondary-fixed-variant: 99 63 0;
+  --color-on-tertiary-container: 0 53 75;
+  --color-on-secondary: 255 255 255;
+  --color-on-secondary-container: 107 69 0;
+  --color-secondary-fixed: 255 221 180;
+  --color-on-secondary-fixed: 41 24 0;
+  --color-primary-fixed-dim: 255 181 152;
+  --color-secondary-fixed-dim: 255 185 85;
+  --color-inverse-surface: 48 48 48;
+  --color-error-container: 255 218 214;
+  --color-tertiary-fixed: 198 231 255;
+  --color-inverse-primary: 255 181 152;
+  --color-on-tertiary: 255 255 255;
+  --color-primary-dark: 224 90 24;
+  --color-charcoal: 41 41 41;
+  --color-muted-gray: 102 102 102;
+  --color-surface-soft: 247 247 245;
+  --color-primary-hover: 229 91 27;
+  --color-surface-bg: 247 247 245;
+  --color-success-green: 16 185 129;
+  --color-info-blue: 37 99 235;
+  --color-subtext: 102 102 102;
+  --color-soft-bg: 247 247 245;
+  --color-orange-brand: 252 108 38;
+  --color-orange-hover: 229 90 27;
+  --color-emerald-accent: 16 185 129;
+  --color-emerald-light: 209 250 229;
+  --color-emerald-border: 167 243 208;
+  --color-blue-accent: 37 99 235;
+  --color-blue-light: 219 234 254;
+  --color-surface-alt: 247 247 245;
+  --color-muted: 102 102 102;
+  --color-badge-gray: 240 241 239;
+  --color-status-green: 16 185 129;
+  --color-status-green-bg: 209 250 229;
+  --color-status-amber: 245 166 35;
+  --color-status-amber-dark: 217 119 6;
+  --color-status-amber-bg: 254 243 199;
+  --color-status-blue: 37 99 235;
+  --color-status-blue-bg: 219 234 254;
+  --color-accent-orange: 252 108 38;
+  --color-accent-emerald: 16 185 129;
+  --color-accent-emerald-light: 209 250 229;
+  --color-accent-amber: 245 166 35;
+  --color-accent-amber-light: 254 243 199;
+  --color-accent-blue: 37 99 235;
+  --color-accent-blue-light: 219 234 254;
+  --color-star-gold: 245 166 35;
+  --color-border-subtle: 233 233 231;
+  --color-bg-light: 247 247 245;
+  --color-surface-card: 255 255 255;
+  --color-emerald-tag: 16 185 129;
+  --color-emerald-bg: 209 250 229;
+  --color-surface-canvas: 255 255 255;
+  --color-text-muted: 102 102 102;
+  --color-status-success: 16 185 129;
+  --color-status-success-ink: 4 120 87;
+  --color-accent: 252 108 38;
+}
+
+/* ===== Font (từ fonts.css) ===== */
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/be-vietnam-0.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/fonts/be-vietnam-1.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/be-vietnam-2.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Be Vietnam Pro';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url(/fonts/be-vietnam-3.ttf) format('truetype');
+}
+
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url(/fonts/material-symbols.ttf) format('truetype');
+}
+
+/* ===== Style chung (từ globals.css) ===== */
+@layer base {
+  html { scroll-behavior:smooth;scroll-padding-top:100px;color-scheme:light; }
+  body { margin:0;background:rgb(var(--color-page-bg));color:rgb(var(--color-text-primary)); }
+  * { box-sizing:border-box; }
+  button,select,summary { cursor:pointer; }
+  button,input,select,textarea { font-family:inherit; }
+  input,select,textarea { accent-color:rgb(var(--color-brand-accent)); }
+  :focus-visible { outline:2px solid #B9430C;outline-offset:3px; }
+  h1,h2,h3 { text-wrap:balance; }
+  img { max-width:100%; }
+  .material-symbols-outlined { font-size:24px; }
+  ::selection { background:rgb(var(--color-accent-soft));color:rgb(var(--color-text-primary)); }
+}
+.material-symbols-outlined { font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;font-feature-settings:"liga";-webkit-font-smoothing:antialiased;flex-shrink:0; }
+.skip-link { position:fixed;top:-80px;left:16px;z-index:120;background:white;color:rgb(var(--color-text-primary));padding:12px 20px;border-radius:8px; }
+.skip-link:focus { top:12px; }
+.site-header { container-type:inline-size;box-shadow:0 1px 12px rgb(41 41 41 / .035); }
+.site-header.auth-overlay { background:transparent;border-color:transparent;box-shadow:none;backdrop-filter:none; }
+.ui-action { white-space:nowrap;flex-shrink:0; }
+.cardb-screen button.whitespace-nowrap { flex-shrink:0;min-width:max-content; }
+.cardb-screen a[href^="tel:"] { white-space:nowrap;flex-shrink:0; }
+.ui-money { white-space:nowrap;flex-shrink:0;font-variant-numeric:tabular-nums; }
+.cardb-screen .flex > * { min-width:0; }
+.cardb-screen .flex:not(.flex-col):has(> .ui-money) { column-gap:.75rem; }
+.site-header nav a { white-space:nowrap;flex-shrink:0; }
+.site-header button[aria-controls^="account-menu"] { white-space:nowrap;flex-shrink:0; }
+@container(max-width:1280px) {
+ .site-header nav[aria-label="Điều hướng chính"] { display:none; }
+ .header-menu-toggle { display:flex; }
+ .header-mobile-navigation { display:block; }
+}
+.cardb-screen { min-width:0; }
+.cardb-screen main { min-height:75vh; }
+.cardb-screen main section { scroll-margin-top:96px; }
+.table-scroll { max-width:100%;overflow-x:auto; }
+[data-filter-hidden="true"] { display:none!important; }
+[data-results-layout="list"] { grid-template-columns:1fr; }
+[data-results-layout="list"] [data-car-image] { max-height:260px; }
+[data-active="true"] { border-color:rgb(var(--color-brand-accent))!important;background:rgb(var(--color-accent-soft))!important;color:rgb(var(--color-brand-accent))!important; }
+[data-favorite="true"] { color:rgb(var(--color-brand-accent))!important;font-variation-settings:"FILL" 1; }
+[data-action="rental-mode"][data-active="false"] { background:transparent!important;color:rgb(var(--color-text-secondary))!important;box-shadow:none!important; }
+[data-rating-active="true"] { color:rgb(var(--color-brand-accent))!important;font-variation-settings:"FILL" 1; }
+[data-car-image] { transition:transform .45s cubic-bezier(.2,.7,.3,1); }
+[data-vehicle-card]:hover [data-car-image] { transform:scale(1.035); }
+.toast { animation:toast-in .2s ease-out; }
+@keyframes toast-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+.square-grid-container { position:relative;isolation:isolate;overflow:hidden;background:rgb(var(--color-section-bg));border-bottom:1px solid rgb(var(--color-border-light)); }
+.grid-reveal { position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .3s ease;background-image:linear-gradient(90deg,rgb(var(--color-brand-accent) / .8) 1px,transparent 1px),linear-gradient(rgb(var(--color-brand-accent) / .8) 1px,transparent 1px);background-size:28px 28px;mask-image:radial-gradient(circle 150px at var(--grid-x,-1000px) var(--grid-y,-1000px),#000,transparent);-webkit-mask-image:radial-gradient(circle 150px at var(--grid-x,-1000px) var(--grid-y,-1000px),#000,transparent); }
+.square-grid-container[data-glowing="true"] .grid-reveal { opacity:1; }
+.hero-car-card { background:rgb(var(--color-cinematic)); }
+.hero-car-scene { position:relative;aspect-ratio:16/7;overflow:hidden; }
+.hero-car-scene::after { content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgb(var(--color-cinematic)),transparent 16px,transparent calc(100% - 16px),rgb(var(--color-cinematic))),linear-gradient(rgb(var(--color-cinematic)),transparent 20px,transparent calc(100% - 20px),rgb(var(--color-cinematic))); }
+.hero-car-video { display:block;width:100%;height:100%;object-fit:cover;object-position:center; }
+@media(max-width:767px) { .hero-car-scene { aspect-ratio:16/10; } }
+.ambient-glow { animation:ambient-glow 6s ease-in-out infinite; }
+@keyframes ambient-glow { 0%,100%{opacity:.6}50%{opacity:.85} }
+.auth-screen { position:relative;background:#e7e2d8;color:#25251f; }
+.auth-screen::before { content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:#e7e2d8 url("/images/auth-cardb.jpg") left center / cover no-repeat; }
+.auth-screen main { position:relative;z-index:1;box-sizing:border-box;min-height:100dvh;padding-top:80px;background:transparent; }
+.auth-screen-brand { position:absolute;z-index:1;top:clamp(104px,12vh,148px);left:max(1rem,calc((100% - 1440px) / 2 + 1rem));margin:0;color:#25251f;pointer-events:none; }
+.auth-screen-brand-title { margin:0;font-size:clamp(34px,2.8vw,46px);font-weight:700;line-height:1.15;letter-spacing:-.02em; }
+.auth-screen-brand-title span { color:#fc6c26;text-decoration:underline;text-decoration-thickness:2px;text-decoration-color:rgba(252,108,38,.4);text-underline-offset:7px; }
+.auth-screen-brand-lede { max-width:28ch;margin:16px 0 0;color:#5c584f;font-size:16px;font-weight:500;line-height:1.55; }
+@media(min-width:640px) {
+ .auth-screen-brand { left:max(1.5rem,calc((100% - 1440px) / 2 + 1.5rem)); }
+}
+@media(min-width:1024px) {
+ .auth-screen-brand { left:max(2.5rem,calc((100% - 1440px) / 2 + 2.5rem)); }
+ .auth-screen-brand-title { font-size:clamp(44px,2.6vw,48px); }
+}
+.auth-screen-frame { box-sizing:border-box;display:flex;align-items:safe center;justify-content:flex-end;width:100%;min-height:calc(100dvh - 80px);padding:clamp(24px,4vh,48px) clamp(28px,3vw,56px) clamp(24px,4vh,48px) clamp(24px,4vw,72px); }
+.auth-screen-card { width:min(450px,100%);padding:30px 32px 24px;border:1px solid rgba(255,255,255,.65);border-radius:24px;background:rgba(250,248,242,.78);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 12px 36px rgba(35,30,20,.08); }
+.auth-screen-card h1 { margin:0 0 20px;color:#25251f;font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.2; }
+.auth-form { display:grid;gap:14px; }
+.auth-field-pair { display:grid;gap:14px; }
+.auth-field-group { display:grid;gap:6px;min-width:0; }
+.auth-field-group > label,.auth-label-row > label { color:#25251f;font-size:13px;font-weight:600; }
+.auth-required { color:#fc6c26; }
+.auth-label-row { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.auth-label-row a,.auth-switch a { color:#fc6c26;font-weight:700; }
+.auth-label-row a:hover,.auth-switch a:hover { color:#b9430c; }
+.auth-control { position:relative;display:flex;align-items:center; }
+.auth-control > .material-symbols-outlined { position:absolute;left:14px;color:#6d685f;font-size:20px;pointer-events:none; }
+.auth-control > button { position:absolute;right:8px;display:grid;place-items:center;width:32px;height:32px;color:#6d685f; }
+.auth-control > button .material-symbols-outlined { font-size:20px; }
+.auth-field { width:100%;height:48px;padding:0 14px 0 44px;border:1px solid #e4dfd4;border-radius:12px;background:#faf8f2;color:#25251f;font-size:14px; }
+.auth-field--action { padding-right:44px; }
+.auth-field::placeholder { color:#8a847a; }
+.auth-field:focus { outline:none;border-color:#fc6c26;box-shadow:0 0 0 3px rgba(252,108,38,.18); }
+.auth-screen input.auth-field:-webkit-autofill,.auth-screen input.auth-field:-webkit-autofill:hover,.auth-screen input.auth-field:-webkit-autofill:focus { -webkit-text-fill-color:#25251f;caret-color:#25251f;box-shadow:0 0 0 1000px #faf8f2 inset;transition:background-color 9999s ease-out; }
+.auth-submit { display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:4px;border-radius:12px;background:#fc6c26;color:#fff;font-size:15px;font-weight:700; }
+.auth-submit:hover { background:#b9430c; }
+.auth-submit:disabled { cursor:not-allowed;background:#e7b89a; }
+.auth-switch { margin-top:16px;color:#5f5f55;font-size:14px;text-align:center; }
+@media(max-width:900px) {
+ .auth-screen-brand { display:none; }
+ .auth-screen::before { background-position:30% 62%; }
+ .auth-screen-frame { align-items:flex-start;justify-content:stretch;padding:16px 16px 32px; }
+ .auth-screen-card { width:100%;padding:24px 20px 20px; }
+}
+.cardb-screen details[open] summary .faq-icon { transform:rotate(180deg);color:rgb(var(--color-brand-accent)); }
+.cardb-screen details[open] summary { color:rgb(var(--color-brand-accent)); }
+.cardb-screen summary::-webkit-details-marker { display:none; }
+.cardb-screen input[readonly] { text-overflow:ellipsis; }
+@media(max-width:400px){ .ui-action { padding-inline:.75rem; }.ui-action.pagination-arrow,.ui-action[data-handler="switchAuthTab"] { padding-inline:.5rem; } }
+@media(max-width:767px){
+ .px-margin { padding-left:1.25rem!important;padding-right:1.25rem!important; }
+ .text-display-hero { font-size:36px!important;line-height:1.25!important; }
+ .text-headline-lg { font-size:28px!important;line-height:1.3!important; }
+ .cardb-screen main .grid > * { min-width:0; }
+ .cardb-screen main aside.sticky { position:static; }
+ .cardb-screen .text-5xl,.cardb-screen .text-6xl { font-size:34px;line-height:1.25; }
+ .cardb-screen .whitespace-nowrap { max-width:100%; }
+ .cardb-screen .overflow-x-auto { max-width:100%;overscroll-behavior-x:contain; }
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}}
+@media print{.site-header,footer,[data-hold-control],.toast{display:none!important}.cardb-screen main{padding-top:0!important}}
+
+.profile-content > .shadow-sm { border-radius:1rem; }
+.profile-content > .shadow-sm:is([class~="p-space-md"],[class~="p-space-lg"],[class~="p-space-xl"]),
+.profile-content > .tab-pane > .shadow-sm,
+.profile-content [data-purpose^="bank-card-"] { border-radius:1rem;padding:1rem; }
+@media(min-width:768px) {
+ .profile-content > .shadow-sm:is([class~="p-space-md"],[class~="p-space-lg"],[class~="p-space-xl"]),
+ .profile-content > .tab-pane > .shadow-sm,
+ .profile-content [data-purpose^="bank-card-"] { padding:1.5rem; }
+}

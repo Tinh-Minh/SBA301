@@ -1,0 +1,23 @@
+/target/
+/.idea/
+/.vscode/
+*.iml
+
+.env
+.env.*
+!.env.example
+
+application-local.properties
+
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# External local signing keys are provisioned separately from the application.
+/config/keys/
+
+# Local file storage for private documents/images
+/storage/

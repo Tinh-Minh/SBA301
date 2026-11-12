@@ -1,0 +1,115 @@
+package com.carrental.controller;
+
+import static com.carrental.util.RequestChecks.ok;
+import static com.carrental.util.RequestChecks.requirePositiveId;
+
+import com.carrental.config.CustomerProperties;
+import com.carrental.dto.request.customer.ChangeCustomerRoleRequest;
+import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
+import com.carrental.dto.request.customer.CustomerListQuery;
+import com.carrental.dto.request.customer.UpdateProfileRequest;
+import com.carrental.dto.response.ApiResponse;
+import com.carrental.dto.response.CustomerAdminResponse;
+import com.carrental.dto.response.CustomerProfileResponse;
+import com.carrental.dto.response.CustomerSummaryResponse;
+import com.carrental.dto.response.KycSummaryResponse;
+import com.carrental.dto.response.PageResponse;
+import com.carrental.security.CurrentAccount;
+import com.carrental.service.CustomerService;
+import com.carrental.service.KycService;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
+
+@RestController
+@RequestMapping(path = "/api/customers", produces = MediaType.APPLICATION_JSON_VALUE)
+public class CustomerController {
+    private final CustomerService customerService;
+    private final CustomerProperties customerProperties;
+    private final KycService kycService;
+
+    public CustomerController(CustomerService customerService, CustomerProperties customerProperties, KycService kycService) {
+        this.customerService = customerService;
+        this.customerProperties = customerProperties;
+        this.kycService = kycService;
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> me(
+            @AuthenticationPrincipal CurrentAccount account) {
+        return ok(customerService.getMe(account));
+    }
+
+    @GetMapping("/me/kyc")
+    public ResponseEntity<ApiResponse<KycSummaryResponse>> myKyc(
+            @AuthenticationPrincipal CurrentAccount account) {
+        return ok(kycService.getMe(account));
+    }
+
+    @PatchMapping(path = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> updateMe(
+            @AuthenticationPrincipal CurrentAccount account,
+            @RequestBody UpdateProfileRequest request) {
+        return ok(customerService.updateMe(account, request));
+    }
+
+    /** PUT is the current Function 1 contract; PATCH remains for existing clients. */
+    @PutMapping(path = "/me", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> replaceMeFields(
+            @AuthenticationPrincipal CurrentAccount account,
+            @RequestBody UpdateProfileRequest request) {
+        return ok(customerService.updateMe(account, request));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<PageResponse<CustomerSummaryResponse>>> listCustomers(
+            @RequestParam MultiValueMap<String, String> parameters) {
+        CustomerListQuery query = CustomerListQuery.parse(parameters, customerProperties);
+        return ok(customerService.listCustomers(query));
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CustomerAdminResponse>> getCustomer(@PathVariable long id) {
+        requirePositiveId(id);
+        return ok(customerService.getCustomer(id));
+    }
+
+    @GetMapping("/{id}/kyc")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<KycSummaryResponse>> getCustomerKyc(@PathVariable long id) {
+        requirePositiveId(id);
+        return ok(kycService.getCustomer(id));
+    }
+
+    @PatchMapping(path = "/{id}/status", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CustomerAdminResponse>> changeCustomerStatus(
+            @AuthenticationPrincipal CurrentAccount actor,
+            @PathVariable long id,
+            @RequestBody ChangeCustomerStatusRequest request) {
+        requirePositiveId(id);
+        return ok(customerService.changeCustomerStatus(actor, id, request));
+    }
+
+    @PatchMapping(path = "/{id}/role", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<CustomerAdminResponse>> changeCustomerRole(
+            @AuthenticationPrincipal CurrentAccount actor,
+            @PathVariable long id,
+            @RequestBody ChangeCustomerRoleRequest request) {
+        requirePositiveId(id);
+        return ok(customerService.changeCustomerRole(actor, id, request));
+    }
+}

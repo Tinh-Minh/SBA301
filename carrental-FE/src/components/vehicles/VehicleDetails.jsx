@@ -1,0 +1,228 @@
+import { Link } from "react-router";
+import { useCallback, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ConfirmDialog } from "@/components/ConfirmDialog.jsx";
+import { FormErrors } from "@/components/FormErrors.jsx";
+import { LiveState } from "@/components/LiveUi.jsx";
+import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { useApiQuery } from "@/hooks/useApiQuery.js";
+import { useAuth } from "@/hooks/useAuth.js";
+import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels } from "@/utils/labels.js";
+import { formatDateTime } from "@/utils/datetime.js";
+import { carService } from "@/services/vehicleService.js";
+import { reviewService } from "@/services/reviewService.js";
+
+export function Detail({ carId }) {
+    const load = useCallback(async () => {
+        const car = await carService.getPublic(carId);
+        return { car };
+    }, [carId]);
+
+    const detail = useApiQuery(["vehicles", "public-detail", { carId }], load, { requiresAuth: false });
+
+    if (!detail.data)
+        return <LiveState loading={detail.loading} error={detail.error} label="thông tin xe" onRetry={detail.reload}/>;
+
+    return <Body car={detail.data.car} />;
+}
+
+function Body({ car }) {
+    const features = parseFeatures(car.features);
+    const dayPrice = car.rentalPricePerDay || car.pricePerDay || 0;
+    const monthPrice = car.rentalPricePerMonth;
+    const contactName = car.contactName || car.ownerFullName || "Chủ xe";
+    const phone = car.contactPhone || "";
+    const zalo = car.contactZalo || car.contactPhone || "";
+
+    return (
+        <div className="flex flex-col gap-6">
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            {/* Cột trái: Hình ảnh và thông số xe */}
+            <article className="overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
+                <img src={carImage(car)} alt={carName(car)} className="h-64 w-full object-cover" />
+                {car.images?.length > 1 ? (
+                    <div className="flex gap-2 overflow-x-auto p-3">
+                        {car.images.map((image) => (
+                            <img
+                                key={image.id}
+                                src={image.imageUrl}
+                                alt=""
+                                className="h-16 w-24 shrink-0 rounded-lg object-cover"
+                            />
+                        ))}
+                    </div>
+                ) : null}
+                <div className="flex flex-col gap-3 p-5">
+                    <div className="flex items-center justify-between">
+                        <h1 className="text-2xl font-bold text-[#292929]">
+                            {car.brand} {car.model} {car.manufactureYear ?? ""}
+                        </h1>
+                        <span className="rounded-full bg-[#EBF5FF] px-3 py-1 text-xs font-semibold text-[#1E40AF]">
+                            Đã kiểm định
+                        </span>
+                    </div>
+
+                    <p className="text-sm text-[#666666]">
+                        {carTypeLabels[car.carType] ?? car.carType} • {car.seats} chỗ • {transmissionLabels[car.transmission] ?? car.transmission} • {fuelTypeLabels[car.fuelType] ?? car.fuelType}
+                        {car.color ? ` • ${car.color}` : ""}
+                    </p>
+
+                    <div className="flex items-center gap-2 text-sm text-[#292929]">
+                        <span>📍</span>
+                        <span>{car.pickupAddress || [car.district, car.city].filter(Boolean).join(", ")}</span>
+                    </div>
+
+                    {car.description ? (
+                        <div className="mt-2 border-t border-[#F2F2F0] pt-3">
+                            <h2 className="text-sm font-bold text-[#292929] mb-1">Mô tả chi tiết</h2>
+                            <p className="whitespace-pre-line text-sm text-[#666666]">{car.description}</p>
+                        </div>
+                    ) : null}
+
+                    {features.length ? (
+                        <div className="mt-2 border-t border-[#F2F2F0] pt-3">
+                            <h2 className="text-sm font-bold text-[#292929] mb-2">Tiện ích trang bị</h2>
+                            <ul className="flex flex-wrap gap-2">
+                                {features.map((item) => (
+                                    <li key={item} className="rounded-full bg-[#F7F7F5] px-3 py-1 text-xs font-semibold text-[#292929]">
+                                        ✓ {item}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ) : null}
+                </div>
+            </article>
+
+            {/* Cột phải: Thông tin liên hệ & Giá thuê tham khảo */}
+            <aside className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+                <h2 className="text-lg font-bold text-[#292929]">Mức giá tham khảo</h2>
+                
+                <div className="mt-3 rounded-xl bg-[#FFF7F2] p-4">
+                    <div className="flex items-baseline justify-between">
+                        <span className="text-sm text-[#666666]">Thuê theo ngày:</span>
+                        <span className="text-2xl font-black text-[#FC6C26]">{formatMoney(dayPrice)}</span>
+                    </div>
+                    {monthPrice ? (
+                        <div className="mt-2 flex items-baseline justify-between border-t border-[#FED7AA] pt-2">
+                            <span className="text-sm text-[#666666]">Thuê theo tháng:</span>
+                            <span className="text-lg font-bold text-[#292929]">{formatMoney(monthPrice)}</span>
+                        </div>
+                    ) : null}
+                    <p className="mt-2 text-xs text-[#9A3412]">
+                        * Giá trên là giá tham khảo. Bạn có thể liên hệ trực tiếp với chủ xe để thương lượng thêm.
+                    </p>
+                </div>
+
+                <div className="mt-6 border-t border-[#E9E9E7] pt-5">
+                    <h3 className="text-sm font-bold text-[#292929] uppercase tracking-wide">
+                        Thông tin người cho thuê
+                    </h3>
+                    
+                    <div className="mt-3 flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FC6C26] font-bold text-white text-lg">
+                            {contactName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p className="font-bold text-[#292929]">{contactName}</p>
+                            <span className="inline-flex items-center text-xs text-[#059669] font-medium">
+                                ✓ Chủ xe đã xác thực danh tính
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="mt-5 grid gap-3">
+                        {phone ? (
+                            <a
+                                href={`tel:${phone}`}
+                                className="flex items-center justify-center gap-2 rounded-xl bg-[#FC6C26] py-3 px-4 font-bold text-white shadow-sm hover:bg-[#e05615] transition"
+                            >
+                                <span>📞</span>
+                                <span>Gọi ngay: {phone}</span>
+                            </a>
+                        ) : null}
+
+                        {zalo ? (
+                            <a
+                                href={`https://zalo.me/${zalo.replace(/\s+/g, '')}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center justify-center gap-2 rounded-xl border border-[#0068FF] bg-[#F0F6FF] py-3 px-4 font-bold text-[#0068FF] hover:bg-[#E1EDFF] transition"
+                            >
+                                <span>💬</span>
+                                <span>Nhắn tin qua Zalo</span>
+                            </a>
+                        ) : null}
+                    </div>
+
+                    <div className="mt-6 rounded-xl bg-[#F9FAFB] p-3 text-xs text-[#6B7280] leading-relaxed">
+                        <p className="font-semibold text-[#374151] mb-1">💡 Hướng dẫn thuê xe an toàn:</p>
+                        <p>1. Liên hệ trước để chốt lịch và các giấy tờ cần xuất trình.</p>
+                        <p>2. Kiểm tra kỹ tình trạng ngoại quan và giấy tờ xe khi nhận xe.</p>
+                        <p>3. Ký hợp đồng hoặc biên bản thỏa thuận bàn giao giữa 2 bên.</p>
+                    </div>
+
+                    <div className="mt-4 text-center">
+                        <Link to="/explore" className="text-xs font-semibold text-[#666666] hover:text-[#FC6C26]">
+                            ← Xem các tin đăng xe khác
+                        </Link>
+                    </div>
+                </div>
+            </aside>
+        </div>
+        <CarReviews carId={car.id} />
+        </div>
+    );
+}
+
+const reviewSchema = z.object({
+    rating: z.coerce.number().int().min(1, "Chọn từ 1 đến 5 sao").max(5, "Tối đa 5 sao"),
+    comment: z.string().max(2000, "Nhận xét tối đa 2000 ký tự"),
+});
+
+function CarReviews({ carId }) {
+    const { loggedIn } = useAuth();
+    const summary = useApiQuery(["reviews", "car", carId], () => reviewService.byCar(carId), { requiresAuth: false });
+    const create = useApiMutation(reviewService.create, summary.reload);
+    const [open, setOpen] = useState(false);
+    const form = useForm({ resolver: zodResolver(reviewSchema), defaultValues: { rating: 5, comment: "" } });
+    const data = summary.data;
+    async function submit(values) {
+        const created = await create.run({ carId, ...values });
+        if (created) {
+            setOpen(false);
+            form.reset({ rating: 5, comment: "" });
+        }
+    }
+    return <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h2 className="text-lg font-bold text-[#292929]">Đánh giá {data ? `• ${Number(data.averageRating || 0).toFixed(1)}/5 (${data.totalReviews})` : ""}</h2>
+      {loggedIn ? <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Viết đánh giá</button> : <Link to={`/login?next=/cars/${carId}`} className="text-sm font-bold text-[#FC6C26]">Đăng nhập để đánh giá</Link>}
+    </div>
+    <LiveState loading={summary.loading && !data} error={summary.error} empty={!!data && !data.reviews?.length} label="đánh giá" onRetry={summary.reload}/>
+    <ul className="mt-3 flex flex-col gap-3">{(data?.reviews ?? []).map(review => <li key={review.id} className="rounded-xl bg-[#F7F7F5] p-3 text-sm">
+      <p className="font-bold">{review.customerName} <span className="text-[#FC6C26]">{review.rating}/5</span></p>
+      <p className="mt-1">{review.comment || "Không có nhận xét"}</p>
+      <p className="mt-1 text-xs text-[#666666]">{formatDateTime(review.createdAt)}</p>
+    </li>)}</ul>
+    <ConfirmDialog open={open} title="Đánh giá xe này" confirmLabel="Gửi đánh giá" busy={create.running} error={create.error?.message} onClose={() => setOpen(false)} onConfirm={form.handleSubmit(submit)}>
+      <form className="flex flex-col gap-3" onSubmit={form.handleSubmit(submit)}>
+        <label className="text-xs font-semibold text-[#666666]">Số sao<select className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("rating")}>{[5, 4, 3, 2, 1].map(star => <option key={star} value={star}>{star} sao</option>)}</select></label>
+        <label className="text-xs font-semibold text-[#666666]">Nhận xét<textarea maxLength={2000} rows={4} className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("comment")}/></label>
+        <FormErrors errors={form.formState.errors}/>
+      </form>
+    </ConfirmDialog>
+  </section>;
+}
+
+function parseFeatures(raw) {
+    if (!raw) return [];
+    try {
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+    } catch {
+        return String(raw).split(",").map((item) => item.trim()).filter(Boolean);
+    }
+}

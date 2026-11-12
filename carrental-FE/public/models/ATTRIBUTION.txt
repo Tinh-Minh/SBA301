@@ -1,0 +1,8 @@
+2015 Dodge Challenger LB★PERFORMANCE
+Author: Ddiaz Design (https://sketchfab.com/ddiaz-design)
+Source: https://sketchfab.com/3d-models/2015-dodge-challenger-lbperformance-db846e9b985e4ae4934a5d9b6d1683f2
+License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+Original model file retained. Runtime presentation changes include normalization,
+lighting, wheel pivot adjustments and scroll-driven animation.
