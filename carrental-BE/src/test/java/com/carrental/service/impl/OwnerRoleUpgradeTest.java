@@ -20,6 +20,7 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
+import com.carrental.service.AuthService;
 import com.carrental.service.KycService;
 import com.carrental.storage.PrivateDocumentStorage;
 import jakarta.persistence.EntityManager;
@@ -115,7 +116,7 @@ class OwnerRoleUpgradeTest {
         when(customers.findWithLockById(11L)).thenReturn(Optional.of(verified));
 
         CustomerServiceImpl service = new CustomerServiceImpl(
-                customers, mock(EntityManager.class), new CustomerProperties(), FIXED_CLOCK);
+                customers, mock(EntityManager.class), new CustomerProperties(), FIXED_CLOCK, mock(AuthService.class));
 
         ChangeCustomerRoleRequest toOwner = new ChangeCustomerRoleRequest();
         toOwner.setRole(StringNode.valueOf("OWNER"));
