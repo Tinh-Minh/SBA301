@@ -209,6 +209,23 @@ class BugFixRegressionIntegrationTest {
                 .andExpect(jsonPath("$.data.content.length()").value(0));
     }
 
+    // ===================================================================== F2-03
+
+    @Test
+    void duplicatePlateIsDetectedRegardlessOfFormatting() throws Exception {
+        as(ownerId, post("/api/cars").content(carJson("51A11111"))).andExpect(status().isConflict());
+        as(ownerId, post("/api/cars").content(carJson("51a 111.11"))).andExpect(status().isConflict());
+        as(otherId, post("/api/cars").content(carJson("51A-111.11"))).andExpect(status().isConflict());
+        as(ownerId, post("/api/cars").content(carJson("60B-123.45"))).andExpect(status().isOk());
+        as(ownerId, post("/api/cars").content(carJson("60B12345"))).andExpect(status().isConflict());
+    }
+
+    private static String carJson(String plate) {
+        return "{\"licensePlate\":\"" + plate + "\",\"brand\":\"Toyota\",\"model\":\"Vios\",\"manufactureYear\":2022,"
+                + "\"carType\":\"SEDAN\",\"seats\":5,\"transmission\":\"AUTOMATIC\",\"fuelType\":\"GASOLINE\","
+                + "\"city\":\"Hồ Chí Minh\",\"pickupAddress\":\"1 Lê Lợi\",\"rentalPricePerDay\":800000}";
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {

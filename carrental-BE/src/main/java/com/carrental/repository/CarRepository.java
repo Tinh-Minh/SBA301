@@ -19,6 +19,15 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
 
     boolean existsByLicensePlateIgnoreCaseAndIdNot(String licensePlate, Long id);
 
+    /**
+     * So sánh biển số sau khi chuẩn hoá (bỏ '-', '.', khoảng trắng, viết hoa) để
+     * "51Q-719.80" và "51q71980" được coi là cùng một xe.
+     */
+    @org.springframework.data.jpa.repository.Query("select count(c) > 0 from Car c where "
+            + "upper(replace(replace(replace(c.licensePlate, '-', ''), '.', ''), ' ', '')) = :normalized")
+    boolean existsByNormalizedLicensePlate(
+            @org.springframework.data.repository.query.Param("normalized") String normalized);
+
     Page<Car> findAllByOwnerId(Long ownerId, Pageable pageable);
 
     Page<Car> findAllByOwnerIdAndStatus(Long ownerId, CarStatus status, Pageable pageable);

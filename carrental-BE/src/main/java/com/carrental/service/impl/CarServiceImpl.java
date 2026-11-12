@@ -65,7 +65,8 @@ public class CarServiceImpl implements CarService {
             CurrentUserService.requireVerifiedOwner(owner);
 
             Car car = request.toEntity();
-            if (carRepository.existsByLicensePlateIgnoreCase(car.getLicensePlate())) {
+            if (carRepository.existsByLicensePlateIgnoreCase(car.getLicensePlate())
+                    || carRepository.existsByNormalizedLicensePlate(normalizePlate(car.getLicensePlate()))) {
                 throw new AppException(HttpStatus.CONFLICT, "Biển số xe đã tồn tại trên hệ thống: " + car.getLicensePlate());
             }
 
@@ -562,6 +563,11 @@ public class CarServiceImpl implements CarService {
             log.error("Lỗi không mong muốn khi duyệt giấy tờ xe docId={}", documentId, e);
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể phê duyệt giấy tờ xe");
         }
+    }
+
+    /** Bỏ gạch nối, dấu chấm, khoảng trắng và viết hoa để so trùng biển số. */
+    static String normalizePlate(String plate) {
+        return plate == null ? "" : plate.replaceAll("[-.\\s]", "").toUpperCase(java.util.Locale.ROOT);
     }
 
     private Car findCarOrThrow(Long carId) {
