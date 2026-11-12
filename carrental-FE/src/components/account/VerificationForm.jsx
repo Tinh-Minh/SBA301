@@ -57,10 +57,10 @@ export function SubmitForm({
     </label>
     <label className="text-xs font-semibold text-[#666666]">Số giấy tờ<input required disabled={Boolean(blockedMessage)} maxLength={50} value={form.docNumber} onChange={update("docNumber")} className={`${fieldClass} mt-1`}/></label>
     <label className="text-xs font-semibold text-[#666666]">Họ tên trên giấy<input disabled={Boolean(blockedMessage)} value={form.fullNameOnDoc} onChange={update("fullNameOnDoc")} className={`${fieldClass} mt-1`}/></label>
-    <label className="text-xs font-semibold text-[#666666]">Ngày sinh trên giấy<DateField value={form.dateOfBirthOnDoc} onChange={update("dateOfBirthOnDoc")} className={`${fieldClass} mt-1`}/></label>
+    <label className="text-xs font-semibold text-[#666666]">Ngày sinh trên giấy<DateField disabled={Boolean(blockedMessage)} value={form.dateOfBirthOnDoc} onChange={update("dateOfBirthOnDoc")} className={`${fieldClass} mt-1`}/></label>
     <label className="text-xs font-semibold text-[#666666]">Nơi cấp<input disabled={Boolean(blockedMessage)} value={form.issuePlace} onChange={update("issuePlace")} className={`${fieldClass} mt-1`}/></label>
-    <label className="text-xs font-semibold text-[#666666]">Ngày cấp<DateField value={form.issueDate} onChange={update("issueDate")} className={`${fieldClass} mt-1`}/></label>
-    <label className="text-xs font-semibold text-[#666666]">Ngày hết hạn<DateField value={form.expiresAt} onChange={update("expiresAt")} className={`${fieldClass} mt-1`}/></label>
+    <label className="text-xs font-semibold text-[#666666]">Ngày cấp<DateField disabled={Boolean(blockedMessage)} value={form.issueDate} onChange={update("issueDate")} className={`${fieldClass} mt-1`}/></label>
+    <label className="text-xs font-semibold text-[#666666]">Ngày hết hạn<DateField disabled={Boolean(blockedMessage)} value={form.expiresAt} onChange={update("expiresAt")} className={`${fieldClass} mt-1`}/></label>
     {form.docType === "DRIVER_LICENSE" ? <label className="text-xs font-semibold text-[#666666]">Hạng bằng<input required disabled={Boolean(blockedMessage)} value={form.licenseClass} onChange={update("licenseClass")} placeholder="B2" className={`${fieldClass} mt-1`}/></label> : null}
     <label className="text-xs font-semibold text-[#666666]">Ảnh mặt trước<input ref={frontInput} required disabled={Boolean(blockedMessage)} type="file" accept="image/*" onChange={event => setFront(event.target.files?.[0] ?? null)} className={`${fieldClass} mt-1`}/></label>
     <label className="text-xs font-semibold text-[#666666]">Ảnh mặt sau<input ref={backInput} disabled={Boolean(blockedMessage)} type="file" accept="image/*" onChange={event => setBack(event.target.files?.[0] ?? null)} className={`${fieldClass} mt-1`}/></label>

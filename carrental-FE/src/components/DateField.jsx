@@ -33,7 +33,7 @@ function maskDateTime(raw) {
     return text;
 }
 
-const CalendarInput = forwardRef(function CalendarInput({ value, onChange, className, required, id, name, withTime = false }, ref) {
+const CalendarInput = forwardRef(function CalendarInput({ value, onChange, className, required, disabled, id, name, withTime = false }, ref) {
     const format = withTime ? formatInputDateTime : formatInputDate;
     const parse = withTime ? parseInputDateTime : parseInputDate;
     const mask = withTime ? maskDateTime : maskDate;
@@ -62,7 +62,7 @@ const CalendarInput = forwardRef(function CalendarInput({ value, onChange, class
         input.setCustomValidity(message);
         onChange({ target: { value: "" } });
     }
-    return <input ref={ref} id={id} name={name} required={required} type="text" inputMode="numeric" autoComplete="bday" placeholder={withTime ? "dd/mm/yyyy hh:mm" : "dd/mm/yyyy"} title={message} value={text} onFocus={() => setFocused(true)} onBlur={event => { setFocused(false); if (!parse(text) && text.trim())
+    return <input ref={ref} id={id} name={name} required={required} disabled={disabled} type="text" inputMode="numeric" autoComplete="bday" placeholder={withTime ? "dd/mm/yyyy hh:mm" : "dd/mm/yyyy"} title={message} value={text} onFocus={() => setFocused(true)} onBlur={event => { setFocused(false); if (!parse(text) && text.trim())
         event.target.reportValidity(); }} onChange={event => commit(event.target.value, event.target)} className={className}/>;
 });
 
