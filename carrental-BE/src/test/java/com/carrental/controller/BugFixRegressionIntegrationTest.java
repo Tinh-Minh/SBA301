@@ -246,6 +246,22 @@ class BugFixRegressionIntegrationTest {
                 .andExpect(jsonPath("$.data.status").value("ACTIVE"));
     }
 
+    // ===================================================================== F2-06
+
+    @Test
+    void carImageAndDocumentUrlsRejectScriptSchemes() throws Exception {
+        for (String bad : List.of("javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4=", "//evil.example/x.png", "ftp://x/y.png")) {
+            as(ownerId, post("/api/cars/" + carId + "/images").content("[{\"imageUrl\":\"" + bad + "\"}]"))
+                    .andExpect(status().isBadRequest());
+            as(ownerId, post("/api/cars/" + carId + "/documents")
+                    .content("{\"docType\":\"INSURANCE\",\"fileUrl\":\"" + bad + "\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+        as(ownerId, post("/api/cars/" + carId + "/images")
+                .content("[{\"imageUrl\":\"https://cdn.example.com/a.jpg\"},{\"imageUrl\":\"/images/cars/a.jpg\"}]"))
+                .andExpect(status().isOk());
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {
