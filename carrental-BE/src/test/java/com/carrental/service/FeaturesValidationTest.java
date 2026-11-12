@@ -244,10 +244,10 @@ class FeaturesValidationTest {
     @DisplayName("F4 - Xem tóm tắt đánh giá xe kèm điểm trung bình")
     void testGetReviewsByCarId() {
         when(carRepository.existsById(10L)).thenReturn(true);
-        Review r1 = Review.builder().car(car).customer(customer).rating(5).comment("Tuyệt vời").status(ReviewStatus.APPROVED).build();
-        Review r2 = Review.builder().car(car).customer(customer).rating(4).comment("Khá tốt").status(ReviewStatus.APPROVED).build();
+        Review r1 = Review.builder().car(car).customer(customer).rating(5).comment("Tuyệt vời").build();
+        Review r2 = Review.builder().car(car).customer(customer).rating(4).comment("Khá tốt").build();
 
-        when(reviewRepository.findByCarIdAndStatusOrderByCreatedAtDesc(10L, ReviewStatus.APPROVED)).thenReturn(List.of(r1, r2));
+        when(reviewRepository.findByCarIdOrderByCreatedAtDesc(10L)).thenReturn(List.of(r1, r2));
         when(reviewRepository.getAverageRatingByCarId(10L)).thenReturn(4.5);
 
         CarReviewSummaryResponse summary = reviewService.getReviewsByCarId(10L);

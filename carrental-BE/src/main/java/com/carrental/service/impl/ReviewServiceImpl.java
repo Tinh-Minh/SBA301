@@ -34,7 +34,6 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final CarRepository carRepository;
-    private final com.carrental.repository.BookingRepository bookingRepository;
     private final BookingRepository bookingRepository;
     private final CurrentUserService currentUserService;
 
