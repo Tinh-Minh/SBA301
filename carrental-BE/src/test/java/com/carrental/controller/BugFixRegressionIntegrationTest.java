@@ -226,6 +226,26 @@ class BugFixRegressionIntegrationTest {
                 + "\"city\":\"Hồ Chí Minh\",\"pickupAddress\":\"1 Lê Lợi\",\"rentalPricePerDay\":800000}";
     }
 
+    // ===================================================================== F2-04
+
+    @Test
+    void adminCannotApproveCarWithoutVerifiedRegistration() throws Exception {
+        as(adminId, post("/api/admin/cars/" + pendingApprovalCarId + "/approve")).andExpect(status().isConflict());
+
+        String doc = as(ownerId, post("/api/cars/" + pendingApprovalCarId + "/documents")
+                .content("{\"docType\":\"REGISTRATION\",\"fileUrl\":\"/images/docs/cavet.jpg\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        Long docId = ((Number) JsonPath.read(doc, "$.data.id")).longValue();
+        // Giấy tờ còn chờ xác minh => vẫn chưa duyệt được
+        as(adminId, post("/api/admin/cars/" + pendingApprovalCarId + "/approve")).andExpect(status().isConflict());
+
+        as(adminId, patch("/api/admin/cars/" + pendingApprovalCarId + "/documents/" + docId + "/verify")
+                .content("{\"verifyStatus\":\"APPROVED\"}")).andExpect(status().isOk());
+        as(adminId, post("/api/admin/cars/" + pendingApprovalCarId + "/approve"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"));
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {

@@ -317,6 +317,17 @@ public class CarServiceImpl implements CarService {
         try {
             Car car = findCarOrThrow(carId);
             car.getStatus().validateTransitionTo(CarStatus.ACTIVE);
+
+            // Chỉ duyệt xe khi giấy đăng ký xe (cà vẹt) đã được xác minh
+            boolean registrationVerified = carDocumentRepository
+                    .findByCarIdAndDocType(carId, com.carrental.enums.CarDocumentType.REGISTRATION)
+                    .map(doc -> doc.getVerifyStatus() == VerificationStatus.APPROVED)
+                    .orElse(false);
+            if (!registrationVerified) {
+                throw new AppException(HttpStatus.CONFLICT,
+                        "Xe chưa có giấy đăng ký xe được xác minh nên chưa thể duyệt. Hãy xác minh giấy tờ xe trước");
+            }
+
             car.setStatus(CarStatus.ACTIVE);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
