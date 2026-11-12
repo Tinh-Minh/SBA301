@@ -216,6 +216,12 @@ public class CarServiceImpl implements CarService {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Chủ xe chỉ có thể tạm dừng (INACTIVE) hoặc kích hoạt lại (ACTIVE) xe");
             }
 
+            // Chủ xe chỉ được bật/tắt xe ĐÃ được admin duyệt. Xe đang chờ duyệt hoặc bị từ chối
+            // phải đi qua luồng duyệt của admin, không được tự chuyển sang ACTIVE.
+            if (car.getStatus() != CarStatus.ACTIVE && car.getStatus() != CarStatus.INACTIVE) {
+                throw new AppException(HttpStatus.CONFLICT, "Xe chưa được quản trị viên duyệt nên chưa thể tự đổi trạng thái");
+            }
+
             car.getStatus().validateTransitionTo(newStatus);
             car.setStatus(newStatus);
             return toResponse(carRepository.saveAndFlush(car));
