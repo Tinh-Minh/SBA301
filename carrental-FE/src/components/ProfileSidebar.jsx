@@ -16,7 +16,8 @@ const groups = [
 ];
 export function ProfileSidebar({ active, className = "" }) {
     const { user, isAdmin, isOwner } = useAuth();
-    const ownerCounts = useOwnerCounts(Boolean(user && !isAdmin));
+    // Chỉ chủ xe mới gọi API xe của tôi (khách gọi sẽ bị 403)
+    const ownerCounts = useOwnerCounts(Boolean(user && isOwner));
     const roleLabel = accountRoleLabel(user, ownerCounts.approvedCars);
     return <aside className={`space-y-4 ${className}`} data-purpose="account-sidebar">
     <div className="relative overflow-hidden rounded-xl bg-surface-container-lowest p-4 shadow-sm">
