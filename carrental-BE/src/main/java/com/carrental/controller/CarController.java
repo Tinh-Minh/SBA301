@@ -65,10 +65,41 @@ public class CarController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String direction
     ) {
+        validateSearchParams(page, size, sortBy, direction, seats, minPrice, maxPrice);
         Pageable pageable = PageRequestFactory.of(page, size, sortBy, direction, ALLOWED_CAR_SORT_FIELDS, "createdAt");
         // API công khai luôn chỉ trả xe đang hiển thị (LISTED): không nhận listingStatus từ client
         // để tránh lộ xe UNLISTED/EXPIRED ra ngoài.
         return ApiResponse.ok(carService.searchCars(city, carType, brand, seats, minPrice, maxPrice, ListingStatus.LISTED, pageable));
+    }
+
+    /** Từ chối tham số tìm kiếm vô nghĩa thay vì âm thầm bỏ qua. */
+    static void validateSearchParams(int page, int size, String sortBy, String direction,
+                                     Integer seats, BigDecimal minPrice, BigDecimal maxPrice) {
+        if (page < 0) {
+            throw badParam("Số trang (page) phải từ 0 trở lên");
+        }
+        if (size < 1) {
+            throw badParam("Kích thước trang (size) phải từ 1 trở lên");
+        }
+        if (sortBy != null && !ALLOWED_CAR_SORT_FIELDS.contains(sortBy)) {
+            throw badParam("Không hỗ trợ sắp xếp theo '" + sortBy + "'");
+        }
+        if (direction != null && !direction.equalsIgnoreCase("ASC") && !direction.equalsIgnoreCase("DESC")) {
+            throw badParam("Chiều sắp xếp (direction) chỉ nhận ASC hoặc DESC");
+        }
+        if (seats != null && seats < 1) {
+            throw badParam("Số chỗ phải từ 1 trở lên");
+        }
+        if ((minPrice != null && minPrice.signum() < 0) || (maxPrice != null && maxPrice.signum() < 0)) {
+            throw badParam("Khoảng giá không được âm");
+        }
+        if (minPrice != null && maxPrice != null && minPrice.compareTo(maxPrice) > 0) {
+            throw badParam("Giá tối thiểu không được lớn hơn giá tối đa");
+        }
+    }
+
+    private static com.carrental.exception.AppException badParam(String message) {
+        return new com.carrental.exception.AppException(org.springframework.http.HttpStatus.BAD_REQUEST, message);
     }
 
     // Chủ xe xem danh sách xe của mình (hỗ trợ lọc status và listingStatus)

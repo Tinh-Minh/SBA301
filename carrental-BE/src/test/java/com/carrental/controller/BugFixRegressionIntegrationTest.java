@@ -262,6 +262,19 @@ class BugFixRegressionIntegrationTest {
                 .andExpect(status().isOk());
     }
 
+    // ===================================================================== F2-07
+
+    @Test
+    void publicSearchRejectsNonsenseParameters() throws Exception {
+        mockMvc.perform(get("/api/cars/search").param("page", "-1")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/cars/search").param("sortBy", "passwordHash")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/cars/search").param("seats", "-5")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/cars/search").param("minPrice", "900000").param("maxPrice", "100000"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/cars/search").param("minPrice", "100000").param("maxPrice", "900000")
+                .param("sortBy", "rentalPricePerDay").param("direction", "asc")).andExpect(status().isOk());
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {
