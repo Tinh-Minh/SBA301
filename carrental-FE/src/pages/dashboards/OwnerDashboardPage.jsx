@@ -41,7 +41,7 @@ export default function OwnerDashboard() {
     <section className="rounded-2xl border border-card-border bg-white p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-bold text-charcoal">Gói chờ thanh toán</h2>
-        <span className="text-sm text-muted-gray">Đã thu <Money amount={data.paidTotal}/></span>
+        <span className="text-sm text-muted-gray">Đã chi cho gói đăng tin <Money amount={data.paidTotal}/></span>
       </div>
       {data.pendingPaymentsList.length === 0 ? <p className="mt-3 text-sm text-muted-gray">Không có gói nào đang chờ thanh toán.</p> : <ul className="mt-3 flex flex-col gap-2">
         {data.pendingPaymentsList.map(item => <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[#F7F7F5] px-3 py-2 text-sm">
