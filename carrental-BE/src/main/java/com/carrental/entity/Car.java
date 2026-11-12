@@ -117,6 +117,10 @@ public class Car extends BaseEntity {
     @Builder.Default
     private CarStatus status = CarStatus.PENDING_APPROVAL;
 
+    // Lý do admin từ chối hồ sơ gần nhất (xoá khi xe được gửi duyệt lại hoặc được duyệt)
+    @Column(name = "reject_reason", length = 500)
+    private String rejectReason;
+
     // Trạng thái hiển thị rao vặt (được cấp bởi gói subscription)
     @Enumerated(EnumType.STRING)
     @Column(name = "listing_status", nullable = false, length = 20)

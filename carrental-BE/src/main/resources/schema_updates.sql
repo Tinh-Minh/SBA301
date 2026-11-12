@@ -12,3 +12,6 @@ ALTER TABLE cars ADD COLUMN IF NOT EXISTS deposit_amount        NUMERIC(14,0) CH
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS km_limit_per_day      INT CHECK (km_limit_per_day > 0);
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS extra_km_fee          NUMERIC(14,0) CHECK (extra_km_fee >= 0);
 ALTER TABLE cars ADD COLUMN IF NOT EXISTS late_fee_per_hour     NUMERIC(14,0) CHECK (late_fee_per_hour >= 0);
+
+-- Lưu lý do admin từ chối hồ sơ xe để chủ xe biết cần sửa gì
+ALTER TABLE cars ADD COLUMN IF NOT EXISTS reject_reason VARCHAR(500);

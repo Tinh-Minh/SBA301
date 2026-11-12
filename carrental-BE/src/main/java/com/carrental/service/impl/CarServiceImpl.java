@@ -108,6 +108,7 @@ public class CarServiceImpl implements CarService {
             if (car.getStatus() == CarStatus.REJECTED) {
                 car.getStatus().validateTransitionTo(CarStatus.PENDING_APPROVAL);
                 car.setStatus(CarStatus.PENDING_APPROVAL);
+                car.setRejectReason(null);
                 log.info("Car id={} được gửi duyệt lại (REJECTED -> PENDING_APPROVAL)", carId);
             }
 
@@ -328,6 +329,7 @@ public class CarServiceImpl implements CarService {
                         "Xe chưa có giấy đăng ký xe được xác minh nên chưa thể duyệt. Hãy xác minh giấy tờ xe trước");
             }
 
+            car.setRejectReason(null);
             car.setStatus(CarStatus.ACTIVE);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
@@ -350,6 +352,7 @@ public class CarServiceImpl implements CarService {
             Car car = findCarOrThrow(carId);
             car.getStatus().validateTransitionTo(CarStatus.REJECTED);
             car.setStatus(CarStatus.REJECTED);
+            car.setRejectReason(reason);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Từ chối xe thất bại carId={}: {}", carId, e.getMessage());

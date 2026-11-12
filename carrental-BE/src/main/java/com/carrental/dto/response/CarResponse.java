@@ -50,6 +50,7 @@ public record CarResponse(
         BigDecimal extraKmFee,
         BigDecimal lateFeePerHour,
         BigDecimal weekendPricePerDay,
+        String rejectReason,
         List<CarImageResponse> images,
         List<CarDocumentResponse> documents,
         LocalDateTime createdAt,
@@ -122,6 +123,8 @@ public record CarResponse(
                 car.getExtraKmFee(),
                 car.getLateFeePerHour(),
                 car.getWeekendPricePerDay(),
+                // Lý do từ chối chỉ dành cho chủ xe/admin (bản công khai không có biển số)
+                licensePlate != null ? car.getRejectReason() : null,
                 imgList,
                 docList,
                 car.getCreatedAt(),

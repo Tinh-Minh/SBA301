@@ -93,6 +93,7 @@ export default function OwnerVehicles() {
                 </div>
               </div>
               <p className="text-sm text-muted-gray">{statusNote(car.status)} Điểm giao xe: {car.pickupAddress}</p>
+              {car.status === "REJECTED" && car.rejectReason ? <p role="note" className="rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2 text-sm text-[#B91C1C]"><strong>Lý do từ chối:</strong> {car.rejectReason}. Sửa hồ sơ rồi lưu lại để gửi duyệt lại.</p> : null}
               <ListingStatusBar car={car} subscriptions={subscriptions ?? []} onReload={() => { reloadCars?.(); reloadSubs?.(); }}/>
               <div className="mt-auto flex flex-wrap items-center gap-2">
                 <Link to={ownerRoutes.vehicleEdit(car.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-card-border px-3.5 py-2 text-xs font-bold text-charcoal hover:border-orange-200 hover:text-brand-accent">

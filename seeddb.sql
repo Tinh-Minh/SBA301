@@ -191,6 +191,7 @@ CREATE TABLE cars (
     listing_status       VARCHAR(20)  NOT NULL DEFAULT 'UNLISTED'
                          CHECK (listing_status IN ('UNLISTED', 'LISTED', 'EXPIRED')),
                          
+    reject_reason        VARCHAR(500),
     current_subscription_id BIGINT,
     created_at           TIMESTAMP    NOT NULL DEFAULT vn_now(),
     updated_at           TIMESTAMP    NOT NULL DEFAULT vn_now()
