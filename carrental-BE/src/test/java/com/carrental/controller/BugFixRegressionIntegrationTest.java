@@ -289,6 +289,16 @@ class BugFixRegressionIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    // ===================================================================== F4-02
+
+    @Test
+    void reviewsAreRejectedForCarsThatAreNotApproved() throws Exception {
+        as(plainCustomerId, post("/api/reviews").content("{\"carId\":" + rejectedCarId + ",\"rating\":1,\"comment\":\"x\"}"))
+                .andExpect(status().isNotFound());
+        as(plainCustomerId, post("/api/reviews").content("{\"carId\":" + pendingApprovalCarId + ",\"rating\":5}"))
+                .andExpect(status().isNotFound());
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {

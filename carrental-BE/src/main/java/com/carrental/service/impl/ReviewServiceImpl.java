@@ -43,6 +43,11 @@ public class ReviewServiceImpl implements ReviewService {
         Car car = carRepository.findById(request.getCarId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + request.getCarId()));
 
+        // Xe chưa được duyệt / bị từ chối không hiển thị công khai nên không nhận đánh giá
+        if (car.getStatus() != com.carrental.enums.CarStatus.ACTIVE) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + request.getCarId());
+        }
+
         if (car.getOwner() != null && car.getOwner().getId().equals(customer.getId())) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Bạn không thể tự đánh giá xe của chính mình");
         }
