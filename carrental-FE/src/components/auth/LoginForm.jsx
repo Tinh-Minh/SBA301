@@ -36,10 +36,10 @@ export function LoginForm() {
 
     return <form data-native noValidate onSubmit={onSubmit} aria-busy={isSubmitting} className="auth-form">
         <div className="auth-field-group">
-            <label htmlFor="login-account">Email hoặc số điện thoại</label>
+            <label htmlFor="login-account">Email</label>
             <div className="auth-control">
                 <span className="material-symbols-outlined" aria-hidden="true">alternate_email</span>
-                <input className="auth-field" id="login-account" placeholder="name@example.com hoặc 0912..." required type="text" autoComplete="username" aria-label="Email hoặc số điện thoại" {...register("email")} aria-invalid={Boolean(errors.email)} />
+                <input className="auth-field" id="login-account" placeholder="name@example.com" required type="email" inputMode="email" autoComplete="username" aria-label="Email" {...register("email")} aria-invalid={Boolean(errors.email)} />
             </div>
         </div>
         <div className="auth-field-group">
