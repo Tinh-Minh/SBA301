@@ -18,6 +18,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
     @EntityGraph(attributePaths = {"customer", "car"})
     List<Review> findByCarIdOrderByCreatedAtDesc(Long carId);
 
+    @EntityGraph(attributePaths = {"customer", "car"})
+    List<Review> findByCarIdAndApprovedTrueOrderByCreatedAtDesc(Long carId);
+
     boolean existsByCarIdAndCustomerId(Long carId, Long customerId);
 
     Page<Review> findByCarId(Long carId, Pageable pageable);
@@ -26,4 +29,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
 
     @Query("SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r WHERE r.car.id = :carId")
     Double getAverageRatingByCarId(@Param("carId") Long carId);
+
+    @Query("SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r WHERE r.car.id = :carId AND r.approved = true")
+    Double getApprovedAverageRatingByCarId(@Param("carId") Long carId);
+
+    long countByCarIdAndApprovedTrue(Long carId);
 }

@@ -29,7 +29,9 @@ export const adminUserService = {
     /** PATCH /api/user-documents/{id}/review { verifyStatus: APPROVED|REJECTED, rejectReason } */
     reviewDocument: (id, verifyStatus, rejectReason) => request(endpoints.userDocuments.byIdReview(id), {
         method: "PATCH",
-        json: { verifyStatus, rejectReason: verifyStatus === "REJECTED" ? (rejectReason || null) : null },
+        json: verifyStatus === "APPROVED" 
+            ? { verifyStatus: "APPROVED" } 
+            : { verifyStatus: "REJECTED", rejectReason: rejectReason?.trim() || null },
     }),
     /** URL ảnh giấy tờ (cần JWT nên tải qua Axios rồi tạo blob URL). */
     async documentImage(id, side) {

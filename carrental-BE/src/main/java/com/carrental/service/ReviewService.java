@@ -24,6 +24,9 @@ public interface ReviewService {
     /** Admin gỡ đánh giá vi phạm / rác. */
     void deleteByAdmin(Long id);
 
+    /** Admin duyệt đánh giá để hiển thị công khai. */
+    ReviewResponse approveByAdmin(Long id);
+
     /** Kiểm tra xem tài khoản hiện tại có đủ điều kiện đánh giá xe hay không. */
     ReviewEligibilityResponse checkEligibility(Long carId);
 }

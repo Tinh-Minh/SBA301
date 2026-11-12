@@ -59,4 +59,11 @@ public class ReviewController {
         reviewService.deleteByAdmin(id);
         return ApiResponse.ok("Đã gỡ đánh giá", null);
     }
+
+    // Admin duyệt đánh giá để hiển thị công khai
+    @PreAuthorize("hasRole('ADMIN')")
+    @org.springframework.web.bind.annotation.PatchMapping("/api/admin/reviews/{id}/approve")
+    public ApiResponse<ReviewResponse> approveByAdmin(@PathVariable Long id) {
+        return ApiResponse.ok("Đã duyệt đánh giá", reviewService.approveByAdmin(id));
+    }
 }

@@ -15,6 +15,7 @@ public record ReviewResponse(
         String customerAvatar,
         Integer rating,
         String comment,
+        Boolean approved,
         LocalDateTime createdAt
 ) {
     public static ReviewResponse from(Review r) {
@@ -38,6 +39,7 @@ public record ReviewResponse(
                 customerAvatar,
                 r.getRating(),
                 r.getComment(),
+                Boolean.TRUE.equals(r.getApproved()),
                 r.getCreatedAt()
         );
     }

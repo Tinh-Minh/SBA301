@@ -3,10 +3,6 @@
 /.vscode/
 *.iml
 
-.env
-.env.*
-!.env.example
-
 application-local.properties
 
 *.pem

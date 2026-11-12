@@ -91,8 +91,9 @@ public class ReviewServiceImpl implements ReviewService {
             throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId);
         }
 
-        List<Review> reviews = reviewRepository.findByCarIdOrderByCreatedAtDesc(carId);
-        Double avg = reviewRepository.getAverageRatingByCarId(carId);
+        // Chỉ lấy review đã được admin duyệt để hiển thị công khai
+        List<Review> reviews = reviewRepository.findByCarIdAndApprovedTrueOrderByCreatedAtDesc(carId);
+        Double avg = reviewRepository.getApprovedAverageRatingByCarId(carId);
         if (avg == null) avg = 0.0;
         double roundedAvg = Math.round(avg * 10.0) / 10.0;
 
@@ -106,6 +107,17 @@ public class ReviewServiceImpl implements ReviewService {
         Specification<Review> spec = buildFilterSpecification(carId, customerId);
         Page<Review> page = reviewRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(ReviewResponse::from));
+    }
+
+    @Override
+    @Transactional
+    public ReviewResponse approveByAdmin(Long id) {
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id));
+        review.setApproved(true);
+        reviewRepository.save(review);
+        log.info("Admin duyệt đánh giá id={} của xe id={}", id, review.getCar().getId());
+        return ReviewResponse.from(review);
     }
 
     @Override
