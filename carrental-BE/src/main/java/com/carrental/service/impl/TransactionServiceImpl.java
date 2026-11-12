@@ -46,6 +46,14 @@ public class TransactionServiceImpl implements TransactionService {
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
 
+    @org.springframework.beans.factory.annotation.Value("${app.payment.simulate-gateway-enabled:false}")
+    private boolean simulateGatewayEnabled;
+
+    /** Dùng cho unit test dựng service bằng tay (không qua Spring). */
+    public void setSimulateGatewayEnabled(boolean simulateGatewayEnabled) {
+        this.simulateGatewayEnabled = simulateGatewayEnabled;
+    }
+
     @Autowired
     public TransactionServiceImpl(
             TransactionRepository transactionRepository,
@@ -153,12 +161,32 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionResponse simulateGateway(Long id) {
+        return simulateGateway(id, true);
+    }
+
+    @Override
+    @Transactional
+    public TransactionResponse simulateGateway(Long id, boolean success) {
+        // Cổng giả lập chỉ dành cho dev/test. Mặc định TẮT để chủ xe không thể tự xác nhận
+        // thanh toán và đăng tin miễn phí trên môi trường thật.
+        if (!simulateGatewayEnabled) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Chức năng giả lập thanh toán đang tắt trên môi trường này");
+        }
+
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + id));
         validateAccess(transaction);
 
         if (transaction.getStatus() == TransactionStatus.SUCCESS) {
             return TransactionResponse.from(transaction);
+        }
+        transaction.getStatus().validateTransitionTo(success ? TransactionStatus.SUCCESS : TransactionStatus.FAILED);
+
+        if (!success) {
+            transaction.setStatus(TransactionStatus.FAILED);
+            Transaction failed = transactionRepository.save(transaction);
+            log.info("Giả lập thanh toán THẤT BẠI cho transaction id={}", failed.getId());
+            return TransactionResponse.from(failed);
         }
 
         transaction.setStatus(TransactionStatus.SUCCESS);

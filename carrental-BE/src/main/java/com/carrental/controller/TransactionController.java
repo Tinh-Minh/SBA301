@@ -49,8 +49,14 @@ public class TransactionController {
 
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @PostMapping("/{id}/simulate-gateway")
-    public ApiResponse<TransactionResponse> simulateGateway(@PathVariable Long id) {
-        return ApiResponse.ok("Giả lập thanh toán thành công", transactionService.simulateGateway(id));
+    public ApiResponse<TransactionResponse> simulateGateway(
+            @PathVariable Long id,
+            @org.springframework.web.bind.annotation.RequestBody(required = false) Map<String, Object> body) {
+        // simulateSuccess=false => giả lập cổng thanh toán báo thất bại (mặc định: thành công)
+        Object flag = body == null ? null : body.get("simulateSuccess");
+        boolean success = flag == null || Boolean.parseBoolean(String.valueOf(flag));
+        TransactionResponse response = transactionService.simulateGateway(id, success);
+        return ApiResponse.ok(success ? "Giả lập thanh toán thành công" : "Giả lập thanh toán thất bại", response);
     }
 
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")

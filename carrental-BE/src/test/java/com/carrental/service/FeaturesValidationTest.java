@@ -175,6 +175,7 @@ class FeaturesValidationTest {
         when(transactionRepository.findById(500L)).thenReturn(Optional.of(tx));
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+        transactionService.setSimulateGatewayEnabled(true);
         TransactionResponse response = transactionService.simulateGateway(500L);
 
         assertNotNull(response);

@@ -99,6 +99,7 @@ class BugFixRegressionIntegrationTest {
     @Autowired private VoucherRepository voucherRepository;
     @Autowired private CarSubscriptionService subscriptionService;
     @Autowired private TransactionRepository transactionRepository;
+    @Autowired private com.carrental.service.impl.TransactionServiceImpl transactionServiceImpl;
     @Autowired private MutableClock clock;
     @Autowired private EntityManager entityManager;
     @Autowired private TransactionTemplate tx;
@@ -157,6 +158,42 @@ class BugFixRegressionIntegrationTest {
         as(ownerId, patch("/api/cars/" + carId + "/status").param("status", "INACTIVE")).andExpect(status().isOk());
         as(ownerId, patch("/api/cars/" + carId + "/status").param("status", "ACTIVE")).andExpect(status().isOk());
         assertThat(car().getStatus()).isEqualTo(CarStatus.ACTIVE);
+    }
+
+    // ===================================================================== F4-01
+
+    @Test
+    void simulateGatewayHonoursFailureFlagAndKeepsListingHidden() throws Exception {
+        Long subId = create(null);
+        Long txId = pendingTransaction(subId);
+        as(ownerId, post("/api/transactions/" + txId + "/simulate-gateway").content("{\"simulateSuccess\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("FAILED"));
+        assertThat(subscription(subId).getStatus()).isEqualTo(SubscriptionStatus.PENDING_PAYMENT);
+        assertThat(car().getListingStatus()).isEqualTo(ListingStatus.UNLISTED);
+        // Giao dịch đã FAILED thì không giả lập lại thành SUCCESS được
+        as(ownerId, post("/api/transactions/" + txId + "/simulate-gateway")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void simulateGatewayIsRejectedWhenDisabled() throws Exception {
+        Long subId = create(null);
+        Long txId = pendingTransaction(subId);
+        transactionServiceImpl.setSimulateGatewayEnabled(false);
+        try {
+            as(ownerId, post("/api/transactions/" + txId + "/simulate-gateway")).andExpect(status().isForbidden());
+            as(adminId, post("/api/transactions/" + txId + "/simulate-gateway")).andExpect(status().isForbidden());
+        } finally {
+            transactionServiceImpl.setSimulateGatewayEnabled(true);
+        }
+        assertThat(subscription(subId).getStatus()).isEqualTo(SubscriptionStatus.PENDING_PAYMENT);
+    }
+
+    private Long pendingTransaction(Long subId) throws Exception {
+        String body = as(ownerId, post("/api/transactions/package-payment")
+                .content("{\"subscriptionId\":" + subId + ",\"method\":\"VNPAY\"}"))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        return ((Number) JsonPath.read(body, "$.data.id")).longValue();
     }
 
     // ===================================================================== helpers
