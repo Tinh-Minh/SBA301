@@ -7,5 +7,10 @@
 !/docs/
 !/BACKEND_CONVENTIONS.md
 !/seeddb.sql
+!/TEST_PLAN.md
+!/BUG_REPORT.md
+!/FIX_LOG.md
+!/FINAL_REPORT.md
+!/run_comprehensive_suite.cjs
 !/.gitignore
 /.idea/
