@@ -30,6 +30,8 @@ public class DatabaseSeedInitializer implements InitializingBean {
 
     private static final String SEED_SCRIPT = "seed_data.sql";
     private static final String UPDATE_SCRIPT = "schema_updates.sql";
+    /** Dữ liệu mẫu cho các bảng tạo bởi schema_updates.sql; chỉ chạy ngay sau khi nạp seed chính. */
+    private static final String EXTRA_SEED_SCRIPT = "seed_data_extras.sql";
 
     private final DataSource dataSource;
     private final boolean reset;
@@ -43,7 +45,8 @@ public class DatabaseSeedInitializer implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws Exception {
         boolean empty = !customersTableExists();
-        if (empty || reset) {
+        boolean seeded = empty || reset;
+        if (seeded) {
             log.warn("Nạp dữ liệu mẫu {} (database trống={}, reset={})", SEED_SCRIPT, empty, reset);
             run(SEED_SCRIPT);
         } else {
@@ -51,6 +54,9 @@ public class DatabaseSeedInitializer implements InitializingBean {
         }
         if (new ClassPathResource(UPDATE_SCRIPT).exists()) {
             run(UPDATE_SCRIPT);
+        }
+        if (seeded && new ClassPathResource(EXTRA_SEED_SCRIPT).exists()) {
+            run(EXTRA_SEED_SCRIPT);
         }
     }
 
