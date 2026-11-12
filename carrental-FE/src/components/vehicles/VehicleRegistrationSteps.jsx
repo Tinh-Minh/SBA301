@@ -11,14 +11,22 @@ export const steps = [
     { id: 3, title: "Giá thuê & Cọc", next: "Tiếp tục: Tải bộ ảnh niêm yết (Bước 4)", blurb: "Thiết lập đơn giá theo ngày, tiền cọc thế chấp và phí phụ trội." },
     { id: 4, title: "Hình ảnh niêm yết", next: "Gửi BQL CarDB thẩm định", blurb: "Tải ảnh thực tế và hoàn tất hồ sơ gửi CarDB thẩm định." },
 ];
-const brands = ["VinFast", "Mercedes-Benz", "BMW", "Porsche", "Audi", "Hyundai"];
+const brands = ["Toyota", "Honda", "Hyundai", "Kia", "Mazda", "Mitsubishi", "Ford", "VinFast", "Suzuki", "Nissan", "Mercedes-Benz", "BMW", "Audi", "Porsche"];
 export const modelsByBrand = {
-    VinFast: ["VF 9 Plus AWD", "VF 8 Plus", "VF 5 Plus"],
-    "Mercedes-Benz": ["GLC 300 4MATIC", "E 300 AMG"],
-    BMW: ["530i M Sport", "X5 xDrive40i"],
+    Toyota: ["Vios", "Camry", "Corolla Cross", "Fortuner", "Innova", "Veloz Cross"],
+    Honda: ["City", "Civic", "CR-V", "HR-V", "BR-V"],
+    Hyundai: ["Accent", "Creta", "Tucson", "Santa Fe", "Stargazer"],
+    Kia: ["Morning", "K3", "Seltos", "Sonet", "Carnival", "Sorento"],
+    Mazda: ["Mazda2", "Mazda3", "CX-5", "CX-8"],
+    Mitsubishi: ["Xpander", "Xforce", "Attrage", "Triton"],
+    Ford: ["Ranger", "Everest", "Territory"],
+    VinFast: ["VF 3", "VF 5 Plus", "VF 6", "VF 8 Plus", "VF 9 Plus AWD"],
+    Suzuki: ["Ertiga", "XL7", "Swift"],
+    Nissan: ["Almera", "Navara", "Kicks"],
+    "Mercedes-Benz": ["C 200", "E 300 AMG", "GLC 300 4MATIC"],
+    BMW: ["320i", "530i M Sport", "X5 xDrive40i"],
+    Audi: ["A4", "A6", "Q5"],
     Porsche: ["Macan GTS", "Cayenne"],
-    Audi: ["A6", "Q5"],
-    Hyundai: ["Santa Fe", "Tucson"],
 };
 const years = ["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"];
 export const segments = [
