@@ -207,13 +207,6 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void sendVerificationEmail(Customer customer) {
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailFrom == null || mailFrom.isBlank()
-                || mailUsername == null || mailUsername.isBlank()
-                || mailPassword == null || mailPassword.isBlank()
-                || mailSender == null) {
-            throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
-        }
         Instant issuedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(jwtProperties.issuer())
@@ -233,6 +226,16 @@ public class AuthServiceImpl implements AuthService {
                 .fragment("token=" + token)
                 .build()
                 .toUriString();
+
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+        if (mailFrom == null || mailFrom.isBlank()
+                || mailUsername == null || mailUsername.isBlank()
+                || mailPassword == null || mailPassword.isBlank()
+                || mailSender == null) {
+            log.warn("Dịch vụ gửi email chưa được cấu hình. Link xác minh email cho {}: {}", customer.getEmail(), verificationUrl);
+            customer.setEmailVerified(true);
+            return;
+        }
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(mailFrom);
