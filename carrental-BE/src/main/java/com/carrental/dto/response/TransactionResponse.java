@@ -21,7 +21,9 @@ public record TransactionResponse(
         String providerRef,
         LocalDateTime paidAt,
         LocalDateTime createdAt,
-        String paymentUrl
+        String paymentUrl,
+        /** Trạng thái gói đăng tin của giao dịch, để phân biệt giao dịch thất bại với giao dịch bị huỷ theo gói. */
+        String subscriptionStatus
 ) {
     public static TransactionResponse from(Transaction t) {
         return from(t, null);
@@ -65,7 +67,9 @@ public record TransactionResponse(
                 t.getProviderRef(),
                 t.getPaidAt(),
                 t.getCreatedAt(),
-                paymentUrl
+                paymentUrl,
+                t.getSubscription() != null && t.getSubscription().getStatus() != null
+                        ? t.getSubscription().getStatus().name() : null
         );
     }
 }
