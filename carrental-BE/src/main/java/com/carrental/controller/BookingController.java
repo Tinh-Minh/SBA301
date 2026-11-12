@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final com.carrental.service.RentalDashboardService dashboardService;
 
     // ---------------------------------------------------------------- công khai
 
@@ -123,5 +124,25 @@ public class BookingController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ApiResponse.ok(bookingService.adminList(status, carId, q, PageRequestFactory.of(page, size, "id,desc")));
+    }
+
+    // ---------------------------------------------------------------- bảng theo dõi
+
+    @PreAuthorize("hasRole('OWNER')")
+    @GetMapping("/api/dashboards/owner")
+    public ApiResponse<OwnerDashboardResponse> ownerDashboard() {
+        return ApiResponse.ok(dashboardService.owner());
+    }
+
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")
+    @GetMapping("/api/dashboards/customer")
+    public ApiResponse<CustomerDashboardResponse> customerDashboard() {
+        return ApiResponse.ok(dashboardService.customer());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/api/admin/bookings/stats")
+    public ApiResponse<AdminBookingStats> adminStats() {
+        return ApiResponse.ok(dashboardService.admin());
     }
 }

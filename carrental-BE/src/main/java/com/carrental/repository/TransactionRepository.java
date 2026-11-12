@@ -53,4 +53,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
            "GROUP BY lp.id, lp.name, lp.code " +
            "ORDER BY SUM(t.amount) DESC")
     List<Object[]> findPackageRevenueStats();
+
+    /** Tiền chủ xe đã trả cho gói đăng tin, theo từng xe. */
+    @Query("SELECT t.subscription.car.id, COALESCE(SUM(t.amount), 0) FROM Transaction t "
+            + "WHERE t.status = 'SUCCESS' AND t.subscription.customer.id = :ownerId GROUP BY t.subscription.car.id")
+    List<Object[]> sumPackageSpendByCar(@org.springframework.data.repository.query.Param("ownerId") Long ownerId);
 }
