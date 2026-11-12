@@ -79,9 +79,9 @@ public class SecurityConfiguration {
                         .requestMatchers(org.springframework.web.cors.CorsUtils::isPreFlightRequest).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/packages").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login",
+                                "/api/auth/verify-email", "/api/auth/resend-verification").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cars/search", "/api/cars/{id:[0-9]+}", "/api/cars/{carId:[0-9]+}/reviews",
-                                "/api/cars/{carId:[0-9]+}/reviews/**",
                                 "/api/cars/{carId:[0-9]+}/safety", "/api/cars/{carId:[0-9]+}/quote",
                                 "/api/cars/{carId:[0-9]+}/availability").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews", "/api/reviews/**").permitAll()

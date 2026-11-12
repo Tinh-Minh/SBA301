@@ -14,6 +14,7 @@ import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.enums.ListingStatus;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -59,6 +60,8 @@ public interface CarService {
 
     // Car Images
     List<CarImageResponse> addCarImages(Long carId, List<CarImageRequest> requests);
+
+    List<CarImageResponse> addCarImages(Long carId, List<MultipartFile> files, Integer primaryIndex);
 
     void deleteCarImage(Long carId, Long imageId);
 

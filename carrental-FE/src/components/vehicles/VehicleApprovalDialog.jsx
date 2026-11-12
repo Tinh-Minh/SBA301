@@ -3,7 +3,7 @@ import { AdminDialog, AdminState, PrimaryButton, StatusPill } from "@/components
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate } from "@/utils/datetime.js";
-import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels, verifyStatusLabels } from "@/utils/labels.js";
+import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, resolveAssetUrl, transmissionLabels, verifyStatusLabels } from "@/utils/labels.js";
 import { adminCarService } from "@/services/adminService.js";
 
 export const tabs = [
@@ -37,7 +37,7 @@ export function CarDetail({ id, onChanged }) {
     const busy = approve.running || reject.running || verify.running;
     return <aside className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <img src={carImage(car)} alt={`${car.brand} ${car.model}`} className="h-44 w-full rounded-xl object-cover"/>
-    {car.images.length > 1 ? <div className="flex gap-2 overflow-x-auto">{car.images.map(image => <img key={image.id} src={image.imageUrl} alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover"/>)}</div> : null}
+    {car.images.length > 1 ? <div className="flex gap-2 overflow-x-auto">{car.images.map(image => <img key={image.id} src={resolveAssetUrl(image.imageUrl)} alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover"/>)}</div> : null}
     <div>
       <h2 className="text-lg font-bold text-[#292929]">{car.brand} {car.model} {car.manufactureYear ?? ""}</h2>
       <p className="text-xs text-[#666666]">{car.licensePlate} • Chủ xe #{car.ownerId}{car.ownerFullName ? ` • ${car.ownerFullName}` : ""}</p>
@@ -59,7 +59,7 @@ export function CarDetail({ id, onChanged }) {
       {!documents.length ? <p className="text-sm text-[#666666]">Chủ xe chưa tải giấy tờ.</p> : null}
       {documents.map(doc => <div key={doc.id} className="rounded-xl border border-[#E9E9E7] p-3 text-sm">
         <div className="flex items-center justify-between gap-2">
-          <a href={doc.fileUrl} target="_blank" rel="noreferrer" className="font-bold text-[#FC6C26] underline">{carDocLabel[doc.docType] ?? doc.docType}</a>
+          <a href={resolveAssetUrl(doc.fileUrl)} target="_blank" rel="noreferrer" className="font-bold text-[#FC6C26] underline">{carDocLabel[doc.docType] ?? doc.docType}</a>
           <StatusPill tone={docTone[doc.verifyStatus]}>{verifyStatusLabels[doc.verifyStatus] ?? doc.verifyStatus}</StatusPill>
         </div>
         <p className="mt-1 text-xs text-[#666666]">Hết hạn: {formatDate(doc.expiresAt)}{doc.rejectReason ? ` • Lý do: ${doc.rejectReason}` : ""}</p>

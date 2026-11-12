@@ -22,3 +22,8 @@ export function useDocuments() {
     const list = useApiQuery(["account", "documents"], load);
     return list;
 }
+
+export function useMyKyc() {
+    const load = useCallback(() => getMyKyc(), []);
+    return useApiQuery(["account", "kyc"], load);
+}

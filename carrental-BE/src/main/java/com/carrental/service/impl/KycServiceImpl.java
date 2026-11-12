@@ -2,8 +2,10 @@ package com.carrental.service.impl;
 
 import com.carrental.dto.response.KycSummaryResponse;
 import com.carrental.entity.Customer;
+import com.carrental.entity.UserDocument;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
@@ -12,6 +14,7 @@ import com.carrental.security.CurrentAccount;
 import com.carrental.service.KycService;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.util.List;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +61,20 @@ public class KycServiceImpl implements KycService {
 
     private KycSummaryResponse summary(Customer customer) {
         LocalDate today = LocalDate.now(clock);
-        KycStatus status = KycService.evaluateDocuments(documents.findByCustomerId(customer.getId()), today);
-        return KycSummaryResponse.from(customer, status, today);
+        List<UserDocument> docs = documents.findByCustomerId(customer.getId());
+        KycStatus status = KycService.evaluateDocuments(docs, today);
+        int used = (int) docs.stream()
+                .filter(d -> UserDocumentServiceImpl.IDENTITY_DOC_TYPES.contains(d.getDocType()))
+                .count();
+        boolean hasPending = docs.stream()
+                .anyMatch(d -> UserDocumentServiceImpl.IDENTITY_DOC_TYPES.contains(d.getDocType())
+                        && d.getVerifyStatus() == VerificationStatus.PENDING);
+        return KycSummaryResponse.from(
+                customer,
+                status,
+                today,
+                used,
+                UserDocumentServiceImpl.MAX_OWNER_UPGRADE_ATTEMPTS,
+                hasPending);
     }
 }

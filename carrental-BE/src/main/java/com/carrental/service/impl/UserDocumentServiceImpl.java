@@ -36,9 +36,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,19 +55,50 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @Service
 @Transactional(readOnly = true)
 public class UserDocumentServiceImpl implements UserDocumentService {
+
+    public static final int MAX_OWNER_UPGRADE_ATTEMPTS = 3;
+    public static final Set<DocumentType> IDENTITY_DOC_TYPES = Set.of(DocumentType.CITIZEN_ID, DocumentType.PASSPORT);
+
     private final CustomerRepository customers;
     private final UserDocumentRepository documents;
     private final PrivateDocumentStorage storage;
     private final KycService kycService;
     private final Clock clock;
+    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private final String mailFrom;
+    private final String mailUsername;
+    private final String mailPassword;
+    private final String frontendBaseUrl;
 
     public UserDocumentServiceImpl(CustomerRepository customers, UserDocumentRepository documents,
             PrivateDocumentStorage storage, KycService kycService, Clock clock) {
+        this(customers, documents, storage, kycService, clock, null, "", "", "", "http://localhost:3000");
+    }
+
+    @Autowired
+    public UserDocumentServiceImpl(
+            CustomerRepository customers,
+            UserDocumentRepository documents,
+            PrivateDocumentStorage storage,
+            KycService kycService,
+            Clock clock,
+            ObjectProvider<JavaMailSender> mailSenderProvider,
+            @Value("${app.mail.from:}") String mailFrom,
+            @Value("${spring.mail.username:}") String mailUsername,
+            @Value("${spring.mail.password:}") String mailPassword,
+            @Value("${app.frontend.base-url:http://localhost:3000}") String frontendBaseUrl) {
         this.customers = customers;
         this.documents = documents;
         this.storage = storage;
         this.kycService = kycService;
         this.clock = clock;
+        this.mailSenderProvider = mailSenderProvider;
+        this.mailFrom = mailFrom == null ? "" : mailFrom;
+        this.mailUsername = mailUsername == null ? "" : mailUsername;
+        this.mailPassword = mailPassword == null ? "" : mailPassword;
+        this.frontendBaseUrl = frontendBaseUrl == null || frontendBaseUrl.isBlank()
+                ? "http://localhost:3000"
+                : frontendBaseUrl;
     }
 
     @Override
@@ -94,9 +131,22 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             if (owner.getStatus() != CustomerStatus.ACTIVE || owner.getRole() != account.role()) {
                 throw new AppException(ErrorCode.INVALID_TOKEN);
             }
-            // Không nhận thêm hồ sơ cùng loại khi hồ sơ trước còn chờ duyệt (tránh spam hàng chờ của admin)
-            if (documents.existsByCustomerIdAndDocTypeAndVerifyStatus(
-                    owner.getId(), command.metadata().docType(), VerificationStatus.PENDING)) {
+            DocumentType docType = command.metadata().docType();
+            if (IDENTITY_DOC_TYPES.contains(docType)) {
+                // Không nhận thêm yêu cầu nâng cấp chủ xe khi đang có hồ sơ định danh PENDING.
+                if (documents.existsByCustomerIdAndDocTypeInAndVerifyStatus(
+                        owner.getId(), IDENTITY_DOC_TYPES, VerificationStatus.PENDING)) {
+                    throw new AppException(ErrorCode.DOCUMENT_PENDING_EXISTS,
+                            "Bạn đã có yêu cầu nâng cấp chủ xe đang chờ duyệt, vui lòng chờ kết quả trước khi gửi lại");
+                }
+                // Giới hạn tối đa 3 lần gửi yêu cầu nâng cấp chủ xe cho mỗi user (kể cả các lần đã bị từ chối).
+                long submittedAttempts = documents.countByCustomerIdAndDocTypeIn(owner.getId(), IDENTITY_DOC_TYPES);
+                if (submittedAttempts >= MAX_OWNER_UPGRADE_ATTEMPTS) {
+                    throw new AppException(ErrorCode.OWNER_UPGRADE_LIMIT_EXCEEDED,
+                            "Bạn đã sử dụng hết tối đa 3 lần gửi yêu cầu nâng cấp chủ xe (bao gồm cả các lần đã bị từ chối)");
+                }
+            } else if (documents.existsByCustomerIdAndDocTypeAndVerifyStatus(
+                    owner.getId(), docType, VerificationStatus.PENDING)) {
                 throw new AppException(ErrorCode.DOCUMENT_PENDING_EXISTS);
             }
             UserDocument document = command.metadata().toEntity(owner,
@@ -207,6 +257,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         }
         UserDocumentReviewResponse response = UserDocumentReviewResponse.from(document, currentKyc, evaluatedOn);
         log.info("document-review actorId={} ownerId={} documentId={} type={} {} -> {} kyc {} -> {} role {} -> {} reasonProvided={}", actorRow.getId(), owner.getId(), document.getId(), document.getDocType(), oldStatus, command.status(), oldKyc, currentKyc, oldRole, owner.getRole(), command.reason() != null);
+        sendReviewNotificationEmail(owner, document, command.status(), oldRole, owner.getRole());
         return response;
     }
 
@@ -300,5 +351,91 @@ public class UserDocumentServiceImpl implements UserDocumentService {
 
     private void requireStorage() {
         if (!storage.isEnabled()) throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, "Dịch vụ lưu tệp chưa được bật");
+    }
+
+    private void sendReviewNotificationEmail(
+            Customer owner,
+            UserDocument document,
+            VerificationStatus verifyStatus,
+            Role oldRole,
+            Role newRole) {
+        JavaMailSender mailSender = mailSenderProvider != null ? mailSenderProvider.getIfAvailable() : null;
+        if (mailSender == null
+                || mailFrom.isBlank()
+                || mailUsername.isBlank()
+                || mailPassword.isBlank()) {
+            log.warn("document-review-email-skipped reason=mail_unconfigured customerId={} documentId={} verifyStatus={}",
+                    owner.getId(), document.getId(), verifyStatus);
+            return;
+        }
+        if (owner.getEmail() == null || owner.getEmail().isBlank()) {
+            log.warn("document-review-email-skipped reason=missing_recipient customerId={} documentId={} verifyStatus={}",
+                    owner.getId(), document.getId(), verifyStatus);
+            return;
+        }
+
+        String baseUrl = frontendBaseUrl.replaceAll("/+$", "");
+        String docLabel = switch (document.getDocType()) {
+            case CITIZEN_ID -> "CCCD/CMND";
+            case PASSPORT -> "Hộ chiếu";
+            case DRIVER_LICENSE -> "Giấy phép lái xe";
+        };
+        String greetingName = owner.getFullName() != null && !owner.getFullName().isBlank()
+                ? owner.getFullName()
+                : "Quý khách";
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(mailFrom);
+        message.setTo(owner.getEmail());
+
+        if (verifyStatus == VerificationStatus.APPROVED) {
+            boolean promotedToOwner = newRole == Role.OWNER && oldRole != Role.OWNER;
+            if (promotedToOwner) {
+                message.setSubject("Chúc mừng! Tài khoản CarDB của bạn đã được nâng cấp lên Chủ xe");
+                message.setText("Xin chào " + greetingName + ",\n\n"
+                        + "Chúc mừng bạn! Hồ sơ " + docLabel + " của bạn đã được quản trị viên phê duyệt.\n"
+                        + "Tài khoản CarDB của bạn đã chính thức được nâng cấp lên vai trò Chủ xe (OWNER). "
+                        + "Bạn có thể đăng ký xe cho thuê và quản lý tin đăng ngay tại:\n"
+                        + baseUrl + "/owner/dashboard\n\n"
+                        + "Trân trọng,\nĐội ngũ CarDB");
+            } else {
+                message.setSubject("Thông báo: Hồ sơ " + docLabel + " trên CarDB đã được duyệt");
+                message.setText("Xin chào " + greetingName + ",\n\n"
+                        + "Chúc mừng bạn! Hồ sơ " + docLabel + " của bạn đã được quản trị viên xác minh thành công.\n"
+                        + "Xem chi tiết trạng thái tại:\n"
+                        + baseUrl + "/account/verification\n\n"
+                        + "Trân trọng,\nĐội ngũ CarDB");
+            }
+        } else {
+            long usedAttempts = IDENTITY_DOC_TYPES.contains(document.getDocType())
+                    ? documents.countByCustomerIdAndDocTypeIn(owner.getId(), IDENTITY_DOC_TYPES)
+                    : 0;
+            long remaining = Math.max(0, MAX_OWNER_UPGRADE_ATTEMPTS - usedAttempts);
+            String reason = document.getRejectReason() != null && !document.getRejectReason().isBlank()
+                    ? document.getRejectReason()
+                    : "Hồ sơ chưa đạt yêu cầu xác minh.";
+            String quotaNote = IDENTITY_DOC_TYPES.contains(document.getDocType())
+                    ? (remaining > 0
+                            ? "Bạn còn " + remaining + "/" + MAX_OWNER_UPGRADE_ATTEMPTS + " lượt gửi yêu cầu nâng cấp chủ xe."
+                            : "Bạn đã sử dụng hết tối đa " + MAX_OWNER_UPGRADE_ATTEMPTS + "/" + MAX_OWNER_UPGRADE_ATTEMPTS + " lượt gửi yêu cầu nâng cấp chủ xe.")
+                    : "Bạn có thể cập nhật lại hồ sơ hợp lệ.";
+            message.setSubject("Thông báo: Hồ sơ " + docLabel + " trên CarDB chưa được duyệt");
+            message.setText("Xin chào " + greetingName + ",\n\n"
+                    + "Rất tiếc, hồ sơ " + docLabel + " của bạn đã bị từ chối.\n"
+                    + "Lý do từ chối: " + reason + "\n\n"
+                    + quotaNote + "\n"
+                    + "Xem trạng thái hồ sơ tại:\n"
+                    + baseUrl + "/account/verification\n\n"
+                    + "Trân trọng,\nĐội ngũ CarDB");
+        }
+
+        try {
+            mailSender.send(message);
+            log.info("document-review-email-sent customerId={} documentId={} verifyStatus={}",
+                    owner.getId(), document.getId(), verifyStatus);
+        } catch (RuntimeException ex) {
+            log.warn("document-review-email-failed customerId={} documentId={} verifyStatus={} exceptionType={}",
+                    owner.getId(), document.getId(), verifyStatus, ex.getClass().getSimpleName());
+        }
     }
 }

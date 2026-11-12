@@ -37,3 +37,12 @@ export async function uploadImage(file) {
     const data = await request("/api/uploads/images", { method: "POST", body: form });
     return data.url;
 }
+
+/** POST /api/uploads/images/batch — tải nhiều ảnh cùng lúc, trả về danh sách URL nội bộ. */
+export async function uploadImages(files) {
+    const form = new FormData();
+    for (const file of files)
+        form.append("files", file);
+    const data = await request("/api/uploads/images/batch", { method: "POST", body: form });
+    return data.urls ?? [];
+}

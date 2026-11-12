@@ -24,6 +24,7 @@ import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.service.CarService;
 import com.carrental.service.CurrentUserService;
+import com.carrental.service.PublicImageStorageService;
 import com.carrental.util.DbErrors;
 import com.carrental.util.TimeUtil;
 import jakarta.persistence.criteria.Predicate;
@@ -36,6 +37,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ public class CarServiceImpl implements CarService {
     private final CarImageRepository carImageRepository;
     private final CarDocumentRepository carDocumentRepository;
     private final CurrentUserService currentUserService;
+    private final PublicImageStorageService publicImageStorageService;
 
     @Override
     @Transactional
@@ -437,6 +440,59 @@ public class CarServiceImpl implements CarService {
             throw DbErrors.toAppException(e, "Không thể lưu hình ảnh xe");
         } catch (Exception e) {
             log.error("Lỗi không mong muốn khi thêm ảnh xe carId={}", carId, e);
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu hình ảnh xe");
+        }
+    }
+
+    @Override
+    @Transactional
+    public List<CarImageResponse> addCarImages(Long carId, List<MultipartFile> files, Integer primaryIndex) {
+        log.info("Upload multipart car images carId={}, count={}", carId, files != null ? files.size() : 0);
+        List<String> storedUrls = List.of();
+        try {
+            Car car = loadOwnedCar(carId);
+            if (files == null || files.isEmpty()) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Danh sách ảnh không được để trống");
+            }
+            long currentCount = carImageRepository.countByCarId(carId);
+            if (currentCount + files.size() > MAX_CAR_IMAGES) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Mỗi xe chỉ được có tối đa " + MAX_CAR_IMAGES + " hình ảnh");
+            }
+            if (primaryIndex != null && (primaryIndex < 0 || primaryIndex >= files.size())) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Vị trí ảnh đại diện không hợp lệ");
+            }
+
+            storedUrls = publicImageStorageService.storeImages(files);
+
+            if (primaryIndex != null) {
+                clearPrimary(carId);
+            }
+            boolean isFirstImageEver = (currentCount == 0);
+            List<CarImage> entities = new ArrayList<>(storedUrls.size());
+            for (int i = 0; i < storedUrls.size(); i++) {
+                boolean isPrimary = (primaryIndex != null && i == primaryIndex)
+                        || (primaryIndex == null && isFirstImageEver && i == 0);
+                entities.add(CarImage.builder()
+                        .car(car)
+                        .imageUrl(storedUrls.get(i))
+                        .isPrimary(isPrimary)
+                        .sortOrder((int) currentCount + i)
+                        .build());
+            }
+            return carImageRepository.saveAllAndFlush(entities).stream()
+                    .map(CarImageResponse::from)
+                    .toList();
+        } catch (AppException e) {
+            publicImageStorageService.deleteQuietly(storedUrls);
+            log.warn("Upload ảnh xe thất bại carId={}: {}", carId, e.getMessage());
+            throw e;
+        } catch (DataAccessException e) {
+            publicImageStorageService.deleteQuietly(storedUrls);
+            log.warn("Lỗi dữ liệu khi upload ảnh xe carId={}: {}", carId, e.getMessage());
+            throw DbErrors.toAppException(e, "Không thể lưu hình ảnh xe");
+        } catch (Exception e) {
+            publicImageStorageService.deleteQuietly(storedUrls);
+            log.error("Lỗi không mong muốn khi upload ảnh xe carId={}", carId, e);
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu hình ảnh xe");
         }
     }

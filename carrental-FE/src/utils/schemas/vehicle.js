@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { httpUrlInput, integerInput, optionalHttpUrlInput, optionalIntegerInput, optionalVndInput, requiredText, vndInput } from "@/utils/validateInput.js";
+import { integerInput, mediaUrlInput, optionalIntegerInput, optionalMediaUrlInput, optionalVndInput, requiredText, vndInput } from "@/utils/validateInput.js";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
@@ -28,10 +28,10 @@ export const vehicleCreateSchema = vehiclePricingSchema.extend({
     weekendPrice: vndInput({ positive: true, min: 10_000, max: 100_000_000, label: "Đơn giá cuối tuần" }),
     lateFee: optionalVndInput({ max: 10_000_000, label: "Phí trễ giờ" }),
     // Admin chỉ duyệt được xe khi có giấy đăng ký xe (cà vẹt) nên bắt buộc ngay từ bước đăng ký.
-    registrationUrl: httpUrlInput.min(1, "Vui lòng cung cấp ảnh giấy đăng ký xe (cà vẹt)."),
-    inspectionUrl: optionalHttpUrlInput,
+    registrationUrl: mediaUrlInput.min(1, "Vui lòng chọn ảnh hoặc nhập đường dẫn giấy đăng ký xe (cà vẹt)."),
+    inspectionUrl: optionalMediaUrlInput,
     // Ảnh góc trước là ảnh đại diện của tin đăng nên bắt buộc; các góc còn lại là tuỳ chọn.
-    photos: z.record(z.string(), z.object({ url: httpUrlInput }))
+    photos: z.record(z.string(), z.object({ url: mediaUrlInput }).passthrough())
         .refine(photos => Boolean(photos.front?.url), "Cần ít nhất ảnh góc trước để làm ảnh đại diện."),
     agreed: z.literal(true, { error: "Vui lòng xác nhận thông tin đăng ký xe." }),
 });

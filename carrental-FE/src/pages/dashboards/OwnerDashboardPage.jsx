@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { tripService } from "@/services/tripService.js";
 import { formatDateTime } from "@/utils/datetime.js";
-import { formatMoney } from "@/utils/labels.js";
+import { formatMoney, resolveAssetUrl } from "@/utils/labels.js";
 import { carStatusMeta } from "@/utils/owner.js";
 
 const listingMeta = { LISTED: { label: "Đang hiển thị", tone: "success" }, UNLISTED: { label: "Chưa hiển thị", tone: "neutral" }, EXPIRED: { label: "Hết gói", tone: "warning" } };
@@ -48,7 +48,7 @@ export default function OwnerDashboard() {
         <table className="mt-2 w-full min-w-[760px] text-left text-sm">
           <thead className="text-xs uppercase text-muted-gray"><tr><th className="px-4 py-2">Xe</th><th>Trạng thái</th><th>An toàn</th><th>Đơn</th><th>Doanh thu</th><th>Chi gói</th><th>Đánh giá</th><th/></tr></thead>
           <tbody>{d.cars.map(c => <tr key={c.carId} className="border-t border-card-border align-top">
-            <td className="px-4 py-3"><div className="flex items-center gap-3">{c.imageUrl ? <img src={c.imageUrl} alt="" className="h-10 w-14 rounded-lg object-cover"/> : null}<div><p className="font-semibold">{c.carName}</p><p className="font-mono text-xs text-muted-gray">{c.licensePlate}</p></div></div></td>
+            <td className="px-4 py-3"><div className="flex items-center gap-3">{c.imageUrl ? <img src={resolveAssetUrl(c.imageUrl)} alt="" className="h-10 w-14 rounded-lg object-cover"/> : null}<div><p className="font-semibold">{c.carName}</p><p className="font-mono text-xs text-muted-gray">{c.licensePlate}</p></div></div></td>
             <td className="py-3"><div className="flex flex-col items-start gap-1"><StatusBadge meta={carStatusMeta[c.carStatus]}/><StatusBadge meta={listingMeta[c.listingStatus]}/></div></td>
             <td className="py-3"><SafetyBadge level={c.safetyLevel}/></td>
             <td className="py-3 text-xs"><b className="text-sm">{c.totalBookings}</b><br/>{c.pendingRequests ? <span className="text-[#B45309]">{c.pendingRequests} chờ xác nhận<br/></span> : null}{c.activeBookings ? `${c.activeBookings} đang chạy • ` : ""}{c.completedBookings} xong{c.nextPickupAt ? <><br/>Giao kế tiếp: {formatDateTime(c.nextPickupAt)}</> : null}</td>
