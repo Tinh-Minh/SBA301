@@ -10,12 +10,12 @@ const groups = [
         ] },
     { title: "Tin đăng và đánh giá", links: [
             { section: "reviews", href: "/my-trips", label: "Đánh giá của tôi", icon: "reviews" },
-            { section: "subscriptions", href: "/owner/subscriptions", label: "Gói đăng tin", icon: "workspace_premium" },
-            { section: "owner", href: "/owner/dashboard", label: "Kênh chủ xe", icon: "garage_home" },
+            { section: "subscriptions", href: "/owner/subscriptions", label: "Gói đăng tin", icon: "workspace_premium", ownerOnly: true },
+            { section: "owner", href: "/owner/dashboard", label: "Kênh chủ xe", icon: "garage_home", ownerOnly: true },
         ] },
 ];
 export function ProfileSidebar({ active, className = "" }) {
-    const { user, isAdmin } = useAuth();
+    const { user, isAdmin, isOwner } = useAuth();
     const ownerCounts = useOwnerCounts(Boolean(user && !isAdmin));
     const roleLabel = accountRoleLabel(user, ownerCounts.approvedCars);
     return <aside className={`space-y-4 ${className}`} data-purpose="account-sidebar">
@@ -27,7 +27,7 @@ export function ProfileSidebar({ active, className = "" }) {
       </div>
     </div>
     <nav aria-label="Hồ sơ và tài khoản" className="space-y-4 rounded-xl bg-surface-container-lowest p-2 shadow-sm">
-      {groups.map(group => <div key={group.title}><h3 className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">{group.title}</h3><div className="space-y-1">{group.links.map(link => {
+      {groups.map(group => <div key={group.title}><h3 className="px-4 py-2 text-[10px] font-semibold uppercase tracking-wider text-on-surface-variant">{group.title}</h3><div className="space-y-1">{group.links.filter(link => !link.ownerOnly || isOwner).map(link => {
                 const selected = link.section === active;
                 return <Link key={link.href} to={link.href} aria-current={selected ? "page" : undefined} className={`group flex items-center gap-2 rounded-lg px-4 py-2.5 transition-colors ${selected ? "bg-primary-fixed/50 font-semibold text-primary-container shadow-sm" : "text-on-surface hover:bg-surface-container-low"}`}><Icon name={link.icon} className={`shrink-0 text-[20px] ${selected ? "text-primary-container" : "text-outline group-hover:text-primary-container"}`}/><span className="min-w-0 flex-1 whitespace-nowrap text-sm">{link.label}</span><Icon name="chevron_right" className="text-[16px] text-outline"/></Link>;
             })}</div></div>)}
