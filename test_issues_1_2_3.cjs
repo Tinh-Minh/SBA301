@@ -136,14 +136,20 @@ async function run() {
     const cavetPath = path.join(tmpDir, 'cavet.png');
     const txtPath = path.join(tmpDir, 'invalid.txt');
     const bigPngPath = path.join(tmpDir, 'oversized.png');
+    const fakeJpgPath = path.join(tmpDir, 'fake-spoof.jpg');
+    const realJpgPath = 'd:/SBA/docs/postman/fixtures/synthetic-front.jpg';
+    const realWebpPath = 'd:/SBA/carrental-FE/public/images/9aa3d9bc2c6c3ec1.webp';
 
     fs.writeFileSync(png1Path, VALID_PNG);
     fs.writeFileSync(png2Path, VALID_PNG);
     fs.writeFileSync(cavetPath, VALID_PNG);
     fs.writeFileSync(txtPath, 'not-an-image');
+    fs.writeFileSync(fakeJpgPath, VALID_JPEG_HEADER_INVALID);
     const bigBuf = Buffer.alloc(5 * 1024 * 1024 + 512, 0);
     VALID_PNG.copy(bigBuf);
     fs.writeFileSync(bigPngPath, bigBuf);
+    const medBuf = Buffer.alloc(4 * 1024 * 1024 + 200 * 1024, 0);
+    VALID_PNG.copy(medBuf);
 
     const adminToken = await login('admin@carrental.vn');
     const ownerToken = await login('binh@gmail.com');
@@ -212,6 +218,37 @@ async function run() {
         carImgMulti.status === 200 && carDetailAfter.data?.data?.images?.length === 2 && carDetailAfter.data?.data?.images[0]?.imageUrl?.startsWith('/api/uploads/files/'),
         `HTTP ${carImgMulti.status}, dbImages=${carDetailAfter.data?.data?.images?.length}, url=${carDetailAfter.data?.data?.images?.[0]?.imageUrl}`,
         'HTTP 200 & 2 DB images'
+    );
+
+    const realJpgBuf = fs.readFileSync(realJpgPath);
+    const realWebpBuf = fs.readFileSync(realWebpPath);
+    const upJpg = await multipartReq('/api/uploads/images', ownerToken, [
+        { name: 'file', filename: 'real.jpg', contentType: 'image/jpeg', buffer: realJpgBuf },
+    ]);
+    const upWebp = await multipartReq('/api/uploads/images', ownerToken, [
+        { name: 'file', filename: 'real.webp', contentType: 'image/webp', buffer: realWebpBuf },
+    ]);
+    const jpgRead = upJpg.data?.data?.url ? await jsonReq('GET', upJpg.data.data.url) : { status: 0 };
+    const webpRead = upWebp.data?.data?.url ? await jsonReq('GET', upWebp.data.data.url) : { status: 0 };
+    record(
+        'I1-API-08',
+        'Upload real JPG and WebP files and serve publicly',
+        upJpg.status === 200 && upWebp.status === 200 && jpgRead.status === 200 && webpRead.status === 200,
+        `jpg=${upJpg.status}/${jpgRead.status}, webp=${upWebp.status}/${webpRead.status}`,
+        'All HTTP 200'
+    );
+
+    const largeMulti = await multipartReq(`/api/cars/${apiCarId}/images`, ownerToken, [
+        { name: 'files', filename: 'm1.png', contentType: 'image/png', buffer: medBuf },
+        { name: 'files', filename: 'm2.png', contentType: 'image/png', buffer: medBuf },
+        { name: 'files', filename: 'm3.png', contentType: 'image/png', buffer: medBuf },
+    ]);
+    record(
+        'I1-API-09',
+        'Multi-file upload 3x4.2MB (>11MB total, <=5MB each) succeeds HTTP 200',
+        largeMulti.status === 200 && largeMulti.data?.data?.length === 3,
+        `HTTP ${largeMulti.status}, saved=${largeMulti.data?.data?.length}`,
+        'HTTP 200 & 3 saved'
     );
 
     // ========================================================
@@ -470,6 +507,88 @@ async function run() {
             const exploreMatch = await page.locator(`img[src*="/api/uploads/files/"]`).count();
             const exploreWidth = exploreMatch > 0 ? await exploreImg.evaluate(el => el.naturalWidth) : 0;
             record('I1-UI-08', 'Uploaded car image renders on Explore list page', exploreMatch > 0 && exploreWidth > 0, `uploadedImgOnExplore=${exploreMatch}, naturalWidth=${exploreWidth}`, '> 0 & loaded');
+
+            // Test OwnerVehicleEditPage: upload .webp, preview before save, set primary, delete image
+            await page.goto(`${FE_URL}/owner/vehicles/edit/${uiCarId}`, { waitUntil: 'networkidle' });
+            await page.waitForTimeout(800);
+            await page.getByRole('button', { name: /Hình ảnh niêm yết/i }).click();
+            await page.waitForTimeout(300);
+            await page.locator('input[type="file"][multiple]').setInputFiles(realWebpPath);
+            await page.waitForTimeout(400);
+            const editBlobCount = await page.locator('img[src^="blob:"]').count();
+            await page.getByRole('button', { name: /Lưu ảnh mới/i }).click();
+            await page.waitForTimeout(1000);
+            const editImgsAfterUpload = await page.locator('img[src*="/api/uploads/files/"]').count();
+            const setPrimaryBtns = page.getByRole('button', { name: 'Đặt ảnh chính' });
+            const primaryBtnsBefore = await setPrimaryBtns.count();
+            if (primaryBtnsBefore > 0) {
+                await setPrimaryBtns.last().click();
+                await page.waitForTimeout(800);
+            }
+            const carAfterPrimary = await jsonReq('GET', `/api/cars/${uiCarId}`, ownerToken);
+            const webpIsPrimary = (carAfterPrimary.data?.data?.images || []).some(img => img.isPrimary && img.imageUrl.endsWith('.webp'));
+            const deleteBtns = page.getByRole('button', { name: 'Xóa', exact: true });
+            if (await deleteBtns.count() >= 2) {
+                await deleteBtns.first().click();
+                await page.waitForTimeout(800);
+            }
+            const carAfterDelete = await jsonReq('GET', `/api/cars/${uiCarId}`, ownerToken);
+            record(
+                'I1-UI-09',
+                'OwnerVehicleEditPage uploads WebP with preview, sets primary image, and deletes image',
+                editBlobCount >= 1 && editImgsAfterUpload >= 3 && webpIsPrimary && (carAfterDelete.data?.data?.images?.length === 2),
+                `blob=${editBlobCount}, afterUpload=${editImgsAfterUpload}, webpPrimary=${webpIsPrimary}, afterDelete=${carAfterDelete.data?.data?.images?.length}`,
+                'preview>=1, upload>=3, webpPrimary=true, afterDelete=2'
+            );
+
+            // Test OwnerVehicleNewPage: spoofed .jpg fails cleanly without creating orphan car, then mixed URL (front) + local .jpg (rear) keeps front primary
+            await page.goto(`${FE_URL}/owner/vehicles/new`, { waitUntil: 'networkidle' });
+            await page.waitForTimeout(500);
+            const mixPlate = `51M-${Math.floor(10000 + Math.random() * 89999)}`;
+            await page.fill('input[placeholder="51K-889.92"]', mixPlate);
+            await page.fill('input[placeholder="128 Thảo Điền, P. Thảo Điền"]', '99 Hai Bà Trưng, Q.1');
+            await page.locator('input[type="file"]').nth(0).setInputFiles(realJpgPath);
+            await page.waitForTimeout(300);
+            await page.getByRole('button', { name: /Tiếp tục: Thông số/i }).click();
+            await page.waitForTimeout(250);
+            await page.getByRole('button', { name: /Tiếp tục: Cài đặt bảng giá/i }).click();
+            await page.waitForTimeout(250);
+            await page.locator('input[placeholder="Tối thiểu 10.000đ"]').nth(0).fill('850000');
+            await page.locator('input[placeholder="Tối thiểu 10.000đ"]').nth(1).fill('950000');
+            await page.locator('input[placeholder="Nhập 0 nếu miễn cọc"]').fill('2000000');
+            await page.waitForTimeout(200);
+            await page.getByRole('button', { name: /Tiếp tục: Tải bộ ảnh niêm yết/i }).click();
+            await page.waitForTimeout(300);
+
+            const slotInputs = page.locator('input[type="url"]');
+            await slotInputs.nth(0).fill('https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=400');
+            const singleSlotFiles = page.locator('input[type="file"]:not([multiple])');
+            await singleSlotFiles.nth(1).setInputFiles(fakeJpgPath);
+            await page.waitForTimeout(200);
+            await page.locator('input[type="checkbox"]').last().check();
+            await page.getByRole('button', { name: /Gửi BQL CarDB thẩm định/i }).click();
+            await page.waitForTimeout(1000);
+            const myCarsCheck = await jsonReq('GET', '/api/cars/my-cars?size=50', ownerToken);
+            const noOrphan = !(myCarsCheck.data?.data?.content || []).some(c => c.licensePlate === mixPlate);
+
+            // Now replace spoofed .jpg with real .jpg and resubmit -> succeeds with front URL as primary!
+            await singleSlotFiles.nth(1).setInputFiles(realJpgPath);
+            await page.waitForTimeout(300);
+            await page.getByRole('button', { name: /Gửi BQL CarDB thẩm định/i }).click();
+            await page.waitForURL('**/owner/vehicles', { timeout: 15000 });
+            await page.waitForTimeout(800);
+            const myCarsAfterMix = await jsonReq('GET', '/api/cars/my-cars?size=50', ownerToken);
+            const mixCar = (myCarsAfterMix.data?.data?.content || []).find(c => c.licensePlate === mixPlate);
+            const mixDetail = mixCar ? await jsonReq('GET', `/api/cars/${mixCar.id}`, ownerToken) : null;
+            const mixImgs = mixDetail?.data?.data?.images || [];
+            const frontRemainsPrimary = mixImgs.length === 2 && mixImgs[0].isPrimary && mixImgs[0].imageUrl.startsWith('https://') && !mixImgs[1].isPrimary && mixImgs[1].imageUrl.startsWith('/api/uploads/files/');
+            record(
+                'I1-UI-10',
+                'Spoofed .jpg leaves no orphan car and mixed URL(front)+File(rear) preserves front as primary',
+                noOrphan && frontRemainsPrimary,
+                `noOrphan=${noOrphan}, imgs=${JSON.stringify(mixImgs.map(i => ({ p: i.isPrimary, u: i.imageUrl })))}`,
+                'noOrphan=true & front URL isPrimary=true'
+            );
         }
         await ctx1.close();
 
