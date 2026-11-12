@@ -153,7 +153,7 @@ function CarReviews({ carId }) {
             form.reset({ rating: 5, comment: "" });
         }
     }
-    return <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+    return <section id="reviews" className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="text-lg font-bold text-[#292929]">Đánh giá từ khách đã thuê {data ? `• ${Number(data.averageRating || 0).toFixed(1)}/5 (${data.totalReviews})` : ""}</h2>
       {loggedIn ? <button type="button" title="Chỉ khách đã hoàn tất chuyến thuê xe này mới đánh giá được" onClick={() => setOpen(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Viết đánh giá</button> : <Link to={`/login?next=/cars/${carId}`} className="text-sm font-bold text-[#FC6C26]">Đăng nhập để đánh giá</Link>}

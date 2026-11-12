@@ -6,12 +6,12 @@ import { Icon } from "@/components/Icon.jsx";
 import { SiteBrand } from "@/components/SiteBrand.jsx";
 import { initials } from "@/utils/labels.js";
 
-const publicNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/list-your-car", "Cho thuê xe"], ["/packages", "Gói đăng tin"]];
-const customerNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/account/verification", "Đăng ký chủ xe"], ["/packages", "Gói đăng tin"]];
-const ownerNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/owner/dashboard", "Chủ xe"], ["/packages", "Gói đăng tin"]];
+const publicNavigation = [["/explore", "Thuê xe"], ["/list-your-car", "Cho thuê xe"], ["/packages", "Gói đăng tin"]];
+const customerNavigation = [["/explore", "Thuê xe"], ["/trips", "Chuyến đi"], ["/account/verification", "Đăng ký chủ xe"], ["/packages", "Gói đăng tin"]];
+const ownerNavigation = [["/explore", "Thuê xe"], ["/trips", "Chuyến đi"], ["/owner/dashboard", "Chủ xe"], ["/packages", "Gói đăng tin"]];
 const adminNavigation = [["/explore", "Khám phá xe"], ["/my-trips", "Đánh giá của tôi"], ["/packages", "Gói đăng tin"], ["/admin/dashboard", "Quản trị"]];
-const customerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/account/verification", "Xác minh chủ xe (KYC)", "verified_user"]];
-const ownerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/owner/subscriptions", "Gói đăng tin", "workspace_premium"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
+const customerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/trips", "Chuyến đi của tôi", "directions_car"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/account/verification", "Xác minh chủ xe (KYC)", "verified_user"]];
+const ownerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/trips", "Chuyến đi của tôi", "directions_car"], ["/owner/bookings", "Đơn thuê xe của tôi", "assignment"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/owner/subscriptions", "Gói đăng tin", "workspace_premium"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
 export function Header({ previewState } = {}) {
     const instance = useId();
     const mobileId = previewState === undefined ? "mobile-navigation" : `mobile-navigation-${instance}`;
