@@ -9,7 +9,7 @@ import { LiveState } from "@/components/LiveUi.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useAuth } from "@/hooks/useAuth.js";
-import { carService } from "@/services/vehicleService.js";
+import { tripService } from "@/services/tripService.js";
 import { reviewService } from "@/services/reviewService.js";
 import { formatDateTime } from "@/utils/datetime.js";
 
@@ -26,10 +26,24 @@ export default function MyReviewsPage() {
 function ReviewScreen() {
     const { user } = useAuth();
     const reviews = useApiQuery(["reviews", "mine", user?.id], () => reviewService.mine(user.id), { enabled: Boolean(user?.id) });
-    const cars = useApiQuery(["cars", "public", "review"], () => carService.search({ size: 50 }), { requiresAuth: false });
-    const create = useApiMutation(reviewService.create, reviews.reload);
+    const myTrips = useApiQuery(["bookings", "my"], tripService.mine);
+    const create = useApiMutation(reviewService.create, () => {
+        reviews.reload();
+        myTrips.reload();
+    });
     const [open, setOpen] = useState(false);
     const form = useForm({ resolver: zodResolver(schema), defaultValues: { carId: "", rating: 5, comment: "" } });
+
+    // Lọc các xe từ những chuyến đi đã hoàn tất (COMPLETED)
+    const completedTrips = (myTrips.data ?? []).filter(b => b.status === "COMPLETED");
+    const reviewedCarIds = new Set((reviews.data ?? []).map(r => r.carId));
+    // Danh sách xe đã thuê hoàn tất
+    const eligibleCars = Array.from(
+        new Map(
+            completedTrips.map(b => [b.carId, { id: b.carId, name: b.carName, licensePlate: b.carLicensePlate }])
+        ).values()
+    );
+
     async function submit(values) {
         const created = await create.run(values);
         if (created) {
@@ -41,9 +55,15 @@ function ReviewScreen() {
     <div className="flex items-center justify-between gap-3">
       <div>
         <h1 className="text-2xl font-bold">Đánh giá của tôi</h1>
-        <p className="mt-1 text-sm text-[#666666]">Đánh giá xe bạn đã xem. Mỗi tài khoản đánh giá một xe một lần.</p>
+        <p className="mt-1 text-sm text-[#666666]">Đánh giá xe bạn đã thuê và hoàn tất chuyến đi. Mỗi xe được đánh giá một lần.</p>
       </div>
-      <button type="button" onClick={() => setOpen(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Viết đánh giá</button>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+      >
+        Viết đánh giá
+      </button>
     </div>
     <LiveState loading={reviews.loading && !reviews.data} error={reviews.error} empty={!!reviews.data && reviews.data.length === 0} label="đánh giá" onRetry={reviews.reload}/>
     <ul className="flex flex-col gap-3">{(reviews.data ?? []).map(review => <li key={review.id} className="rounded-2xl border border-[#E9E9E7] bg-white p-4">
@@ -52,15 +72,34 @@ function ReviewScreen() {
       <p className="mt-2 text-xs text-[#666666]">{formatDateTime(review.createdAt)}</p>
     </li>)}</ul>
     <ConfirmDialog open={open} title="Viết đánh giá xe" confirmLabel="Gửi đánh giá" busy={create.running} error={create.error?.message} onClose={() => setOpen(false)} onConfirm={form.handleSubmit(submit)}>
-      <form className="flex flex-col gap-3" onSubmit={form.handleSubmit(submit)}>
-        <label className="text-xs font-semibold text-[#666666]">Xe<select className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("carId")}>
-          <option value="">Chọn xe</option>
-          {(cars.data?.content ?? []).map(car => <option key={car.id} value={car.id}>{car.brand} {car.model} • {car.licensePlate}</option>)}
-        </select></label>
-        <label className="text-xs font-semibold text-[#666666]">Số sao<select className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("rating")}>{[5, 4, 3, 2, 1].map(star => <option key={star} value={star}>{star} sao</option>)}</select></label>
-        <label className="text-xs font-semibold text-[#666666]">Nhận xét<textarea maxLength={2000} rows={4} className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("comment")}/></label>
-        <FormErrors errors={form.formState.errors}/>
-      </form>
+      {eligibleCars.length === 0 ? (
+        <div className="py-4 text-center">
+          <p className="text-sm font-medium text-[#292929]">Bạn chưa có chuyến thuê xe nào đã hoàn tất để đánh giá.</p>
+          <p className="mt-1 text-xs text-[#666666]">Chỉ những xe bạn đã thuê và hoàn thành chuyến đi mới có thể gửi đánh giá.</p>
+        </div>
+      ) : (
+        <form className="flex flex-col gap-3" onSubmit={form.handleSubmit(submit)}>
+          <label className="text-xs font-semibold text-[#666666]">Xe đã thuê
+            <select className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("carId")}>
+              <option value="">-- Chọn xe đã hoàn tất chuyến đi --</option>
+              {eligibleCars.map(car => (
+                <option key={car.id} value={car.id} disabled={reviewedCarIds.has(car.id)}>
+                  {car.name} {car.licensePlate ? `• ${car.licensePlate}` : ""} {reviewedCarIds.has(car.id) ? "(Đã đánh giá)" : ""}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-[#666666]">Số sao
+            <select className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("rating")}>
+              {[5, 4, 3, 2, 1].map(star => <option key={star} value={star}>{star} sao</option>)}
+            </select>
+          </label>
+          <label className="text-xs font-semibold text-[#666666]">Nhận xét
+            <textarea maxLength={2000} rows={4} placeholder="Chia sẻ cảm nhận về chuyến đi, chất lượng xe..." className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("comment")}/>
+          </label>
+          <FormErrors errors={form.formState.errors}/>
+        </form>
+      )}
     </ConfirmDialog>
   </div>;
 }

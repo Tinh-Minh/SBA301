@@ -13,6 +13,7 @@ import { carImage, carName, carTypeLabels, formatMoney, fuelTypeLabels, transmis
 import { formatDateTime } from "@/utils/datetime.js";
 import { carService } from "@/services/vehicleService.js";
 import { reviewService } from "@/services/reviewService.js";
+import { tripService } from "@/services/tripService.js";
 import { Icon } from "@/components/Icon.jsx";
 import { BookingPanel } from "@/components/booking/BookingPanel.jsx";
 import { SafetyBadge, SafetyPanel, useSafety } from "@/components/booking/SafetyPanel.jsx";
@@ -140,24 +141,65 @@ const reviewSchema = z.object({
 });
 
 function CarReviews({ carId }) {
-    const { loggedIn } = useAuth();
+    const { loggedIn, user } = useAuth();
     const summary = useApiQuery(["reviews", "car", carId], () => reviewService.byCar(carId), { requiresAuth: false });
-    const create = useApiMutation(reviewService.create, summary.reload);
+    const myBookings = useApiQuery(["bookings", "my"], tripService.mine, { enabled: Boolean(loggedIn) });
+    const create = useApiMutation(reviewService.create, () => {
+        summary.reload();
+        myBookings.reload();
+    });
     const [open, setOpen] = useState(false);
+    const [noticeOpen, setNoticeOpen] = useState(false);
+    const [sentPending, setSentPending] = useState(false);
     const form = useForm({ resolver: zodResolver(reviewSchema), defaultValues: { rating: 5, comment: "" } });
     const data = summary.data;
+
+    // Kiểm tra khách đã có đơn thuê hoàn tất (COMPLETED) cho xe này hay chưa
+    const completedBooking = (myBookings.data ?? []).find(b => b.carId === Number(carId) && b.status === "COMPLETED");
+    const hasCompletedTrip = Boolean(completedBooking);
+    const hasReviewed = completedBooking?.reviewed;
+
     async function submit(values) {
         const created = await create.run({ carId, ...values });
         if (created) {
             setOpen(false);
+            setSentPending(true);
             form.reset({ rating: 5, comment: "" });
         }
     }
     return <section id="reviews" className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <h2 className="text-lg font-bold text-[#292929]">Đánh giá từ khách đã thuê {data ? `• ${Number(data.averageRating || 0).toFixed(1)}/5 (${data.totalReviews})` : ""}</h2>
-      {loggedIn ? <button type="button" title="Chỉ khách đã hoàn tất chuyến thuê xe này mới đánh giá được" onClick={() => setOpen(true)} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Viết đánh giá</button> : <Link to={`/login?next=/cars/${carId}`} className="text-sm font-bold text-[#FC6C26]">Đăng nhập để đánh giá</Link>}
+      {!loggedIn ? (
+        <Link to={`/login?next=/cars/${carId}`} className="text-sm font-bold text-[#FC6C26]">Đăng nhập để đánh giá</Link>
+      ) : hasReviewed ? (
+        <span className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">
+          ✓ Bạn đã gửi đánh giá cho xe này
+        </span>
+      ) : hasCompletedTrip ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white hover:opacity-90"
+        >
+          Viết đánh giá
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setNoticeOpen(true)}
+          className="rounded-xl border border-[#E9E9E7] bg-[#F7F7F5] px-4 py-2 text-sm font-semibold text-[#888888] hover:bg-[#EFEFEF]"
+          title="Chỉ khách hàng đã hoàn tất chuyến thuê xe này mới có thể viết đánh giá"
+        >
+          Viết đánh giá
+        </button>
+      )}
     </div>
+    {sentPending && (
+      <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
+        ✓ Cảm ơn bạn! Đánh giá đã được gửi và đang chờ Quản trị viên duyệt trước khi hiển thị công khai.
+      </div>
+    )}
     <LiveState loading={summary.loading && !data} error={summary.error} empty={!!data && !data.reviews?.length} label="đánh giá" onRetry={summary.reload}/>
     <ul className="mt-3 flex flex-col gap-3">{(data?.reviews ?? []).map(review => <li key={review.id} className="rounded-xl bg-[#F7F7F5] p-3 text-sm">
       <p className="font-bold">{review.customerName} <span className="text-[#FC6C26]">{review.rating}/5</span></p>
@@ -170,6 +212,18 @@ function CarReviews({ carId }) {
         <label className="text-xs font-semibold text-[#666666]">Nhận xét<textarea maxLength={2000} rows={4} className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("comment")}/></label>
         <FormErrors errors={form.formState.errors}/>
       </form>
+    </ConfirmDialog>
+    <ConfirmDialog
+      open={noticeOpen}
+      title="Chưa đủ điều kiện đánh giá"
+      confirmLabel="Đã hiểu"
+      onClose={() => setNoticeOpen(false)}
+      onConfirm={() => setNoticeOpen(false)}
+    >
+      <div className="py-2 text-sm text-[#444444]">
+        <p>Để đảm bảo tính xác thực và công bằng cho các chủ xe, chỉ những khách hàng <b>đã thuê và hoàn tất chuyến đi</b> đối với chiếc xe này mới có quyền gửi đánh giá.</p>
+        <p className="mt-2 text-xs text-[#666666]">Sau khi hoàn thành chuyến đi và ký xác nhận biên bản trả xe, bạn có thể quay lại đây hoặc vào mục <i>Chuyến đi của tôi</i> để viết đánh giá.</p>
+      </div>
     </ConfirmDialog>
   </section>;
 }
