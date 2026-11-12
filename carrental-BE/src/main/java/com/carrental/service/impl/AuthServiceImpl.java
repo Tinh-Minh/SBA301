@@ -1,5 +1,6 @@
 package com.carrental.service.impl;
 
+import com.carrental.config.MailEnvironmentStartupLogger;
 import com.carrental.config.security.JwtProperties;
 import com.carrental.dto.request.auth.AuthInputNormalizer;
 import com.carrental.dto.request.auth.ChangePasswordRequest;
@@ -247,8 +248,10 @@ public class AuthServiceImpl implements AuthService {
         try {
             mailSender.send(message);
         } catch (MailException exception) {
-            log.warn("Email delivery unavailable traceId={} exceptionType={}",
-                    RequestTraceFilter.currentTraceId(), exception.getClass().getSimpleName());
+            log.warn("Email delivery unavailable traceId={} exceptionType={} detail={}",
+                    RequestTraceFilter.currentTraceId(),
+                    exception.getClass().getSimpleName(),
+                    MailEnvironmentStartupLogger.summarizeMailFailure(exception, customer.getEmail()));
             throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, exception);
         }
     }

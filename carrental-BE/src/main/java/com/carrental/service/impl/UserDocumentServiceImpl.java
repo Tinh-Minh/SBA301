@@ -4,6 +4,7 @@ import static com.carrental.util.RequestChecks.notFound;
 import static com.carrental.util.RequestChecks.requirePositiveId;
 import static com.carrental.util.RequestChecks.requirePrincipal;
 
+import com.carrental.config.MailEnvironmentStartupLogger;
 import com.carrental.dto.request.document.ReviewUserDocumentRequest;
 import com.carrental.dto.request.document.UserDocumentListQuery;
 import com.carrental.dto.request.document.UserDocumentSubmissionCommand;
@@ -434,8 +435,12 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             log.info("document-review-email-sent customerId={} documentId={} verifyStatus={}",
                     owner.getId(), document.getId(), verifyStatus);
         } catch (RuntimeException ex) {
-            log.warn("document-review-email-failed customerId={} documentId={} verifyStatus={} exceptionType={}",
-                    owner.getId(), document.getId(), verifyStatus, ex.getClass().getSimpleName());
+            log.warn("document-review-email-failed customerId={} documentId={} verifyStatus={} exceptionType={} detail={}",
+                    owner.getId(),
+                    document.getId(),
+                    verifyStatus,
+                    ex.getClass().getSimpleName(),
+                    MailEnvironmentStartupLogger.summarizeMailFailure(ex, owner.getEmail(), document.getRejectReason()));
         }
     }
 }
