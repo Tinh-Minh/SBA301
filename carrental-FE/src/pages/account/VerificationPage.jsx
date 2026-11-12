@@ -42,7 +42,12 @@ export default function VerificationLive() {
         <Link to="/owner/dashboard" className="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800">Vào kênh chủ xe</Link>
       </div>
       : <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-        <p className="font-bold">Đăng ký trở thành Chủ xe (OWNER) — vai trò hiện tại: Khách hàng ({user?.role ?? "CUSTOMER"})</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="font-bold">Đăng ký trở thành Chủ xe (OWNER) — vai trò hiện tại: Khách hàng ({user?.role ?? "CUSTOMER"})</p>
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-bold text-amber-950 border border-amber-300">
+            Đã gửi {upgradeAttemptsUsed}/{maxUpgradeAttempts} lần • Còn lại {upgradeAttemptsRemaining} lần
+          </span>
+        </div>
         <p className="mt-1 text-xs leading-relaxed text-amber-900">Tài khoản Khách hàng chưa thể vào trang Chủ xe hoặc đăng ký xe. Hãy nộp CCCD hoặc Hộ chiếu bên dưới và chờ Admin xác nhận; ngay sau khi được duyệt, tài khoản sẽ tự động nâng cấp lên Chủ xe.</p>
         {hasPendingUpgrade ? (
           <p role="status" className="mt-2 rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-950">
@@ -62,8 +67,17 @@ export default function VerificationLive() {
           <h2 className="font-bold">{docTypeLabels[doc.docType] ?? doc.docType}</h2>
           <Pill className={tone[doc.verifyStatus]}>{verifyStatusLabels[doc.verifyStatus] ?? doc.verifyStatus}</Pill>
         </div>
-        <p className="mt-1 text-sm text-[#666666]">Số {doc.docNumberMasked ?? "—"} • nộp {formatDateTime(doc.createdAt)}</p>
-        {doc.rejectReason ? <p className="mt-1 text-sm text-[#B91C1C]">Lý do: {doc.rejectReason}</p> : null}
+        <p className="mt-1 text-sm text-[#666666]">
+          Số {doc.docNumberMasked ?? "—"} • nộp {formatDateTime(doc.createdAt)}
+          {doc.verifiedAt ? ` • duyệt lúc ${formatDateTime(doc.verifiedAt)}` : ""}
+        </p>
+        {doc.verifyStatus === "REJECTED" ? (
+          <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-[#B91C1C]">
+            <span className="font-bold">Lý do từ chối:</span> {doc.rejectReason || "Không có ghi chú lý do."}
+          </div>
+        ) : doc.rejectReason ? (
+          <p className="mt-1 text-sm text-[#B91C1C]">Lý do: {doc.rejectReason}</p>
+        ) : null}
       </article>)}
       {list.data && !list.data.length ? <p className="text-sm text-[#666666]">Bạn chưa nộp giấy tờ nào.</p> : null}
     </div>

@@ -70,7 +70,7 @@ export const updateCustomerStatus = (id, status, reason) => request(endpoints.cu
 export const updateCustomerRole = (id, role) => request(endpoints.customers.byIdRole(id), { method: "PATCH", json: { role } });
 
 export const userDocumentService = {
-    listMine: async () => toPage(await request(endpoints.userDocuments.list, { query: { scope: "mine", size: 50 } })).content,
+    listMine: async () => toPage(await request(endpoints.userDocuments.list, { query: { scope: "mine", size: 50, sort: "createdAt,desc" } })).content,
     get: (id) => request(endpoints.userDocuments.byId(id)),
     submit({ docType, docNumber, fullNameOnDoc, dateOfBirthOnDoc, issuePlace, issueDate, expiresAt, licenseClass, frontImage, backImage }) {
         const form = new FormData();
