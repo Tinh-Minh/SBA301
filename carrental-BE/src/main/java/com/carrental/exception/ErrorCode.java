@@ -18,6 +18,7 @@ public enum ErrorCode {
     LAST_ACTIVE_ADMIN_LOCK_FORBIDDEN(HttpStatus.CONFLICT, "Không thể khóa ADMIN ACTIVE cuối cùng"),
     DOCUMENT_SELF_REVIEW_FORBIDDEN(HttpStatus.FORBIDDEN, "ADMIN không được tự duyệt giấy tờ của mình"),
     DOCUMENT_ALREADY_REVIEWED(HttpStatus.CONFLICT, "Giấy tờ đã được xử lý"),
+    DOCUMENT_PENDING_EXISTS(HttpStatus.CONFLICT, "Bạn đã có hồ sơ cùng loại đang chờ duyệt, vui lòng chờ kết quả trước khi gửi lại"),
     DOCUMENT_NOT_APPROVABLE(HttpStatus.CONFLICT, "Giấy tờ chưa đủ điều kiện duyệt"),
     APPROVED_DOCUMENT_CONFLICT(HttpStatus.CONFLICT, "Giấy tờ đã được duyệt không thể trùng lặp"),
     DRIVER_PROFILE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Hồ sơ tài xế đã tồn tại"),
