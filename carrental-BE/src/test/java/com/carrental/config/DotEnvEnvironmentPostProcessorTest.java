@@ -24,6 +24,8 @@ class DotEnvEnvironmentPostProcessorTest {
                 "export MAILJET_API_KEY=test-api-key # trailing inline comment",
                 "MAILJET_SECRET_KEY=\"secret-with-#-and-\\nline\"",
                 "MAILJET_SENDER_EMAIL='sender@cardb.vn'",
+                "QUOTED_WITH_COMMENT=\"quoted-val\" # inline comment after quote",
+                "SINGLE_QUOTED_WITH_COMMENT='single-val' # comment",
                 "FRONTEND_URL=http://localhost:3000"
         );
 
@@ -32,6 +34,8 @@ class DotEnvEnvironmentPostProcessorTest {
         assertThat(parsed).containsEntry("MAILJET_API_KEY", "test-api-key");
         assertThat(parsed).containsEntry("MAILJET_SECRET_KEY", "secret-with-#-and-\nline");
         assertThat(parsed).containsEntry("MAILJET_SENDER_EMAIL", "sender@cardb.vn");
+        assertThat(parsed).containsEntry("QUOTED_WITH_COMMENT", "quoted-val");
+        assertThat(parsed).containsEntry("SINGLE_QUOTED_WITH_COMMENT", "single-val");
         assertThat(parsed).containsEntry("FRONTEND_URL", "http://localhost:3000");
     }
 

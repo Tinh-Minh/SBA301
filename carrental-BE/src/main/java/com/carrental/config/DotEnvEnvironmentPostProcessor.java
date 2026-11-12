@@ -114,16 +114,34 @@ public class DotEnvEnvironmentPostProcessor implements EnvironmentPostProcessor,
         return result;
     }
 
-    private static String parseValue(String rawValue) {
+    static String parseValue(String rawValue) {
         String trimmed = rawValue.trim();
-        if (trimmed.length() >= 2) {
-            char first = trimmed.charAt(0);
-            char last = trimmed.charAt(trimmed.length() - 1);
-            if (first == '"' && last == '"') {
-                return unescapeDoubleQuoted(trimmed.substring(1, trimmed.length() - 1));
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        char first = trimmed.charAt(0);
+        if (first == '"' || first == '\'') {
+            char quote = first;
+            int endQuoteIdx = -1;
+            boolean escaped = false;
+            for (int i = 1; i < trimmed.length(); i++) {
+                char c = trimmed.charAt(i);
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (c == '\\' && quote == '"') {
+                    escaped = true;
+                    continue;
+                }
+                if (c == quote) {
+                    endQuoteIdx = i;
+                    break;
+                }
             }
-            if (first == '\'' && last == '\'') {
-                return trimmed.substring(1, trimmed.length() - 1);
+            if (endQuoteIdx >= 1) {
+                String inside = trimmed.substring(1, endQuoteIdx);
+                return quote == '"' ? unescapeDoubleQuoted(inside) : inside;
             }
         }
         int commentIdx = findInlineCommentIndex(trimmed);
