@@ -87,8 +87,8 @@ export const carService = {
     addDocument: (id, { docType, fileUrl, expiresAt }) => request(endpoints.cars.byIdDocuments(id), { method: "POST", json: { docType, fileUrl, expiresAt: expiresAt || null } }),
     listDocuments: (id) => request(endpoints.cars.byIdDocuments(id)),
     /** GET /api/cars/search — tìm xe đang ACTIVE và LISTED. */
-    async search({ city, carType, brand, seats, minPrice, maxPrice, listingStatus, page = 0, size = 12, sortBy = "createdAt", direction = "DESC" } = {}) {
-        const result = toPage(await request(endpoints.cars.search, { query: { city, carType, brand, seats, minPrice, maxPrice, listingStatus, page, size, sortBy, direction } }));
+    async search({ city, carType, brand, seats, minPrice, maxPrice, page = 0, size = 12, sortBy = "createdAt", direction = "DESC" } = {}) {
+        const result = toPage(await request(endpoints.cars.search, { query: { city, carType, brand, seats, minPrice, maxPrice, page, size, sortBy, direction } }));
         return { ...result, content: result.content.map(normalizeCar) };
     },
     getPublic: getCar,

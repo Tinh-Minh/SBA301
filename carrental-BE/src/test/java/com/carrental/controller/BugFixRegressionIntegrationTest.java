@@ -196,6 +196,19 @@ class BugFixRegressionIntegrationTest {
         return ((Number) JsonPath.read(body, "$.data.id")).longValue();
     }
 
+    // ===================================================================== F2-02
+
+    @Test
+    void publicSearchNeverExposesUnlistedCars() throws Exception {
+        // carId đang ACTIVE nhưng UNLISTED (chưa mua gói)
+        mockMvc.perform(get("/api/cars/search").param("listingStatus", "UNLISTED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(0));
+        mockMvc.perform(get("/api/cars/search"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content.length()").value(0));
+    }
+
     // ===================================================================== helpers
 
     private ResultActions as(Long userId, MockHttpServletRequestBuilder req) throws Exception {

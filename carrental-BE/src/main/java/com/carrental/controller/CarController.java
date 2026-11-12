@@ -60,14 +60,15 @@ public class CarController {
             @RequestParam(required = false) Integer seats,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            @RequestParam(required = false) ListingStatus listingStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String direction
     ) {
         Pageable pageable = PageRequestFactory.of(page, size, sortBy, direction, ALLOWED_CAR_SORT_FIELDS, "createdAt");
-        return ApiResponse.ok(carService.searchCars(city, carType, brand, seats, minPrice, maxPrice, listingStatus, pageable));
+        // API công khai luôn chỉ trả xe đang hiển thị (LISTED): không nhận listingStatus từ client
+        // để tránh lộ xe UNLISTED/EXPIRED ra ngoài.
+        return ApiResponse.ok(carService.searchCars(city, carType, brand, seats, minPrice, maxPrice, ListingStatus.LISTED, pageable));
     }
 
     // Chủ xe xem danh sách xe của mình (hỗ trợ lọc status và listingStatus)
