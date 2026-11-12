@@ -11,4 +11,6 @@ public interface AuthService {
     CustomerProfileResponse register(RegisterRequest request);
     TokenResponse login(LoginRequest request);
     void changePassword(CurrentAccount account, ChangePasswordRequest request);
+    void verifyEmail(String token);
+    void resendVerification(String email);
 }

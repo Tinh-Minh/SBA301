@@ -11,6 +11,8 @@ public enum ErrorCode {
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "Phương thức không được hỗ trợ"),
     UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Loại nội dung không được hỗ trợ"),
     AUTHENTICATION_FAILED(HttpStatus.UNAUTHORIZED, "Thông tin xác thực không hợp lệ hoặc không được phép đăng nhập"),
+    EMAIL_VERIFICATION_REQUIRED(HttpStatus.FORBIDDEN, "Vui lòng xác minh email trước khi đăng nhập"),
+    INVALID_EMAIL_VERIFICATION_TOKEN(HttpStatus.BAD_REQUEST, "Liên kết xác minh email không hợp lệ hoặc đã hết hạn"),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Token không hợp lệ hoặc tài khoản không còn được phép truy cập"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này"),
     ACCOUNT_ALREADY_EXISTS(HttpStatus.CONFLICT, "Tài khoản đã tồn tại"),
