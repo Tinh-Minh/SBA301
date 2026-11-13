@@ -21,6 +21,18 @@ public final class PageRequestFactory {
                 Sort.by(new Sort.Order(dir, field), Sort.Order.asc("id")));
     }
 
+    /** Như {@link #of(int, int, String)} nhưng chỉ nhận trường nằm trong whitelist; trường lạ trả 400 thay vì 500. */
+    public static Pageable of(int page, int size, String sort, Set<String> allowedSortFields) {
+        if (sort != null && !sort.isBlank()) {
+            String field = sort.split(",")[0].trim();
+            if (!allowedSortFields.contains(field)) {
+                throw new com.carrental.exception.AppException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                        "Không hỗ trợ sắp xếp theo '" + field + "'");
+            }
+        }
+        return of(page, size, sort);
+    }
+
     public static Pageable of(int page, int size, String sort) {
         int safePage = Math.max(page, 0);
         int safeSize = Math.min(Math.max(size, 1), MAX_SIZE);

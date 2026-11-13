@@ -67,7 +67,8 @@ public class TransactionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,desc") String sort) {
-        Pageable pageable = PageRequestFactory.of(page, size, sort);
+        Pageable pageable = PageRequestFactory.of(page, size, sort,
+                java.util.Set.of("id", "amount", "status", "transactionType", "method", "paidAt", "createdAt"));
         return ApiResponse.ok(transactionService.getPaged(subscriptionId, bookingId, type, status, pageable));
     }
 }

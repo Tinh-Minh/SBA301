@@ -253,7 +253,9 @@ public class TransactionServiceImpl implements TransactionService {
             try {
                 TransactionType type = TransactionType.valueOf(transactionType.toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("transactionType"), type));
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException e) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Loại giao dịch không hợp lệ: " + transactionType);
+            }
         }
 
         if (status != null && !status.isBlank()) {
@@ -266,7 +268,9 @@ public class TransactionServiceImpl implements TransactionService {
                             cb.isNotNull(root.get("booking"))
                     ));
                 }
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException e) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Trạng thái giao dịch không hợp lệ: " + status);
+            }
         }
 
         return spec;
