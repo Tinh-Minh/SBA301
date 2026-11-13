@@ -25,6 +25,7 @@ import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
 import com.carrental.service.CustomerService;
+import com.carrental.service.PublicImageStorageService;
 import com.carrental.util.RequestChecks;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.Root;
@@ -44,9 +45,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -63,22 +66,31 @@ public class CustomerServiceImpl implements CustomerService {
     private final Clock clock;
     private final AuthService authService;
     private final UserDocumentRepository documents;
+    private final PublicImageStorageService publicImageStorageService;
 
     public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
             CustomerProperties properties, Clock clock, AuthService authService) {
-        this(customers, entityManager, properties, clock, authService, null);
+        this(customers, entityManager, properties, clock, authService, null, null);
+    }
+
+    public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
+            CustomerProperties properties, Clock clock, AuthService authService,
+            UserDocumentRepository documents) {
+        this(customers, entityManager, properties, clock, authService, documents, null);
     }
 
     @Autowired
     public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
             CustomerProperties properties, Clock clock, AuthService authService,
-            UserDocumentRepository documents) {
+            UserDocumentRepository documents,
+            PublicImageStorageService publicImageStorageService) {
         this.customers = customers;
         this.entityManager = entityManager;
         this.properties = properties;
         this.clock = clock;
         this.authService = authService;
         this.documents = documents;
+        this.publicImageStorageService = publicImageStorageService;
     }
 
     @Override
@@ -328,11 +340,37 @@ public class CustomerServiceImpl implements CustomerService {
         return phone;
     }
 
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
+    public CustomerProfileResponse uploadAvatar(CurrentAccount account, MultipartFile file) {
+        if (account == null) throw new AppException(ErrorCode.INVALID_TOKEN);
+        if (file == null || file.isEmpty()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Vui lòng chọn một tệp ảnh đại diện");
+        }
+        if (publicImageStorageService == null) {
+            throw new AppException(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ lưu trữ ảnh tạm thời không khả dụng");
+        }
+        Customer customer = customers.findWithLockById(account.customerId())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+        if (customer.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
+
+        String storedUrl = publicImageStorageService.storeImage(file);
+        customer.setAvatarUrl(storedUrl);
+        customers.flush();
+        entityManager.refresh(customer);
+        log.info("customer-avatar-updated customerId={} url={}", customer.getId(), storedUrl);
+        return CustomerProfileResponse.from(customer);
+    }
+
     private String normalizedAvatar(String value) {
         if (value == null) return null;
         String avatar = value.strip();
         if (avatar.isEmpty()) return null;
         if (avatar.length() > 500) throw fieldError("avatarUrl", "Ảnh đại diện tối đa 500 ký tự");
+        if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
+            throw fieldError("avatarUrl", "Vui lòng tải ảnh lên từ máy tính, không dùng URL ngoài");
+        }
         return avatar;
     }
 

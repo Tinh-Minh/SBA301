@@ -250,7 +250,7 @@ class BugFixRegressionIntegrationTest {
 
     @Test
     void carImageAndDocumentUrlsRejectScriptSchemes() throws Exception {
-        for (String bad : List.of("javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4=", "//evil.example/x.png", "ftp://x/y.png")) {
+        for (String bad : List.of("javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4=", "//evil.example/x.png", "ftp://x/y.png", "https://cdn.example.com/a.jpg", "http://evil.com/x.png")) {
             as(ownerId, post("/api/cars/" + carId + "/images").content("[{\"imageUrl\":\"" + bad + "\"}]"))
                     .andExpect(status().isBadRequest());
             as(ownerId, post("/api/cars/" + carId + "/documents")
@@ -258,7 +258,7 @@ class BugFixRegressionIntegrationTest {
                     .andExpect(status().isBadRequest());
         }
         as(ownerId, post("/api/cars/" + carId + "/images")
-                .content("[{\"imageUrl\":\"https://cdn.example.com/a.jpg\"},{\"imageUrl\":\"/images/cars/a.jpg\"}]"))
+                .content("[{\"imageUrl\":\"/images/cars/a.jpg\"}]"))
                 .andExpect(status().isOk());
     }
 

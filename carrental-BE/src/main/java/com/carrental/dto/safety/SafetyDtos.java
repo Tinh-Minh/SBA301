@@ -31,8 +31,8 @@ public final class SafetyDtos {
             SafetyRecordResult result,
             @Size(max = 1000, message = "Ghi chú tối đa 1000 ký tự") String note,
             @Size(max = 500, message = "Đường dẫn tệp tối đa 500 ký tự")
-            @Pattern(regexp = "^$|^(https?://|/(?!/))\\S+$",
-                    message = "Đường dẫn chỉ được bắt đầu bằng http://, https:// hoặc là đường dẫn nội bộ dạng /...")
+            @Pattern(regexp = "^$|^/(?!/)\\S+$",
+                    message = "Vui lòng tải tệp lên từ máy tính, không dùng URL ngoài")
             String fileUrl) {}
 
     public record SafetyVerifyRequest(

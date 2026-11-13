@@ -7,7 +7,7 @@ export const httpUrlInput = z.string().trim().max(500, "Đường dẫn tối đ
     .regex(/^(https?:\/\/\S+|\/(?!\/)\S+)$/i, "Đường dẫn phải là URL (http/https) hoặc tệp đã tải lên (/api/uploads/...).");
 export const optionalHttpUrlInput = z.union([z.string().trim().length(0), httpUrlInput]);
 export const mediaUrlInput = z.string().trim().max(500, "Đường dẫn tối đa 500 ký tự.")
-    .regex(/^(https?:\/\/\S+|\/(?!\/)\S+|blob:\S+)$/i, "Vui lòng chọn tệp ảnh từ máy hoặc nhập URL ảnh hợp lệ.");
+    .regex(/^(\/(?!\/)\S+|blob:\S+)$/i, "Vui lòng chọn tệp ảnh từ máy.");
 export const optionalMediaUrlInput = z.union([z.string().trim().length(0), mediaUrlInput]);
 
 export const MAX_IMAGE_UPLOAD_BYTES = 5 * 1024 * 1024;

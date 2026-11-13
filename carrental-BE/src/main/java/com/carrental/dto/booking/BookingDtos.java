@@ -27,7 +27,7 @@ public final class BookingDtos {
 
     private BookingDtos() {}
 
-    static final String URL_REGEX = "^(https?://|/(?!/))\\S+$";
+    static final String URL_REGEX = "^/(?!/)\\S+$";
 
     // ------------------------------------------------------------------ requests
 

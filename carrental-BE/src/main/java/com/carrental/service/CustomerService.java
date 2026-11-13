@@ -15,6 +15,8 @@ public interface CustomerService {
 
     CustomerProfileResponse updateMe(CurrentAccount account, UpdateProfileRequest request);
 
+    CustomerProfileResponse uploadAvatar(CurrentAccount account, org.springframework.web.multipart.MultipartFile file);
+
     PageResponse<CustomerSummaryResponse> listCustomers(CustomerListQuery query);
 
     CustomerAdminResponse getCustomer(long id);

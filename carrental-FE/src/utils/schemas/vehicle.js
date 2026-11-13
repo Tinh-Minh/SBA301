@@ -28,7 +28,7 @@ export const vehicleCreateSchema = vehiclePricingSchema.extend({
     weekendPrice: vndInput({ positive: true, min: 10_000, max: 100_000_000, label: "Đơn giá cuối tuần" }),
     lateFee: optionalVndInput({ max: 10_000_000, label: "Phí trễ giờ" }),
     // Admin chỉ duyệt được xe khi có giấy đăng ký xe (cà vẹt) nên bắt buộc ngay từ bước đăng ký.
-    registrationUrl: mediaUrlInput.min(1, "Vui lòng chọn ảnh hoặc nhập đường dẫn giấy đăng ký xe (cà vẹt)."),
+    registrationUrl: mediaUrlInput.min(1, "Vui lòng chọn ảnh giấy đăng ký xe (cà vẹt)."),
     inspectionUrl: optionalMediaUrlInput,
     // Ảnh góc trước là ảnh đại diện của tin đăng nên bắt buộc; các góc còn lại là tuỳ chọn.
     photos: z.record(z.string(), z.object({ url: mediaUrlInput }).passthrough())

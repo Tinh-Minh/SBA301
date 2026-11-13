@@ -17,3 +17,9 @@ application-local.properties
 
 # Local file storage for private documents/images
 /storage/
+
+# Environment files
+.env
+.env.local
+.env.*
+!.env.example
