@@ -22,9 +22,8 @@ public class MailEnvironmentStartupLogger {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
 
     static final List<String> REQUIRED_ENV_VARIABLES = List.of(
-            "MAILJET_API_KEY",
-            "MAILJET_SECRET_KEY",
-            "MAILJET_SENDER_EMAIL",
+            "MAIL_USERNAME",
+            "MAIL_PASSWORD",
             "FRONTEND_URL");
 
     private final Environment environment;

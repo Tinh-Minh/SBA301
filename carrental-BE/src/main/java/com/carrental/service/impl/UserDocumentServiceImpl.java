@@ -4,7 +4,6 @@ import static com.carrental.util.RequestChecks.notFound;
 import static com.carrental.util.RequestChecks.requirePositiveId;
 import static com.carrental.util.RequestChecks.requirePrincipal;
 
-import com.carrental.config.MailEnvironmentStartupLogger;
 import com.carrental.dto.request.document.ReviewUserDocumentRequest;
 import com.carrental.dto.request.document.UserDocumentListQuery;
 import com.carrental.dto.request.document.UserDocumentSubmissionCommand;
@@ -25,6 +24,7 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
+import com.carrental.service.EmailService;
 import com.carrental.service.KycService;
 import com.carrental.service.UserDocumentService;
 import com.carrental.storage.PrivateDocumentStorage;
@@ -40,18 +40,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.util.HtmlUtils;
 
 @Slf4j
 @Service
@@ -66,15 +64,12 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     private final PrivateDocumentStorage storage;
     private final KycService kycService;
     private final Clock clock;
-    private final ObjectProvider<JavaMailSender> mailSenderProvider;
-    private final String mailFrom;
-    private final String mailUsername;
-    private final String mailPassword;
+    private final EmailService emailService;
     private final String frontendBaseUrl;
 
     public UserDocumentServiceImpl(CustomerRepository customers, UserDocumentRepository documents,
             PrivateDocumentStorage storage, KycService kycService, Clock clock) {
-        this(customers, documents, storage, kycService, clock, null, "", "", "", "http://localhost:3000");
+        this(customers, documents, storage, kycService, clock, null, "http://localhost:3000");
     }
 
     @Autowired
@@ -84,20 +79,14 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             PrivateDocumentStorage storage,
             KycService kycService,
             Clock clock,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
-            @Value("${app.mail.from:}") String mailFrom,
-            @Value("${spring.mail.username:}") String mailUsername,
-            @Value("${spring.mail.password:}") String mailPassword,
+            EmailService emailService,
             @Value("${app.frontend.base-url:http://localhost:3000}") String frontendBaseUrl) {
         this.customers = customers;
         this.documents = documents;
         this.storage = storage;
         this.kycService = kycService;
         this.clock = clock;
-        this.mailSenderProvider = mailSenderProvider;
-        this.mailFrom = mailFrom == null ? "" : mailFrom;
-        this.mailUsername = mailUsername == null ? "" : mailUsername;
-        this.mailPassword = mailPassword == null ? "" : mailPassword;
+        this.emailService = emailService;
         this.frontendBaseUrl = frontendBaseUrl == null || frontendBaseUrl.isBlank()
                 ? "http://localhost:3000"
                 : frontendBaseUrl;
@@ -414,11 +403,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             VerificationStatus verifyStatus,
             Role oldRole,
             Role newRole) {
-        JavaMailSender mailSender = mailSenderProvider != null ? mailSenderProvider.getIfAvailable() : null;
-        if (mailSender == null
-                || mailFrom.isBlank()
-                || mailUsername.isBlank()
-                || mailPassword.isBlank()) {
+        if (emailService == null || !emailService.isConfigured()) {
             log.warn("document-review-email-skipped reason=mail_unconfigured customerId={} documentId={} verifyStatus={}",
                     owner.getId(), document.getId(), verifyStatus);
             return;
@@ -439,27 +424,31 @@ public class UserDocumentServiceImpl implements UserDocumentService {
                 ? owner.getFullName()
                 : "Quý khách";
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(mailFrom);
-        message.setTo(owner.getEmail());
+        String subject;
+        String plainTextBody;
+        String htmlContent;
+        String actionUrl = baseUrl + "/account/verification";
 
         if (verifyStatus == VerificationStatus.APPROVED) {
             boolean promotedToOwner = newRole == Role.OWNER && oldRole != Role.OWNER;
             if (promotedToOwner) {
-                message.setSubject("Chúc mừng! Tài khoản CarDB của bạn đã được nâng cấp lên Chủ xe");
-                message.setText("Xin chào " + greetingName + ",\n\n"
+                subject = "Chúc mừng! Tài khoản CarDB của bạn đã được nâng cấp lên Chủ xe";
+                plainTextBody = "Xin chào " + greetingName + ",\n\n"
                         + "Chúc mừng bạn! Hồ sơ " + docLabel + " của bạn đã được quản trị viên phê duyệt.\n"
                         + "Tài khoản CarDB của bạn đã chính thức được nâng cấp lên vai trò Chủ xe (OWNER). "
-                        + "Bạn có thể đăng ký xe cho thuê và quản lý tin đăng ngay tại:\n"
-                        + baseUrl + "/owner/dashboard\n\n"
-                        + "Trân trọng,\nĐội ngũ CarDB");
+                        + "Bạn có thể đăng ký xe cho thuê và quản lý tin đăng tại:\n"
+                        + baseUrl + "/owner/dashboard\n\nTrân trọng,\nĐội ngũ CarDB";
+                actionUrl = baseUrl + "/owner/dashboard";
+                htmlContent = "<p>Chúc mừng bạn! Hồ sơ <strong>" + HtmlUtils.htmlEscape(docLabel)
+                        + "</strong> đã được quản trị viên phê duyệt.</p>"
+                        + "<p>Tài khoản CarDB của bạn đã được nâng cấp lên vai trò Chủ xe (OWNER).</p>";
             } else {
-                message.setSubject("Thông báo: Hồ sơ " + docLabel + " trên CarDB đã được duyệt");
-                message.setText("Xin chào " + greetingName + ",\n\n"
+                subject = "Thông báo: Hồ sơ " + docLabel + " trên CarDB đã được duyệt";
+                plainTextBody = "Xin chào " + greetingName + ",\n\n"
                         + "Chúc mừng bạn! Hồ sơ " + docLabel + " của bạn đã được quản trị viên xác minh thành công.\n"
-                        + "Xem chi tiết trạng thái tại:\n"
-                        + baseUrl + "/account/verification\n\n"
-                        + "Trân trọng,\nĐội ngũ CarDB");
+                        + "Xem chi tiết trạng thái tại:\n" + actionUrl + "\n\nTrân trọng,\nĐội ngũ CarDB";
+                htmlContent = "<p>Chúc mừng bạn! Hồ sơ <strong>" + HtmlUtils.htmlEscape(docLabel)
+                        + "</strong> đã được quản trị viên xác minh thành công.</p>";
             }
         } else {
             long usedAttempts = IDENTITY_DOC_TYPES.contains(document.getDocType())
@@ -474,27 +463,39 @@ public class UserDocumentServiceImpl implements UserDocumentService {
                             ? "Bạn còn " + remaining + "/" + MAX_OWNER_UPGRADE_ATTEMPTS + " lượt gửi yêu cầu nâng cấp chủ xe."
                             : "Bạn đã sử dụng hết tối đa " + MAX_OWNER_UPGRADE_ATTEMPTS + "/" + MAX_OWNER_UPGRADE_ATTEMPTS + " lượt gửi yêu cầu nâng cấp chủ xe.")
                     : "Bạn có thể cập nhật lại hồ sơ hợp lệ.";
-            message.setSubject("Thông báo: Hồ sơ " + docLabel + " trên CarDB chưa được duyệt");
-            message.setText("Xin chào " + greetingName + ",\n\n"
+            subject = "Thông báo: Hồ sơ " + docLabel + " trên CarDB chưa được duyệt";
+            plainTextBody = "Xin chào " + greetingName + ",\n\n"
                     + "Rất tiếc, hồ sơ " + docLabel + " của bạn đã bị từ chối.\n"
                     + "Lý do từ chối: " + reason + "\n\n"
-                    + quotaNote + "\n"
-                    + "Xem trạng thái hồ sơ tại:\n"
-                    + baseUrl + "/account/verification\n\n"
-                    + "Trân trọng,\nĐội ngũ CarDB");
+                    + quotaNote + "\nXem trạng thái hồ sơ tại:\n" + actionUrl + "\n\nTrân trọng,\nĐội ngũ CarDB";
+            htmlContent = "<p>Rất tiếc, hồ sơ <strong>" + HtmlUtils.htmlEscape(docLabel)
+                    + "</strong> của bạn chưa được duyệt.</p><p><strong>Lý do:</strong> "
+                    + HtmlUtils.htmlEscape(reason) + "</p><p>" + HtmlUtils.htmlEscape(quotaNote) + "</p>";
         }
 
         try {
-            mailSender.send(message);
+            String safeName = HtmlUtils.htmlEscape(greetingName);
+            String safeActionUrl = HtmlUtils.htmlEscape(actionUrl);
+            String htmlBody = """
+                    <!doctype html><html lang="vi"><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#252525">
+                      <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px">
+                        <div style="font-size:24px;font-weight:700;color:#f2763d">CarDB</div>
+                        <h1 style="font-size:22px;margin:24px 0 12px">%s</h1>
+                        <p>Xin chào %s,</p>%s
+                        <p style="margin:28px 0"><a href="%s" style="display:inline-block;background:#f2763d;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px">Xem trạng thái hồ sơ</a></p>
+                        <p style="font-size:12px;color:#777">Trân trọng,<br>Đội ngũ CarDB</p>
+                      </div>
+                    </body></html>
+                    """.formatted(HtmlUtils.htmlEscape(subject), safeName, htmlContent, safeActionUrl);
+            emailService.sendHtmlEmail(owner.getEmail(), subject, plainTextBody, htmlBody);
             log.info("document-review-email-sent customerId={} documentId={} verifyStatus={}",
                     owner.getId(), document.getId(), verifyStatus);
         } catch (RuntimeException ex) {
-            log.warn("document-review-email-failed customerId={} documentId={} verifyStatus={} exceptionType={} detail={}",
+            log.warn("document-review-email-failed customerId={} documentId={} verifyStatus={} exceptionType={}",
                     owner.getId(),
                     document.getId(),
                     verifyStatus,
-                    ex.getClass().getSimpleName(),
-                    MailEnvironmentStartupLogger.summarizeMailFailure(ex, owner.getEmail(), document.getRejectReason()));
+                    ex.getClass().getSimpleName());
         }
     }
 }

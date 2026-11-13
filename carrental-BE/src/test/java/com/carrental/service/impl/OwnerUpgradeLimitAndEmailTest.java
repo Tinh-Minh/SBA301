@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -29,6 +30,7 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
+import com.carrental.service.EmailService;
 import com.carrental.service.KycService;
 import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentReceipt;
@@ -43,10 +45,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.MailSendException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tools.jackson.databind.node.StringNode;
@@ -135,9 +134,8 @@ class OwnerUpgradeLimitAndEmailTest {
         UserDocumentRepository documents = mock(UserDocumentRepository.class);
         PrivateDocumentStorage storage = mock(PrivateDocumentStorage.class);
         KycService kycService = mock(KycService.class);
-        JavaMailSender mailSender = mock(JavaMailSender.class);
-        ObjectProvider<JavaMailSender> mailProvider = mock(ObjectProvider.class);
-        when(mailProvider.getIfAvailable()).thenReturn(mailSender);
+        EmailService emailService = mock(EmailService.class);
+        when(emailService.isConfigured()).thenReturn(true);
 
         Customer admin = customer(1L, Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.VERIFIED);
         Customer owner = customer(30L, Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.PENDING);
@@ -152,18 +150,20 @@ class OwnerUpgradeLimitAndEmailTest {
 
         UserDocumentServiceImpl service = new UserDocumentServiceImpl(
                 customers, documents, storage, kycService, FIXED_CLOCK,
-                mailProvider, "noreply@cardb.vn", "smtp-user", "smtp-pass", "http://localhost:3000");
+                emailService, "http://localhost:3000");
 
         ReviewUserDocumentRequest approveReq = new ReviewUserDocumentRequest();
         approveReq.setVerifyStatus(StringNode.valueOf("APPROVED"));
         service.review(new CurrentAccount(1L, Role.ADMIN), 400L, approveReq);
 
-        ArgumentCaptor<SimpleMailMessage> mailCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender).send(mailCaptor.capture());
-        SimpleMailMessage approvedMail = mailCaptor.getValue();
-        assertThat(approvedMail.getTo()).containsExactly("user30@test.vn");
-        assertThat(approvedMail.getSubject()).contains("Chúc mừng");
-        assertThat(approvedMail.getText()).contains("Chủ xe (OWNER)");
+        ArgumentCaptor<String> subjectCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> plainTextCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> htmlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService).sendHtmlEmail(eq("user30@test.vn"), subjectCaptor.capture(),
+                plainTextCaptor.capture(), htmlCaptor.capture());
+        assertThat(subjectCaptor.getValue()).contains("Chúc mừng");
+        assertThat(plainTextCaptor.getValue()).contains("Chủ xe (OWNER)");
+        assertThat(htmlCaptor.getValue()).contains("Chủ xe (OWNER)", "href=");
 
         // Test rejection + mail delivery exception resilience + no PII leak in logs
         Customer owner2 = customer(31L, Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.PENDING);
@@ -173,7 +173,8 @@ class OwnerUpgradeLimitAndEmailTest {
         when(documents.findWithLockById(401L)).thenReturn(Optional.of(docReject));
         when(kycService.currentStatus(31L, LocalDate.now(FIXED_CLOCK))).thenReturn(KycStatus.REJECTED);
         when(documents.countByCustomerIdAndDocTypeIn(eq(31L), anyCollection())).thenReturn(2L);
-        doThrow(new MailSendException("SMTP down")).when(mailSender).send(any(SimpleMailMessage.class));
+        doThrow(new MailSendException("SMTP down")).when(emailService)
+                .sendHtmlEmail(anyString(), anyString(), anyString(), anyString());
 
         Logger logger = (Logger) LoggerFactory.getLogger(UserDocumentServiceImpl.class);
         ListAppender<ILoggingEvent> appender = new ListAppender<>();

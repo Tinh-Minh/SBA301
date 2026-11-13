@@ -27,6 +27,7 @@ import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.CustomerService;
+import com.carrental.service.EmailService;
 import com.carrental.service.KycService;
 import com.carrental.service.UserDocumentService;
 import com.carrental.service.impl.CustomerServiceImpl;
@@ -46,11 +47,8 @@ import tools.jackson.databind.node.JsonNodeFactory;
 import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
@@ -63,9 +61,7 @@ class OwnerUpgradeWorkflowTest {
 
     private final Clock clock = Clock.fixed(Instant.parse("2026-11-13T00:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
     private final PrivateDocumentStorage storage = mock(PrivateDocumentStorage.class);
-    private final JavaMailSender mailSender = mock(JavaMailSender.class);
-    @SuppressWarnings("unchecked")
-    private final ObjectProvider<JavaMailSender> mailProvider = mock(ObjectProvider.class);
+    private final EmailService emailService = mock(EmailService.class);
 
     private UserDocumentService documentService;
     private KycService kycService;
@@ -77,7 +73,6 @@ class OwnerUpgradeWorkflowTest {
 
     @BeforeEach
     void setUp() {
-        when(mailProvider.getIfAvailable()).thenReturn(mailSender);
         when(storage.isEnabled()).thenReturn(true);
         when(storage.store(any())).thenAnswer(inv -> {
             UUID id = UUID.randomUUID();
@@ -89,7 +84,7 @@ class OwnerUpgradeWorkflowTest {
 
         kycService = new KycServiceImpl(customers, documents, clock);
         documentService = new UserDocumentServiceImpl(customers, documents, storage, kycService, clock,
-                mailProvider, "noreply@cardb.vn", "apikey", "secretkey", "http://localhost:3000");
+                emailService, "http://localhost:3000");
 
         user = customers.save(Customer.builder()
                 .fullName("Nguyễn Văn Kiểm Thử")

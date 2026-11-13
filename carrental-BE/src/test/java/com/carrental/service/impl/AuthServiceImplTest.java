@@ -3,6 +3,7 @@ package com.carrental.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -18,6 +19,7 @@ import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
+import com.carrental.service.EmailService;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -27,9 +29,6 @@ import java.util.Optional;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -42,9 +41,7 @@ class AuthServiceImplTest {
     private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
     private final JwtEncoder jwtEncoder = mock(JwtEncoder.class);
     private final JwtDecoder jwtDecoder = mock(JwtDecoder.class);
-    private final JavaMailSender mailSender = mock(JavaMailSender.class);
-    @SuppressWarnings("unchecked")
-    private final ObjectProvider<JavaMailSender> mailSenderProvider = mock(ObjectProvider.class);
+    private final EmailService emailService = mock(EmailService.class);
     private final Instant now = Instant.parse("2026-01-01T00:00:00Z");
     private AuthServiceImpl service;
 
@@ -52,9 +49,8 @@ class AuthServiceImplTest {
     void setUp() {
         service = new AuthServiceImpl(customers, passwordEncoder, jwtEncoder, jwtDecoder,
                 new JwtProperties("issuer", "audience", Duration.ofMinutes(30), Duration.ZERO, "x".repeat(32)),
-                Clock.fixed(now, ZoneOffset.UTC), mailSenderProvider, "http://localhost:3000", "noreply@example.test",
-                "test-api-key", "test-secret-key");
-        when(mailSenderProvider.getIfAvailable()).thenReturn(mailSender);
+                Clock.fixed(now, ZoneOffset.UTC), emailService, "http://localhost:3000");
+        when(emailService.isConfigured()).thenReturn(true);
     }
 
     @Test
@@ -151,13 +147,19 @@ class AuthServiceImplTest {
         var response = service.register(request);
 
         assertThat(response.emailVerified()).isFalse();
-        ArgumentCaptor<SimpleMailMessage> message = ArgumentCaptor.forClass(SimpleMailMessage.class);
-        verify(mailSender).send(message.capture());
-        assertThat(message.getValue().getTo()).containsExactly("new@example.test");
-        assertThat(message.getValue().getText()).contains(
+        ArgumentCaptor<String> subject = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> plainText = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> html = ArgumentCaptor.forClass(String.class);
+        verify(emailService).sendHtmlEmail(eq("new@example.test"), subject.capture(), plainText.capture(), html.capture());
+        assertThat(subject.getValue()).isEqualTo("Xác minh email CarDB");
+        assertThat(plainText.getValue()).contains(
                 "http://localhost:3000/verify-email#token=signed-verification-token",
-                "30 phút");
-        verify(jwtEncoder).encode(any(JwtEncoderParameters.class));
+                "5 phút");
+        assertThat(html.getValue()).contains("Xác minh email", "href=", "5 phút")
+                .doesNotContain("<script>");
+        ArgumentCaptor<JwtEncoderParameters> jwtParameters = ArgumentCaptor.forClass(JwtEncoderParameters.class);
+        verify(jwtEncoder).encode(jwtParameters.capture());
+        assertThat(jwtParameters.getValue().getClaims().getExpiresAt()).isEqualTo(now.plusSeconds(300));
     }
 
     @Test

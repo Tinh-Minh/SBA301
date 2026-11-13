@@ -22,6 +22,7 @@ import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.security.CurrentAccountJwtAuthenticationConverter;
 import com.carrental.security.InvalidCurrentAccountException;
+import com.carrental.service.EmailService;
 import com.carrental.service.MailRateLimiter;
 import com.carrental.service.PublicImageStorageService;
 import jakarta.persistence.EntityManager;
@@ -38,9 +39,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpStatus;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,7 +63,7 @@ class PasswordAndMailRateLimitTest {
     private PasswordEncoder passwordEncoder;
     private JwtEncoder jwtEncoder;
     private JwtDecoder jwtDecoder;
-    private ObjectProvider<JavaMailSender> mailSenderProvider;
+    private EmailService emailService;
     private AuthServiceImpl authService;
 
     @BeforeEach
@@ -74,13 +73,12 @@ class PasswordAndMailRateLimitTest {
         passwordEncoder = new BCryptPasswordEncoder();
         jwtEncoder = mock(JwtEncoder.class);
         jwtDecoder = mock(JwtDecoder.class);
-        mailSenderProvider = mock(ObjectProvider.class);
+        emailService = mock(EmailService.class);
 
         JwtProperties jwtProps = new JwtProperties("test-issuer", "test-audience", Duration.ofMinutes(30), Duration.ZERO, "x".repeat(32));
         authService = new AuthServiceImpl(
                 customers, passwordEncoder, jwtEncoder, jwtDecoder, jwtProps, clock,
-                mailSenderProvider, "http://localhost:3000", "sender@test.local",
-                "key", "secret", rateLimiter);
+                emailService, "http://localhost:3000", rateLimiter);
     }
 
     // =========================================================================

@@ -21,9 +21,8 @@ class DotEnvEnvironmentPostProcessorTest {
         List<String> lines = List.of(
                 "# comment",
                 "   ",
-                "export MAILJET_API_KEY=test-api-key # trailing inline comment",
-                "MAILJET_SECRET_KEY=\"secret-with-#-and-\\nline\"",
-                "MAILJET_SENDER_EMAIL='sender@cardb.vn'",
+                "export MAIL_USERNAME=test-user@gmail.com # trailing inline comment",
+                "MAIL_PASSWORD=\"secret-with-#-and-\\nline\"",
                 "QUOTED_WITH_COMMENT=\"quoted-val\" # inline comment after quote",
                 "SINGLE_QUOTED_WITH_COMMENT='single-val' # comment",
                 "FRONTEND_URL=http://localhost:3000"
@@ -31,9 +30,8 @@ class DotEnvEnvironmentPostProcessorTest {
 
         Map<String, Object> parsed = DotEnvEnvironmentPostProcessor.parseLines(lines);
 
-        assertThat(parsed).containsEntry("MAILJET_API_KEY", "test-api-key");
-        assertThat(parsed).containsEntry("MAILJET_SECRET_KEY", "secret-with-#-and-\nline");
-        assertThat(parsed).containsEntry("MAILJET_SENDER_EMAIL", "sender@cardb.vn");
+        assertThat(parsed).containsEntry("MAIL_USERNAME", "test-user@gmail.com");
+        assertThat(parsed).containsEntry("MAIL_PASSWORD", "secret-with-#-and-\nline");
         assertThat(parsed).containsEntry("QUOTED_WITH_COMMENT", "quoted-val");
         assertThat(parsed).containsEntry("SINGLE_QUOTED_WITH_COMMENT", "single-val");
         assertThat(parsed).containsEntry("FRONTEND_URL", "http://localhost:3000");
@@ -45,7 +43,7 @@ class DotEnvEnvironmentPostProcessorTest {
         Path beDir = tempDir.resolve("carrental-BE");
         Files.createDirectories(beDir);
         Path envFile = beDir.resolve(".env");
-        Files.writeString(envFile, "MAILJET_API_KEY=from-child\n");
+        Files.writeString(envFile, "MAIL_USERNAME=from-child@gmail.com\n");
 
         Path resolvedFromRoot = DotEnvEnvironmentPostProcessor.resolveEnvFile(tempDir);
         assertThat(resolvedFromRoot).isEqualTo(envFile.toAbsolutePath().normalize());
@@ -58,12 +56,12 @@ class DotEnvEnvironmentPostProcessorTest {
     @DisplayName("loadFileIntoEnvironment injects dotenv property source")
     void loadFileIntoEnvironmentPopulatesEnv(@TempDir Path tempDir) throws IOException {
         Path envFile = tempDir.resolve(".env");
-        Files.writeString(envFile, "MAILJET_SENDER_EMAIL=test@cardb.vn\n");
+        Files.writeString(envFile, "MAIL_USERNAME=test@cardb.vn\n");
 
         ConfigurableEnvironment environment = new StandardEnvironment();
         DotEnvEnvironmentPostProcessor.loadFileIntoEnvironment(environment, envFile);
 
-        assertThat(environment.getProperty("MAILJET_SENDER_EMAIL")).isEqualTo("test@cardb.vn");
+        assertThat(environment.getProperty("MAIL_USERNAME")).isEqualTo("test@cardb.vn");
     }
 
     @Test
@@ -73,7 +71,7 @@ class DotEnvEnvironmentPostProcessorTest {
         MailEnvironmentStartupLogger logger = new MailEnvironmentStartupLogger(env);
 
         List<String> missing = logger.findMissingVariables();
-        assertThat(missing).containsExactly("MAILJET_API_KEY", "MAILJET_SECRET_KEY", "MAILJET_SENDER_EMAIL", "FRONTEND_URL");
+        assertThat(missing).containsExactly("MAIL_USERNAME", "MAIL_PASSWORD", "FRONTEND_URL");
 
         Exception simulated = new RuntimeException("554 5.7.1 Delivery to secret-user@test.vn failed with password123");
         String summary = MailEnvironmentStartupLogger.summarizeMailFailure(simulated, "password123");

@@ -1,6 +1,5 @@
 package com.carrental.service.impl;
 
-import com.carrental.config.MailEnvironmentStartupLogger;
 import com.carrental.config.security.JwtProperties;
 import com.carrental.dto.request.auth.AuthInputNormalizer;
 import com.carrental.dto.request.auth.ChangePasswordRequest;
@@ -17,6 +16,7 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
+import com.carrental.service.EmailService;
 import com.carrental.service.MailRateLimiter;
 import java.time.Clock;
 import java.time.Duration;
@@ -31,11 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.mail.MailException;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -48,6 +45,7 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.HtmlUtils;
 import com.carrental.web.RequestTraceFilter;
 
 @Slf4j
@@ -60,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
             "^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
     private static final String EMAIL_VERIFICATION_PURPOSE = "email_verification";
     private static final String EMAIL_VERIFICATION_AUDIENCE = "email-verification";
-    private static final Duration EMAIL_VERIFICATION_TTL = Duration.ofMinutes(30);
+    private static final Duration EMAIL_VERIFICATION_TTL = Duration.ofMinutes(5);
     private static final Duration RESEND_COOLDOWN = Duration.ofMinutes(1);
 
     private final CustomerRepository customers;
@@ -69,24 +67,18 @@ public class AuthServiceImpl implements AuthService {
     private final JwtDecoder jwtDecoder;
     private final JwtProperties jwtProperties;
     private final Clock clock;
-    private final ObjectProvider<JavaMailSender> mailSenderProvider;
+    private final EmailService emailService;
     private final String frontendBaseUrl;
-    private final String mailFrom;
-    private final String mailUsername;
-    private final String mailPassword;
     private final MailRateLimiter mailRateLimiter;
     private final Map<String, Instant> resendRequests = new HashMap<>();
 
     public AuthServiceImpl(CustomerRepository customers, PasswordEncoder passwordEncoder,
             JwtEncoder jwtEncoder,
             JwtDecoder jwtDecoder, JwtProperties jwtProperties, Clock clock,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
-            String frontendBaseUrl,
-            String mailFrom,
-            String mailUsername,
-            String mailPassword) {
+            EmailService emailService,
+            String frontendBaseUrl) {
         this(customers, passwordEncoder, jwtEncoder, jwtDecoder, jwtProperties, clock,
-                mailSenderProvider, frontendBaseUrl, mailFrom, mailUsername, mailPassword,
+                emailService, frontendBaseUrl,
                 new MailRateLimiter(clock));
     }
 
@@ -94,11 +86,8 @@ public class AuthServiceImpl implements AuthService {
     public AuthServiceImpl(CustomerRepository customers, PasswordEncoder passwordEncoder,
             JwtEncoder jwtEncoder,
             JwtDecoder jwtDecoder, JwtProperties jwtProperties, Clock clock,
-            ObjectProvider<JavaMailSender> mailSenderProvider,
+            EmailService emailService,
             @Value("${app.frontend.base-url:http://localhost:3000}") String frontendBaseUrl,
-            @Value("${app.mail.from:}") String mailFrom,
-            @Value("${spring.mail.username:}") String mailUsername,
-            @Value("${spring.mail.password:}") String mailPassword,
             MailRateLimiter mailRateLimiter) {
         this.customers = customers;
         this.passwordEncoder = passwordEncoder;
@@ -106,11 +95,8 @@ public class AuthServiceImpl implements AuthService {
         this.jwtDecoder = jwtDecoder;
         this.jwtProperties = jwtProperties;
         this.clock = clock;
-        this.mailSenderProvider = mailSenderProvider;
+        this.emailService = emailService;
         this.frontendBaseUrl = frontendBaseUrl;
-        this.mailFrom = mailFrom;
-        this.mailUsername = mailUsername;
-        this.mailPassword = mailPassword;
         this.mailRateLimiter = mailRateLimiter != null ? mailRateLimiter : new MailRateLimiter(clock);
     }
 
@@ -253,30 +239,36 @@ public class AuthServiceImpl implements AuthService {
                 .build()
                 .toUriString();
 
-        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
-        if (mailFrom == null || mailFrom.isBlank()
-                || mailUsername == null || mailUsername.isBlank()
-                || mailPassword == null || mailPassword.isBlank()
-                || mailSender == null) {
-            log.warn("Dịch vụ gửi email chưa được cấu hình. Link xác minh email cho {}: {}", customer.getEmail(), verificationUrl);
-            customer.setEmailVerified(true);
-            return;
+        if (emailService == null || !emailService.isConfigured()) {
+            log.warn("auth-verification-email-skipped reason=mail_unconfigured customerId={}", customer.getId());
+            throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE);
         }
 
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom(mailFrom);
-        message.setTo(customer.getEmail());
-        message.setSubject("Xác minh email CarDB");
-        message.setText("Xin chào " + customer.getFullName() + ",\n\n"
-                + "Vui lòng mở liên kết sau để xác minh email CarDB của bạn (có hiệu lực trong 30 phút):\n"
-                + verificationUrl + "\n\nNếu bạn không tạo tài khoản, hãy bỏ qua email này.");
+        String subject = "Xác minh email CarDB";
+        String plainTextBody = "Xin chào " + customer.getFullName() + ",\n\n"
+                + "Vui lòng mở liên kết sau để xác minh email CarDB của bạn (có hiệu lực trong 5 phút):\n"
+                + verificationUrl + "\n\nNếu bạn không tạo tài khoản, hãy bỏ qua email này.";
+        String safeName = HtmlUtils.htmlEscape(customer.getFullName() == null ? "Quý khách" : customer.getFullName());
+        String safeUrl = HtmlUtils.htmlEscape(verificationUrl);
+        String htmlBody = """
+                <!doctype html><html lang="vi"><body style="margin:0;padding:24px;background:#f4f5f7;font-family:Arial,sans-serif;color:#252525">
+                  <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px">
+                    <div style="font-size:24px;font-weight:700;color:#f2763d">CarDB</div>
+                    <h1 style="font-size:24px;margin:24px 0 12px">Xác minh email</h1>
+                    <p>Xin chào %s,</p>
+                    <p>Vui lòng xác minh địa chỉ email để hoàn tất đăng ký tài khoản CarDB.</p>
+                    <p style="margin:28px 0"><a href="%s" style="display:inline-block;background:#f2763d;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 24px;border-radius:8px">Xác minh email</a></p>
+                    <p style="color:#666">Liên kết có hiệu lực trong 5 phút. Nếu bạn không tạo tài khoản, hãy bỏ qua email này.</p>
+                    <p style="font-size:12px;color:#777">Trân trọng,<br>Đội ngũ CarDB</p>
+                  </div>
+                </body></html>
+                """.formatted(safeName, safeUrl);
         try {
-            mailSender.send(message);
+            emailService.sendHtmlEmail(customer.getEmail(), subject, plainTextBody, htmlBody);
         } catch (MailException exception) {
-            log.warn("Email delivery unavailable traceId={} exceptionType={} detail={}",
+            log.warn("Email delivery unavailable traceId={} exceptionType={}",
                     RequestTraceFilter.currentTraceId(),
-                    exception.getClass().getSimpleName(),
-                    MailEnvironmentStartupLogger.summarizeMailFailure(exception, customer.getEmail()));
+                    exception.getClass().getSimpleName());
             throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, exception);
         }
     }
