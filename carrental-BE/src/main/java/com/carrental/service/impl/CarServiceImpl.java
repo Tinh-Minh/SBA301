@@ -136,6 +136,39 @@ public class CarServiceImpl implements CarService {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.carrental.repository.CarSubscriptionRepository carSubscriptionRepository;
+
+    /**
+     * Tạm dừng xe thì dừng đếm thời gian slot đang chạy; hoạt động lại thì cộng bù
+     * khoảng thời gian đã dừng vào slot hiện tại và ngày kết thúc gói.
+     */
+    private void pauseOrResumeSubscription(Car car, CarStatus newStatus) {
+        if (carSubscriptionRepository == null || car.getCurrentSubscriptionId() == null) {
+            return;
+        }
+        carSubscriptionRepository.findById(car.getCurrentSubscriptionId()).ifPresent(sub -> {
+            if (sub.getStatus() != com.carrental.enums.SubscriptionStatus.ACTIVE) {
+                return;
+            }
+            java.time.LocalDateTime now = com.carrental.util.TimeUtil.nowVn();
+            if (newStatus == CarStatus.INACTIVE && sub.getPausedAt() == null
+                    && sub.getCurrentSlotEndDate() != null && sub.getCurrentSlotEndDate().isAfter(now)) {
+                sub.setPausedAt(now);
+                car.setListingStatus(ListingStatus.UNLISTED);
+            } else if (newStatus == CarStatus.ACTIVE && sub.getPausedAt() != null) {
+                java.time.Duration paused = java.time.Duration.between(sub.getPausedAt(), now);
+                sub.setCurrentSlotEndDate(sub.getCurrentSlotEndDate().plus(paused));
+                if (sub.getEndDate() != null) {
+                    sub.setEndDate(sub.getEndDate().plus(paused));
+                }
+                sub.setPausedAt(null);
+                car.setListingStatus(ListingStatus.LISTED);
+            }
+            carSubscriptionRepository.save(sub);
+        });
+    }
+
     private static String identityOf(Car car) {
         return String.join("|", String.valueOf(car.getBrand()), String.valueOf(car.getModel()),
                 String.valueOf(car.getManufactureYear()), String.valueOf(car.getLicensePlate())).toLowerCase();
@@ -252,6 +285,7 @@ public class CarServiceImpl implements CarService {
 
             car.getStatus().validateTransitionTo(newStatus);
             car.setStatus(newStatus);
+            pauseOrResumeSubscription(car, newStatus);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Chủ xe đổi trạng thái thất bại carId={}: {}", carId, e.getMessage());

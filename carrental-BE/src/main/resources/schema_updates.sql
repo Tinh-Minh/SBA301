@@ -139,3 +139,6 @@ ALTER TABLE transactions ADD CONSTRAINT fk_transactions_booking
 -- Cột kiểm duyệt đánh giá (entity Review.approved). DB cũ: đánh giá đã có coi như đã duyệt.
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE reviews ALTER COLUMN approved SET DEFAULT FALSE;
+
+-- Tạm dừng xe: lưu thời điểm dừng để cộng bù thời gian slot khi xe hoạt động lại.
+ALTER TABLE car_subscriptions ADD COLUMN IF NOT EXISTS paused_at TIMESTAMP;
