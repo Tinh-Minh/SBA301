@@ -8,6 +8,7 @@ import com.carrental.config.MailEnvironmentStartupLogger;
 import com.carrental.dto.request.document.ReviewUserDocumentRequest;
 import com.carrental.dto.request.document.UserDocumentListQuery;
 import com.carrental.dto.request.document.UserDocumentSubmissionCommand;
+import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.UserDocumentDetailResponse;
 import com.carrental.dto.response.UserDocumentReviewResponse;
@@ -334,21 +335,68 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     }
 
     private void validateApprovalPrerequisites(UserDocument document, LocalDate today) {
-        boolean complete = notBlank(document.getFullNameOnDoc())
-                && document.getDateOfBirthOnDoc() != null && !document.getDateOfBirthOnDoc().isAfter(today)
-                && notBlank(document.getIssuePlace())
-                && document.getIssueDate() != null && !document.getIssueDate().isAfter(today)
-                && (document.getExpiresAt() == null || !document.getExpiresAt().isBefore(today))
-                && (document.getIssueDate() == null || document.getExpiresAt() == null
-                        || !document.getIssueDate().isAfter(document.getExpiresAt()));
-        if (document.getDocType() == DocumentType.DRIVER_LICENSE) {
-            complete = complete && notBlank(document.getLicenseClass()) && document.getExpiresAt() != null;
+        List<String> reasons = new ArrayList<>();
+        List<FieldErrorResponse> fieldErrors = new ArrayList<>();
+
+        if (!notBlank(document.getFullNameOnDoc())) {
+            reasons.add("Họ và tên trên giấy tờ không được để trống");
+            fieldErrors.add(new FieldErrorResponse("fullNameOnDoc", "Họ và tên trên giấy tờ không được để trống"));
         }
-        if (document.getDocType() == DocumentType.CITIZEN_ID
-                || document.getDocType() == DocumentType.DRIVER_LICENSE) {
-            complete = complete && notBlank(document.getBackImageUrl());
+
+        if (document.getDateOfBirthOnDoc() == null) {
+            reasons.add("Thiếu ngày sinh trên giấy tờ");
+            fieldErrors.add(new FieldErrorResponse("dateOfBirthOnDoc", "Thiếu ngày sinh trên giấy tờ"));
+        } else if (document.getDateOfBirthOnDoc().isAfter(today)) {
+            reasons.add("Ngày sinh (" + document.getDateOfBirthOnDoc() + ") không được ở tương lai");
+            fieldErrors.add(new FieldErrorResponse("dateOfBirthOnDoc", "Ngày sinh (" + document.getDateOfBirthOnDoc() + ") không được ở tương lai"));
         }
-        if (!complete) throw new AppException(ErrorCode.DOCUMENT_NOT_APPROVABLE);
+
+        if (!notBlank(document.getIssuePlace())) {
+            reasons.add("Nơi cấp giấy tờ không được để trống");
+            fieldErrors.add(new FieldErrorResponse("issuePlace", "Nơi cấp giấy tờ không được để trống"));
+        }
+
+        if (document.getIssueDate() == null) {
+            reasons.add("Thiếu ngày cấp giấy tờ");
+            fieldErrors.add(new FieldErrorResponse("issueDate", "Thiếu ngày cấp giấy tờ"));
+        } else if (document.getIssueDate().isAfter(today)) {
+            reasons.add("Ngày cấp (" + document.getIssueDate() + ") không được ở tương lai");
+            fieldErrors.add(new FieldErrorResponse("issueDate", "Ngày cấp (" + document.getIssueDate() + ") không được ở tương lai"));
+        }
+
+        if (document.getDocType() == DocumentType.DRIVER_LICENSE && document.getExpiresAt() == null) {
+            reasons.add("Giấy phép lái xe bắt buộc phải có ngày hết hạn");
+            fieldErrors.add(new FieldErrorResponse("expiresAt", "Giấy phép lái xe bắt buộc phải có ngày hết hạn"));
+        }
+
+        if (document.getExpiresAt() != null && document.getExpiresAt().isBefore(today)) {
+            reasons.add("Giấy tờ đã hết hạn sử dụng (ngày hết hạn: " + document.getExpiresAt() + ", hôm nay: " + today + ")");
+            fieldErrors.add(new FieldErrorResponse("expiresAt", "Giấy tờ đã hết hạn sử dụng"));
+        }
+
+        if (document.getIssueDate() != null && document.getExpiresAt() != null
+                && document.getIssueDate().isAfter(document.getExpiresAt())) {
+            reasons.add("Ngày hết hạn (" + document.getExpiresAt() + ") phải sau hoặc bằng ngày cấp (" + document.getIssueDate() + ")");
+            fieldErrors.add(new FieldErrorResponse("expiresAt", "Ngày hết hạn phải sau hoặc bằng ngày cấp"));
+        }
+
+        if (document.getDocType() == DocumentType.DRIVER_LICENSE && !notBlank(document.getLicenseClass())) {
+            reasons.add("Giấy phép lái xe bắt buộc phải có hạng bằng lái");
+            fieldErrors.add(new FieldErrorResponse("licenseClass", "Giấy phép lái xe bắt buộc phải có hạng bằng lái"));
+        }
+
+        if ((document.getDocType() == DocumentType.CITIZEN_ID || document.getDocType() == DocumentType.DRIVER_LICENSE)
+                && !notBlank(document.getBackImageUrl())) {
+            reasons.add("Thiếu ảnh chụp mặt sau giấy tờ");
+            fieldErrors.add(new FieldErrorResponse("backImage", "Thiếu ảnh chụp mặt sau giấy tờ"));
+        }
+
+        if (!reasons.isEmpty()) {
+            String detailedMessage = "Giấy tờ chưa đủ điều kiện duyệt: " + String.join("; ", reasons);
+            log.warn("document-review-prerequisites-failed docId={} docType={} reasons={}",
+                    document.getId(), document.getDocType(), reasons);
+            throw new AppException(ErrorCode.DOCUMENT_NOT_APPROVABLE, detailedMessage, fieldErrors);
+        }
     }
 
     private void validateStoredEvidence(UserDocument document) {

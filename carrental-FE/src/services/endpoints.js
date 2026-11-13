@@ -41,6 +41,7 @@ export const endpoints = {
         byIdStatus: (id) => `/api/customers/${id}/status`,
         list: "/api/customers",
         me: "/api/customers/me",
+        meAvatar: "/api/customers/me/avatar",
         meKyc: "/api/customers/me/kyc",
     },
     disputes: {

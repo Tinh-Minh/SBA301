@@ -118,7 +118,7 @@ public class CustomerServiceImpl implements CustomerService {
         String address = request.addressWasProvided() ? normalizedAddress(request.getAddress()) : null;
         String email = request.emailWasProvided() ? normalizedEmail(request.getEmail()) : null;
         String phone = request.phoneWasProvided() ? normalizedPhone(request.getPhone()) : null;
-        if (request.avatarUrlWasProvided()) {
+        if (request.avatarUrlWasProvided() && !Objects.equals(request.getAvatarUrl(), customer.getAvatarUrl())) {
             throw fieldError("avatarUrl", "Vui lòng tải ảnh đại diện bằng chức năng tải ảnh lên");
         }
         String zaloPhone = request.zaloPhoneWasProvided() ? normalizedZaloPhone(request.getZaloPhone()) : null;

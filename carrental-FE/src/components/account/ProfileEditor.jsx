@@ -4,10 +4,8 @@ import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate, toLocalDate } from "@/utils/datetime.js";
 import { kycStatusLabels } from "@/utils/labels.js";
 import { updateSessionAccount } from "@/utils/session.js";
-import { changePassword } from "@/services/accountService.js";
+import { changePassword, updateMyProfile, uploadMyAvatar } from "@/services/accountService.js";
 import { authenticate } from "@/services/authService.js";
-import { updateMyProfile } from "@/services/accountService.js";
-import { uploadImage } from "@/services/tripService.js";
 
 const profileInputClass = "w-full rounded-xl border border-[#767676] bg-white px-3 py-2 text-sm text-[#292929] placeholder:text-[#666666] focus-visible:outline-[#B9430C] focus-visible:border-[#B9430C]";
 
@@ -30,7 +28,6 @@ export function Editor({ profile, kyc, onSaved }) {
             fullName: fullName.trim(),
             email: email.trim(),
             phone: phone.trim(),
-            avatarUrl: avatarUrl.trim(),
             zaloPhone,
             contactNote,
             dateOfBirth: dateOfBirth || null,
@@ -102,8 +99,10 @@ export function Editor({ profile, kyc, onSaved }) {
                         setAvatarBusy(true);
                         setAvatarError("");
                         try {
-                          const url = await uploadImage(file);
-                          setAvatarUrl(url);
+                          const updated = await uploadMyAvatar(file);
+                          setAvatarUrl(updated.avatarUrl);
+                          updateSessionAccount({ avatarUrl: updated.avatarUrl });
+                          onSaved?.();
                         } catch (err) {
                           setAvatarError(err?.message || "Không tải ảnh lên được");
                         } finally {
