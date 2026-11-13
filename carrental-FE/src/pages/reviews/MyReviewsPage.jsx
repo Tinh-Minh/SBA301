@@ -67,7 +67,11 @@ function ReviewScreen() {
     </div>
     <LiveState loading={reviews.loading && !reviews.data} error={reviews.error} empty={!!reviews.data && reviews.data.length === 0} label="đánh giá" onRetry={reviews.reload}/>
     <ul className="flex flex-col gap-3">{(reviews.data ?? []).map(review => <li key={review.id} className="rounded-2xl border border-[#E9E9E7] bg-white p-4">
-      <p className="font-bold">{review.carName} <span className="text-sm font-semibold text-[#FC6C26]">{review.rating}/5</span></p>
+      <p className="font-bold">{review.carName} <span className="text-sm font-semibold text-[#FC6C26]">{review.rating}/5</span>{" "}
+        {review.approved
+          ? <span className="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700">Đã hiển thị</span>
+          : <span className="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-700" title="Đánh giá sẽ tự hiển thị sau 48 giờ nếu chưa được duyệt">Đang chờ duyệt</span>}
+      </p>
       <p className="mt-1 text-sm text-[#292929]">{review.comment || "Không có nhận xét"}</p>
       <p className="mt-2 text-xs text-[#666666]">{formatDateTime(review.createdAt)}</p>
     </li>)}</ul>

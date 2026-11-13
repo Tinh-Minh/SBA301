@@ -207,7 +207,7 @@ function CarReviews({ carId }) {
     </div>
     {sentPending && (
       <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-800">
-        ✓ Cảm ơn bạn! Đánh giá đã được gửi và đang chờ Quản trị viên duyệt trước khi hiển thị công khai.
+        ✓ Cảm ơn bạn! Đánh giá đã được gửi và đang chờ Quản trị viên duyệt (tự hiển thị sau tối đa 48 giờ).
       </div>
     )}
     <LiveState loading={summary.loading && !data} error={summary.error} empty={!!data && !data.reviews?.length} label="đánh giá" onRetry={summary.reload}/>
