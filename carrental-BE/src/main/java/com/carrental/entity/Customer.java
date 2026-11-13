@@ -66,4 +66,25 @@ public class Customer extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private CustomerStatus status = CustomerStatus.ACTIVE;
+
+    // Tài khoản ngân hàng nhận tiền hoàn cọc (khách) / tiền thuê (chủ xe).
+    @Column(name = "bank_account_number", length = 30)
+    private String bankAccountNumber;
+
+    @Column(name = "bank_name", length = 100)
+    private String bankName;
+
+    /** Chi nhánh / phòng giao dịch mở tài khoản. */
+    @Column(name = "bank_branch", length = 150)
+    private String bankBranch;
+
+    @Column(name = "bank_account_holder", length = 150)
+    private String bankAccountHolder;
+
+    public boolean hasBankAccount() {
+        return bankAccountNumber != null && !bankAccountNumber.isBlank()
+                && bankName != null && !bankName.isBlank()
+                && bankBranch != null && !bankBranch.isBlank()
+                && bankAccountHolder != null && !bankAccountHolder.isBlank();
+    }
 }

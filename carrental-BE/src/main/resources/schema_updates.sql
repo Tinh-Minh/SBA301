@@ -170,3 +170,9 @@ CREATE TABLE IF NOT EXISTS customer_reviews (
     created_at  TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
 );
 CREATE INDEX IF NOT EXISTS idx_customer_reviews_customer ON customer_reviews (customer_id);
+
+-- Tài khoản ngân hàng nhận tiền (hoàn cọc cho khách, chi trả cho chủ xe).
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(30);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS bank_name VARCHAR(100);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS bank_branch VARCHAR(150);
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS bank_account_holder VARCHAR(150);
