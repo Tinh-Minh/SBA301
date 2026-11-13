@@ -202,3 +202,16 @@ CREATE TABLE IF NOT EXISTS settlement_slips (
 );
 CREATE INDEX IF NOT EXISTS idx_settlement_slips_recipient ON settlement_slips (recipient_id, status);
 CREATE INDEX IF NOT EXISTS idx_settlement_slips_booking ON settlement_slips (booking_id);
+
+-- Dòng tiền thuê xe qua hệ thống: cọc lúc đặt, trả đủ trước khi nhận xe, phí phát sinh khi trả xe.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS deposit_paid_at TIMESTAMP;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS rental_payment_status VARCHAR(20) DEFAULT 'UNPAID';
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS rental_paid_at TIMESTAMP;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS extra_fee_status VARCHAR(20) DEFAULT 'NOT_REQUIRED';
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS fuel_fee_amount NUMERIC(14,0) DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS cancel_fee_amount NUMERIC(14,0);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_amount NUMERIC(14,0);
+ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_transaction_type_check;
+ALTER TABLE transactions ADD CONSTRAINT transactions_transaction_type_check CHECK (transaction_type IN
+    ('PACKAGE_PAYMENT', 'BOOKING_DEPOSIT', 'BOOKING_PAYMENT', 'BOOKING_EXTRA_FEE', 'BOOKING_REFUND', 'REFUND'));

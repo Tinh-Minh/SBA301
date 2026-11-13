@@ -74,13 +74,7 @@ public class PaymentEventListener {
                     log.info("Chuyển trạng thái xe carId={} sang LISTED", car.getId());
                 }
             }
-        } else if (transaction.getTransactionType() == TransactionType.BOOKING_DEPOSIT) {
-            Booking booking = transaction.getBooking();
-            if (booking != null && booking.getDepositStatus() != PaymentStatus.PAID) {
-                booking.setDepositStatus(PaymentStatus.PAID);
-                bookingRepository.save(booking);
-                log.info("Cập nhật depositStatus=PAID cho bookingId={}", booking.getId());
-            }
         }
+        // Thanh toán của đơn thuê được BookingService.applyPayment xử lý đồng bộ trong VNPayServiceImpl.
     }
 }

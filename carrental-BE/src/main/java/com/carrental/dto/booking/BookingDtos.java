@@ -201,7 +201,17 @@ public final class BookingDtos {
             BigDecimal discountAmount,
             PaymentStatus depositStatus,
             BigDecimal remainingAmount,
-            LocalDateTime returnReportedAt) {
+            LocalDateTime returnReportedAt,
+            LocalDateTime depositPaidAt,
+            LocalDateTime depositDueAt,
+            LocalDateTime ownerResponseDueAt,
+            PaymentStatus rentalPaymentStatus,
+            BigDecimal rentalRemainingAmount,
+            PaymentStatus extraFeeStatus,
+            BigDecimal fuelFeeAmount,
+            LocalDateTime cancelledAt,
+            BigDecimal cancelFeeAmount,
+            BigDecimal refundAmount) {
 
         public static BookingResponse from(Booking b, String imageUrl, boolean reviewed, List<Handover> handovers) {
             var car = b.getCar();
@@ -227,7 +237,14 @@ public final class BookingDtos {
                     b.getPickupOdometerKm(), b.getReturnOdometerKm(), b.getExtraKmAmount(), b.getLateAmount(),
                     b.getOtherFeeAmount(), b.getOtherFeeNote(), b.getFinalAmount(), b.getCompletedAt(), b.getCreatedAt(),
                     reviewed, handovers.stream().map(HandoverResponse::from).toList(),
-                    vCode, discount, depStatus, rem, b.getReturnReportedAt());
+                    vCode, discount, depStatus, rem, b.getReturnReportedAt(),
+                    b.getDepositPaidAt(),
+                    b.getCreatedAt() != null ? b.getCreatedAt().plus(com.carrental.service.BookingMoneyPolicy.DEPOSIT_PAYMENT_WINDOW) : null,
+                    b.getDepositPaidAt() != null ? b.getDepositPaidAt().plus(com.carrental.service.BookingMoneyPolicy.OWNER_RESPONSE_WINDOW) : null,
+                    b.getRentalPaymentStatus(),
+                    b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO)
+                            .subtract(b.getDepositAmount() != null ? b.getDepositAmount() : BigDecimal.ZERO).max(BigDecimal.ZERO),
+                    b.getExtraFeeStatus(), b.getFuelFeeAmount(), b.getCancelledAt(), b.getCancelFeeAmount(), b.getRefundAmount());
         }
     }
 

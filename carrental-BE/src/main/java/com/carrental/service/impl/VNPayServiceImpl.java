@@ -41,6 +41,10 @@ public class VNPayServiceImpl implements VNPayService {
     private final BookingRepository bookingRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
+    private com.carrental.service.BookingService bookingService;
+
     private static final DateTimeFormatter VNP_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     @Override
@@ -156,10 +160,8 @@ public class VNPayServiceImpl implements VNPayService {
                 transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + (transactionNo != null ? transactionNo : txnRef));
                 Transaction saved = transactionRepository.save(transaction);
-                if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
-                    Booking b = saved.getBooking();
-                    b.setDepositStatus(PaymentStatus.PAID);
-                    bookingRepository.save(b);
+                if (saved.getBooking() != null && bookingService != null) {
+                    bookingService.applyPayment(saved); // cọc / tiền thuê còn lại / phí phát sinh
                 }
                 eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
                 transaction = saved;
@@ -216,10 +218,8 @@ public class VNPayServiceImpl implements VNPayService {
                 transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + transactionNo);
                 Transaction saved = transactionRepository.save(transaction);
-                if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
-                    Booking b = saved.getBooking();
-                    b.setDepositStatus(PaymentStatus.PAID);
-                    bookingRepository.save(b);
+                if (saved.getBooking() != null && bookingService != null) {
+                    bookingService.applyPayment(saved); // cọc / tiền thuê còn lại / phí phát sinh
                 }
                 eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
             } else {

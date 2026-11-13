@@ -33,3 +33,11 @@ FROM (VALUES
     (10, '1903998877665', 'Techcombank', 'Chi nhánh Đà Nẵng - PGD Sơn Trà', 'DO THUY LINH')
 ) AS v(id, num, bank, branch, holder)
 WHERE customers.id = v.id;
+
+-- Đơn mẫu theo dòng tiền mới: cọc 40% thanh toán lúc đặt, phần còn lại trả trước khi nhận xe.
+UPDATE bookings SET deposit_amount = CEIL(rental_amount * 0.4 / 1000) * 1000,
+                    deposit_status = 'PAID', deposit_paid_at = created_at
+WHERE booking_code LIKE 'BK-DEMO-%';
+UPDATE bookings SET rental_payment_status = 'PAID', rental_paid_at = confirmed_at
+WHERE booking_code IN ('BK-DEMO-0001');
+UPDATE bookings SET final_amount = 0 WHERE booking_code = 'BK-DEMO-0001';

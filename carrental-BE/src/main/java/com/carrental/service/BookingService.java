@@ -20,6 +20,7 @@ import com.carrental.enums.HandoverType;
 import com.carrental.enums.ListingStatus;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.Role;
+import com.carrental.enums.TransactionType;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.exception.AppException;
 import com.carrental.repository.BookingRepository;
@@ -69,8 +70,6 @@ public class BookingService {
     private static final int MAX_ADVANCE_DAYS = 90;
     /** Số yêu cầu thuê đang chờ chủ xe xác nhận tối đa của một khách (chống spam giữ lịch). */
     static final int MAX_PENDING_REQUESTS = 3;
-    /** Thời hạn khách phải đặt cọc sau khi chủ xe xác nhận đơn. */
-    public static final Duration DEPOSIT_DUE = Duration.ofHours(2);
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BookingRepository bookingRepository;
@@ -81,6 +80,7 @@ public class BookingService {
     private final VoucherRepository voucherRepository;
     private final CurrentUserService currentUserService;
     private final CarSafetyService carSafetyService;
+    private final SettlementService settlementService;
     private final com.carrental.repository.UserDocumentRepository userDocumentRepository;
     private final PublicImageStorageService publicImageStorageService;
     private final Clock clock;
@@ -174,6 +174,10 @@ public class BookingService {
             throw bad("Bạn không thể đặt xe của chính mình");
         }
         requireVerifiedDriver(customer, request.returnAt());
+        BankAccountService.requireBankAccount(customer, "để nhận tiền hoàn khi huỷ chuyến");
+        if (!bookingRepository.findCustomerOverlapping(customer.getId(), request.pickupAt(), request.returnAt(), HOLDING).isEmpty()) {
+            throw new AppException(HttpStatus.CONFLICT, "Bạn đã có một chuyến thuê khác trùng thời gian này");
+        }
         if (bookingRepository.countByCustomerIdAndStatus(customer.getId(), BookingStatus.REQUESTED) >= MAX_PENDING_REQUESTS) {
             throw new AppException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đang có " + MAX_PENDING_REQUESTS
                     + " yêu cầu thuê chờ chủ xe xác nhận. Vui lòng chờ phản hồi hoặc huỷ bớt trước khi gửi thêm");
@@ -199,8 +203,9 @@ public class BookingService {
         Voucher voucher = resolveVoucher(request.voucherCode(), q.rentalAmount(), customer);
         BigDecimal discount = calculateDiscount(voucher, q.rentalAmount());
         // Lượt voucher chỉ bị trừ khi chủ xe xác nhận đơn (xem accept), tránh spam yêu cầu để chiếm lượt.
-        PaymentStatus initialDepositStatus = (q.depositAmount() == null || q.depositAmount().compareTo(BigDecimal.ZERO) <= 0)
-                ? PaymentStatus.NOT_REQUIRED : PaymentStatus.UNPAID;
+        // Cọc 40% tiền thuê sau giảm, thanh toán ngay qua hệ thống (trong 30 phút) thì yêu cầu mới tới chủ xe.
+        BigDecimal deposit = BookingMoneyPolicy.depositFor(q.rentalAmount().subtract(discount).max(BigDecimal.ZERO));
+        PaymentStatus initialDepositStatus = deposit.signum() > 0 ? PaymentStatus.UNPAID : PaymentStatus.NOT_REQUIRED;
 
         Booking booking = Booking.builder()
                 .bookingCode(newCode())
@@ -211,7 +216,7 @@ public class BookingService {
                 .dayAmount(q.dayAmount()).hourAmount(q.hourAmount()).rentalAmount(q.rentalAmount())
                 .voucher(voucher)
                 .discountAmount(discount)
-                .depositAmount(q.depositAmount())
+                .depositAmount(deposit)
                 .depositStatus(initialDepositStatus)
                 .kmLimitPerDay(car.getKmLimitPerDay()).extraKmFee(car.getExtraKmFee())
                 .lateFeePerHour(car.getLateFeePerHour())
@@ -245,16 +250,252 @@ public class BookingService {
                 && b.getPickupAt().isBefore(now().plusHours(24))) {
             throw conflict("Chủ xe không thể huỷ đơn đã xác nhận trong vòng 24 giờ trước giờ nhận xe. Vui lòng liên hệ quản trị viên");
         }
-        boolean voucherCounted = b.getStatus() != BookingStatus.REQUESTED;
-        b.setStatus(BookingStatus.CANCELLED);
-        b.setCancelReason(reason.trim());
-        b.setCancelledBy(admin ? "ADMIN" : isOwner ? "OWNER" : "CUSTOMER");
+        if (isOwner && !admin && b.getStatus() == BookingStatus.REQUESTED) {
+            throw conflict("Chủ xe dùng chức năng Từ chối cho yêu cầu chưa xác nhận");
+        }
+        String by = admin ? "ADMIN" : isOwner ? "OWNER" : "CUSTOMER";
+        cancelWithSettlement(b, by, reason.trim());
+        if ("OWNER".equals(by)) {
+            enforceOwnerCancelLimit(b.getOwner());
+        }
+        return toResponse(bookingRepository.saveAndFlush(b));
+    }
 
-        // Hoàn lại lượt voucher nếu lượt đã được tính (đơn đã được xác nhận)
-        if (b.getVoucher() != null && voucherCounted) {
+    /**
+     * Huỷ đơn và lập phiếu tiền theo chính sách (xem {@link BookingMoneyPolicy}):
+     * <ul>
+     *   <li>Đơn chưa được chủ xe xác nhận, hoặc admin huỷ: hoàn 100% số khách đã trả.</li>
+     *   <li>Khách huỷ (hoặc khách vắng mặt): phí huỷ tính từ lúc cọc; hoàn phần còn lại, phí chuyển cho chủ xe.</li>
+     *   <li>Chủ xe huỷ (hoặc chủ xe không giao xe): phí huỷ tính từ lúc xác nhận; hoàn 100% + đền bù bằng phí huỷ,
+     *       chủ xe bị phạt đúng khoản đền bù.</li>
+     * </ul>
+     */
+    private void cancelWithSettlement(Booking b, String by, String reason) {
+        boolean confirmed = b.getStatus() != BookingStatus.REQUESTED;
+        LocalDateTime now = now();
+        BigDecimal paid = paidByCustomer(b);
+        BigDecimal tripValue = tripValue(b);
+        BigDecimal fee = BigDecimal.ZERO;
+        BigDecimal refund = paid;
+        String rule = "hoàn 100%";
+        if (confirmed && (by.startsWith("CUSTOMER"))) {
+            fee = BookingMoneyPolicy.cancellationFee(tripValue, b.getDepositPaidAt(), b.getPickupAt(), now).min(paid);
+            refund = paid.subtract(fee);
+            rule = BookingMoneyPolicy.cancellationRule(b.getDepositPaidAt(), b.getPickupAt(), now);
+        } else if (confirmed && by.startsWith("OWNER")) {
+            fee = BookingMoneyPolicy.cancellationFee(tripValue, b.getConfirmedAt(), b.getPickupAt(), now);
+            refund = paid.add(paid.signum() > 0 ? fee : BigDecimal.ZERO);
+            rule = BookingMoneyPolicy.cancellationRule(b.getConfirmedAt(), b.getPickupAt(), now);
+        }
+        b.setStatus(BookingStatus.CANCELLED);
+        b.setCancelReason(reason);
+        b.setCancelledBy(by);
+        b.setCancelledAt(now);
+        b.setCancelFeeAmount(fee);
+        b.setRefundAmount(refund);
+        if (b.getVoucher() != null && confirmed) {
             voucherRepository.decreaseUsage(b.getVoucher().getId());
         }
+        String code = b.getBookingCode();
+        if (refund.signum() > 0) {
+            settlementService.refundCustomer(b, refund, "Hoàn tiền đơn " + code + " (" + label(by) + "; " + rule + ")");
+        }
+        if (fee.signum() > 0 && by.startsWith("CUSTOMER") && paid.signum() > 0) {
+            settlementService.payOwner(b, fee, "Phí huỷ chuyến đơn " + code + " do khách huỷ (" + rule + ")");
+        }
+        if (fee.signum() > 0 && by.startsWith("OWNER") && paid.signum() > 0) {
+            settlementService.penalizeOwner(b, fee, "Đền bù cho khách do chủ xe huỷ đơn " + code + " (" + rule + ")");
+        }
+        log.info("Huỷ đơn {} bởi {}: đã trả={}, phí huỷ={}, hoàn khách={}", code, by, paid, fee, refund);
+    }
 
+    private static String label(String by) {
+        return switch (by) {
+            case "CUSTOMER" -> "khách huỷ";
+            case "OWNER" -> "chủ xe huỷ";
+            case "CUSTOMER_NO_SHOW" -> "khách không đến nhận xe";
+            case "OWNER_NO_SHOW" -> "chủ xe không giao xe";
+            case "ADMIN" -> "quản trị viên huỷ";
+            default -> "hệ thống huỷ";
+        };
+    }
+
+    /** Đóng yêu cầu chưa được xác nhận (từ chối / hết hạn): hoàn 100% tiền cọc nếu khách đã trả. */
+    private void closeUnconfirmed(Booking b, BookingStatus status, String reason) {
+        b.setStatus(status);
+        if (status == BookingStatus.REJECTED) {
+            b.setRejectReason(reason);
+        } else {
+            b.setCancelReason(reason);
+        }
+        BigDecimal paid = paidByCustomer(b);
+        b.setRefundAmount(paid);
+        if (paid.signum() > 0) {
+            settlementService.refundCustomer(b, paid, "Hoàn 100% tiền cọc đơn " + b.getBookingCode() + " (" + reason + ")");
+        }
+    }
+
+    // ================================================================== thanh toán qua hệ thống
+
+    /** Số tiền khách cần thanh toán cho từng khoản, kèm kiểm tra trạng thái đơn. */
+    @Transactional(readOnly = true)
+    public BigDecimal amountDue(Booking b, TransactionType type) {
+        switch (type) {
+            case BOOKING_DEPOSIT -> {
+                if (b.getStatus() != BookingStatus.REQUESTED) {
+                    throw bad("Chỉ đặt cọc khi yêu cầu thuê đang chờ (vừa đặt xe)");
+                }
+                if (b.getDepositStatus() != PaymentStatus.UNPAID) {
+                    throw bad("Đơn thuê này đã được thanh toán tiền cọc");
+                }
+                return b.getDepositAmount();
+            }
+            case BOOKING_PAYMENT -> {
+                if (b.getStatus() != BookingStatus.CONFIRMED) {
+                    throw bad("Chỉ thanh toán phần còn lại khi chủ xe đã xác nhận đơn và trước khi nhận xe");
+                }
+                if (b.getRentalPaymentStatus() == PaymentStatus.PAID) {
+                    throw bad("Đơn thuê đã được thanh toán đủ tiền thuê");
+                }
+                BigDecimal remaining = remainingRental(b);
+                if (remaining.signum() <= 0) {
+                    throw bad("Đơn thuê không còn khoản tiền thuê cần thanh toán");
+                }
+                return remaining;
+            }
+            case BOOKING_EXTRA_FEE -> {
+                if (b.getStatus() != BookingStatus.RETURN_PENDING || b.getExtraFeeStatus() != PaymentStatus.UNPAID) {
+                    throw bad("Đơn thuê không có phí phát sinh cần thanh toán");
+                }
+                return b.getFinalAmount();
+            }
+            default -> throw bad("Loại thanh toán không hợp lệ cho đơn thuê");
+        }
+    }
+
+    /** Cập nhật đơn thuê khi cổng thanh toán xác nhận giao dịch thành công (gọi đồng bộ từ VNPay return/IPN). */
+    @Transactional
+    public void applyPayment(com.carrental.entity.Transaction tx) {
+        Booking b = tx.getBooking();
+        if (b == null) {
+            return;
+        }
+        b = find(b.getId());
+        switch (tx.getTransactionType()) {
+            case BOOKING_DEPOSIT -> {
+                b.setDepositStatus(PaymentStatus.PAID);
+                b.setDepositPaidAt(now());
+                if (b.getStatus() != BookingStatus.REQUESTED) {
+                    // Đơn đã hết hạn/bị huỷ trong lúc khách đang thanh toán: hoàn lại ngay.
+                    b.setRefundAmount(b.getDepositAmount());
+                    settlementService.refundCustomer(b, b.getDepositAmount(),
+                            "Hoàn tiền cọc đơn " + b.getBookingCode() + " (thanh toán sau khi đơn đã đóng)");
+                }
+                if (remainingRental(b).signum() <= 0) {
+                    b.setRentalPaymentStatus(PaymentStatus.PAID);
+                }
+            }
+            case BOOKING_PAYMENT -> {
+                b.setRentalPaymentStatus(PaymentStatus.PAID);
+                b.setRentalPaidAt(now());
+            }
+            case BOOKING_EXTRA_FEE -> {
+                b.setExtraFeeStatus(PaymentStatus.PAID);
+                if (b.getStatus() == BookingStatus.RETURN_PENDING) {
+                    completeTrip(b);
+                }
+            }
+            default -> { return; }
+        }
+        bookingRepository.saveAndFlush(b);
+        log.info("Ghi nhận thanh toán {} cho đơn {}", tx.getTransactionType(), b.getBookingCode());
+    }
+
+    /** Hoàn tất chuyến: chi trả cho chủ xe tiền thuê gốc (nền tảng chịu khoản giảm giá voucher) + phí phát sinh. */
+    private void completeTrip(Booking b) {
+        b.setStatus(BookingStatus.COMPLETED);
+        b.setCompletedAt(now());
+        BigDecimal extras = nz(b.getExtraKmAmount()).add(nz(b.getLateAmount())).add(nz(b.getFuelFeeAmount()))
+                .add(nz(b.getOtherFeeAmount()));
+        BigDecimal gross = b.getRentalAmount().add(extras);
+        String detail = "tiền thuê " + b.getRentalAmount().toPlainString() + "đ"
+                + (nz(b.getDiscountAmount()).signum() > 0 ? " (gồm " + b.getDiscountAmount().toPlainString() + "đ voucher nền tảng bù)" : "")
+                + (extras.signum() > 0 ? " + phí phát sinh " + extras.toPlainString() + "đ" : "");
+        settlementService.payOwner(b, gross, "Chi trả đơn " + b.getBookingCode() + ": " + detail);
+    }
+
+    private static BigDecimal nz(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    /** Giá trị chuyến = tiền thuê sau giảm giá. */
+    static BigDecimal tripValue(Booking b) {
+        BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
+        return b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO);
+    }
+
+    /** Số tiền thuê khách đã trả qua hệ thống (cọc + phần còn lại). */
+    static BigDecimal paidByCustomer(Booking b) {
+        BigDecimal paid = BigDecimal.ZERO;
+        if (b.getDepositStatus() == PaymentStatus.PAID && b.getDepositAmount() != null) {
+            paid = paid.add(b.getDepositAmount());
+        }
+        if (b.getRentalPaymentStatus() == PaymentStatus.PAID) {
+            paid = paid.add(remainingRental(b));
+        }
+        return paid;
+    }
+
+    /** Phần tiền thuê còn lại sau cọc. */
+    static BigDecimal remainingRental(Booking b) {
+        BigDecimal deposit = b.getDepositAmount() != null ? b.getDepositAmount() : BigDecimal.ZERO;
+        return tripValue(b).subtract(deposit).max(BigDecimal.ZERO);
+    }
+
+    /** Chủ xe huỷ quá {@value BookingMoneyPolicy#OWNER_CANCEL_LIMIT} lần trong 30 ngày: tạm ẩn toàn bộ tin đăng. */
+    private void enforceOwnerCancelLimit(Customer owner) {
+        long count = bookingRepository.countByOwnerIdAndCancelledByAndCancelledAtAfter(owner.getId(), "OWNER", now().minusDays(30))
+                + bookingRepository.countByOwnerIdAndCancelledByAndCancelledAtAfter(owner.getId(), "OWNER_NO_SHOW", now().minusDays(30));
+        if (count >= BookingMoneyPolicy.OWNER_CANCEL_LIMIT) {
+            carRepository.findAll().stream()
+                    .filter(c -> c.getOwner() != null && c.getOwner().getId().equals(owner.getId())
+                            && c.getListingStatus() == ListingStatus.LISTED)
+                    .forEach(c -> {
+                        c.setListingStatus(ListingStatus.UNLISTED);
+                        carRepository.save(c);
+                    });
+            log.warn("Chủ xe {} huỷ {} đơn trong 30 ngày -> tạm ẩn toàn bộ tin đăng", owner.getId(), count);
+        }
+    }
+
+    // ================================================================== vắng mặt khi nhận xe
+
+    /** Chủ xe báo khách không đến nhận xe (sau giờ nhận 2 giờ): tính như khách huỷ sát ngày. */
+    @Transactional
+    public BookingResponse reportCustomerNoShow(Long id) {
+        Booking b = ownedBooking(id);
+        requireStatus(b, BookingStatus.CONFIRMED);
+        if (now().isBefore(b.getPickupAt().plus(BookingMoneyPolicy.CUSTOMER_NO_SHOW_GRACE))) {
+            throw conflict("Chỉ báo khách vắng mặt sau giờ nhận xe 2 giờ");
+        }
+        cancelWithSettlement(b, "CUSTOMER_NO_SHOW", "Khách không đến nhận xe");
+        return toResponse(bookingRepository.saveAndFlush(b));
+    }
+
+    /** Khách báo chủ xe không giao xe (sau giờ nhận 1 giờ, chưa có biên bản): tính như chủ xe huỷ. */
+    @Transactional
+    public BookingResponse reportOwnerNoShow(Long id) {
+        Customer user = currentUserService.getCurrentUser();
+        Booking b = find(id);
+        if (!b.getCustomer().getId().equals(user.getId())) {
+            throw forbidden();
+        }
+        requireStatus(b, BookingStatus.CONFIRMED);
+        if (now().isBefore(b.getPickupAt().plus(BookingMoneyPolicy.OWNER_NO_SHOW_GRACE))) {
+            throw conflict("Chỉ báo chủ xe không giao xe sau giờ nhận xe 1 giờ");
+        }
+        cancelWithSettlement(b, "OWNER_NO_SHOW", "Chủ xe không giao xe đúng hẹn");
+        enforceOwnerCancelLimit(b.getOwner());
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
@@ -283,13 +524,24 @@ public class BookingService {
             throw new AppException(HttpStatus.FORBIDDEN,
                     "Bạn cần xác minh danh tính (CCCD/Hộ chiếu) trước khi thuê xe");
         }
-        boolean validLicense = userDocumentRepository.findByCustomerId(customer.getId()).stream()
-                .anyMatch(d -> d.getDocType() == com.carrental.enums.DocumentType.DRIVER_LICENSE
-                        && d.getVerifyStatus() == com.carrental.enums.VerificationStatus.APPROVED
-                        && (d.getExpiresAt() == null || !d.getExpiresAt().isBefore(returnAt.toLocalDate())));
-        if (!validLicense) {
+        var licenses = userDocumentRepository.findByCustomerId(customer.getId()).stream()
+                .filter(d -> d.getDocType() == com.carrental.enums.DocumentType.DRIVER_LICENSE
+                        && d.getVerifyStatus() == com.carrental.enums.VerificationStatus.APPROVED)
+                .toList();
+        if (licenses.isEmpty()) {
             throw new AppException(HttpStatus.FORBIDDEN,
-                    "Bạn cần có giấy phép lái xe đã được duyệt và còn hạn đến ngày trả xe để thuê xe");
+                    "Bạn cần chụp ảnh giấy phép lái xe, nhập thông tin và chờ quản trị viên duyệt trước khi thuê xe");
+        }
+        // Ngày trả xe phải trước ngày hết hạn GPLX ít nhất 10 ngày (phòng xe về trễ / bất khả kháng).
+        boolean validLicense = licenses.stream().anyMatch(d -> d.getExpiresAt() == null
+                || !returnAt.toLocalDate().isAfter(d.getExpiresAt().minusDays(BookingMoneyPolicy.LICENSE_BUFFER_DAYS)));
+        if (!validLicense) {
+            java.time.LocalDate latest = licenses.stream().map(com.carrental.entity.UserDocument::getExpiresAt)
+                    .filter(java.util.Objects::nonNull).max(java.time.LocalDate::compareTo).orElseThrow()
+                    .minusDays(BookingMoneyPolicy.LICENSE_BUFFER_DAYS);
+            throw new AppException(HttpStatus.FORBIDDEN, "Giấy phép lái xe phải còn hạn ít nhất "
+                    + BookingMoneyPolicy.LICENSE_BUFFER_DAYS + " ngày sau ngày trả xe. Với GPLX hiện tại, ngày trả xe muộn nhất là "
+                    + latest.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         }
     }
 
@@ -322,6 +574,15 @@ public class BookingService {
         if (b.getPickupAt().isBefore(now())) {
             throw conflict("Đã quá giờ nhận xe của yêu cầu này");
         }
+        if (b.getDepositStatus() == PaymentStatus.UNPAID) {
+            throw conflict("Khách chưa thanh toán tiền cọc, chưa thể xác nhận đơn");
+        }
+        BankAccountService.requireBankAccount(b.getOwner(), "để nhận tiền thuê xe trước khi xác nhận đơn");
+        boolean customerBusy = bookingRepository.findCustomerOverlapping(b.getCustomer().getId(), b.getPickupAt(), b.getReturnAt(), HOLDING)
+                .stream().anyMatch(o -> !o.getId().equals(b.getId()));
+        if (customerBusy) {
+            throw conflict("Khách đã có chuyến thuê khác được xác nhận trùng thời gian");
+        }
         carRepository.findWithLockById(b.getCar().getId());
         if (!bookingRepository.findOverlapping(b.getCar().getId(), b.getPickupAt(), b.getReturnAt(), HOLDING).isEmpty()) {
             throw conflict("Xe đã có đơn khác được xác nhận trùng thời gian");
@@ -341,8 +602,7 @@ public class BookingService {
             if (other.getId().equals(b.getId())) {
                 continue;
             }
-            other.setStatus(BookingStatus.REJECTED);
-            other.setRejectReason("Xe đã được xác nhận cho khách khác trong khung giờ này");
+            closeUnconfirmed(other, BookingStatus.REJECTED, "Xe đã được xác nhận cho khách khác trong khung giờ này");
         }
         bookingRepository.saveAll(competing);
         return toResponse(bookingRepository.saveAndFlush(b));
@@ -352,8 +612,7 @@ public class BookingService {
     public BookingResponse reject(Long id, String reason) {
         Booking b = ownedBooking(id);
         requireStatus(b, BookingStatus.REQUESTED);
-        b.setStatus(BookingStatus.REJECTED);
-        b.setRejectReason(reason.trim());
+        closeUnconfirmed(b, BookingStatus.REJECTED, reason.trim());
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
@@ -384,9 +643,12 @@ public class BookingService {
                 && request.odometerKm() < b.getPickupOdometerKm()) {
             throw bad("Số km khi trả (" + request.odometerKm() + ") không được nhỏ hơn lúc nhận (" + b.getPickupOdometerKm() + ")");
         }
-        if (type == HandoverType.PICKUP && b.getDepositAmount() != null && b.getDepositAmount().signum() > 0
-                && b.getDepositStatus() != PaymentStatus.PAID) {
-            throw conflict("Khách chưa đặt cọc, chưa thể lập biên bản giao xe");
+        if (type == HandoverType.PICKUP) {
+            if (b.getRentalPaymentStatus() != PaymentStatus.PAID) {
+                throw conflict("Khách chưa thanh toán đủ tiền thuê qua hệ thống, chưa thể giao xe");
+            }
+            // Kiểm tra lại giấy tờ lúc giao xe: GPLX có thể đã hết hạn hoặc bị thu hồi sau khi đặt.
+            requireVerifiedDriver(b.getCustomer(), b.getReturnAt());
         }
         if (type == HandoverType.PICKUP && b.getPickupAt().minusHours(24).isAfter(now())) {
             throw conflict("Chỉ lập biên bản nhận xe trong vòng 24 giờ trước giờ nhận xe");
@@ -405,7 +667,7 @@ public class BookingService {
         handoverRepository.saveAndFlush(h);
 
         if (type == HandoverType.RETURN) {
-            settle(b, request.odometerKm(), request.otherFeeAmount(), request.otherFeeNote());
+            settle(b, request.odometerKm(), request.fuelPercent(), request.otherFeeAmount(), request.otherFeeNote());
         }
         b.setStatus(type == HandoverType.PICKUP ? BookingStatus.PICKUP_PENDING : BookingStatus.RETURN_PENDING);
         return toResponse(bookingRepository.saveAndFlush(b));
@@ -467,9 +729,13 @@ public class BookingService {
                 b.setPickedUpAt(now());
                 b.setPickupOdometerKm(h.getOdometerKm());
             } else {
-                b.setStatus(BookingStatus.COMPLETED);
                 b.setReturnedAt(now());
-                b.setCompletedAt(now());
+                if (nz(b.getFinalAmount()).signum() > 0) {
+                    // Có phí phát sinh: khách thanh toán qua hệ thống rồi chuyến mới hoàn tất.
+                    b.setExtraFeeStatus(PaymentStatus.UNPAID);
+                } else {
+                    completeTrip(b);
+                }
             }
         }
         handoverRepository.saveAndFlush(h);
@@ -527,14 +793,14 @@ public class BookingService {
         if (type == HandoverType.RETURN) {
             BigDecimal fee = request.otherFeeAmount() != null ? request.otherFeeAmount() : b.getOtherFeeAmount();
             String feeNote = request.otherFeeNote() != null ? request.otherFeeNote() : b.getOtherFeeNote();
-            settle(b, h.getOdometerKm(), fee, feeNote);
+            settle(b, h.getOdometerKm(), h.getFuelPercent(), fee, feeNote);
             bookingRepository.saveAndFlush(b);
         }
         return toResponse(b);
     }
 
     /** Chốt phí phát sinh khi trả xe: quá km, trễ giờ, phí khác. */
-    private void settle(Booking b, int returnOdometer, BigDecimal otherFee, String otherFeeNote) {
+    private void settle(Booking b, int returnOdometer, Integer returnFuel, BigDecimal otherFee, String otherFeeNote) {
         // Mốc tính phí trễ: lần đầu khách báo trả xe hoặc chủ xe lập biên bản trả; sửa biên bản sau đó không đổi mốc.
         if (b.getReturnReportedAt() == null) {
             b.setReturnReportedAt(now());
@@ -567,16 +833,16 @@ public class BookingService {
         b.setOtherFeeAmount(other);
         b.setOtherFeeNote(trim(otherFeeNote));
 
-        BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
-        BigDecimal actualRental = b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO);
-        BigDecimal totalTripCost = actualRental.add(extraKm).add(late).add(other);
-
-        // Trừ tiền cọc nếu khách đã thanh toán cọc
-        BigDecimal paidDeposit = (b.getDepositStatus() == PaymentStatus.PAID && b.getDepositAmount() != null)
-                ? b.getDepositAmount() : BigDecimal.ZERO;
-        BigDecimal remainingToPay = totalTripCost.subtract(paidDeposit).max(BigDecimal.ZERO);
-
-        b.setFinalAmount(remainingToPay);
+        // Phí xăng/pin hụt so với lúc nhận xe.
+        BigDecimal fuelFee = BigDecimal.ZERO;
+        Integer pickupFuel = handoverRepository.findByBookingIdAndHandoverType(b.getId(), HandoverType.PICKUP)
+                .map(Handover::getFuelPercent).orElse(null);
+        if (pickupFuel != null && returnFuel != null && returnFuel < pickupFuel) {
+            fuelFee = BookingMoneyPolicy.FUEL_FEE_PER_PERCENT.multiply(BigDecimal.valueOf(pickupFuel - returnFuel));
+        }
+        b.setFuelFeeAmount(fuelFee);
+        // Tiền thuê đã trả đủ trước khi nhận xe; khi trả xe khách chỉ còn thanh toán phí phát sinh.
+        b.setFinalAmount(extraKm.add(late).add(other).add(fuelFee));
     }
 
     // ================================================================== đọc
@@ -632,40 +898,43 @@ public class BookingService {
 
     // ================================================================== tự động
 
-    /** Yêu cầu chưa được chủ xe nhận mà đã tới giờ nhận xe thì hết hạn. */
+    /** Yêu cầu chưa được chủ xe nhận mà đã tới giờ nhận xe thì hết hạn; hoàn 100% nếu khách đã cọc. */
     @Transactional
     public int expireStaleRequests() {
         List<Booking> stale = bookingRepository.findAllByStatusAndPickupAtBefore(BookingStatus.REQUESTED, now());
         for (Booking b : stale) {
-            b.setStatus(BookingStatus.EXPIRED);
+            closeUnconfirmed(b, BookingStatus.EXPIRED, "Đã tới giờ nhận xe mà chủ xe chưa xác nhận");
         }
         bookingRepository.saveAll(stale);
         return stale.size();
     }
 
     /**
-     * Đơn đã xác nhận nhưng khách chưa đặt cọc sau {@link #DEPOSIT_DUE} (hoặc đã tới giờ nhận xe)
-     * thì tự huỷ để trả lịch xe cho khách khác.
+     * Hạn của yêu cầu thuê:
+     * <ul>
+     *   <li>Khách chưa thanh toán cọc sau {@link BookingMoneyPolicy#DEPOSIT_PAYMENT_WINDOW} kể từ khi đặt: hết hạn.</li>
+     *   <li>Khách đã cọc nhưng chủ xe không phản hồi trong {@link BookingMoneyPolicy#OWNER_RESPONSE_WINDOW}: tự từ chối, hoàn 100%.</li>
+     * </ul>
      */
     @Transactional
     public int cancelUnpaidDeposits() {
         LocalDateTime now = now();
-        List<Booking> unpaid = bookingRepository.findAllByStatusAndDepositStatus(BookingStatus.CONFIRMED, PaymentStatus.UNPAID)
-                .stream()
-                .filter(b -> b.getDepositAmount() != null && b.getDepositAmount().signum() > 0)
-                .filter(b -> !b.getPickupAt().isAfter(now)
-                        || (b.getConfirmedAt() != null && !b.getConfirmedAt().plus(DEPOSIT_DUE).isAfter(now)))
-                .toList();
-        for (Booking b : unpaid) {
-            b.setStatus(BookingStatus.CANCELLED);
-            b.setCancelledBy("SYSTEM");
-            b.setCancelReason("Quá hạn " + DEPOSIT_DUE.toHours() + " giờ đặt cọc sau khi chủ xe xác nhận");
-            if (b.getVoucher() != null) {
-                voucherRepository.decreaseUsage(b.getVoucher().getId());
+        int closed = 0;
+        for (Booking b : bookingRepository.findAllByStatusAndDepositStatus(BookingStatus.REQUESTED, PaymentStatus.UNPAID)) {
+            if (b.getCreatedAt() != null && !b.getCreatedAt().plus(BookingMoneyPolicy.DEPOSIT_PAYMENT_WINDOW).isAfter(now)) {
+                closeUnconfirmed(b, BookingStatus.EXPIRED, "Quá 30 phút chưa thanh toán tiền cọc");
+                bookingRepository.save(b);
+                closed++;
             }
         }
-        bookingRepository.saveAll(unpaid);
-        return unpaid.size();
+        for (Booking b : bookingRepository.findAllByStatusAndDepositStatus(BookingStatus.REQUESTED, PaymentStatus.PAID)) {
+            if (b.getDepositPaidAt() != null && !b.getDepositPaidAt().plus(BookingMoneyPolicy.OWNER_RESPONSE_WINDOW).isAfter(now)) {
+                closeUnconfirmed(b, BookingStatus.REJECTED, "Chủ xe không phản hồi trong 24 giờ");
+                bookingRepository.save(b);
+                closed++;
+            }
+        }
+        return closed;
     }
 
     private Voucher resolveVoucher(String voucherCode, BigDecimal rentalAmount, Customer customer) {

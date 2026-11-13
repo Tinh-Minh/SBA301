@@ -17,6 +17,9 @@ public interface TransactionService {
 
     TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request, HttpServletRequest servletRequest);
 
+    TransactionResponse createBookingPayment(BookingDepositPaymentRequest request, com.carrental.enums.TransactionType type,
+                                             HttpServletRequest servletRequest);
+
     default TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request) {
         return createBookingDepositPayment(request, null);
     }

@@ -122,6 +122,40 @@ public class Booking extends BaseEntity {
     @Column(name = "returned_at")
     private LocalDateTime returnedAt;
 
+    // ---------------------------------------------------------------- dòng tiền qua hệ thống
+    /** Thời điểm khách thanh toán xong tiền cọc (mốc 1 giờ huỷ miễn phí, 24 giờ chủ xe phải phản hồi). */
+    @Column(name = "deposit_paid_at")
+    private LocalDateTime depositPaidAt;
+
+    /** Phần tiền thuê còn lại (sau cọc) – phải thanh toán qua hệ thống trước khi nhận xe. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "rental_payment_status", length = 20)
+    @Builder.Default
+    private PaymentStatus rentalPaymentStatus = PaymentStatus.UNPAID;
+
+    @Column(name = "rental_paid_at")
+    private LocalDateTime rentalPaidAt;
+
+    /** Phí phát sinh khi trả xe (km, trễ giờ, xăng, phí khác) – thanh toán qua hệ thống để hoàn tất chuyến. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "extra_fee_status", length = 20)
+    @Builder.Default
+    private PaymentStatus extraFeeStatus = PaymentStatus.NOT_REQUIRED;
+
+    @Column(name = "fuel_fee_amount", precision = 14, scale = 0)
+    private BigDecimal fuelFeeAmount;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    /** Phí huỷ chuyến (bên huỷ chịu) theo chính sách: miễn phí 1 giờ đầu, 10% (&gt;7 ngày), 40% (≤7 ngày). */
+    @Column(name = "cancel_fee_amount", precision = 14, scale = 0)
+    private BigDecimal cancelFeeAmount;
+
+    /** Tổng tiền hoàn cho khách khi đơn bị huỷ (đã gồm đền bù nếu chủ xe huỷ). */
+    @Column(name = "refund_amount", precision = 14, scale = 0)
+    private BigDecimal refundAmount;
+
     /** Thời điểm xe thực tế được trả (khách báo hoặc lần đầu chủ xe lập biên bản trả) - dùng để tính phí trễ. */
     @Column(name = "return_reported_at")
     private LocalDateTime returnReportedAt;

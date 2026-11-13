@@ -21,6 +21,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     List<Booking> findOverlapping(@Param("carId") Long carId, @Param("from") LocalDateTime from,
                                   @Param("to") LocalDateTime to, @Param("statuses") Collection<BookingStatus> statuses);
 
+    @Query("select b from Booking b where b.customer.id = :customerId and b.status in :statuses "
+            + "and b.pickupAt < :to and b.returnAt > :from")
+    List<Booking> findCustomerOverlapping(@Param("customerId") Long customerId, @Param("from") LocalDateTime from,
+                                          @Param("to") LocalDateTime to, @Param("statuses") Collection<BookingStatus> statuses);
+
+    long countByOwnerIdAndCancelledByAndCancelledAtAfter(Long ownerId, String cancelledBy, LocalDateTime after);
+
+    List<Booking> findAllByStatusAndRentalPaymentStatus(BookingStatus status, com.carrental.enums.PaymentStatus rentalPaymentStatus);
+
     @Query("select distinct b.car.id from Booking b where b.status in :statuses "
             + "and b.pickupAt < :to and b.returnAt > :from")
     List<Long> findBusyCarIds(@Param("from") LocalDateTime from, @Param("to") LocalDateTime to,

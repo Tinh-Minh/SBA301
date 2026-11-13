@@ -136,59 +136,55 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request, HttpServletRequest servletRequest) {
-        log.info("Khởi tạo thanh toán tiền cọc bookingId={}, method={}", request.bookingId(), request.method());
+        return createBookingPayment(request, TransactionType.BOOKING_DEPOSIT, servletRequest);
+    }
 
+    /**
+     * Tạo giao dịch thanh toán cho đơn thuê: tiền cọc (ngay sau khi đặt), phần tiền thuê còn lại
+     * (trước khi nhận xe) hoặc phí phát sinh (khi trả xe). Số tiền do BookingService tính theo trạng thái đơn.
+     */
+    @Override
+    @Transactional
+    public TransactionResponse createBookingPayment(BookingDepositPaymentRequest request, TransactionType type,
+                                                    HttpServletRequest servletRequest) {
+        log.info("Khởi tạo thanh toán {} bookingId={}, method={}", type, request.bookingId(), request.method());
         Customer current = currentUserService.getCurrentUser();
         Booking booking = bookingRepository.findById(request.bookingId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn thuê id=" + request.bookingId()));
-
-        if (!booking.getCustomer().getId().equals(current.getId()) && !currentUserService.isAdmin(current)) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ khách thuê xe mới được thực hiện thanh toán tiền cọc cho đơn này");
+        if (!booking.getCustomer().getId().equals(current.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ khách thuê xe mới được thanh toán cho đơn này");
         }
+        BigDecimal amount = bookingService.amountDue(booking, type);
 
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể đặt cọc khi đơn thuê đã được chủ xe xác nhận (CONFIRMED)");
-        }
-
-        if (booking.getDepositStatus() == PaymentStatus.PAID) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê này đã được thanh toán tiền cọc");
-        }
-
-        if (booking.getDepositAmount() == null || booking.getDepositAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê này không yêu cầu tiền cọc");
-        }
-
-        // Kiểm tra xem đã có giao dịch PENDING nào trước đó chưa
         Optional<Transaction> existingPending = transactionRepository
-                .findFirstByBookingIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
-                        booking.getId(), TransactionType.BOOKING_DEPOSIT, TransactionStatus.PENDING);
-
+                .findFirstByBookingIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(booking.getId(), type, TransactionStatus.PENDING);
         Transaction transaction;
-        if (existingPending.isPresent() && existingPending.get().getMethod() == request.method()) {
+        if (existingPending.isPresent() && existingPending.get().getMethod() == request.method()
+                && existingPending.get().getAmount().compareTo(amount) == 0) {
             transaction = existingPending.get();
         } else {
-            if (existingPending.isPresent()) {
-                Transaction oldPending = existingPending.get();
-                oldPending.setStatus(TransactionStatus.FAILED);
-                transactionRepository.save(oldPending);
-            }
-            transaction = Transaction.builder()
+            existingPending.ifPresent(old -> {
+                old.setStatus(TransactionStatus.FAILED);
+                transactionRepository.save(old);
+            });
+            transaction = transactionRepository.save(Transaction.builder()
                     .booking(booking)
-                    .transactionType(TransactionType.BOOKING_DEPOSIT)
-                    .amount(booking.getDepositAmount())
+                    .transactionType(type)
+                    .amount(amount)
                     .method(request.method())
                     .status(TransactionStatus.PENDING)
-                    .build();
-            transaction = transactionRepository.save(transaction);
+                    .build());
         }
-
         String paymentUrl = null;
         if (request.method() == PaymentMethod.VNPAY) {
             paymentUrl = vnPayService.createPaymentUrl(transaction.getId(), request.bankCode(), servletRequest);
         }
-
         return TransactionResponse.from(transaction, paymentUrl);
     }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
+    private com.carrental.service.BookingService bookingService;
 
     @Override
     @Transactional(readOnly = true)
