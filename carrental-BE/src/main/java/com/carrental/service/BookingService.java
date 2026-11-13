@@ -233,6 +233,9 @@ public class BookingService {
                 && !(admin && b.getStatus().isOpen())) {
             throw conflict("Chỉ huỷ được đơn chưa bàn giao xe");
         }
+        if (!admin && b.getStatus() == BookingStatus.CONFIRMED && !b.getPickupAt().isAfter(now())) {
+            throw conflict("Đã quá giờ nhận xe, không thể tự huỷ đơn. Vui lòng liên hệ hỗ trợ");
+        }
         b.setStatus(BookingStatus.CANCELLED);
         b.setCancelReason(reason.trim());
         b.setCancelledBy(admin ? "ADMIN" : isOwner ? "OWNER" : "CUSTOMER");
