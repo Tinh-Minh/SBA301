@@ -21,7 +21,7 @@ export const pageTitles = {
     "handover/pickup": "Biên bản nhận xe",
     "handover/return": "Biên bản trả xe",
     "reviews": "Đánh giá của tôi",
-    "disputes": "Đánh giá của tôi",
+    "disputes": "Khiếu nại biên bản",
     "components/navigation": "Thành phần điều hướng",
     "list-your-car": "Đăng ký cho thuê xe",
     "contact": "Liên hệ CarDB",

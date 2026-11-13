@@ -46,7 +46,7 @@ export function AdminRoute() {
 export const adminPages = [
     page("admin", <AliasRedirect to="/admin/dashboard" />),
     page("admin/dashboard", <AdminDashboardPage />, "Tổng quan quản trị"),
-    page("admin/disputes", <AliasRedirect to="/admin/reviews" />),
+    page("admin/disputes", <AliasRedirect to="/admin/bookings" />),
     page("admin/reviews", <AdminReviewsPage />, "Đánh giá xe"),
     page("admin/orders", <AliasRedirect to="/admin/bookings" />),
     page("admin/bookings", <AdminBookingsPage />, "Đơn thuê xe"),
