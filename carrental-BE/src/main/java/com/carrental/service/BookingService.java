@@ -247,6 +247,11 @@ public class BookingService {
         if (!admin && b.getStatus() == BookingStatus.CONFIRMED && !b.getPickupAt().isAfter(now())) {
             throw conflict("Đã quá giờ nhận xe, không thể tự huỷ đơn. Vui lòng liên hệ hỗ trợ");
         }
+        // Chủ xe không được bỏ khách vào phút chót: đơn đã xác nhận chỉ tự huỷ được trước giờ nhận xe hơn 24 giờ.
+        if (isOwner && !admin && b.getStatus() == BookingStatus.CONFIRMED
+                && b.getPickupAt().isBefore(now().plusHours(24))) {
+            throw conflict("Chủ xe không thể huỷ đơn đã xác nhận trong vòng 24 giờ trước giờ nhận xe. Vui lòng liên hệ quản trị viên");
+        }
         b.setStatus(BookingStatus.CANCELLED);
         b.setCancelReason(reason.trim());
         b.setCancelledBy(admin ? "ADMIN" : isOwner ? "OWNER" : "CUSTOMER");
