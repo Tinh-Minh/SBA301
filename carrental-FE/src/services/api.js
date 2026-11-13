@@ -50,7 +50,8 @@ function errorFromBody(status, body) {
     const fieldErrors = Array.isArray(body?.errors) ? body.errors : [];
     const detail = fieldErrors.map(item => item?.message).filter(Boolean);
     const base = body?.message || body?.error || statusMessages[status] || `Lỗi ${status}`;
-    const message = detail.length && !detail.includes(base) ? `${base}: ${detail.join("; ")}` : base;
+    const hasDetailInBase = detail.some(d => base.includes(d));
+    const message = detail.length && !detail.includes(base) && !hasDetailInBase ? `${base}: ${detail.join("; ")}` : base;
     return new ApiError(status, message, body?.code, fieldErrors);
 }
 

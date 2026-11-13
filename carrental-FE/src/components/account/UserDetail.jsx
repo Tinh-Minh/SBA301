@@ -58,7 +58,12 @@ export function UserDetail({ id, onChanged }) {
       {!documents.length ? <p className="text-sm text-[#666666]">Khách hàng chưa nộp giấy tờ.</p> : null}
       {documents.map(doc => <DocumentCard key={doc.id} doc={doc} busy={review.running}
             onApprove={() => void review.run(doc.id, "APPROVED")} onReject={() => setDialog({ type: "reject-doc", docId: doc.id })}/>)}
-      {review.error ? <p className="text-sm text-[#B91C1C]">{review.error.message}</p> : null}
+      {review.error ? (
+        <div role="alert" className="mt-2 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-[#B91C1C]">
+          <p className="font-bold">Không thể duyệt giấy tờ:</p>
+          <p className="mt-1 leading-relaxed whitespace-pre-wrap">{review.error.message}</p>
+        </div>
+      ) : null}
     </div>
     <div className="flex flex-col gap-2 border-t border-[#E9E9E7] pt-4">
       {profile.role !== "ADMIN" ? (profile.role === "OWNER"
@@ -86,6 +91,22 @@ export function UserDetail({ id, onChanged }) {
 function DocumentCard({ doc, busy, onApprove, onReject }) {
     const [images, setImages] = useState(null);
     const [failed, setFailed] = useState(false);
+    const [detail, setDetail] = useState(null);
+    const [loadingDetail, setLoadingDetail] = useState(false);
+
+    async function toggleDetail() {
+        if (detail) { setDetail(null); return; }
+        setLoadingDetail(true);
+        try {
+            const data = await adminUserService.getDocument(doc.id);
+            setDetail(data);
+        } catch {
+            // ignore
+        } finally {
+            setLoadingDetail(false);
+        }
+    }
+
     async function preview() {
         try {
             const sides = [doc.hasFrontImage ? "front" : null, doc.hasBackImage ? "back" : null].filter(Boolean);
@@ -102,8 +123,24 @@ function DocumentCard({ doc, busy, onApprove, onReject }) {
     </div>
     <p className="mt-1 text-xs text-[#666666]">Số: {doc.docNumberMasked ?? "—"} • nộp {formatDateTime(doc.createdAt)}</p>
     {doc.rejectReason ? <p className="mt-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-medium text-[#B91C1C]">Lý do từ chối: {doc.rejectReason}</p> : null}
-    {(doc.hasFrontImage || doc.hasBackImage) && !images ? <button type="button" onClick={preview} className="mt-2 text-xs font-bold text-[#FC6C26]">Xem ảnh giấy tờ</button> : null}
+    <div className="mt-2 flex flex-wrap items-center gap-3">
+      {(doc.hasFrontImage || doc.hasBackImage) && !images ? <button type="button" onClick={preview} className="text-xs font-bold text-[#FC6C26] hover:underline">Xem ảnh giấy tờ</button> : null}
+      <button type="button" onClick={toggleDetail} className="text-xs font-bold text-[#2563EB] hover:underline">
+        {loadingDetail ? "Đang tải…" : detail ? "Ẩn thông tin" : "Xem thông tin đã nộp"}
+      </button>
+    </div>
     {failed ? <p className="mt-1 text-xs text-[#B91C1C]">Không tải được ảnh (backend có thể đang tắt lưu trữ file).</p> : null}
+    {detail ? (
+      <div className="mt-2 space-y-1 rounded-xl bg-[#F7F7F5] p-2.5 text-xs text-[#292929]">
+        <p><span className="text-[#666666]">Họ và tên:</span> <b className="text-[#111827]">{detail.fullNameOnDoc || "—"}</b></p>
+        <p><span className="text-[#666666]">Ngày sinh:</span> <b className="text-[#111827]">{detail.dateOfBirthOnDoc ? formatDate(detail.dateOfBirthOnDoc) : "—"}</b></p>
+        <p><span className="text-[#666666]">Số giấy tờ:</span> <b className="text-[#111827]">{detail.docNumber || "—"}</b></p>
+        <p><span className="text-[#666666]">Nơi cấp:</span> <b className="text-[#111827]">{detail.issuePlace || "—"}</b></p>
+        <p><span className="text-[#666666]">Ngày cấp:</span> <b className="text-[#111827]">{detail.issueDate ? formatDate(detail.issueDate) : "—"}</b></p>
+        <p><span className="text-[#666666]">Ngày hết hạn:</span> <b className="text-[#111827]">{detail.expiresAt ? formatDate(detail.expiresAt) : "Không thời hạn"}</b></p>
+        {detail.licenseClass ? <p><span className="text-[#666666]">Hạng bằng:</span> <b className="text-[#111827]">{detail.licenseClass}</b></p> : null}
+      </div>
+    ) : null}
     {images ? <div className="mt-2 grid grid-cols-2 gap-2">{images.map(src => <img key={src} src={src} alt="Ảnh giấy tờ" className="h-24 w-full rounded-lg object-cover"/>)}</div> : null}
     {doc.verifyStatus === "PENDING" ? <div className="mt-3 flex gap-2">
       <button type="button" disabled={busy} onClick={onApprove} className="rounded-lg bg-[#047857] px-3 py-1.5 text-xs font-bold text-white disabled:opacity-60">Duyệt</button>

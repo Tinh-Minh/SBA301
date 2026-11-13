@@ -99,10 +99,9 @@ export function Editor({ profile, kyc, onSaved }) {
                         setAvatarBusy(true);
                         setAvatarError("");
                         try {
-                          const res = await uploadMyAvatar(file);
-                          const newUrl = res?.avatarUrl ?? res?.data?.avatarUrl ?? "";
-                          setAvatarUrl(newUrl);
-                          updateSessionAccount({ avatarUrl: newUrl });
+                          const updated = await uploadMyAvatar(file);
+                          setAvatarUrl(updated.avatarUrl);
+                          updateSessionAccount({ avatarUrl: updated.avatarUrl });
                           onSaved?.();
                         } catch (err) {
                           setAvatarError(err?.message || "Không tải ảnh lên được");
