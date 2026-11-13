@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -45,6 +45,10 @@ export function Detail({ carId }) {
 
 function Body({ car }) {
     const [activeImage, setActiveImage] = useState(null);
+    useEffect(() => {
+        const name = carName(car);
+        if (name) document.title = `${name} | CarDB`;
+    }, [car]);
     const features = parseFeatures(car.features);
     const dayPrice = car.rentalPricePerDay || car.pricePerDay || 0;
     const monthPrice = car.rentalPricePerMonth;
