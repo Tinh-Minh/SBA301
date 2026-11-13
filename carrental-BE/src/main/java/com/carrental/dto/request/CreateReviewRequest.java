@@ -24,6 +24,7 @@ public class CreateReviewRequest {
     @NotNull(message = "Số sao đánh giá không được để trống")
     @Min(value = 1, message = "Số sao tối thiểu là 1")
     @Max(value = 5, message = "Số sao tối đa là 5")
+    @tools.jackson.databind.annotation.JsonDeserialize(using = StrictIntegerDeserializer.class)
     private Integer rating;
 
     @Size(max = 2000, message = "Nội dung nhận xét tối đa 2000 ký tự")
