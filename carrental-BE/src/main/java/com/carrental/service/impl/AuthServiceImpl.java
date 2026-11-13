@@ -63,6 +63,7 @@ public class AuthServiceImpl implements AuthService {
     private static final List<String> UNIQUE_CONSTRAINTS = List.of("uq_customers_email_lower", "customers_phone_key");
     private static final Pattern BCRYPT_HASH = Pattern.compile(
             "^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
+    private static final com.carrental.security.LoginAttemptGuard LOGIN_ATTEMPTS = new com.carrental.security.LoginAttemptGuard();
     private static final String EMAIL_VERIFICATION_PURPOSE = "email_verification";
     private static final String EMAIL_VERIFICATION_AUDIENCE = "email-verification";
     private static final Duration EMAIL_VERIFICATION_TTL = Duration.ofMinutes(30);
@@ -147,15 +148,20 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public TokenResponse login(LoginRequest request) {
         String email = AuthInputNormalizer.email(request.getEmail());
-        Customer customer = customers.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new AppException(ErrorCode.AUTHENTICATION_FAILED));
-        String passwordHash = customer.getPasswordHash();
-        if (customer.getStatus() != CustomerStatus.ACTIVE
+        if (LOGIN_ATTEMPTS.isLocked(email)) {
+            throw new AppException(ErrorCode.TOO_MANY_REQUESTS);
+        }
+        Customer customer = customers.findByEmailIgnoreCase(email).orElse(null);
+        String passwordHash = customer == null ? null : customer.getPasswordHash();
+        if (customer == null
+                || customer.getStatus() != CustomerStatus.ACTIVE
                 || passwordHash == null
                 || !BCRYPT_HASH.matcher(passwordHash).matches()
                 || !passwordEncoder.matches(request.getPassword(), passwordHash)) {
+            LOGIN_ATTEMPTS.recordFailure(email);
             throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
         }
+        LOGIN_ATTEMPTS.recordSuccess(email);
         if (customer.getRole() == Role.CUSTOMER
                 && !Boolean.TRUE.equals(customer.getEmailVerified())) {
             throw new AppException(ErrorCode.EMAIL_VERIFICATION_REQUIRED);
