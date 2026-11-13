@@ -84,9 +84,7 @@ public class ListingPackageServiceImpl implements ListingPackageService {
         int durationDaysPerSlot = request.durationDaysPerSlot() != null && request.durationDaysPerSlot() > 0
                 ? request.durationDaysPerSlot()
                 : (request.durationDays() != null ? request.durationDays() : 7);
-        int durationDays = request.durationDays() != null && request.durationDays() > 0
-                ? request.durationDays()
-                : (slotCount * durationDaysPerSlot);
+        int durationDays = consistentDurationDays(request.durationDays(), slotCount, durationDaysPerSlot);
 
         ListingPackage listingPackage = ListingPackage.builder()
                 .name(normalizedRequired(request.name(), "name", 100))
@@ -104,6 +102,16 @@ public class ListingPackageServiceImpl implements ListingPackageService {
         log.info("listing-package-create actorId={} packageId={} code={}", actor.customerId(),
                 listingPackage.getId(), listingPackage.getCode());
         return ListingPackageResponse.from(listingPackage);
+    }
+
+    /** Thời hạn gói luôn bằng số slot × số ngày mỗi slot để chủ xe không mất slot đã trả tiền. */
+    private static int consistentDurationDays(Integer requested, int slotCount, int durationDaysPerSlot) {
+        int expected = slotCount * durationDaysPerSlot;
+        if (requested != null && requested > 0 && requested != expected) {
+            throw new AppException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Thời hạn gói (" + requested + " ngày) phải bằng số slot × số ngày mỗi slot (" + expected + " ngày)");
+        }
+        return expected;
     }
 
     @Override
@@ -124,11 +132,11 @@ public class ListingPackageServiceImpl implements ListingPackageService {
         int durationDaysPerSlot = request.durationDaysPerSlot() != null && request.durationDaysPerSlot() > 0
                 ? request.durationDaysPerSlot()
                 : (listingPackage.getDurationDaysPerSlot() != null ? listingPackage.getDurationDaysPerSlot() : 7);
-        int durationDays = request.durationDays() != null && request.durationDays() > 0
-                ? request.durationDays()
-                : (slotCount * durationDaysPerSlot);
+        int durationDays = consistentDurationDays(request.durationDays(), slotCount, durationDaysPerSlot);
 
-        if (!listingPackage.getDurationDays().equals(durationDays)
+        if ((!listingPackage.getDurationDays().equals(durationDays)
+                || !java.util.Objects.equals(listingPackage.getSlotCount(), slotCount)
+                || !java.util.Objects.equals(listingPackage.getDurationDaysPerSlot(), durationDaysPerSlot))
                 && subscriptions.existsByListingPackage_Id(id)) {
             throw new AppException(ErrorCode.LISTING_PACKAGE_DURATION_IN_USE);
         }
