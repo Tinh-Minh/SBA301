@@ -129,3 +129,9 @@ ALTER TABLE bookings ADD COLUMN IF NOT EXISTS deposit_status VARCHAR(20) DEFAULT
 ALTER TABLE transactions ALTER COLUMN subscription_id DROP NOT NULL;
 ALTER TABLE transactions ADD COLUMN IF NOT EXISTS booking_id BIGINT REFERENCES bookings(id);
 
+
+-- Khoá ngoại transactions.booking_id: seed_data.sql tạo bảng transactions trước bảng bookings,
+-- nên FK được gắn ở đây (chạy lại nhiều lần vẫn an toàn).
+ALTER TABLE transactions DROP CONSTRAINT IF EXISTS fk_transactions_booking;
+ALTER TABLE transactions ADD CONSTRAINT fk_transactions_booking
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE;
