@@ -122,6 +122,10 @@ public class Booking extends BaseEntity {
     @Column(name = "returned_at")
     private LocalDateTime returnedAt;
 
+    /** Thời điểm xe thực tế được trả (khách báo hoặc lần đầu chủ xe lập biên bản trả) - dùng để tính phí trễ. */
+    @Column(name = "return_reported_at")
+    private LocalDateTime returnReportedAt;
+
     @Column(name = "pickup_odometer_km")
     private Integer pickupOdometerKm;
 

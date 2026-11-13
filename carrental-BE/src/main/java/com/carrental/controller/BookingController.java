@@ -93,6 +93,13 @@ public class BookingController {
         return ApiResponse.ok(bookingService.get(id));
     }
 
+    /** Khách báo đã trả xe: chốt thời điểm trả để tính phí trễ, chủ xe không thể kéo dài bằng cách lập biên bản muộn. */
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/api/bookings/{id}/returned")
+    public ApiResponse<BookingResponse> reportReturned(@PathVariable Long id) {
+        return ApiResponse.ok("Đã ghi nhận thời điểm trả xe", bookingService.reportReturned(id));
+    }
+
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/api/bookings/{id}/cancel")
     public ApiResponse<BookingResponse> cancel(@PathVariable Long id, @Valid @RequestBody ReasonRequest request) {

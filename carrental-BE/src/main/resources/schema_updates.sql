@@ -142,3 +142,6 @@ ALTER TABLE reviews ALTER COLUMN approved SET DEFAULT FALSE;
 
 -- Tạm dừng xe: lưu thời điểm dừng để cộng bù thời gian slot khi xe hoạt động lại.
 ALTER TABLE car_subscriptions ADD COLUMN IF NOT EXISTS paused_at TIMESTAMP;
+
+-- Mốc trả xe thực tế để tính phí trễ (khách báo trả xe hoặc lần đầu chủ xe lập biên bản trả).
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_reported_at TIMESTAMP;

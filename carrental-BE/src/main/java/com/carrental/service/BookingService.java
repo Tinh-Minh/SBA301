@@ -297,6 +297,20 @@ public class BookingService {
         return transactionRepository.save(refundTx);
     }
 
+    @Transactional
+    public BookingResponse reportReturned(Long id) {
+        Customer user = currentUserService.getCurrentUser();
+        Booking b = find(id);
+        if (!b.getCustomer().getId().equals(user.getId())) {
+            throw forbidden();
+        }
+        requireStatus(b, BookingStatus.IN_PROGRESS);
+        if (b.getReturnReportedAt() == null) {
+            b.setReturnReportedAt(now());
+        }
+        return toResponse(bookingRepository.saveAndFlush(b));
+    }
+
     /** Khi quyết toán, nếu tiền cọc lớn hơn tổng chi phí chuyến đi thì hoàn phần dư cho khách. */
     private void refundExcessDeposit(Booking b) {
         if (b.getDepositStatus() != PaymentStatus.PAID || b.getDepositAmount() == null || b.getDepositAmount().signum() <= 0) {
@@ -592,7 +606,11 @@ public class BookingService {
 
     /** Chốt phí phát sinh khi trả xe: quá km, trễ giờ, phí khác. */
     private void settle(Booking b, int returnOdometer, BigDecimal otherFee, String otherFeeNote) {
-        LocalDateTime now = now();
+        // Mốc tính phí trễ: lần đầu khách báo trả xe hoặc chủ xe lập biên bản trả; sửa biên bản sau đó không đổi mốc.
+        if (b.getReturnReportedAt() == null) {
+            b.setReturnReportedAt(now());
+        }
+        LocalDateTime now = b.getReturnReportedAt();
         b.setReturnOdometerKm(returnOdometer);
         BigDecimal extraKm = BigDecimal.ZERO;
         if (b.getKmLimitPerDay() != null && b.getExtraKmFee() != null && b.getPickupOdometerKm() != null) {
