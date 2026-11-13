@@ -5,6 +5,7 @@ import { fieldClass } from "@/components/LiveUi.jsx";
 import { useAuth } from "@/hooks/useAuth.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { tripService } from "@/services/tripService.js";
+import { useSafety } from "@/components/booking/SafetyPanel.jsx";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney } from "@/utils/labels.js";
 import { defaultWindow, durationLabel, toApiTime, windowError } from "@/utils/rental.js";
@@ -23,6 +24,10 @@ export function BookingPanel({ car }) {
     const [sending, setSending] = useState(false);
     const busy = useApiQuery(["availability", car.id], () => tripService.availability(car.id), { requiresAuth: false });
     const own = user && user.id === car.ownerId;
+    const safety = useSafety(car.id);
+    const unsafe = safety.data?.level === "UNSAFE";
+    // BE chỉ cho thuê khi danh tính đã duyệt và có GPLX còn hạn; FE chặn sớm để khách biết cần làm gì.
+    const kycVerified = user?.kycStatus === "VERIFIED";
 
     useEffect(() => {
         const problem = windowError(pickupAt, returnAt);
@@ -85,6 +90,8 @@ export function BookingPanel({ car }) {
 
     {own ? <p className="mt-4 rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Đây là xe của bạn.</p>
       : !loggedIn ? <Link to={`/login?next=${next}`} className="mt-4 flex justify-center rounded-xl bg-[#FC6C26] py-3 font-bold text-white">Đăng nhập để đặt xe</Link>
+      : unsafe ? <p className="mt-4 rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Xe đang có đăng kiểm/bảo hiểm hết hạn hoặc không đạt nên tạm thời không nhận đặt.</p>
+      : !kycVerified ? <div className="mt-4 rounded-xl bg-[#FFF7ED] p-3 text-sm text-[#9A3412]">Bạn cần xác minh danh tính và giấy phép lái xe trước khi thuê xe. <Link to="/account/verification" className="font-bold text-[#FC6C26]">Xác minh ngay</Link></div>
       : <>
         <label className="mt-4 block text-xs font-semibold text-[#666666]">Lời nhắn cho chủ xe (tuỳ chọn)<textarea rows={2} maxLength={1000} value={note} onChange={e => setNote(e.target.value)} placeholder="VD: nhận xe tại nhà, cần ghế trẻ em…" className={`${fieldClass} mt-1`}/></label>
         <button type="button" disabled={!quote?.available || sending} onClick={book} className="mt-3 w-full rounded-xl bg-[#FC6C26] py-3 font-bold text-white hover:bg-[#e05615] disabled:opacity-50">{sending ? "Đang gửi…" : "Gửi yêu cầu thuê xe"}</button>
