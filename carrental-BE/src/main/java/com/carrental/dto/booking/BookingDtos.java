@@ -72,7 +72,9 @@ public final class BookingDtos {
 
     public record RespondHandoverRequest(
             @NotEmpty(message = "Vui lòng xem và phản hồi các hạng mục") List<@Valid ItemDecision> decisions,
-            @Size(max = 1000) String customerNote) {}
+            @Size(max = 1000) String customerNote,
+            /** Biên bản trả xe: khách không đồng ý số tiền phí phát sinh (ghi lý do vào customerNote). */
+            Boolean disputeFees) {}
 
     public record ItemRevision(
             @NotNull Long itemId,
@@ -82,7 +84,9 @@ public final class BookingDtos {
             @Min(0) @Max(2_000_000) Integer odometerKm,
             @Min(0) @Max(100) Integer fuelPercent,
             @Size(max = 1000) String ownerNote,
-            @NotEmpty(message = "Vui lòng sửa các mục khách yêu cầu") List<@Valid ItemRevision> revisions) {}
+            List<@Valid ItemRevision> revisions,
+            @Min(0) BigDecimal otherFeeAmount,
+            @Size(max = 500) String otherFeeNote) {}
 
     // ------------------------------------------------------------------ responses
 

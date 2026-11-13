@@ -531,6 +531,12 @@ public class BookingService {
             }
         }
         h.setCustomerNote(trim(request.customerNote()));
+        if (type == HandoverType.RETURN && Boolean.TRUE.equals(request.disputeFees())) {
+            if (blank(request.customerNote())) {
+                throw bad("Vui lòng ghi rõ lý do không đồng ý với phí phát sinh");
+            }
+            anyDisputed = true;
+        }
         if (anyDisputed) {
             h.setStatus(HandoverStatus.DISPUTED);
         } else {
@@ -559,8 +565,10 @@ public class BookingService {
         if (h.getStatus() != HandoverStatus.DISPUTED) {
             throw conflict("Biên bản không có mục nào cần sửa");
         }
-        if (photos == null || photos.size() != request.revisions().size()) {
-            throw bad("Số lượng ảnh tải lên (" + (photos != null ? photos.size() : 0) + ") phải khớp với số mục cần sửa (" + request.revisions().size() + ")");
+        List<ItemRevision> revisions = request.revisions() == null ? List.of() : request.revisions();
+        int photoCount = photos == null ? 0 : photos.size();
+        if (photoCount != revisions.size()) {
+            throw bad("Số lượng ảnh tải lên (" + photoCount + ") phải khớp với số mục cần sửa (" + revisions.size() + ")");
         }
         Map<Long, HandoverItem> disputed = new HashMap<>();
         for (HandoverItem item : h.getItems()) {
@@ -568,13 +576,13 @@ public class BookingService {
                 disputed.put(item.getId(), item);
             }
         }
-        Set<Long> revised = request.revisions().stream().map(ItemRevision::itemId).collect(Collectors.toSet());
+        Set<Long> revised = revisions.stream().map(ItemRevision::itemId).collect(Collectors.toSet());
         if (!revised.equals(disputed.keySet())) {
             throw bad("Vui lòng sửa đúng và đủ các mục khách yêu cầu");
         }
-        List<String> storedUrls = publicImageStorageService.storeImages(photos);
-        for (int i = 0; i < request.revisions().size(); i++) {
-            ItemRevision r = request.revisions().get(i);
+        List<String> storedUrls = revisions.isEmpty() ? List.of() : publicImageStorageService.storeImages(photos);
+        for (int i = 0; i < revisions.size(); i++) {
+            ItemRevision r = revisions.get(i);
             HandoverItem item = disputed.get(r.itemId());
             item.setPhotoUrl(storedUrls.get(i));
             item.setConditionNote(trim(r.conditionNote()));
@@ -598,7 +606,9 @@ public class BookingService {
         h.setSubmittedAt(now());
         handoverRepository.saveAndFlush(h);
         if (type == HandoverType.RETURN) {
-            settle(b, h.getOdometerKm(), b.getOtherFeeAmount(), b.getOtherFeeNote());
+            BigDecimal fee = request.otherFeeAmount() != null ? request.otherFeeAmount() : b.getOtherFeeAmount();
+            String feeNote = request.otherFeeNote() != null ? request.otherFeeNote() : b.getOtherFeeNote();
+            settle(b, h.getOdometerKm(), fee, feeNote);
             bookingRepository.saveAndFlush(b);
         }
         return toResponse(b);
@@ -628,6 +638,10 @@ public class BookingService {
         BigDecimal other = otherFee == null || otherFee.signum() < 0 ? BigDecimal.ZERO : otherFee;
         if (other.signum() > 0 && blank(otherFeeNote)) {
             throw bad("Vui lòng ghi rõ lý do phí khác");
+        }
+        // Mức trần phí khác: không vượt quá tiền thuê gốc của chuyến (hư hỏng lớn hơn cần xử lý qua khiếu nại/bảo hiểm).
+        if (other.compareTo(b.getRentalAmount()) > 0) {
+            throw bad("Phí khác tối đa bằng tiền thuê gốc (" + b.getRentalAmount().toPlainString() + "đ). Thiệt hại lớn hơn vui lòng liên hệ quản trị viên");
         }
         b.setExtraKmAmount(extraKm);
         b.setLateAmount(late);
