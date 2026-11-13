@@ -280,8 +280,15 @@ public class BookingService {
         if (b.getStatus() != BookingStatus.REQUESTED && b.getStatus() != BookingStatus.CONFIRMED) {
             throw conflict("Đơn không còn ở giai đoạn liên hệ");
         }
-        b.setOwnerContactedAt(now());
-        b.setContactNote(request.contactNote().trim());
+        LocalDateTime contactedAt = now();
+        if (b.getOwnerContactedAt() == null) {
+            b.setOwnerContactedAt(contactedAt);
+        }
+        // Giữ lịch sử các lần liên hệ (mới nhất ở cuối) thay vì ghi đè; cột tối đa 1000 ký tự.
+        String entry = "[" + contactedAt.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")) + "] "
+                + request.contactNote().trim();
+        String history = blank(b.getContactNote()) ? entry : b.getContactNote() + "\n" + entry;
+        b.setContactNote(history.length() > 1000 ? history.substring(history.length() - 1000) : history);
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
