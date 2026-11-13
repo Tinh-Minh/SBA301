@@ -10,6 +10,8 @@ export const endpoints = {
         changePassword: "/api/auth/change-password",
         login: "/api/auth/login",
         register: "/api/auth/register",
+        resendVerification: "/api/auth/resend-verification",
+        verifyEmail: "/api/auth/verify-email",
     },
     bankAccounts: {
         byId: (id) => `/api/bank-accounts/${id}`,
