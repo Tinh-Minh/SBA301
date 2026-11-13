@@ -4,6 +4,18 @@ import { AuthLayout } from "@/components/auth/AuthLayout.jsx";
 import { resendVerification, verifyEmail } from "@/services/authService.js";
 
 const PENDING_EMAIL_KEY = "cardb:pending-verification-email";
+const RESEND_COOLDOWN_SECONDS = 60;
+
+function resendCooldownFromError(error) {
+    if (error?.status !== 429 && error?.code !== "TOO_MANY_REQUESTS") return 0;
+
+    const message = String(error?.message || "");
+    const seconds = message.match(/(\d+)\s*(?:giây|seconds?)/i);
+    if (seconds) return Math.max(1, Number(seconds[1]));
+    if (/vài giây/i.test(message)) return 5;
+    if (/trong 10 phút/i.test(message)) return 10 * 60;
+    return RESEND_COOLDOWN_SECONDS;
+}
 
 function verificationTokenFromLocation() {
     const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -19,6 +31,31 @@ export default function VerifyEmailPage() {
     const [message, setMessage] = useState("");
     const [resendError, setResendError] = useState("");
     const [isResending, setIsResending] = useState(false);
+    const [resendCooldown, setResendCooldown] = useState({ email: "", until: 0 });
+    const [now, setNow] = useState(() => Date.now());
+    const normalizedEmail = email.trim().toLowerCase();
+    const resendSeconds = resendCooldown.email === normalizedEmail
+        ? Math.max(0, Math.ceil((resendCooldown.until - now) / 1000))
+        : 0;
+    const isResendCoolingDown = resendSeconds > 0;
+
+    useEffect(() => {
+        if (!isResendCoolingDown) return undefined;
+        const timer = window.setInterval(() => {
+            const currentTime = Date.now();
+            setNow(currentTime);
+            if (currentTime >= resendCooldown.until) {
+                window.clearInterval(timer);
+            }
+        }, 1000);
+        return () => window.clearInterval(timer);
+    }, [resendCooldown.until, isResendCoolingDown]);
+
+    const startResendCooldown = seconds => {
+        const currentTime = Date.now();
+        setNow(currentTime);
+        setResendCooldown({ email: normalizedEmail, until: currentTime + seconds * 1000 });
+    };
 
     useEffect(() => {
         const token = tokenRef.current;
@@ -38,6 +75,8 @@ export default function VerifyEmailPage() {
 
     const onResend = async event => {
         event.preventDefault();
+        if (isResending || resendSeconds > 0 || !normalizedEmail) return;
+
         setIsResending(true);
         setResendError("");
         try {
@@ -45,8 +84,11 @@ export default function VerifyEmailPage() {
             window.sessionStorage.setItem(PENDING_EMAIL_KEY, email.trim());
             setStatus("sent");
             setMessage("Nếu email hợp lệ và chưa xác minh, liên kết mới sẽ được gửi tới hộp thư của bạn.");
+            startResendCooldown(RESEND_COOLDOWN_SECONDS);
         } catch (error) {
             setResendError(error.message || "Chưa gửi được email. Vui lòng thử lại sau.");
+            const cooldownSeconds = resendCooldownFromError(error);
+            if (cooldownSeconds > 0) startResendCooldown(cooldownSeconds);
         } finally {
             setIsResending(false);
         }
@@ -73,12 +115,14 @@ export default function VerifyEmailPage() {
                 <div className="auth-control">
                     <span className="material-symbols-outlined" aria-hidden="true">mail</span>
                     <input className="auth-field" id="verification-email" type="email" autoComplete="email" required maxLength={150}
-                        placeholder="name@example.com" value={email} onChange={event => setEmail(event.target.value)} />
+                        placeholder="name@example.com" value={email} onChange={event => {
+                            setEmail(event.target.value);
+                        }} />
                 </div>
             </div>
             {resendError ? <p className="text-sm text-red-700" role="alert">{resendError}</p> : null}
-            <button className="auth-submit" type="submit" disabled={isResending || !email.trim()}>
-                {isResending ? "Đang gửi…" : "Gửi lại liên kết"}
+            <button className="auth-submit" type="submit" disabled={isResending || resendSeconds > 0 || !normalizedEmail}>
+                {isResending ? "Đang gửi…" : resendSeconds > 0 ? `Gửi lại sau ${resendSeconds} giây` : "Gửi lại liên kết"}
             </button>
         </form> : null}
         <p className="auth-switch">
