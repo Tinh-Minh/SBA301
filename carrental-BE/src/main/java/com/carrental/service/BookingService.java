@@ -298,6 +298,20 @@ public class BookingService {
         }
         b.setStatus(BookingStatus.CONFIRMED);
         b.setConfirmedAt(now());
+        // Các yêu cầu khác trùng giờ không thể được nhận nữa: từ chối ngay để khách không phải chờ vô ích.
+        List<Booking> competing = bookingRepository.findOverlapping(b.getCar().getId(), b.getPickupAt(), b.getReturnAt(),
+                EnumSet.of(BookingStatus.REQUESTED));
+        for (Booking other : competing) {
+            if (other.getId().equals(b.getId())) {
+                continue;
+            }
+            other.setStatus(BookingStatus.REJECTED);
+            other.setRejectReason("Xe đã được xác nhận cho khách khác trong khung giờ này");
+            if (other.getVoucher() != null) {
+                voucherRepository.decreaseUsage(other.getVoucher().getId());
+            }
+        }
+        bookingRepository.saveAll(competing);
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
