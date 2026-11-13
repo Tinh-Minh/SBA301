@@ -12,7 +12,7 @@ export const pageTitles = {
     "account/verification/compact": "Xác minh giấy tờ",
     "booking/confirm": "Xác nhận yêu cầu thuê xe",
     "booking/success": "Đã gửi yêu cầu thuê xe",
-    "my-trips": "Đánh giá của tôi",
+    "my-reviews": "Đánh giá của tôi",
     "orders/CDB-ORD-20261026-904": "Chi tiết đơn thuê",
     "orders/CDB-ORD-20261026-904/confirmed": "Đơn thuê đã xác nhận",
     "payment": "Thanh toán gói đăng tin",

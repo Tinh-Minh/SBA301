@@ -10,8 +10,8 @@ const publicNavigation = [["/explore", "Thuê xe"], ["/list-your-car", "Cho thu�
 const customerNavigation = [["/explore", "Thuê xe"], ["/trips", "Chuyến đi"], ["/account/verification", "Đăng ký chủ xe"], ["/packages", "Gói đăng tin"]];
 const ownerNavigation = [["/explore", "Thuê xe"], ["/trips", "Chuyến đi"], ["/owner/dashboard", "Chủ xe"], ["/packages", "Gói đăng tin"]];
 const adminNavigation = [["/explore", "Thuê xe"], ["/admin/bookings", "Đơn thuê"], ["/packages", "Gói đăng tin"], ["/admin/dashboard", "Quản trị"]];
-const customerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/trips", "Chuyến đi của tôi", "directions_car"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/account/verification", "Xác minh chủ xe (KYC)", "verified_user"]];
-const ownerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/trips", "Chuyến đi của tôi", "directions_car"], ["/owner/bookings", "Đơn thuê xe của tôi", "assignment"], ["/my-trips", "Đánh giá của tôi", "reviews"], ["/owner/subscriptions", "Gói đăng tin", "workspace_premium"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
+const customerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/trips", "Chuyến đi của tôi", "directions_car"], ["/my-reviews", "Đánh giá của tôi", "reviews"], ["/account/verification", "Xác minh chủ xe (KYC)", "verified_user"]];
+const ownerLinks = [["/account", "Hồ sơ cá nhân", "badge"], ["/trips", "Chuyến đi của tôi", "directions_car"], ["/owner/bookings", "Đơn thuê xe của tôi", "assignment"], ["/my-reviews", "Đánh giá của tôi", "reviews"], ["/owner/subscriptions", "Gói đăng tin", "workspace_premium"], ["/owner/dashboard", "Kênh chủ xe", "directions_car"]];
 export function Header({ previewState } = {}) {
     const instance = useId();
     const mobileId = previewState === undefined ? "mobile-navigation" : `mobile-navigation-${instance}`;
@@ -26,7 +26,7 @@ export function Header({ previewState } = {}) {
     const displayCode = user ? `${roleLabel} • #${user.id}` : "CarDB";
     const navigation = loggedIn ? (isAdmin ? adminNavigation : isOwner ? ownerNavigation : customerNavigation) : publicNavigation;
     const menuLinks = isAdmin ? [...customerLinks.slice(0, 1), ["/admin/dashboard", "Trang quản trị", "admin_panel_settings"]] : isOwner ? ownerLinks : customerLinks;
-    const activePath = previewState === undefined ? path : loggedIn ? "/my-trips" : "/explore";
+    const activePath = previewState === undefined ? path : loggedIn ? "/trips" : "/explore";
     const overPhoto = previewState === undefined && (path === "/login" || path === "/register");
     const [menu, setMenu] = useState(false);
     const [account, setAccount] = useState(false);
