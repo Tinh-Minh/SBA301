@@ -116,6 +116,16 @@ public class VoucherServiceImpl implements VoucherService {
             throw fieldError("discountValue", "Tỷ lệ phần trăm tối đa 100");
         }
         if (!request.getEndAt().isAfter(request.getStartAt())) throw fieldError("endAt", "Phải sau startAt");
+        if (!request.getEndAt().isAfter(LocalDateTime.now(clock))) {
+            throw fieldError("endAt", "Không thể tạo voucher đã hết hạn");
+        }
+        if (request.getCode() == null || !request.getCode().matches("^[A-Za-z0-9_-]{3,50}$")) {
+            throw fieldError("code", "Mã voucher chỉ gồm chữ, số, '_' hoặc '-' (3-50 ký tự), không có dấu cách");
+        }
+        if (request.getDiscountType() == DiscountType.PERCENT
+                && (request.getMaxDiscount() == null || request.getMaxDiscount().signum() <= 0)) {
+            throw fieldError("maxDiscount", "Voucher giảm theo % phải có mức giảm tối đa");
+        }
         if (request.getStartAt().getNano() % 1000 != 0 || request.getEndAt().getNano() % 1000 != 0) {
             throw fieldError("endAt", "Thời gian chỉ hỗ trợ tối đa 6 chữ số thập phân");
         }
