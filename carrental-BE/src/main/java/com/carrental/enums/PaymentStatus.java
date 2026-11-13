@@ -6,7 +6,9 @@ import org.springframework.http.HttpStatus;
 public enum PaymentStatus {
     UNPAID,
     PAID,
-    REFUNDED;
+    REFUNDED,
+    /** Xe miễn cọc: không phát sinh khoản cọc nào. */
+    NOT_REQUIRED;
 
     public boolean canTransitionTo(PaymentStatus next) {
         if (this == UNPAID) {

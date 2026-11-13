@@ -47,23 +47,14 @@ async function getCar(id) {
 }
 
 export const carService = {
-    /** POST /api/cars — tải ảnh multipart trước (nếu có) để tránh tạo xe mồ côi khi ảnh lỗi, giữ đúng thứ tự ảnh đại diện. */
+    /** POST /api/cars — tạo xe rồi tải ảnh multipart trực tiếp qua POST /api/cars/{id}/images. */
     async create(draft) {
         const photoEntries = Array.isArray(draft.photoEntries) ? draft.photoEntries : [];
-        let orderedUrls = [];
-        if (photoEntries.length) {
-            const fileEntries = photoEntries.filter(entry => entry.file);
-            const uploadedUrls = fileEntries.length ? await uploadImages(fileEntries.map(entry => entry.file)) : [];
-            let fileCursor = 0;
-            orderedUrls = photoEntries
-                .map(entry => (entry.file ? uploadedUrls[fileCursor++] : entry.url?.trim()))
-                .filter(Boolean);
-        } else {
-            orderedUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
-        }
+        const files = photoEntries.map(entry => entry?.file).filter(Boolean);
         const created = await request(endpoints.cars.list, { method: "POST", json: { licensePlate: draft.licensePlate.trim().toUpperCase(), ...carPayload(draft) } });
-        if (orderedUrls.length)
-            await this.addImages(created.id, orderedUrls);
+        if (files.length) {
+            await this.uploadImages(created.id, files, 0);
+        }
         return getCar(created.id);
     },
     /** GET /api/cars/my-cars (tóm tắt) + GET /api/cars/{id} để có đủ địa chỉ, cọc, km... */

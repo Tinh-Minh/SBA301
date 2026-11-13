@@ -98,7 +98,6 @@ export const endpoints = {
         quote: "/api/subscriptions/quote",
     },
     transactions: {
-        byIdSimulateGateway: (id) => `/api/transactions/${id}/simulate-gateway`,
         byIdVnpayUrl: (id) => `/api/transactions/${id}/vnpay-url`,
         list: "/api/transactions",
         packagePayment: "/api/transactions/package-payment",

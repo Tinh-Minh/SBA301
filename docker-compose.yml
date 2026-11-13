@@ -1,29 +1,49 @@
-# Chạy cả hai bằng một lệnh, tại thư mục này:
+# Chạy toàn bộ hệ thống bằng một lệnh, tại thư mục gốc dự án:
 #   docker compose up --build
 #
-# Database lấy từ carrental-BE/.env (Supabase). File đó không được copy vào image.
-# Khóa JWT và thư mục giấy tờ trên máy được gắn vào container.
+# - db:       PostgreSQL 17, dữ liệu lưu ở volume pgdata. Lần đầu database trống,
+#             backend tự tạo bảng và nạp dữ liệu mẫu (seed_data.sql).
+# - backend:  http://localhost:8080 – cấu hình lấy từ carrental-BE/.env,
+#             riêng kết nối DB được ghi đè để trỏ vào service db.
+# - frontend: http://localhost:3000
+# Làm sạch toàn bộ dữ liệu: docker compose down -v
 
 services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: carrental
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Postgres123}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d carrental"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   backend:
     build:
       context: ./carrental-BE
     env_file:
       - ./carrental-BE/.env
     environment:
-      JWT_PRIVATE_KEY_LOCATION: file:/keys/private_key.pem
-      JWT_PUBLIC_KEY_LOCATION: file:/keys/public_key.pem
+      DB_URL: jdbc:postgresql://db:5432/carrental
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-Postgres123}
       APP_DOCUMENT_STORAGE_ROOT: /data/private-documents
+      APP_UPLOAD_ROOT: /data/public-uploads
+      FRONTEND_URL: http://localhost:3000
     ports:
       - "8080:8080"
     volumes:
-      - type: bind
-        source: ${SBA301_KEYS_DIR:-C:/Users/letan/AppData/Local/SBA301_RentCar/keys}
-        target: /keys
-        read_only: true
-      - type: bind
-        source: ${SBA301_DOCUMENTS_DIR:-C:/Users/letan/AppData/Local/SBA301_RentCar/private-documents}
-        target: /data/private-documents
+      - uploads:/data
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
       interval: 10s
@@ -43,3 +63,7 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:

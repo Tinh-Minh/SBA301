@@ -17,6 +17,9 @@ public interface TransactionService {
 
     TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request, HttpServletRequest servletRequest);
 
+    TransactionResponse createBookingPayment(BookingDepositPaymentRequest request, com.carrental.enums.TransactionType type,
+                                             HttpServletRequest servletRequest);
+
     default TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request) {
         return createBookingDepositPayment(request, null);
     }
@@ -29,8 +32,6 @@ public interface TransactionService {
 
     String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
 
-    TransactionResponse simulateGateway(Long transactionId);
-
-    /** @param success false để giả lập cổng thanh toán báo thất bại */
-    TransactionResponse simulateGateway(Long transactionId, boolean success);
+    /** Quét và hủy các giao dịch PENDING quá hạn thanh toán. */
+    int expirePendingTransactions();
 }

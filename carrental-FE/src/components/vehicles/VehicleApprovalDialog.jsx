@@ -35,6 +35,9 @@ export function CarDetail({ id, onChanged }) {
     const { car, documents } = detail.data;
     const error = approve.error ?? reject.error ?? verify.error;
     const busy = approve.running || reject.running || verify.running;
+    const registrationApproved = documents.some(d => d.docType === "REGISTRATION" && d.verifyStatus === "APPROVED");
+    const hasRegistration = documents.some(d => d.docType === "REGISTRATION");
+    const canApprove = registrationApproved;
     return <aside className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <img src={carImage(car)} alt={`${car.brand} ${car.model}`} className="h-44 w-full rounded-xl object-cover"/>
     {car.images.length > 1 ? <div className="flex gap-2 overflow-x-auto">{car.images.map(image => <img key={image.id} src={resolveAssetUrl(image.imageUrl)} alt="" className="h-14 w-20 shrink-0 rounded-lg object-cover"/>)}</div> : null}
@@ -71,7 +74,10 @@ export function CarDetail({ id, onChanged }) {
     </div>
     {error ? <p className="text-sm text-[#B91C1C]">{error.message}</p> : null}
     {car.status === "PENDING_APPROVAL" ? <div className="flex flex-col gap-2 border-t border-[#E9E9E7] pt-4">
-      <PrimaryButton disabled={busy} onClick={() => void approve.run()}>✓ Duyệt niêm yết xe</PrimaryButton>
+      {!canApprove ? <p className="rounded-xl bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-800">
+        ⚠️ {!hasRegistration ? "Chủ xe chưa tải lên giấy đăng ký xe (cavet). Yêu cầu chủ xe bổ sung tài liệu trước khi duyệt." : "Giấy đăng ký xe (cavet) chưa được xác minh. Hãy bấm \"Duyệt\" trên giấy tờ ở trên trước."}
+      </p> : null}
+      <PrimaryButton disabled={busy || !canApprove} onClick={() => void approve.run()}>✓ Duyệt niêm yết xe</PrimaryButton>
       <button type="button" disabled={busy} onClick={() => setDialog({ type: "car" })} className="rounded-xl border border-[#EF4444] px-4 py-2.5 text-sm font-bold text-[#EF4444]">Từ chối hồ sơ xe</button>
     </div> : null}
     {car.status === "REJECTED" ? <p className="border-t border-[#E9E9E7] pt-4 text-sm text-[#666666]">Hồ sơ đã bị từ chối. Chủ xe cần cập nhật và gửi duyệt lại trước khi niêm yết.</p> : null}

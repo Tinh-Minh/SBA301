@@ -44,7 +44,6 @@ class OwnerRoleUpgradeTest {
         UserDocumentRepository documents = mock(UserDocumentRepository.class);
         PrivateDocumentStorage storage = mock(PrivateDocumentStorage.class);
         KycService kycService = mock(KycService.class);
-        AuthService authService = mock(AuthService.class);
 
         Customer admin = customer(1L, Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.VERIFIED);
         Customer customer = customer(20L, Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.PENDING);
@@ -60,7 +59,7 @@ class OwnerRoleUpgradeTest {
         when(kycService.currentStatus(20L, LocalDate.now(FIXED_CLOCK))).thenReturn(KycStatus.VERIFIED);
 
         UserDocumentServiceImpl service = new UserDocumentServiceImpl(
-                customers, documents, storage, kycService, FIXED_CLOCK, authService);
+                customers, documents, storage, kycService, FIXED_CLOCK);
         ReviewUserDocumentRequest request = new ReviewUserDocumentRequest();
         request.setVerifyStatus(StringNode.valueOf("APPROVED"));
 
@@ -77,7 +76,6 @@ class OwnerRoleUpgradeTest {
         UserDocumentRepository documents = mock(UserDocumentRepository.class);
         PrivateDocumentStorage storage = mock(PrivateDocumentStorage.class);
         KycService kycService = mock(KycService.class);
-        AuthService authService = mock(AuthService.class);
 
         Customer admin = customer(1L, Role.ADMIN, CustomerStatus.ACTIVE, KycStatus.VERIFIED);
         Customer customer = customer(21L, Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.PENDING);
@@ -96,7 +94,7 @@ class OwnerRoleUpgradeTest {
         when(kycService.currentStatus(21L, LocalDate.now(FIXED_CLOCK))).thenReturn(KycStatus.PENDING);
 
         UserDocumentServiceImpl service = new UserDocumentServiceImpl(
-                customers, documents, storage, kycService, FIXED_CLOCK, authService);
+                customers, documents, storage, kycService, FIXED_CLOCK);
         ReviewUserDocumentRequest request = new ReviewUserDocumentRequest();
         request.setVerifyStatus(StringNode.valueOf("APPROVED"));
 

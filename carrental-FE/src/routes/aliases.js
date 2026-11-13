@@ -1,7 +1,7 @@
 export const routeAliases = {
   "127.0.0.1": "localhost",
   "/kham-pha-xe": "/explore",
-  "/chuyen-xe-cua-toi": "/my-trips",
+  "/chuyen-xe-cua-toi": "/trips",
   "/dang-nhap": "/login",
   "/dang-ky": "/register",
   "/tai-khoan/xac-minh/thu-gon": "/account/verification/compact",
@@ -54,10 +54,10 @@ export const routeAliases = {
   "/tai-khoan-ngan-hang": "/account",
   "/don-thue-xe": "/account/orders",
   "/lich-su-chuyen-di": "/account/history",
-  "/booking-detail-c08": "/my-trips",
-  "/chi-tiet-don-thue": "/my-trips",
-  "/handover-protocol-c10": "/my-trips",
-  "/thanh-toan-lai": "/my-trips",
+  "/booking-detail-c08": "/trips",
+  "/chi-tiet-don-thue": "/trips",
+  "/handover-protocol-c10": "/trips",
+  "/thanh-toan-lai": "/trips",
   "/privacy-policy": "/privacy",
   "/terms-of-service": "/terms"
 };

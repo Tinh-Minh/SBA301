@@ -9,7 +9,7 @@ const groups = [
             { section: "verification", href: "/account/verification", label: "Xác minh giấy tờ", icon: "verified_user" },
         ] },
     { title: "Tin đăng và đánh giá", links: [
-            { section: "reviews", href: "/my-trips", label: "Đánh giá của tôi", icon: "reviews" },
+            { section: "reviews", href: "/my-reviews", label: "Đánh giá của tôi", icon: "reviews" },
             { section: "subscriptions", href: "/owner/subscriptions", label: "Gói đăng tin", icon: "workspace_premium", ownerOnly: true },
             { section: "owner", href: "/owner/dashboard", label: "Kênh chủ xe", icon: "garage_home", ownerOnly: true },
         ] },

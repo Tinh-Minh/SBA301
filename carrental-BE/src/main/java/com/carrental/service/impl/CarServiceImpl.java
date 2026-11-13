@@ -106,9 +106,18 @@ public class CarServiceImpl implements CarService {
         log.info("Update car id={}", carId);
         try {
             Car car = loadOwnedCar(carId);
+            String oldIdentity = identityOf(car);
+            java.math.BigDecimal oldPrice = car.getRentalPricePerDay();
             request.applyTo(car);
 
-            if (car.getStatus() == CarStatus.REJECTED) {
+            boolean approved = car.getStatus() == CarStatus.ACTIVE || car.getStatus() == CarStatus.INACTIVE;
+            if (approved && (!oldIdentity.equals(identityOf(car)) || priceChangedSharply(oldPrice, car.getRentalPricePerDay()))) {
+                // Đổi thông tin nhận dạng xe hoặc giá thay đổi mạnh: ẩn tin và chờ admin duyệt lại.
+                car.setStatus(CarStatus.PENDING_APPROVAL);
+                car.setListingStatus(com.carrental.enums.ListingStatus.UNLISTED);
+                pauseOrResumeSubscription(car, CarStatus.INACTIVE); // K10: tạm dừng slot trong lúc chờ duyệt lại
+                log.info("Car id={} đổi thông tin quan trọng -> PENDING_APPROVAL, ẩn tin chờ duyệt lại", carId);
+            } else if (car.getStatus() == CarStatus.REJECTED) {
                 car.getStatus().validateTransitionTo(CarStatus.PENDING_APPROVAL);
                 car.setStatus(CarStatus.PENDING_APPROVAL);
                 car.setRejectReason(null);
@@ -128,6 +137,53 @@ public class CarServiceImpl implements CarService {
         }
     }
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.carrental.repository.CarSubscriptionRepository carSubscriptionRepository;
+
+    /**
+     * Tạm dừng xe thì dừng đếm thời gian slot đang chạy; hoạt động lại thì cộng bù
+     * khoảng thời gian đã dừng vào slot hiện tại và ngày kết thúc gói.
+     */
+    private void pauseOrResumeSubscription(Car car, CarStatus newStatus) {
+        if (carSubscriptionRepository == null || car.getCurrentSubscriptionId() == null) {
+            return;
+        }
+        carSubscriptionRepository.findById(car.getCurrentSubscriptionId()).ifPresent(sub -> {
+            if (sub.getStatus() != com.carrental.enums.SubscriptionStatus.ACTIVE) {
+                return;
+            }
+            java.time.LocalDateTime now = com.carrental.util.TimeUtil.nowVn();
+            if (newStatus == CarStatus.INACTIVE && sub.getPausedAt() == null
+                    && sub.getCurrentSlotEndDate() != null && sub.getCurrentSlotEndDate().isAfter(now)) {
+                sub.setPausedAt(now);
+                car.setListingStatus(ListingStatus.UNLISTED);
+            } else if (newStatus == CarStatus.ACTIVE && sub.getPausedAt() != null) {
+                java.time.Duration paused = java.time.Duration.between(sub.getPausedAt(), now);
+                sub.setCurrentSlotEndDate(sub.getCurrentSlotEndDate().plus(paused));
+                if (sub.getEndDate() != null) {
+                    sub.setEndDate(sub.getEndDate().plus(paused));
+                }
+                sub.setPausedAt(null);
+                car.setListingStatus(ListingStatus.LISTED);
+            }
+            carSubscriptionRepository.save(sub);
+        });
+    }
+
+    private static String identityOf(Car car) {
+        return String.join("|", String.valueOf(car.getBrand()), String.valueOf(car.getModel()),
+                String.valueOf(car.getManufactureYear()), String.valueOf(car.getLicensePlate())).toLowerCase();
+    }
+
+    /** Giá thuê/ngày thay đổi quá 50% so với giá đã được duyệt. */
+    private static boolean priceChangedSharply(java.math.BigDecimal before, java.math.BigDecimal after) {
+        if (before == null || after == null || before.signum() <= 0) {
+            return false;
+        }
+        java.math.BigDecimal ratio = after.subtract(before).abs().divide(before, 4, java.math.RoundingMode.HALF_UP);
+        return ratio.compareTo(new java.math.BigDecimal("0.5")) > 0;
+    }
+
     @Override
     @Transactional(readOnly = true)
     public CarResponse getCarById(Long carId) {
@@ -140,7 +196,8 @@ public class CarServiceImpl implements CarService {
                     .map(u -> currentUserService.isOwner(car, u) || currentUserService.isAdmin(u))
                     .orElse(false);
 
-            if (!canViewFull && car.getStatus() != CarStatus.ACTIVE) {
+            if (!canViewFull && (car.getStatus() != CarStatus.ACTIVE
+                    || car.getOwner() == null || car.getOwner().getStatus() != com.carrental.enums.CustomerStatus.ACTIVE)) {
                 throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId);
             }
 
@@ -229,6 +286,7 @@ public class CarServiceImpl implements CarService {
 
             car.getStatus().validateTransitionTo(newStatus);
             car.setStatus(newStatus);
+            pauseOrResumeSubscription(car, newStatus);
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Chủ xe đổi trạng thái thất bại carId={}: {}", carId, e.getMessage());
@@ -282,6 +340,8 @@ public class CarServiceImpl implements CarService {
             Specification<Car> spec = (root, query, cb) -> {
                 List<Predicate> ps = new ArrayList<>();
                 ps.add(cb.equal(root.get("status"), CarStatus.ACTIVE));
+                // Chủ xe bị khoá: ẩn toàn bộ tin đăng khỏi trang công khai.
+                ps.add(cb.equal(root.get("owner").get("status"), com.carrental.enums.CustomerStatus.ACTIVE));
 
                 if (listingStatus != null) {
                     ps.add(cb.equal(root.get("listingStatus"), listingStatus));
@@ -353,6 +413,7 @@ public class CarServiceImpl implements CarService {
 
             car.setRejectReason(null);
             car.setStatus(CarStatus.ACTIVE);
+            pauseOrResumeSubscription(car, CarStatus.ACTIVE); // duyệt lại xong: cộng bù thời gian slot đã tạm dừng
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Duyệt xe thất bại carId={}: {}", carId, e.getMessage());

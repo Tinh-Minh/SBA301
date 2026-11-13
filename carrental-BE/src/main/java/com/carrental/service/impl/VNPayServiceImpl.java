@@ -41,6 +41,10 @@ public class VNPayServiceImpl implements VNPayService {
     private final BookingRepository bookingRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
+    private com.carrental.service.BookingService bookingService;
+
     private static final DateTimeFormatter VNP_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     @Override
@@ -150,16 +154,14 @@ public class VNPayServiceImpl implements VNPayService {
             throw new AppException(HttpStatus.BAD_REQUEST, "Định dạng số tiền vnp_Amount không hợp lệ: " + vnpAmountStr);
         }
 
-        if ("00".equals(responseCode) && ("00".equals(transactionStatus) || transactionStatus == null)) {
+        if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
             if (transaction.getStatus() == TransactionStatus.PENDING) {
                 transaction.setStatus(TransactionStatus.SUCCESS);
                 transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + (transactionNo != null ? transactionNo : txnRef));
                 Transaction saved = transactionRepository.save(transaction);
-                if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
-                    Booking b = saved.getBooking();
-                    b.setDepositStatus(PaymentStatus.PAID);
-                    bookingRepository.save(b);
+                if (saved.getBooking() != null && bookingService != null) {
+                    bookingService.applyPayment(saved); // cọc / tiền thuê còn lại / phí phát sinh
                 }
                 eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
                 transaction = saved;
@@ -211,15 +213,13 @@ public class VNPayServiceImpl implements VNPayService {
             String transactionStatus = queryParams.get("vnp_TransactionStatus");
             String transactionNo = queryParams.get("vnp_TransactionNo");
 
-            if ("00".equals(responseCode) && ("00".equals(transactionStatus) || transactionStatus == null)) {
+            if ("00".equals(responseCode) && "00".equals(transactionStatus)) {
                 transaction.setStatus(TransactionStatus.SUCCESS);
                 transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + transactionNo);
                 Transaction saved = transactionRepository.save(transaction);
-                if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
-                    Booking b = saved.getBooking();
-                    b.setDepositStatus(PaymentStatus.PAID);
-                    bookingRepository.save(b);
+                if (saved.getBooking() != null && bookingService != null) {
+                    bookingService.applyPayment(saved); // cọc / tiền thuê còn lại / phí phát sinh
                 }
                 eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
             } else {
@@ -249,7 +249,8 @@ public class VNPayServiceImpl implements VNPayService {
             return response;
         } catch (Exception e) {
             response.put("RspCode", "99");
-            response.put("Message", "Unknown error: " + e.getMessage());
+            log.error("Lỗi xử lý IPN VNPay", e);
+            response.put("Message", "Unknown error");
             return response;
         }
     }
@@ -269,7 +270,7 @@ public class VNPayServiceImpl implements VNPayService {
 
         String calculatedHash = vnPayConfig.hashAllFields(fields);
         if (!secureHash.equalsIgnoreCase(calculatedHash)) {
-            log.warn("Sai lệch chữ ký VNPay: nhận được={}, tính toán={}", secureHash, calculatedHash);
+            log.warn("Sai lệch chữ ký VNPay cho vnp_TxnRef={}", queryParams.get("vnp_TxnRef"));
             throw new AppException(HttpStatus.BAD_REQUEST, "Chữ ký bảo mật VNPay không hợp lệ");
         }
     }

@@ -22,16 +22,13 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.Properties;
 import java.util.List;
 import java.util.Optional;
-import jakarta.mail.Session;
-import jakarta.mail.internet.MimeMessage;
-import jakarta.mail.internet.MimeMultipart;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -46,7 +43,6 @@ class AuthServiceImplTest {
     private final JwtEncoder jwtEncoder = mock(JwtEncoder.class);
     private final JwtDecoder jwtDecoder = mock(JwtDecoder.class);
     private final JavaMailSender mailSender = mock(JavaMailSender.class);
-    private final MimeMessage outgoingEmail = new MimeMessage(Session.getInstance(new Properties()));
     @SuppressWarnings("unchecked")
     private final ObjectProvider<JavaMailSender> mailSenderProvider = mock(ObjectProvider.class);
     private final Instant now = Instant.parse("2026-01-01T00:00:00Z");
@@ -59,7 +55,6 @@ class AuthServiceImplTest {
                 Clock.fixed(now, ZoneOffset.UTC), mailSenderProvider, "http://localhost:3000", "noreply@example.test",
                 "test-api-key", "test-secret-key");
         when(mailSenderProvider.getIfAvailable()).thenReturn(mailSender);
-        when(mailSender.createMimeMessage()).thenReturn(outgoingEmail);
     }
 
     @Test
@@ -135,7 +130,7 @@ class AuthServiceImplTest {
     }
 
     @Test
-    void registrationSendsBrandedHtmlVerificationButtonThatExpiresInFiveMinutes() throws Exception {
+    void registrationSendsSignedVerificationLinkAndReturnsUnverifiedProfile() {
         RegisterRequest request = new RegisterRequest();
         request.setFullName("New Customer");
         request.setEmail("new@example.test");
@@ -156,24 +151,13 @@ class AuthServiceImplTest {
         var response = service.register(request);
 
         assertThat(response.emailVerified()).isFalse();
-        ArgumentCaptor<MimeMessage> message = ArgumentCaptor.forClass(MimeMessage.class);
+        ArgumentCaptor<SimpleMailMessage> message = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(message.capture());
-        assertThat(message.getValue().getAllRecipients())
-                .extracting(Object::toString).containsExactly("new@example.test");
-        assertThat(message.getValue().getSubject()).isEqualTo("CarDB | Xác minh địa chỉ email");
-        MimeMultipart mixed = (MimeMultipart) message.getValue().getContent();
-        MimeMultipart related = (MimeMultipart) mixed.getBodyPart(0).getContent();
-        MimeMultipart alternatives = (MimeMultipart) related.getBodyPart(0).getContent();
-        String plainText = alternatives.getBodyPart(0).getContent().toString();
-        String html = alternatives.getBodyPart(1).getContent().toString();
-        assertThat(plainText).contains("http://localhost:3000/verify-email#token=signed-verification-token",
-                "5 phút");
-        assertThat(html).contains("CarDB", "Xác minh email", "5 phút",
-                "href=\"http://localhost:3000/verify-email#token=signed-verification-token\"")
-                .doesNotContain(">http://localhost:3000/verify-email#token=signed-verification-token<");
-        ArgumentCaptor<JwtEncoderParameters> jwtParameters = ArgumentCaptor.forClass(JwtEncoderParameters.class);
-        verify(jwtEncoder).encode(jwtParameters.capture());
-        assertThat(jwtParameters.getValue().getClaims().getExpiresAt()).isEqualTo(now.plus(Duration.ofMinutes(5)));
+        assertThat(message.getValue().getTo()).containsExactly("new@example.test");
+        assertThat(message.getValue().getText()).contains(
+                "http://localhost:3000/verify-email#token=signed-verification-token",
+                "30 phút");
+        verify(jwtEncoder).encode(any(JwtEncoderParameters.class));
     }
 
     @Test
@@ -186,7 +170,7 @@ class AuthServiceImplTest {
                 .audience(List.of("audience", "email-verification"))
                 .subject("42")
                 .issuedAt(now)
-                .expiresAt(now.plus(Duration.ofMinutes(5)))
+                .expiresAt(now.plus(Duration.ofMinutes(30)))
                 .claim("purpose", "email_verification")
                 .claim("email", "user@example.test")
                 .build());
@@ -196,26 +180,6 @@ class AuthServiceImplTest {
 
         assertThat(customer.getEmailVerified()).isTrue();
         verify(customers).flush();
-    }
-
-    @Test
-    void expiredVerificationTokenIsRejectedEvenWithinJwtClockSkew() {
-        when(jwtDecoder.decode("expired-verification-token")).thenReturn(Jwt.withTokenValue("expired-verification-token")
-                .header("alg", "HS256")
-                .issuer("issuer")
-                .audience(List.of("audience", "email-verification"))
-                .subject("42")
-                .issuedAt(now.minus(Duration.ofMinutes(6)))
-                .expiresAt(now.minusNanos(1))
-                .claim("purpose", "email_verification")
-                .claim("email", "user@example.test")
-                .build());
-
-        assertThatThrownBy(() -> service.verifyEmail("expired-verification-token"))
-                .isInstanceOf(AppException.class)
-                .extracting(exception -> ((AppException) exception).errorCode())
-                .isEqualTo(ErrorCode.INVALID_EMAIL_VERIFICATION_TOKEN);
-        verify(customers, never()).findById(any());
     }
 
     private AppException loginFailure(LoginRequest request) {

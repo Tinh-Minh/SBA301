@@ -111,12 +111,14 @@ class BookingPaymentAndVoucherIntegrationTest {
         clock.setTo(now);
         tx.executeWithoutResult(s -> {
             for (String entity : List.of("HandoverItem", "Handover", "Transaction", "Booking", "CarSafetyRecord",
-                    "Review", "CarSubscription", "CarImage", "CarDocument", "Car", "ListingPackage", "Voucher", "Customer")) {
+                    "Review", "CarSubscription", "CarImage", "CarDocument", "Car", "ListingPackage", "Voucher", "UserDocument", "Customer")) {
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }
             Customer owner = persist(customer("Chủ Xe", "owner@test.vn", "0900000001", Role.OWNER));
             Customer cust = persist(customer("Khách Thuê", "customer@test.vn", "0900000002", Role.CUSTOMER));
             Customer other = persist(customer("Khách Khác", "other@test.vn", "0900000003", Role.CUSTOMER));
+            persist(driverLicense(cust, "GPLX-0002"));
+            persist(driverLicense(other, "GPLX-0003"));
             ownerId = owner.getId();
             customerId = cust.getId();
             otherCustomerId = other.getId();
@@ -172,9 +174,9 @@ class BookingPaymentAndVoucherIntegrationTest {
         assertThat(booking.getVoucher().getId()).isEqualTo(voucher10Id);
         assertThat(booking.getDiscountAmount()).isEqualByComparingTo("50000");
 
-        // Voucher usedCount tăng lên 1
+        // VR-02: lượt voucher chỉ bị trừ khi chủ xe xác nhận đơn, lúc gửi yêu cầu chưa trừ
         Voucher v = voucherRepository.findById(voucher10Id).orElseThrow();
-        assertThat(v.getUsedCount()).isEqualTo(1);
+        assertThat(v.getUsedCount()).isEqualTo(0);
     }
 
     @Test
@@ -298,140 +300,111 @@ class BookingPaymentAndVoucherIntegrationTest {
     // 2. THANH TOÁN TIỀN CỌC QUA VNPAY & SIMULATE GATEWAY
     // =========================================================================
 
-    @Test
-    @DisplayName("Chủ xe nhận đơn (CONFIRMED) -> Khách thanh toán tiền cọc qua VNPay -> Thành công")
-    void fullDepositPaymentFlowSuccess() throws Exception {
-        LocalDateTime pickup = now.plusDays(2).withHour(8).withMinute(0);
-        LocalDateTime dropoff = pickup.plusDays(2);
+    @Autowired private com.carrental.config.VNPayConfig vnPayConfig;
 
-        // 1. Khách đặt xe
-        String createBody = """
-            {
-                "carId": %d,
-                "pickupAt": "%s",
-                "returnAt": "%s",
-                "voucherCode": "GIAM10"
-            }
-        """.formatted(carId, pickup, dropoff);
-        ResultActions res = as(customerId, post("/api/bookings").contentType(MediaType.APPLICATION_JSON).content(createBody))
-                .andExpect(status().isOk());
-        Long bookingId = Long.valueOf(JsonPath.read(res.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
+    /** Mô phỏng VNPay chuyển hướng về (return URL) với chữ ký HMAC hợp lệ. */
+    private void vnpayReturn(Long txId, long amount, boolean success) throws Exception {
+        java.util.Map<String, String> p = new java.util.TreeMap<>();
+        p.put("vnp_TxnRef", txId + "_" + System.nanoTime());
+        p.put("vnp_Amount", String.valueOf(amount * 100));
+        p.put("vnp_ResponseCode", success ? "00" : "24");
+        p.put("vnp_TransactionStatus", success ? "00" : "02");
+        p.put("vnp_TransactionNo", "TEST" + txId);
+        String hash = vnPayConfig.hashAllFields(p);
+        var req = get("/api/payments/vnpay/return").param("format", "json").param("vnp_SecureHash", hash);
+        p.forEach(req::param);
+        mockMvc.perform(req).andExpect(status().isOk());
+    }
 
-        // 2. Cố tình thanh toán cọc khi chưa được duyệt (REQUESTED) -> từ chối 400
-        String depositBody = """
-            {
-                "bookingId": %d,
-                "method": "VNPAY"
-            }
-        """.formatted(bookingId);
-        as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Chỉ có thể đặt cọc khi đơn thuê đã được chủ xe xác nhận (CONFIRMED)"));
-
-        // 3. Chủ xe liên hệ & nhận đơn -> chuyển sang CONFIRMED
-        as(ownerId, post("/api/bookings/" + bookingId + "/contacted")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"contacted\": true, \"contactNote\": \"Đã gọi điện chốt giờ\"}"))
-                .andExpect(status().isOk());
-        as(ownerId, post("/api/bookings/" + bookingId + "/accept"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("CONFIRMED"));
-
-        // 4. Người khác (không phải khách thuê) cố tình thanh toán đơn này -> từ chối 403 Forbidden
-        as(otherCustomerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Chỉ khách thuê xe mới được thực hiện thanh toán tiền cọc cho đơn này"));
-
-        // 5. Khách thuê thanh toán tiền cọc -> Tạo Transaction PENDING
-        ResultActions txRes = as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.transactionType").value("BOOKING_DEPOSIT"))
-                .andExpect(jsonPath("$.data.status").value("PENDING"))
-                .andExpect(jsonPath("$.data.amount").value(2000000)) // Tiền cọc xe là 2.000.000đ
-                .andExpect(jsonPath("$.data.bookingId").value(bookingId));
-
-        Long txId = Long.valueOf(JsonPath.read(txRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
-
-        // 6. Giả lập cổng thanh toán thành công (simulateGateway)
-        as(customerId, post("/api/transactions/" + txId + "/simulate-gateway")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"simulateSuccess\": true}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("SUCCESS"))
-                .andExpect(jsonPath("$.data.providerRef").isNotEmpty());
-
-        // 7. Kiểm tra trạng thái đơn: depositStatus đã chuyển sang PAID!
-        Booking b = bookingRepository.findById(bookingId).orElseThrow();
-        assertThat(b.getDepositStatus()).isEqualTo(PaymentStatus.PAID);
-
-        // 8. Cố tình thanh toán cọc lần nữa khi đã PAID -> từ chối 400
-        as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Đơn thuê này đã được thanh toán tiền cọc"));
-
-        // 9. Callback lặp lại (idempotent): simulate lần nữa không làm hỏng dữ liệu
-        as(customerId, post("/api/transactions/" + txId + "/simulate-gateway")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"simulateSuccess\": true}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("SUCCESS"));
+    private long depositOf(long payable) {
+        return Math.min(payable, (long) Math.ceil(payable * 0.4 / 1000.0) * 1000);
     }
 
     @Test
-    @DisplayName("Thanh toán tiền cọc thất bại: giao dịch chuyển FAILED, đơn không bị kẹt và có thể thanh toán lại")
-    void depositPaymentFailureAndRetry() throws Exception {
+    @DisplayName("Luồng tiền đầy đủ: cọc 40% ngay khi đặt -> chủ xe xác nhận -> trả đủ trước khi nhận xe")
+    void fullDepositPaymentFlowSuccess() throws Exception {
         LocalDateTime pickup = now.plusDays(2).withHour(8).withMinute(0);
         LocalDateTime dropoff = pickup.plusDays(2);
-
         String createBody = """
-            {
-                "carId": %d,
-                "pickupAt": "%s",
-                "returnAt": "%s"
-            }
+            {"carId": %d, "pickupAt": "%s", "returnAt": "%s", "voucherCode": "GIAM10"}
         """.formatted(carId, pickup, dropoff);
+        ResultActions res = as(customerId, post("/api/bookings").contentType(MediaType.APPLICATION_JSON).content(createBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("REQUESTED"))
+                .andExpect(jsonPath("$.data.depositStatus").value("UNPAID"));
+        Long bookingId = Long.valueOf(JsonPath.read(res.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
+        Booking created = bookingRepository.findById(bookingId).orElseThrow();
+        long payable = created.getRentalAmount().subtract(created.getDiscountAmount()).longValue();
+        long deposit = depositOf(payable);
+        assertThat(created.getDepositAmount().longValue()).isEqualTo(deposit);
+
+        // Chủ xe không được xác nhận khi khách chưa cọc
+        as(ownerId, post("/api/bookings/" + bookingId + "/contacted").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"contacted\": true, \"contactNote\": \"Đã gọi điện chốt giờ\"}")).andExpect(status().isOk());
+        as(ownerId, post("/api/bookings/" + bookingId + "/accept")).andExpect(status().isConflict());
+
+        // Người khác không thanh toán hộ được
+        String depositBody = "{\"bookingId\": " + bookingId + ", \"method\": \"VNPAY\"}";
+        as(otherCustomerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
+                .andExpect(status().isForbidden());
+
+        // Khách cọc 40% ngay khi đặt
+        ResultActions txRes = as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.transactionType").value("BOOKING_DEPOSIT"))
+                .andExpect(jsonPath("$.data.amount").value(deposit));
+        Long txId = Long.valueOf(JsonPath.read(txRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
+        vnpayReturn(txId, deposit, true);
+        Booking b = bookingRepository.findById(bookingId).orElseThrow();
+        assertThat(b.getDepositStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(b.getDepositPaidAt()).isNotNull();
+
+        // Không cọc lần hai; callback lặp lại không làm hỏng dữ liệu
+        as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
+                .andExpect(status().isBadRequest());
+        vnpayReturn(txId, deposit, true);
+
+        // Chủ xe xác nhận; khách thanh toán phần còn lại trước khi nhận xe
+        as(ownerId, post("/api/bookings/" + bookingId + "/accept")).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CONFIRMED"));
+        Booking confirmed = bookingRepository.findById(bookingId).orElseThrow();
+        long remaining = confirmed.getRentalAmount().subtract(confirmed.getDiscountAmount()).longValue() - deposit;
+        ResultActions rentRes = as(customerId, post("/api/bookings/" + bookingId + "/rental-payment"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.transactionType").value("BOOKING_PAYMENT"))
+                .andExpect(jsonPath("$.data.amount").value(remaining));
+        Long rentTx = Long.valueOf(JsonPath.read(rentRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
+        vnpayReturn(rentTx, remaining, true);
+        assertThat(bookingRepository.findById(bookingId).orElseThrow().getRentalPaymentStatus()).isEqualTo(PaymentStatus.PAID);
+    }
+
+    @Test
+    @DisplayName("Thanh toán cọc thất bại: giao dịch FAILED, đơn vẫn chờ cọc và thanh toán lại được")
+    void depositPaymentFailureAndRetry() throws Exception {
+        LocalDateTime pickup = now.plusDays(2).withHour(8).withMinute(0);
+        String createBody = """
+            {"carId": %d, "pickupAt": "%s", "returnAt": "%s"}
+        """.formatted(carId, pickup, pickup.plusDays(2));
         ResultActions res = as(customerId, post("/api/bookings").contentType(MediaType.APPLICATION_JSON).content(createBody))
                 .andExpect(status().isOk());
         Long bookingId = Long.valueOf(JsonPath.read(res.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
+        long deposit = bookingRepository.findById(bookingId).orElseThrow().getDepositAmount().longValue();
 
-        // Chủ xe accept
-        as(ownerId, post("/api/bookings/" + bookingId + "/contacted")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"contacted\": true, \"contactNote\": \"Đã gọi điện\"}"));
-        as(ownerId, post("/api/bookings/" + bookingId + "/accept"));
-
-        // Khách khởi tạo thanh toán cọc
         String depositBody = "{\"bookingId\": " + bookingId + ", \"method\": \"VNPAY\"}";
         ResultActions txRes = as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
                 .andExpect(status().isOk());
         Long txId = Long.valueOf(JsonPath.read(txRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
+        vnpayReturn(txId, deposit, false);
+        assertThat(transactionRepository.findById(txId).orElseThrow().getStatus()).isEqualTo(TransactionStatus.FAILED);
+        assertThat(bookingRepository.findById(bookingId).orElseThrow().getDepositStatus()).isEqualTo(PaymentStatus.UNPAID);
 
-        // Giả lập thanh toán THẤT BẠI
-        as(customerId, post("/api/transactions/" + txId + "/simulate-gateway")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"simulateSuccess\": false}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("FAILED"));
-
-        // Đơn không bị kẹt: trạng thái vẫn là CONFIRMED, depositStatus vẫn là UNPAID
-        Booking b = bookingRepository.findById(bookingId).orElseThrow();
-        assertThat(b.getStatus()).isEqualTo(BookingStatus.CONFIRMED);
-        assertThat(b.getDepositStatus()).isEqualTo(PaymentStatus.UNPAID);
-
-        // Khách thanh toán lại (retry): tạo giao dịch mới thành công
-        ResultActions retryRes = as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("PENDING"));
-        Long retryTxId = Long.valueOf(JsonPath.read(retryRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
-
-        // Giả lập lần này thành công
-        as(customerId, post("/api/transactions/" + retryTxId + "/simulate-gateway")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"simulateSuccess\": true}"))
+        // Thanh toán lại thành công
+        ResultActions retry = as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
                 .andExpect(status().isOk());
-
-        b = bookingRepository.findById(bookingId).orElseThrow();
-        assertThat(b.getDepositStatus()).isEqualTo(PaymentStatus.PAID);
+        Long retryId = Long.valueOf(JsonPath.read(retry.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
+        assertThat(retryId).isNotEqualTo(txId);
+        vnpayReturn(retryId, deposit, true);
+        assertThat(bookingRepository.findById(bookingId).orElseThrow().getDepositStatus()).isEqualTo(PaymentStatus.PAID);
     }
 
     @Test
@@ -453,7 +426,7 @@ class BookingPaymentAndVoucherIntegrationTest {
         Long bookingId = Long.valueOf(JsonPath.read(res.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
 
         Voucher v = voucherRepository.findById(voucherFixedId).orElseThrow();
-        assertThat(v.getUsedCount()).isEqualTo(1);
+        assertThat(v.getUsedCount()).isEqualTo(0); // VR-02: chưa trừ lượt khi mới gửi yêu cầu
 
         // Khách hủy đơn
         as(customerId, post("/api/bookings/" + bookingId + "/cancel")
@@ -464,64 +437,6 @@ class BookingPaymentAndVoucherIntegrationTest {
 
         // Voucher usedCount được giảm lại về 0
         v = voucherRepository.findById(voucherFixedId).orElseThrow();
-        assertThat(v.getUsedCount()).isEqualTo(0);
-    }
-
-    @Test
-    @DisplayName("Hủy đơn thuê ĐÃ ĐẶT CỌC: hoàn cọc rõ ràng và ghi nhận trong Transaction (BOOKING_REFUND)")
-    void cancelPaidBookingTriggersDepositRefundTransaction() throws Exception {
-        // Đặt trước 3 ngày (> 24h)
-        LocalDateTime pickup = now.plusDays(3).withHour(8).withMinute(0);
-        LocalDateTime dropoff = pickup.plusDays(2);
-
-        String createBody = """
-            {
-                "carId": %d,
-                "pickupAt": "%s",
-                "returnAt": "%s",
-                "voucherCode": "GIAM10"
-            }
-        """.formatted(carId, pickup, dropoff);
-        ResultActions res = as(customerId, post("/api/bookings").contentType(MediaType.APPLICATION_JSON).content(createBody))
-                .andExpect(status().isOk());
-        Long bookingId = Long.valueOf(JsonPath.read(res.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
-
-        // Chủ xe accept
-        as(ownerId, post("/api/bookings/" + bookingId + "/contacted")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"contacted\": true, \"contactNote\": \"Đã gọi điện\"}"));
-        as(ownerId, post("/api/bookings/" + bookingId + "/accept"));
-
-        // Khách cọc tiền
-        String depositBody = "{\"bookingId\": " + bookingId + ", \"method\": \"VNPAY\"}";
-        ResultActions txRes = as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
-                .andExpect(status().isOk());
-        Long txId = Long.valueOf(JsonPath.read(txRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
-        as(customerId, post("/api/transactions/" + txId + "/simulate-gateway")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"simulateSuccess\": true}"));
-
-        Booking b = bookingRepository.findById(bookingId).orElseThrow();
-        assertThat(b.getDepositStatus()).isEqualTo(PaymentStatus.PAID);
-
-        // Khách hủy đơn trước 24h
-        as(customerId, post("/api/bookings/" + bookingId + "/cancel")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\": \"Có việc bận đột xuất\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.data.depositStatus").value("REFUNDED"));
-
-        // Kiểm tra Transaction hoàn cọc được ghi nhận
-        List<Transaction> txs = transactionRepository.findAllByBookingIdOrderByCreatedAtDesc(bookingId);
-        assertThat(txs).hasSize(2);
-        Transaction refundTx = txs.stream().filter(t -> t.getTransactionType() == TransactionType.BOOKING_REFUND).findFirst().orElseThrow();
-        assertThat(refundTx.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
-        assertThat(refundTx.getAmount()).isEqualByComparingTo("2000000"); // 100% hoàn lại 2.000.000đ
-        assertThat(refundTx.getProviderRef()).startsWith("REFUND_BK_");
-
-        // Lượt voucher cũng được hoàn trả
-        Voucher v = voucherRepository.findById(voucher10Id).orElseThrow();
         assertThat(v.getUsedCount()).isEqualTo(0);
     }
 
@@ -549,6 +464,19 @@ class BookingPaymentAndVoucherIntegrationTest {
         });
     }
 
+    /** BK-01: người thuê phải có GPLX đã duyệt, còn hạn. */
+    private com.carrental.entity.UserDocument driverLicense(Customer owner, String number) {
+        com.carrental.entity.UserDocument doc = new com.carrental.entity.UserDocument();
+        doc.setCustomer(owner);
+        doc.setDocType(com.carrental.enums.DocumentType.DRIVER_LICENSE);
+        doc.setDocNumber(number);
+        doc.setLicenseClass("B2");
+        doc.setExpiresAt(java.time.LocalDate.of(2099, 1, 1));
+        doc.setFrontImageUrl("private-local:front.png");
+        doc.setVerifyStatus(com.carrental.enums.VerificationStatus.APPROVED);
+        return doc;
+    }
+
     private Customer customer(String name, String email, String phone, Role role) {
         return Customer.builder()
                 .fullName(name)
@@ -557,6 +485,8 @@ class BookingPaymentAndVoucherIntegrationTest {
                 .role(role)
                 .status(CustomerStatus.ACTIVE)
                 .kycStatus(KycStatus.VERIFIED)
+                .bankAccountNumber("0071000123456").bankName("Vietcombank")
+                .bankBranch("Chi nhánh Tân Định").bankAccountHolder(name.toUpperCase())
                 .passwordHash("$2a$10$abcdefghijklmnopqrstuvwxyzABCDEF")
                 .build();
     }

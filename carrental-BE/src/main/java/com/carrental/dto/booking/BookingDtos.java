@@ -36,8 +36,10 @@ public final class BookingDtos {
             @NotNull(message = "Vui lòng chọn xe") Long carId,
             @NotNull(message = "Vui lòng chọn thời gian nhận xe") LocalDateTime pickupAt,
             @NotNull(message = "Vui lòng chọn thời gian trả xe") LocalDateTime returnAt,
-            @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự") String contactPhone,
-            @Size(max = 1000, message = "Lời nhắn tối đa 1000 ký tự") String customerNote,
+            @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự")
+            @Pattern(regexp = "^$|^\\s*(\\+84|0)[0-9]{9,10}\\s*$", message = "Số điện thoại không hợp lệ") String contactPhone,
+            @Size(max = 1000, message = "Lời nhắn tối đa 1000 ký tự")
+            @Pattern(regexp = "^[^<>]*$", message = "Lời nhắn không được chứa ký tự < hoặc >") String customerNote,
             @Size(max = 50, message = "Mã voucher tối đa 50 ký tự") String voucherCode) {}
 
     public record ContactRequest(
@@ -69,8 +71,11 @@ public final class BookingDtos {
             @Size(max = 1000, message = "Ghi chú tối đa 1000 ký tự") String disputeNote) {}
 
     public record RespondHandoverRequest(
-            @NotEmpty(message = "Vui lòng xem và phản hồi các hạng mục") List<@Valid ItemDecision> decisions,
-            @Size(max = 1000) String customerNote) {}
+            /** Có thể rỗng khi không còn hạng mục chờ (vd chủ xe chỉ điều chỉnh phí theo phản đối của khách). */
+            List<@Valid ItemDecision> decisions,
+            @Size(max = 1000) String customerNote,
+            /** Biên bản trả xe: khách không đồng ý số tiền phí phát sinh (ghi lý do vào customerNote). */
+            Boolean disputeFees) {}
 
     public record ItemRevision(
             @NotNull Long itemId,
@@ -80,7 +85,9 @@ public final class BookingDtos {
             @Min(0) @Max(2_000_000) Integer odometerKm,
             @Min(0) @Max(100) Integer fuelPercent,
             @Size(max = 1000) String ownerNote,
-            @NotEmpty(message = "Vui lòng sửa các mục khách yêu cầu") List<@Valid ItemRevision> revisions) {}
+            List<@Valid ItemRevision> revisions,
+            @Min(0) BigDecimal otherFeeAmount,
+            @Size(max = 500) String otherFeeNote) {}
 
     // ------------------------------------------------------------------ responses
 
@@ -193,7 +200,18 @@ public final class BookingDtos {
             String voucherCode,
             BigDecimal discountAmount,
             PaymentStatus depositStatus,
-            BigDecimal remainingAmount) {
+            BigDecimal remainingAmount,
+            LocalDateTime returnReportedAt,
+            LocalDateTime depositPaidAt,
+            LocalDateTime depositDueAt,
+            LocalDateTime ownerResponseDueAt,
+            PaymentStatus rentalPaymentStatus,
+            BigDecimal rentalRemainingAmount,
+            PaymentStatus extraFeeStatus,
+            BigDecimal fuelFeeAmount,
+            LocalDateTime cancelledAt,
+            BigDecimal cancelFeeAmount,
+            BigDecimal refundAmount) {
 
         public static BookingResponse from(Booking b, String imageUrl, boolean reviewed, List<Handover> handovers) {
             var car = b.getCar();
@@ -219,7 +237,14 @@ public final class BookingDtos {
                     b.getPickupOdometerKm(), b.getReturnOdometerKm(), b.getExtraKmAmount(), b.getLateAmount(),
                     b.getOtherFeeAmount(), b.getOtherFeeNote(), b.getFinalAmount(), b.getCompletedAt(), b.getCreatedAt(),
                     reviewed, handovers.stream().map(HandoverResponse::from).toList(),
-                    vCode, discount, depStatus, rem);
+                    vCode, discount, depStatus, rem, b.getReturnReportedAt(),
+                    b.getDepositPaidAt(),
+                    b.getCreatedAt() != null ? b.getCreatedAt().plus(com.carrental.service.BookingMoneyPolicy.DEPOSIT_PAYMENT_WINDOW) : null,
+                    b.getDepositPaidAt() != null ? b.getDepositPaidAt().plus(com.carrental.service.BookingMoneyPolicy.OWNER_RESPONSE_WINDOW) : null,
+                    b.getRentalPaymentStatus(),
+                    b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO)
+                            .subtract(b.getDepositAmount() != null ? b.getDepositAmount() : BigDecimal.ZERO).max(BigDecimal.ZERO),
+                    b.getExtraFeeStatus(), b.getFuelFeeAmount(), b.getCancelledAt(), b.getCancelFeeAmount(), b.getRefundAmount());
         }
     }
 

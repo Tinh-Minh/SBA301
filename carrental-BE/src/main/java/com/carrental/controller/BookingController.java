@@ -9,6 +9,8 @@ import com.carrental.enums.BookingStatus;
 import com.carrental.enums.HandoverType;
 import com.carrental.enums.PaymentMethod;
 import com.carrental.service.BookingService;
+import com.carrental.service.DashboardService;
+import com.carrental.service.RentalDashboardService;
 import com.carrental.service.TransactionService;
 import com.carrental.util.PageRequestFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +31,9 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final TransactionService transactionService;
-    private final com.carrental.service.RentalDashboardService dashboardService;
+    private final RentalDashboardService rentalDashboardService;
+    private final DashboardService dashboardService;
+    private final com.carrental.service.SettlementService settlementService;
 
     // ---------------------------------------------------------------- công khai
 
@@ -57,8 +61,28 @@ public class BookingController {
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")
     @GetMapping("/api/bookings/my")
-    public ApiResponse<List<BookingResponse>> mine() {
-        return ApiResponse.ok(bookingService.mineAsCustomer());
+    public ApiResponse<List<BookingResponse>> mine(@RequestParam(required = false) String sort) {
+        return ApiResponse.ok(sortBookings(bookingService.mineAsCustomer(), sort));
+    }
+
+    /** Chỉ hỗ trợ sắp xếp theo createdAt/pickupAt; trường lạ trả 400 thay vì bị bỏ qua. */
+    private static List<BookingResponse> sortBookings(List<BookingResponse> bookings, String sort) {
+        if (sort == null || sort.isBlank()) {
+            return bookings;
+        }
+        String[] parts = sort.split(",");
+        java.util.Comparator<BookingResponse> comparator = switch (parts[0].trim()) {
+            case "createdAt" -> java.util.Comparator.comparing(BookingResponse::createdAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            case "pickupAt" -> java.util.Comparator.comparing(BookingResponse::pickupAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            default -> throw new com.carrental.exception.AppException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Không hỗ trợ sắp xếp theo '" + parts[0].trim() + "'");
+        };
+        if (parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim())) {
+            comparator = comparator.reversed();
+        }
+        return bookings.stream().sorted(comparator).toList();
     }
 
     @PreAuthorize("hasRole('OWNER')")
@@ -71,6 +95,13 @@ public class BookingController {
     @GetMapping("/api/bookings/{id}")
     public ApiResponse<BookingResponse> get(@PathVariable Long id) {
         return ApiResponse.ok(bookingService.get(id));
+    }
+
+    /** Khách báo đã trả xe: chốt thời điểm trả để tính phí trễ, chủ xe không thể kéo dài bằng cách lập biên bản muộn. */
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/api/bookings/{id}/returned")
+    public ApiResponse<BookingResponse> reportReturned(@PathVariable Long id) {
+        return ApiResponse.ok("Đã ghi nhận thời điểm trả xe", bookingService.reportReturned(id));
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -89,6 +120,54 @@ public class BookingController {
         return ApiResponse.ok("Tạo giao dịch thanh toán tiền cọc thành công",
                 transactionService.createBookingDepositPayment(
                         new BookingDepositPaymentRequest(id, method, bankCode), request));
+    }
+
+    /** Thanh toán phần tiền thuê còn lại (sau cọc) qua hệ thống – bắt buộc trước khi nhận xe. */
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/api/bookings/{id}/rental-payment")
+    public ApiResponse<TransactionResponse> payRental(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "VNPAY") PaymentMethod method,
+            @RequestParam(required = false) String bankCode,
+            HttpServletRequest request) {
+        return ApiResponse.ok("Tạo giao dịch thanh toán tiền thuê còn lại",
+                transactionService.createBookingPayment(new BookingDepositPaymentRequest(id, method, bankCode),
+                        com.carrental.enums.TransactionType.BOOKING_PAYMENT, request));
+    }
+
+    /** Thanh toán phí phát sinh khi trả xe – chuyến hoàn tất sau khi thanh toán. */
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/api/bookings/{id}/extra-fee-payment")
+    public ApiResponse<TransactionResponse> payExtraFee(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "VNPAY") PaymentMethod method,
+            @RequestParam(required = false) String bankCode,
+            HttpServletRequest request) {
+        return ApiResponse.ok("Tạo giao dịch thanh toán phí phát sinh",
+                transactionService.createBookingPayment(new BookingDepositPaymentRequest(id, method, bankCode),
+                        com.carrental.enums.TransactionType.BOOKING_EXTRA_FEE, request));
+    }
+
+    /** Khách báo chủ xe không giao xe (sau giờ nhận 1 giờ): hoàn 100% + đền bù, chủ xe bị phạt. */
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/api/bookings/{id}/owner-no-show")
+    public ApiResponse<BookingResponse> ownerNoShow(@PathVariable Long id) {
+        return ApiResponse.ok("Đã ghi nhận chủ xe không giao xe", bookingService.reportOwnerNoShow(id));
+    }
+
+    /** Chủ xe báo khách không đến nhận xe (sau giờ nhận 2 giờ): tính phí huỷ như khách huỷ sát ngày. */
+    @PreAuthorize("hasRole('OWNER')")
+    @PostMapping("/api/bookings/{id}/customer-no-show")
+    public ApiResponse<BookingResponse> customerNoShow(@PathVariable Long id) {
+        return ApiResponse.ok("Đã ghi nhận khách không đến nhận xe", bookingService.reportCustomerNoShow(id));
+    }
+
+    /** Các phiếu hoàn/chi trả/phạt của đơn (khách, chủ xe của đơn hoặc admin). */
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/api/bookings/{id}/settlements")
+    public ApiResponse<java.util.List<com.carrental.service.SettlementService.SlipResponse>> settlements(@PathVariable Long id) {
+        bookingService.get(id); // kiểm tra quyền xem đơn
+        return ApiResponse.ok(settlementService.forBooking(id));
     }
 
     // ---------------------------------------------------------------- chủ xe
@@ -125,7 +204,7 @@ public class BookingController {
     @PutMapping(path = "/api/bookings/{id}/handovers/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<BookingResponse> reviseHandover(@PathVariable Long id, @PathVariable HandoverType type,
                                                        @Valid @RequestPart("data") ReviseHandoverRequest request,
-                                                       @RequestPart("photos") List<MultipartFile> photos) {
+                                                       @RequestPart(value = "photos", required = false) List<MultipartFile> photos) {
         return ApiResponse.ok("Đã gửi lại biên bản đã chỉnh sửa", bookingService.reviseHandover(id, type, request, photos));
     }
 
@@ -154,13 +233,13 @@ public class BookingController {
     @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/api/dashboards/owner")
     public ApiResponse<OwnerDashboardResponse> ownerDashboard() {
-        return ApiResponse.ok(dashboardService.owner());
+        return ApiResponse.ok(rentalDashboardService.owner());
     }
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")
     @GetMapping("/api/dashboards/customer")
     public ApiResponse<CustomerDashboardResponse> customerDashboard() {
-        return ApiResponse.ok(dashboardService.customer());
+        return ApiResponse.ok(rentalDashboardService.customer());
     }
 
     @PreAuthorize("hasRole('ADMIN')")

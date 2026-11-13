@@ -25,7 +25,6 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
-import com.carrental.service.AuthService;
 import com.carrental.service.KycService;
 import com.carrental.service.UserDocumentService;
 import com.carrental.storage.PrivateDocumentStorage;
@@ -67,7 +66,6 @@ public class UserDocumentServiceImpl implements UserDocumentService {
     private final PrivateDocumentStorage storage;
     private final KycService kycService;
     private final Clock clock;
-    private final AuthService authService;
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
     private final String mailFrom;
     private final String mailUsername;
@@ -76,20 +74,7 @@ public class UserDocumentServiceImpl implements UserDocumentService {
 
     public UserDocumentServiceImpl(CustomerRepository customers, UserDocumentRepository documents,
             PrivateDocumentStorage storage, KycService kycService, Clock clock) {
-        this(customers, documents, storage, kycService, clock, null, null, "", "", "", "http://localhost:3000");
-    }
-
-    public UserDocumentServiceImpl(CustomerRepository customers, UserDocumentRepository documents,
-            PrivateDocumentStorage storage, KycService kycService, Clock clock, AuthService authService) {
-        this(customers, documents, storage, kycService, clock, authService, null, "", "", "", "http://localhost:3000");
-    }
-
-    public UserDocumentServiceImpl(CustomerRepository customers, UserDocumentRepository documents,
-            PrivateDocumentStorage storage, KycService kycService, Clock clock,
-            ObjectProvider<JavaMailSender> mailSenderProvider, String mailFrom, String mailUsername,
-            String mailPassword, String frontendBaseUrl) {
-        this(customers, documents, storage, kycService, clock, null, mailSenderProvider, mailFrom, mailUsername,
-                mailPassword, frontendBaseUrl);
+        this(customers, documents, storage, kycService, clock, null, "", "", "", "http://localhost:3000");
     }
 
     @Autowired
@@ -99,7 +84,6 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             PrivateDocumentStorage storage,
             KycService kycService,
             Clock clock,
-            AuthService authService,
             ObjectProvider<JavaMailSender> mailSenderProvider,
             @Value("${app.mail.from:}") String mailFrom,
             @Value("${spring.mail.username:}") String mailUsername,
@@ -110,7 +94,6 @@ public class UserDocumentServiceImpl implements UserDocumentService {
         this.storage = storage;
         this.kycService = kycService;
         this.clock = clock;
-        this.authService = authService;
         this.mailSenderProvider = mailSenderProvider;
         this.mailFrom = mailFrom == null ? "" : mailFrom;
         this.mailUsername = mailUsername == null ? "" : mailUsername;
@@ -281,30 +264,9 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             customers.flush();
         }
         UserDocumentReviewResponse response = UserDocumentReviewResponse.from(document, currentKyc, evaluatedOn);
-        if (authService != null && oldRole == Role.CUSTOMER && owner.getRole() == Role.OWNER) {
-            notifyOwnerApprovedAfterCommit(owner);
-        }
         log.info("document-review actorId={} ownerId={} documentId={} type={} {} -> {} kyc {} -> {} role {} -> {} reasonProvided={}", actorRow.getId(), owner.getId(), document.getId(), document.getDocType(), oldStatus, command.status(), oldKyc, currentKyc, oldRole, owner.getRole(), command.reason() != null);
         sendReviewNotificationEmail(owner, document, command.status(), oldRole, owner.getRole());
         return response;
-    }
-
-    private void notifyOwnerApprovedAfterCommit(Customer customer) {
-        long customerId = customer.getId();
-        String email = customer.getEmail();
-        String fullName = customer.getFullName();
-        Runnable notification = () -> authService.notifyOwnerApproved(customerId, email, fullName);
-        if (TransactionSynchronizationManager.isSynchronizationActive()
-                && TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    notification.run();
-                }
-            });
-        } else {
-            notification.run();
-        }
     }
 
     private UserDocument findAccessibleDocument(CurrentAccount account, long documentId) {

@@ -80,6 +80,10 @@ public class CarSubscription {
     @Column(name = "current_slot_end_date")
     private LocalDateTime currentSlotEndDate;
 
+    /** Thời điểm chủ xe tạm dừng xe; khi xe hoạt động lại, thời gian slot/gói được cộng bù. */
+    @Column(name = "paused_at")
+    private LocalDateTime pausedAt;
+
     @Column(name = "start_date")
     private LocalDateTime startDate;
 

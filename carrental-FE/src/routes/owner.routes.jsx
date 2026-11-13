@@ -54,4 +54,5 @@ export const ownerPages = [
     page("owner/vehicles", <OwnerVehiclesPage />, "Xe của tôi"),
     page("owner/vehicles/new", <OwnerVehicleNewPage />, "Đăng ký xe mới"),
     page("owner/vehicles/edit/:id", <EditCarRoute Screen={OwnerVehicleEditPage} />, "Chỉnh sửa xe"),
+    page("owner/vehicles/:id/edit", <AliasRedirect to="/owner/vehicles/edit/:id" />),
 ];

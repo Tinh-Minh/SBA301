@@ -36,10 +36,19 @@ public class DatabaseSeedInitializer implements InitializingBean {
     private final DataSource dataSource;
     private final boolean reset;
 
+    /** Chuỗi xác nhận bắt buộc khi reset, tránh xoá nhầm dữ liệu thật do bật nhầm cờ hoặc chạy nhầm instance. */
+    public static final String RESET_CONFIRMATION = "XOA-TOAN-BO-DU-LIEU";
+
     public DatabaseSeedInitializer(DataSource dataSource,
-            @Value("${app.database.init.reset:false}") boolean reset) {
+            @Value("${app.database.init.reset:false}") boolean reset,
+            @Value("${app.database.init.reset-confirm:}") String resetConfirm) {
         this.dataSource = dataSource;
-        this.reset = reset;
+        if (reset && !RESET_CONFIRMATION.equals(resetConfirm)) {
+            log.error("Bỏ qua DB_RESET_ON_STARTUP=true vì thiếu DB_RESET_CONFIRM={} - dữ liệu được giữ nguyên", RESET_CONFIRMATION);
+            this.reset = false;
+        } else {
+            this.reset = reset;
+        }
     }
 
     @Override

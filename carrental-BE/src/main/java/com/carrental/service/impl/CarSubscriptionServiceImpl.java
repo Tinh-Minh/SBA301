@@ -174,6 +174,16 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             }
 
             LocalDateTime now = LocalDateTime.now(clock);
+            Car slotCar = subscription.getCar();
+            if (slotCar.getStatus() != com.carrental.enums.CarStatus.ACTIVE) {
+                throw new AppException(HttpStatus.CONFLICT, "Xe đang tạm dừng hoặc chưa được duyệt nên không thể kích hoạt slot");
+            }
+            if (slotCar.getOwner() != null && slotCar.getOwner().getStatus() != com.carrental.enums.CustomerStatus.ACTIVE) {
+                throw new AppException(HttpStatus.CONFLICT, "Tài khoản chủ xe đang bị khoá nên không thể kích hoạt slot");
+            }
+            if (subscription.getEndDate() != null && !subscription.getEndDate().isAfter(now)) {
+                throw new AppException(HttpStatus.CONFLICT, "Gói đăng tin đã hết thời hạn sử dụng");
+            }
             if (subscription.getCurrentSlotEndDate() != null && subscription.getCurrentSlotEndDate().isAfter(now)) {
                 throw new AppException(HttpStatus.CONFLICT, "Slot hiện tại vẫn còn hiệu lực đến "
                         + subscription.getCurrentSlotEndDate().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
@@ -182,7 +192,11 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
             int slotDays = subscription.getDurationDaysPerSlot() != null ? subscription.getDurationDaysPerSlot() : 7;
             subscription.setRemainingSlots(subscription.getRemainingSlots() - 1);
             subscription.setCurrentSlotStartDate(now);
-            subscription.setCurrentSlotEndDate(now.plusDays(slotDays));
+            LocalDateTime slotEnd = now.plusDays(slotDays);
+            if (subscription.getEndDate() != null && slotEnd.isAfter(subscription.getEndDate())) {
+                slotEnd = subscription.getEndDate(); // slot không được kéo dài quá thời hạn gói
+            }
+            subscription.setCurrentSlotEndDate(slotEnd);
 
             Car car = subscription.getCar();
             car.setListingStatus(ListingStatus.LISTED);

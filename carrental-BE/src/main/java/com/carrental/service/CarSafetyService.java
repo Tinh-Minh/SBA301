@@ -75,6 +75,14 @@ public class CarSafetyService {
         return summarize(car, records, documents, privileged);
     }
 
+    /** Xe có đăng kiểm/bảo hiểm hết hạn hoặc kiểm định không đạt thì không được nhận đặt. */
+    @Transactional(readOnly = true)
+    public boolean isUnsafe(Car car) {
+        List<CarSafetyRecord> records = recordRepository.findAllByCarIdOrderByPerformedAtDescIdDesc(car.getId());
+        List<CarDocument> documents = carDocumentRepository.findAllByCarId(car.getId());
+        return summarize(car, records, documents, false).level() == SafetyLevel.UNSAFE;
+    }
+
     @Transactional(readOnly = true)
     public PageResponse<SafetyRecordResponse> adminList(VerificationStatus status, Pageable pageable) {
         Page<CarSafetyRecord> page = status != null

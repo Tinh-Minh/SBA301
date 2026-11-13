@@ -55,6 +55,12 @@ export function clearSession() {
     if (!canUseStorage())
         return;
     window.localStorage.removeItem(STORAGE_KEY);
+    // Xoá bản nháp đăng xe của phiên này để người dùng sau trên cùng máy không thấy dữ liệu.
+    for (let i = window.localStorage.length - 1; i >= 0; i--) {
+        const key = window.localStorage.key(i);
+        if (key && key.startsWith("cardb-vehicle-draft"))
+            window.localStorage.removeItem(key);
+    }
     window.dispatchEvent(new Event(EVENT));
 }
 

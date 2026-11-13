@@ -8,8 +8,18 @@ export const tripService = {
     mine: () => request("/api/bookings/my"),
     ownerList: () => request("/api/bookings/owner"),
     get: (id) => request(`/api/bookings/${id}`),
+    /** Đánh giá 2 chiều: đánh giá của chủ xe dành cho khách ở đơn này + uy tín chung của khách. */
+    customerReview: (id) => request(`/api/bookings/${id}/customer-review`),
+    reviewCustomer: (id, rating, comment) => request(`/api/bookings/${id}/customer-review`, { method: "POST", json: { rating: Number(rating), comment: comment?.trim() || null } }),
+    /** Khách báo đã trả xe (chốt mốc tính phí trễ). */
+    reportReturned: (id) => request(`/api/bookings/${id}/returned`, { method: "POST" }),
     cancel: (id, reason) => request(`/api/bookings/${id}/cancel`, { method: "POST", json: { reason } }),
     payDeposit: (id, method = "VNPAY", bankCode) => request("/api/transactions/booking-deposit", { method: "POST", json: { bookingId: id, method, bankCode } }),
+    payRental: (id) => request(`/api/bookings/${id}/rental-payment`, { method: "POST", query: { method: "VNPAY" } }),
+    payExtraFee: (id) => request(`/api/bookings/${id}/extra-fee-payment`, { method: "POST", query: { method: "VNPAY" } }),
+    customerNoShow: (id) => request(`/api/bookings/${id}/customer-no-show`, { method: "POST" }),
+    ownerNoShow: (id) => request(`/api/bookings/${id}/owner-no-show`, { method: "POST" }),
+    settlements: (id) => request(`/api/bookings/${id}/settlements`),
     contacted: (id, contactNote) => request(`/api/bookings/${id}/contacted`, { method: "POST", json: { contacted: true, contactNote } }),
     accept: (id) => request(`/api/bookings/${id}/accept`, { method: "POST" }),
     reject: (id, reason) => request(`/api/bookings/${id}/reject`, { method: "POST", json: { reason } }),

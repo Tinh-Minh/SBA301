@@ -79,6 +79,9 @@ export function HandoverView({ handover, booking, mode, busy, error, onRespond, 
     const [decisions, setDecisions] = useState({});
     const [revisions, setRevisions] = useState({});
     const [note, setNote] = useState("");
+    const [disputeFees, setDisputeFees] = useState(false);
+    const [newFee, setNewFee] = useState(booking?.otherFeeAmount ?? "");
+    const [newFeeNote, setNewFeeNote] = useState(booking?.otherFeeNote ?? "");
     const [localError, setLocalError] = useState("");
     const open = handover.items.filter(i => i.status === "PENDING" || i.status === "REVISED");
     const disputed = handover.items.filter(i => i.status === "DISPUTED");
@@ -88,12 +91,17 @@ export function HandoverView({ handover, booking, mode, busy, error, onRespond, 
         if (missing.length) return setLocalError("Vui lòng đánh dấu tất cả các mục đang chờ.");
         const noNote = open.filter(i => decisions[i.id].accepted === false && !decisions[i.id].note?.trim());
         if (noNote.length) return setLocalError(`Ghi rõ cần sửa gì ở: ${noNote.map(i => i.categoryLabel).join(", ")}.`);
+        if (disputeFees && !note.trim()) return setLocalError("Ghi rõ lý do không đồng ý với phí phát sinh vào ô ghi chú.");
         setLocalError("");
-        onRespond({ customerNote: note.trim() || null, decisions: open.map(i => ({ itemId: i.id, accepted: decisions[i.id].accepted, disputeNote: decisions[i.id].note?.trim() || null })) });
+        onRespond({ customerNote: note.trim() || null, disputeFees: handover.type === "RETURN" ? disputeFees : null, decisions: open.map(i => ({ itemId: i.id, accepted: decisions[i.id].accepted, disputeNote: decisions[i.id].note?.trim() || null })) });
     }
     function revise() {
         setLocalError("");
         const data = { revisions: disputed.map(i => ({ itemId: i.id, conditionNote: revisions[i.id]?.note ?? i.conditionNote })) };
+        if (handover.type === "RETURN" && newFee !== "") {
+            data.otherFeeAmount = Number(newFee);
+            data.otherFeeNote = newFeeNote.trim() || null;
+        }
         const photos = disputed.map(i => revisions[i.id]?.file);
         onRevise({ data, photos });
     }
@@ -142,12 +150,20 @@ export function HandoverView({ handover, booking, mode, busy, error, onRespond, 
         </li>;
     })}</ul>
 
-    {mode === "respond" && open.length ? <div className="mt-4 flex flex-col gap-2">
+    {mode === "respond" && (open.length || handover.status === "SUBMITTED") ? <div className="mt-4 flex flex-col gap-2">
       <textarea rows={2} value={note} maxLength={1000} onChange={e => setNote(e.target.value)} placeholder="Ghi chú thêm cho chủ xe (tuỳ chọn)" className={fieldClass}/>
+      {handover.type === "RETURN" ? <label className="flex items-center gap-2 text-sm text-[#292929]">
+        <input type="checkbox" checked={disputeFees} onChange={e => setDisputeFees(e.target.checked)}/>
+        Tôi không đồng ý với số tiền phí phát sinh (ghi lý do vào ô ghi chú)
+      </label> : null}
       <button type="button" disabled={busy} onClick={respond} className="self-start rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busy ? "Đang gửi…" : "Gửi xác nhận biên bản"}</button>
       <p className="text-xs text-[#666666]">Chỉ khi tất cả các mục được đánh dấu “Đúng hiện trạng”, {handover.type === "PICKUP" ? "chuyến thuê mới bắt đầu" : "chuyến thuê mới hoàn tất"}.</p>
     </div> : null}
-    {mode === "revise" && disputed.length ? <button type="button" disabled={busy} onClick={revise} className="mt-4 rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busy ? "Đang gửi…" : `Gửi lại ${disputed.length} mục đã sửa`}</button> : null}
+    {mode === "revise" && handover.type === "RETURN" && handover.status === "DISPUTED" ? <div className="mt-4 grid gap-2 sm:grid-cols-2">
+      <label className="text-xs font-semibold text-[#666666]">Phí khác (đ) — sửa nếu khách không đồng ý<input type="number" min={0} value={newFee} onChange={e => setNewFee(e.target.value)} className={`${fieldClass} mt-1`}/></label>
+      <label className="text-xs font-semibold text-[#666666]">Lý do phí khác<input value={newFeeNote} maxLength={500} onChange={e => setNewFeeNote(e.target.value)} className={`${fieldClass} mt-1`}/></label>
+    </div> : null}
+    {mode === "revise" && (disputed.length || (handover.type === "RETURN" && handover.status === "DISPUTED")) ? <button type="button" disabled={busy} onClick={revise} className="mt-4 rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busy ? "Đang gửi…" : disputed.length ? `Gửi lại ${disputed.length} mục đã sửa` : "Gửi lại biên bản (đã điều chỉnh phí)"}</button> : null}
     {localError || error ? <p role="alert" className="mt-3 rounded-xl bg-[#FEF2F2] px-3 py-2 text-sm text-[#B91C1C]">{localError || error}</p> : null}
   </section>;
 }

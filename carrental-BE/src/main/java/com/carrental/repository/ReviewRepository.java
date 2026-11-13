@@ -18,7 +18,17 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
     @EntityGraph(attributePaths = {"customer", "car"})
     List<Review> findByCarIdOrderByCreatedAtDesc(Long carId);
 
+    @EntityGraph(attributePaths = {"customer", "car"})
+    List<Review> findByCarIdAndApprovedTrueOrderByCreatedAtDesc(Long carId);
+
     boolean existsByCarIdAndCustomerId(Long carId, Long customerId);
+
+    boolean existsByBookingId(Long bookingId);
+
+    /** Tự duyệt các đánh giá đã chờ quá hạn để admin không thể giữ/lọc đánh giá xấu vô thời hạn. */
+    @org.springframework.data.jpa.repository.Modifying
+    @Query("UPDATE Review r SET r.approved = true WHERE r.approved = false AND r.createdAt <= :cutoff")
+    int approveCreatedBefore(@Param("cutoff") java.time.LocalDateTime cutoff);
 
     Page<Review> findByCarId(Long carId, Pageable pageable);
 
@@ -26,4 +36,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
 
     @Query("SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r WHERE r.car.id = :carId")
     Double getAverageRatingByCarId(@Param("carId") Long carId);
+
+    @Query("SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r WHERE r.car.id = :carId AND r.approved = true")
+    Double getApprovedAverageRatingByCarId(@Param("carId") Long carId);
+
+    long countByCarIdAndApprovedTrue(Long carId);
 }

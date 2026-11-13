@@ -5,6 +5,7 @@ import { fieldClass } from "@/components/LiveUi.jsx";
 import { useAuth } from "@/hooks/useAuth.js";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { tripService } from "@/services/tripService.js";
+import { useSafety } from "@/components/booking/SafetyPanel.jsx";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney } from "@/utils/labels.js";
 import { defaultWindow, durationLabel, toApiTime, windowError } from "@/utils/rental.js";
@@ -23,6 +24,10 @@ export function BookingPanel({ car }) {
     const [sending, setSending] = useState(false);
     const busy = useApiQuery(["availability", car.id], () => tripService.availability(car.id), { requiresAuth: false });
     const own = user && user.id === car.ownerId;
+    const safety = useSafety(car.id);
+    const unsafe = safety.data?.level === "UNSAFE";
+    // BE chỉ cho thuê khi danh tính đã duyệt và có GPLX còn hạn; FE chặn sớm để khách biết cần làm gì.
+    const kycVerified = user?.kycStatus === "VERIFIED";
 
     useEffect(() => {
         const problem = windowError(pickupAt, returnAt);
@@ -76,7 +81,8 @@ export function BookingPanel({ car }) {
       <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê gốc</dt><dd className="text-base font-bold">{formatMoney(quote.rentalAmount)}</dd></div>
       {quote.discountAmount ? <div className="flex justify-between text-xs text-[#166534]"><dt>Giảm giá voucher ({quote.voucherCode})</dt><dd className="font-bold">-{formatMoney(quote.discountAmount)}</dd></div> : null}
       <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê sau giảm</dt><dd className="text-lg font-black text-[#FC6C26]">{formatMoney(quote.payableRentalAmount || quote.rentalAmount)}</dd></div>
-      <div className="flex justify-between"><dt className="text-[#666666]">Tiền cọc (thanh toán VNPay sau khi chủ xe xác nhận)</dt><dd className="font-semibold">{quote.depositAmount ? formatMoney(quote.depositAmount) : "Miễn cọc"}</dd></div>
+      <div className="flex justify-between"><dt className="text-[#666666]">Cọc 40% (thanh toán ngay khi đặt)</dt><dd className="font-semibold">{formatMoney(Math.min(Number(quote.payableRentalAmount || quote.rentalAmount), Math.ceil(Number(quote.payableRentalAmount || quote.rentalAmount) * 0.4 / 1000) * 1000))}</dd></div>
+      <p className="text-xs text-[#666666]">Phần còn lại thanh toán qua CarDB trước khi nhận xe. Huỷ trong 1 giờ sau khi cọc: miễn phí; trước chuyến hơn 7 ngày: phí 10%; trong 7 ngày: phí 40% giá trị chuyến.</p>
       {quote.includedKm ? <div className="flex justify-between text-xs text-[#666666]"><dt>Km bao gồm</dt><dd>{quote.includedKm} km{quote.extraKmFee ? `, vượt ${formatMoney(quote.extraKmFee)}/km` : ""}</dd></div> : null}
       {quote.lateFeePerHour ? <div className="flex justify-between text-xs text-[#666666]"><dt>Trả trễ</dt><dd>{formatMoney(quote.lateFeePerHour)}/giờ</dd></div> : null}
       {!quote.available ? <p role="alert" className="mt-1 font-semibold text-[#B91C1C]">{quote.unavailableReason}</p> : null}
@@ -85,6 +91,8 @@ export function BookingPanel({ car }) {
 
     {own ? <p className="mt-4 rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Đây là xe của bạn.</p>
       : !loggedIn ? <Link to={`/login?next=${next}`} className="mt-4 flex justify-center rounded-xl bg-[#FC6C26] py-3 font-bold text-white">Đăng nhập để đặt xe</Link>
+      : unsafe ? <p className="mt-4 rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Xe đang có đăng kiểm/bảo hiểm hết hạn hoặc không đạt nên tạm thời không nhận đặt.</p>
+      : !kycVerified ? <div className="mt-4 rounded-xl bg-[#FFF7ED] p-3 text-sm text-[#9A3412]">Bạn cần xác minh danh tính và giấy phép lái xe trước khi thuê xe. <Link to="/account/verification" className="font-bold text-[#FC6C26]">Xác minh ngay</Link></div>
       : <>
         <label className="mt-4 block text-xs font-semibold text-[#666666]">Lời nhắn cho chủ xe (tuỳ chọn)<textarea rows={2} maxLength={1000} value={note} onChange={e => setNote(e.target.value)} placeholder="VD: nhận xe tại nhà, cần ghế trẻ em…" className={`${fieldClass} mt-1`}/></label>
         <button type="button" disabled={!quote?.available || sending} onClick={book} className="mt-3 w-full rounded-xl bg-[#FC6C26] py-3 font-bold text-white hover:bg-[#e05615] disabled:opacity-50">{sending ? "Đang gửi…" : "Gửi yêu cầu thuê xe"}</button>

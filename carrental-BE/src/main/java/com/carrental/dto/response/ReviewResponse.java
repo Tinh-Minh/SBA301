@@ -15,7 +15,10 @@ public record ReviewResponse(
         String customerAvatar,
         Integer rating,
         String comment,
-        LocalDateTime createdAt
+        Boolean approved,
+        LocalDateTime createdAt,
+        String ownerReply,
+        LocalDateTime ownerRepliedAt
 ) {
     public static ReviewResponse from(Review r) {
         if (r == null) return null;
@@ -38,7 +41,10 @@ public record ReviewResponse(
                 customerAvatar,
                 r.getRating(),
                 r.getComment(),
-                r.getCreatedAt()
+                Boolean.TRUE.equals(r.getApproved()),
+                r.getCreatedAt(),
+                r.getOwnerReply(),
+                r.getOwnerRepliedAt()
         );
     }
 }

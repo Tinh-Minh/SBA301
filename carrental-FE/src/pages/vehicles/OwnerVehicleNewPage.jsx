@@ -19,6 +19,7 @@ import { repairDisplayText } from "@/utils/text.js";
 export default function OwnerVehicleNew() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const draftKey = `${DRAFT_KEY}:${user?.id ?? "anonymous"}`;
     const create = useApiMutation(submitCar);
     const [step, setStep] = useState(1);
     const [reached, setReached] = useState(1);
@@ -28,7 +29,10 @@ export default function OwnerVehicleNew() {
     });
     const form = useWatch({ control });
     const { registrationUrl: cavet, inspectionUrl: inspection, photos, agreed } = form;
-    const set = patch => Object.entries(patch).forEach(([name, value]) => setValue(name, value, { shouldDirty: true, shouldValidate: true }));
+    const set = patch => {
+        if (create.error) create.reset?.();
+        Object.entries(patch).forEach(([name, value]) => setValue(name, value, { shouldDirty: true, shouldValidate: true }));
+    };
     const setCavet = value => set({ registrationUrl: value });
     const setInspection = value => set({ inspectionUrl: value });
     const setAgreed = value => set({ agreed: value });
@@ -44,7 +48,7 @@ export default function OwnerVehicleNew() {
     const [inspectionError, setInspectionError] = useState("");
     const [photoErrors, setPhotoErrors] = useState([]);
     useEffect(() => {
-        const raw = localStorage.getItem(DRAFT_KEY);
+        const raw = localStorage.getItem(draftKey);
         if (!raw)
             return;
         try {
@@ -63,7 +67,7 @@ export default function OwnerVehicleNew() {
             }
         }
         catch { /* bản nháp hỏng thì bỏ qua */ }
-    }, []);
+    }, [draftKey]);
     const segment = segments.find(item => item.id === form.segment) ?? segments[0];
     const dayPrice = parseVndInput(form.pricePerDay);
     const weekend = parseVndInput(form.weekendPrice);
@@ -78,7 +82,16 @@ export default function OwnerVehicleNew() {
             .map(issue => [String(issue.path[0] ?? ""), issue.message])
             .filter(([key]) => key && (dirtyFields[key] || errors[key] || String(form[key] ?? "").trim() !== ""))
     );
+    function goToStep(targetStep) {
+        if (create.error) create.reset?.();
+        setStep(targetStep);
+    }
+    function goBack() {
+        if (create.error) create.reset?.();
+        setStep(value => value - 1);
+    }
     async function advance() {
+        if (create.error) create.reset?.();
         if (await trigger(vehicleStepFields[step - 1])) {
             setStep(step + 1);
             setReached(value => Math.max(value, step + 1));
@@ -218,7 +231,7 @@ export default function OwnerVehicleNew() {
         );
         const safeCavet = cavet?.startsWith("blob:") ? "" : cavet;
         const safeInspection = inspection?.startsWith("blob:") ? "" : inspection;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, photos: safePhotos, cavet: safeCavet, inspection: safeInspection }));
+        localStorage.setItem(draftKey, JSON.stringify({ form, step, photos: safePhotos, cavet: safeCavet, inspection: safeInspection }));
         setDraftNote("Đã lưu bản nháp trên máy này.");
     }
     async function submitCar(draft) {
@@ -267,13 +280,22 @@ export default function OwnerVehicleNew() {
         });
         if (!car)
             return;
-        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(draftKey);
         navigate(ownerRoutes.vehicles);
     }
     const subtitle = `${form.brand} ${form.model} • ${form.licensePlate || "Chưa có biển số"}`;
-    return <form data-native noValidate aria-busy={isSubmitting} onSubmit={event => {
-        if (step < 4) { event.preventDefault(); void advance(); }
-        else void handleSubmit(submit)(event);
+    return <form data-native noValidate aria-busy={isSubmitting} onKeyDown={event => {
+        if (event.key === "Enter" && event.target.tagName === "INPUT") {
+            event.preventDefault();
+            if (step < 4) {
+                void advance();
+            }
+        }
+    }} onSubmit={event => {
+        event.preventDefault();
+        if (step === 4) {
+            void handleSubmit(submit)(event);
+        }
     }} className="flex min-w-0 flex-col gap-5">
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -283,7 +305,7 @@ export default function OwnerVehicleNew() {
       </div>
       {step === 1 ? <Link to={ownerRoutes.vehicles} className="inline-flex items-center gap-1.5 self-start rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">
         <Icon name="arrow_back" className="text-[18px]"/> Quay lại Xe của tôi
-      </Link> : <button type="button" onClick={() => setStep(value => value - 1)} className="inline-flex items-center gap-1.5 self-start rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">
+      </Link> : <button type="button" onClick={goBack} className="inline-flex items-center gap-1.5 self-start rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">
         <Icon name="arrow_back" className="text-[18px]"/> Quay lại Bước {step - 1}
       </button>}
     </div>
@@ -294,7 +316,7 @@ export default function OwnerVehicleNew() {
             const current = item.id === step;
             const done = item.id < step;
             return <li key={item.id}>
-          <button type="button" disabled={locked} onClick={() => setStep(item.id)} className={`flex w-full items-center gap-2 rounded-2xl border px-3 py-2.5 text-left ${current ? "border-brand-accent bg-accent-soft" : "border-card-border bg-white"} ${locked ? "opacity-60" : ""}`}>
+          <button type="button" disabled={locked} onClick={() => goToStep(item.id)} className={`flex w-full items-center gap-2 rounded-2xl border px-3 py-2.5 text-left ${current ? "border-brand-accent bg-accent-soft" : "border-card-border bg-white"} ${locked ? "opacity-60" : ""}`}>
             <span className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${current ? "bg-brand-accent text-white" : done ? "bg-status-green-bg text-status-success-ink" : "bg-bg-light text-muted-gray"}`}>
               {done ? <Icon name="check" className="text-[16px]"/> : locked ? <Icon name="lock" className="text-[14px]"/> : item.id}
             </span>
@@ -317,15 +339,15 @@ export default function OwnerVehicleNew() {
     {step <= 3 && gaps.length ? <p className="text-sm text-muted-gray">{gaps.join(" ")}</p> : null}
     {draftNote ? <p className="text-sm font-semibold text-status-success-ink">{draftNote}</p> : null}
     <FormErrors errors={errors} />
-    {create.error ? <p className="text-sm text-on-error-container">{create.error.message}</p> : null}
+    {step === 4 && create.error ? <p className="text-sm text-on-error-container">{create.error.message}</p> : null}
 
     <div className="flex flex-wrap items-center justify-between gap-2">
       <Link to={ownerRoutes.vehicles} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Hủy bỏ đăng ký</Link>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={saveDraft} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Lưu bản nháp</button>
-        {step < 4 ? <button type="button" disabled={!ready[step - 1]} onClick={() => void advance()} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
+        {step < 4 ? <button key={`btn-advance-${step}`} type="button" disabled={!ready[step - 1]} onClick={() => void advance()} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
           {steps[step - 1].next} <Icon name="arrow_forward" className="text-[16px]"/>
-        </button> : <button type="submit" disabled={!ready.every(Boolean) || create.running || isSubmitting} className="rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
+        </button> : <button key="btn-submit" type="submit" disabled={!ready.every(Boolean) || create.running || isSubmitting} className="rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">
           Gửi BQL CarDB thẩm định
         </button>}
       </div>

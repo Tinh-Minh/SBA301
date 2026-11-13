@@ -162,37 +162,11 @@ class FeaturesValidationTest {
     }
 
     @Test
-    @DisplayName("F4 - Giả lập thanh toán thành công (Simulate Gateway)")
-    void testSimulateGateway_Success() {
-        Transaction tx = Transaction.builder()
-                .subscription(subscription)
-                .transactionType(TransactionType.PACKAGE_PAYMENT)
-                .amount(BigDecimal.valueOf(180000))
-                .method(PaymentMethod.VNPAY)
-                .status(TransactionStatus.PENDING)
-                .build();
-        tx.setId(500L);
-
-        when(currentUserService.getCurrentUser()).thenReturn(owner);
-        when(transactionRepository.findById(500L)).thenReturn(Optional.of(tx));
-        when(transactionRepository.save(any(Transaction.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        transactionService.setSimulateGatewayEnabled(true);
-        TransactionResponse response = transactionService.simulateGateway(500L);
-
-        assertNotNull(response);
-        assertEquals("SUCCESS", response.status());
-        assertNotNull(response.providerRef());
-        assertTrue(response.providerRef().startsWith("SIMULATED_"));
-        verify(transactionRepository).save(any(Transaction.class));
-    }
-
-    @Test
     @DisplayName("F4 - Người dùng gửi đánh giá 5 sao cho xe thành công")
     void testCreateReview_Success() {
         when(currentUserService.getCurrentUser()).thenReturn(customer);
         when(carRepository.findById(10L)).thenReturn(Optional.of(car));
-        when(reviewRepository.existsByCarIdAndCustomerId(10L, 2L)).thenReturn(false);
+        when(reviewRepository.existsByBookingId(77L)).thenReturn(false);
 
         Review savedReview = Review.builder()
                 .car(car)
@@ -207,6 +181,11 @@ class FeaturesValidationTest {
         // Khách đã hoàn tất chuyến thuê xe này
         when(bookingRepository.existsByCarIdAndCustomerIdAndStatus(10L, customer.getId(),
                 com.carrental.enums.BookingStatus.COMPLETED)).thenReturn(true);
+        // VR-06: đánh giá gắn với từng chuyến hoàn tất chưa được đánh giá
+        com.carrental.entity.Booking trip = new com.carrental.entity.Booking();
+        org.springframework.test.util.ReflectionTestUtils.setField(trip, "id", 77L);
+        when(bookingRepository.findAllByCarIdAndCustomerIdAndStatusOrderByCompletedAtAsc(10L, customer.getId(),
+                com.carrental.enums.BookingStatus.COMPLETED)).thenReturn(List.of(trip));
 
         CreateReviewRequest request = CreateReviewRequest.builder()
                 .carId(10L)
@@ -247,8 +226,8 @@ class FeaturesValidationTest {
         Review r1 = Review.builder().car(car).customer(customer).rating(5).comment("Tuyệt vời").build();
         Review r2 = Review.builder().car(car).customer(customer).rating(4).comment("Khá tốt").build();
 
-        when(reviewRepository.findByCarIdOrderByCreatedAtDesc(10L)).thenReturn(List.of(r1, r2));
-        when(reviewRepository.getAverageRatingByCarId(10L)).thenReturn(4.5);
+        when(reviewRepository.findByCarIdAndApprovedTrueOrderByCreatedAtDesc(10L)).thenReturn(List.of(r1, r2));
+        when(reviewRepository.getApprovedAverageRatingByCarId(10L)).thenReturn(4.5);
 
         CarReviewSummaryResponse summary = reviewService.getReviewsByCarId(10L);
 
@@ -257,6 +236,25 @@ class FeaturesValidationTest {
         assertEquals(4.5, summary.averageRating());
         assertEquals(2, summary.totalReviews());
         assertEquals(2, summary.reviews().size());
+    }
+
+    @Test
+    @DisplayName("F4 - Khách chưa thuê hoặc chưa hoàn tất chuyến thuê xe thì không thể đánh giá")
+    void testCreateReview_CannotReviewWithoutCompletedTrip() {
+        when(currentUserService.getCurrentUser()).thenReturn(customer);
+        when(carRepository.findById(10L)).thenReturn(Optional.of(car));
+        when(bookingRepository.existsByCarIdAndCustomerIdAndStatus(10L, customer.getId(),
+                com.carrental.enums.BookingStatus.COMPLETED)).thenReturn(false);
+
+        CreateReviewRequest request = CreateReviewRequest.builder()
+                .carId(10L)
+                .rating(5)
+                .comment("Xe chạy rất êm")
+                .build();
+
+        AppException ex = assertThrows(AppException.class, () -> reviewService.createReview(request));
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertTrue(ex.getMessage().contains("hoàn tất"));
     }
 
     @Test

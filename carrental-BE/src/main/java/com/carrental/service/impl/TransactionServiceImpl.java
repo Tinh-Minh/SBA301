@@ -18,11 +18,13 @@ import com.carrental.exception.AppException;
 import com.carrental.repository.BookingRepository;
 import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.VoucherRepository;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,14 +33,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.carrental.event.PaymentCompletedEvent;
-import com.carrental.util.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+
 
 @Slf4j
 @Service
@@ -51,13 +55,11 @@ public class TransactionServiceImpl implements TransactionService {
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @org.springframework.beans.factory.annotation.Value("${app.payment.simulate-gateway-enabled:false}")
-    private boolean simulateGatewayEnabled;
+    @Autowired(required = false)
+    private VoucherRepository voucherRepository;
 
-    /** Dùng cho unit test dựng service bằng tay (không qua Spring). */
-    public void setSimulateGatewayEnabled(boolean simulateGatewayEnabled) {
-        this.simulateGatewayEnabled = simulateGatewayEnabled;
-    }
+    @Value("${app.transaction.payment-timeout-minutes:15}")
+    private int transactionPaymentTimeoutMinutes;
 
     @Autowired
     public TransactionServiceImpl(
@@ -144,59 +146,55 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request, HttpServletRequest servletRequest) {
-        log.info("Khởi tạo thanh toán tiền cọc bookingId={}, method={}", request.bookingId(), request.method());
+        return createBookingPayment(request, TransactionType.BOOKING_DEPOSIT, servletRequest);
+    }
 
+    /**
+     * Tạo giao dịch thanh toán cho đơn thuê: tiền cọc (ngay sau khi đặt), phần tiền thuê còn lại
+     * (trước khi nhận xe) hoặc phí phát sinh (khi trả xe). Số tiền do BookingService tính theo trạng thái đơn.
+     */
+    @Override
+    @Transactional
+    public TransactionResponse createBookingPayment(BookingDepositPaymentRequest request, TransactionType type,
+                                                    HttpServletRequest servletRequest) {
+        log.info("Khởi tạo thanh toán {} bookingId={}, method={}", type, request.bookingId(), request.method());
         Customer current = currentUserService.getCurrentUser();
         Booking booking = bookingRepository.findById(request.bookingId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn thuê id=" + request.bookingId()));
-
-        if (!booking.getCustomer().getId().equals(current.getId()) && !currentUserService.isAdmin(current)) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ khách thuê xe mới được thực hiện thanh toán tiền cọc cho đơn này");
+        if (!booking.getCustomer().getId().equals(current.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ khách thuê xe mới được thanh toán cho đơn này");
         }
+        BigDecimal amount = bookingService.amountDue(booking, type);
 
-        if (booking.getStatus() != BookingStatus.CONFIRMED) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ có thể đặt cọc khi đơn thuê đã được chủ xe xác nhận (CONFIRMED)");
-        }
-
-        if (booking.getDepositStatus() == PaymentStatus.PAID) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê này đã được thanh toán tiền cọc");
-        }
-
-        if (booking.getDepositAmount() == null || booking.getDepositAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê này không yêu cầu tiền cọc");
-        }
-
-        // Kiểm tra xem đã có giao dịch PENDING nào trước đó chưa
         Optional<Transaction> existingPending = transactionRepository
-                .findFirstByBookingIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
-                        booking.getId(), TransactionType.BOOKING_DEPOSIT, TransactionStatus.PENDING);
-
+                .findFirstByBookingIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(booking.getId(), type, TransactionStatus.PENDING);
         Transaction transaction;
-        if (existingPending.isPresent() && existingPending.get().getMethod() == request.method()) {
+        if (existingPending.isPresent() && existingPending.get().getMethod() == request.method()
+                && existingPending.get().getAmount().compareTo(amount) == 0) {
             transaction = existingPending.get();
         } else {
-            if (existingPending.isPresent()) {
-                Transaction oldPending = existingPending.get();
-                oldPending.setStatus(TransactionStatus.FAILED);
-                transactionRepository.save(oldPending);
-            }
-            transaction = Transaction.builder()
+            existingPending.ifPresent(old -> {
+                old.setStatus(TransactionStatus.FAILED);
+                transactionRepository.save(old);
+            });
+            transaction = transactionRepository.save(Transaction.builder()
                     .booking(booking)
-                    .transactionType(TransactionType.BOOKING_DEPOSIT)
-                    .amount(booking.getDepositAmount())
+                    .transactionType(type)
+                    .amount(amount)
                     .method(request.method())
                     .status(TransactionStatus.PENDING)
-                    .build();
-            transaction = transactionRepository.save(transaction);
+                    .build());
         }
-
         String paymentUrl = null;
         if (request.method() == PaymentMethod.VNPAY) {
             paymentUrl = vnPayService.createPaymentUrl(transaction.getId(), request.bankCode(), servletRequest);
         }
-
         return TransactionResponse.from(transaction, paymentUrl);
     }
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    @org.springframework.context.annotation.Lazy
+    private com.carrental.service.BookingService bookingService;
 
     @Override
     @Transactional(readOnly = true)
@@ -223,53 +221,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    @Transactional
-    public TransactionResponse simulateGateway(Long id) {
-        return simulateGateway(id, true);
-    }
-
-    @Override
-    @Transactional
-    public TransactionResponse simulateGateway(Long id, boolean success) {
-        // Cổng giả lập chỉ dành cho dev/test. Mặc định TẮT để chủ xe không thể tự xác nhận
-        // thanh toán và đăng tin miễn phí trên môi trường thật.
-        if (!simulateGatewayEnabled) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Chức năng giả lập thanh toán đang tắt trên môi trường này");
-        }
-
-        Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + id));
-        validateAccess(transaction);
-
-        if (transaction.getStatus() == TransactionStatus.SUCCESS) {
-            return TransactionResponse.from(transaction);
-        }
-        transaction.getStatus().validateTransitionTo(success ? TransactionStatus.SUCCESS : TransactionStatus.FAILED);
-
-        if (!success) {
-            transaction.setStatus(TransactionStatus.FAILED);
-            Transaction failed = transactionRepository.save(transaction);
-            log.info("Giả lập thanh toán THẤT BẠI cho transaction id={}", failed.getId());
-            return TransactionResponse.from(failed);
-        }
-
-        transaction.setStatus(TransactionStatus.SUCCESS);
-        transaction.setPaidAt(TimeUtil.nowVn());
-        transaction.setProviderRef("SIMULATED_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase());
-        Transaction saved = transactionRepository.save(transaction);
-        if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
-            Booking b = saved.getBooking();
-            b.setDepositStatus(PaymentStatus.PAID);
-            bookingRepository.save(b);
-        }
-        if (eventPublisher != null) {
-            eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
-        }
-        log.info("Giả lập thanh toán thành công cho transaction id={}, providerRef={}", saved.getId(), saved.getProviderRef());
-        return TransactionResponse.from(saved);
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public PageResponse<TransactionResponse> getPaged(Long subscriptionId, String transactionType, String status, Pageable pageable) {
         return getPaged(subscriptionId, null, transactionType, status, pageable);
@@ -282,11 +233,15 @@ public class TransactionServiceImpl implements TransactionService {
         Specification<Transaction> spec = buildFilterSpecification(subscriptionId, bookingId, transactionType, status);
 
         if (!currentUserService.isAdmin(current)) {
-            spec = spec.and((root, query, cb) -> cb.or(
-                    cb.equal(root.get("subscription").get("customer").get("id"), current.getId()),
-                    cb.equal(root.get("booking").get("customer").get("id"), current.getId()),
-                    cb.equal(root.get("booking").get("owner").get("id"), current.getId())
-            ));
+            spec = spec.and((root, query, cb) -> {
+                Join<Transaction, CarSubscription> subJoin = root.join("subscription", JoinType.LEFT);
+                Join<Transaction, Booking> bookingJoin = root.join("booking", JoinType.LEFT);
+                return cb.or(
+                        cb.equal(subJoin.join("customer", JoinType.LEFT).get("id"), current.getId()),
+                        cb.equal(bookingJoin.join("customer", JoinType.LEFT).get("id"), current.getId()),
+                        cb.equal(bookingJoin.join("owner", JoinType.LEFT).get("id"), current.getId())
+                );
+            });
         }
 
         Page<Transaction> page = transactionRepository.findAll(spec, pageable);
@@ -297,18 +252,20 @@ public class TransactionServiceImpl implements TransactionService {
         Specification<Transaction> spec = (root, query, cb) -> cb.conjunction();
 
         if (subscriptionId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("subscription").get("id"), subscriptionId));
+            spec = spec.and((root, query, cb) -> cb.equal(root.join("subscription", JoinType.LEFT).get("id"), subscriptionId));
         }
 
         if (bookingId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("booking").get("id"), bookingId));
+            spec = spec.and((root, query, cb) -> cb.equal(root.join("booking", JoinType.LEFT).get("id"), bookingId));
         }
 
         if (transactionType != null && !transactionType.isBlank()) {
             try {
                 TransactionType type = TransactionType.valueOf(transactionType.toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("transactionType"), type));
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException e) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Loại giao dịch không hợp lệ: " + transactionType);
+            }
         }
 
         if (status != null && !status.isBlank()) {
@@ -316,12 +273,17 @@ public class TransactionServiceImpl implements TransactionService {
                 TransactionStatus txStatus = TransactionStatus.valueOf(status.toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), txStatus));
                 if (txStatus == TransactionStatus.PENDING) {
-                    spec = spec.and((root, query, cb) -> cb.or(
-                            cb.equal(root.get("subscription").get("status"), SubscriptionStatus.PENDING_PAYMENT),
-                            cb.isNotNull(root.get("booking"))
-                    ));
+                    spec = spec.and((root, query, cb) -> {
+                        Join<Transaction, CarSubscription> subJoin = root.join("subscription", JoinType.LEFT);
+                        return cb.or(
+                                cb.equal(subJoin.get("status"), SubscriptionStatus.PENDING_PAYMENT),
+                                cb.isNotNull(root.get("booking"))
+                        );
+                    });
                 }
-            } catch (IllegalArgumentException ignored) {}
+            } catch (IllegalArgumentException e) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Trạng thái giao dịch không hợp lệ: " + status);
+            }
         }
 
         return spec;
@@ -361,5 +323,37 @@ public class TransactionServiceImpl implements TransactionService {
             return;
         }
         throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập giao dịch này");
+    }
+
+    @Override
+    @Transactional
+    public int expirePendingTransactions() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(transactionPaymentTimeoutMinutes);
+        List<Transaction> staleList = transactionRepository.findByStatusAndCreatedAtBefore(TransactionStatus.PENDING, cutoff);
+        int count = 0;
+        for (Transaction tx : staleList) {
+            try {
+                tx.setStatus(TransactionStatus.FAILED);
+
+                // Nếu giao dịch liên kết gói đăng tin PENDING_PAYMENT → hủy gói
+                if (tx.getSubscription() != null) {
+                    CarSubscription sub = tx.getSubscription();
+                    if (sub.getStatus() == SubscriptionStatus.PENDING_PAYMENT) {
+                        sub.setStatus(SubscriptionStatus.CANCELLED);
+                        // Hoàn lại lượt dùng voucher nếu có
+                        if (sub.getVoucher() != null && voucherRepository != null) {
+                            voucherRepository.decreaseUsage(sub.getVoucher().getId());
+                        }
+                        log.info("Đã hủy gói đăng tin id={} do giao dịch id={} quá hạn thanh toán",
+                                sub.getId(), tx.getId());
+                    }
+                }
+
+                count++;
+            } catch (RuntimeException e) {
+                log.warn("Không thể hủy giao dịch PENDING id={}: {}", tx.getId(), e.getMessage());
+            }
+        }
+        return count;
     }
 }

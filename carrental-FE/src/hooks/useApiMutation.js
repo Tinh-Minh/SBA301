@@ -22,5 +22,5 @@ export function useApiMutation(action, onSuccess) {
         try { return await mutation.mutateAsync(args); }
         catch { return undefined; }
     }, [mutation.mutateAsync]);
-    return { run, running: mutation.isPending, error: mutation.error };
+    return { run, running: mutation.isPending, error: mutation.error, reset: mutation.reset };
 }
