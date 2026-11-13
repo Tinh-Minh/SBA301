@@ -83,6 +83,7 @@ public class BookingService {
     private final TransactionRepository transactionRepository;
     private final CurrentUserService currentUserService;
     private final CarSafetyService carSafetyService;
+    private final com.carrental.repository.UserDocumentRepository userDocumentRepository;
     private final PublicImageStorageService publicImageStorageService;
     private final Clock clock;
 
@@ -174,6 +175,7 @@ public class BookingService {
         if (car.getOwner().getId().equals(customer.getId())) {
             throw bad("Bạn không thể đặt xe của chính mình");
         }
+        requireVerifiedDriver(customer, request.returnAt());
         if (carSafetyService.isUnsafe(car)) {
             throw new AppException(HttpStatus.CONFLICT,
                     "Xe đang có đăng kiểm/bảo hiểm hết hạn hoặc không đạt nên tạm thời không nhận đặt");
@@ -275,6 +277,25 @@ public class BookingService {
     // ================================================================== chủ xe
 
     /** Chủ xe xác nhận đã gọi/nhắn cho khách và ghi lại nội dung trao đổi. */
+    /**
+     * Người thuê phải có danh tính đã duyệt (KYC VERIFIED) và giấy phép lái xe đã duyệt,
+     * còn hạn đến hết thời gian thuê.
+     */
+    private void requireVerifiedDriver(Customer customer, LocalDateTime returnAt) {
+        if (customer.getKycStatus() != com.carrental.enums.KycStatus.VERIFIED) {
+            throw new AppException(HttpStatus.FORBIDDEN,
+                    "Bạn cần xác minh danh tính (CCCD/Hộ chiếu) trước khi thuê xe");
+        }
+        boolean validLicense = userDocumentRepository.findByCustomerId(customer.getId()).stream()
+                .anyMatch(d -> d.getDocType() == com.carrental.enums.DocumentType.DRIVER_LICENSE
+                        && d.getVerifyStatus() == com.carrental.enums.VerificationStatus.APPROVED
+                        && (d.getExpiresAt() == null || !d.getExpiresAt().isBefore(returnAt.toLocalDate())));
+        if (!validLicense) {
+            throw new AppException(HttpStatus.FORBIDDEN,
+                    "Bạn cần có giấy phép lái xe đã được duyệt và còn hạn đến ngày trả xe để thuê xe");
+        }
+    }
+
     @Transactional
     public BookingResponse markContacted(Long id, ContactRequest request) {
         Booking b = ownedBooking(id);
