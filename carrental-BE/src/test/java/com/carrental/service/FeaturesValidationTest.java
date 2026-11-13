@@ -166,7 +166,7 @@ class FeaturesValidationTest {
     void testCreateReview_Success() {
         when(currentUserService.getCurrentUser()).thenReturn(customer);
         when(carRepository.findById(10L)).thenReturn(Optional.of(car));
-        when(reviewRepository.existsByCarIdAndCustomerId(10L, 2L)).thenReturn(false);
+        when(reviewRepository.existsByBookingId(77L)).thenReturn(false);
 
         Review savedReview = Review.builder()
                 .car(car)
@@ -181,6 +181,11 @@ class FeaturesValidationTest {
         // Khách đã hoàn tất chuyến thuê xe này
         when(bookingRepository.existsByCarIdAndCustomerIdAndStatus(10L, customer.getId(),
                 com.carrental.enums.BookingStatus.COMPLETED)).thenReturn(true);
+        // VR-06: đánh giá gắn với từng chuyến hoàn tất chưa được đánh giá
+        com.carrental.entity.Booking trip = new com.carrental.entity.Booking();
+        org.springframework.test.util.ReflectionTestUtils.setField(trip, "id", 77L);
+        when(bookingRepository.findAllByCarIdAndCustomerIdAndStatusOrderByCompletedAtAsc(10L, customer.getId(),
+                com.carrental.enums.BookingStatus.COMPLETED)).thenReturn(List.of(trip));
 
         CreateReviewRequest request = CreateReviewRequest.builder()
                 .carId(10L)
@@ -221,8 +226,8 @@ class FeaturesValidationTest {
         Review r1 = Review.builder().car(car).customer(customer).rating(5).comment("Tuyệt vời").build();
         Review r2 = Review.builder().car(car).customer(customer).rating(4).comment("Khá tốt").build();
 
-        when(reviewRepository.findByCarIdOrderByCreatedAtDesc(10L)).thenReturn(List.of(r1, r2));
-        when(reviewRepository.getAverageRatingByCarId(10L)).thenReturn(4.5);
+        when(reviewRepository.findByCarIdAndApprovedTrueOrderByCreatedAtDesc(10L)).thenReturn(List.of(r1, r2));
+        when(reviewRepository.getApprovedAverageRatingByCarId(10L)).thenReturn(4.5);
 
         CarReviewSummaryResponse summary = reviewService.getReviewsByCarId(10L);
 

@@ -111,12 +111,14 @@ class BookingPaymentAndVoucherIntegrationTest {
         clock.setTo(now);
         tx.executeWithoutResult(s -> {
             for (String entity : List.of("HandoverItem", "Handover", "Transaction", "Booking", "CarSafetyRecord",
-                    "Review", "CarSubscription", "CarImage", "CarDocument", "Car", "ListingPackage", "Voucher", "Customer")) {
+                    "Review", "CarSubscription", "CarImage", "CarDocument", "Car", "ListingPackage", "Voucher", "UserDocument", "Customer")) {
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }
             Customer owner = persist(customer("Chủ Xe", "owner@test.vn", "0900000001", Role.OWNER));
             Customer cust = persist(customer("Khách Thuê", "customer@test.vn", "0900000002", Role.CUSTOMER));
             Customer other = persist(customer("Khách Khác", "other@test.vn", "0900000003", Role.CUSTOMER));
+            persist(driverLicense(cust, "GPLX-0002"));
+            persist(driverLicense(other, "GPLX-0003"));
             ownerId = owner.getId();
             customerId = cust.getId();
             otherCustomerId = other.getId();
@@ -172,9 +174,9 @@ class BookingPaymentAndVoucherIntegrationTest {
         assertThat(booking.getVoucher().getId()).isEqualTo(voucher10Id);
         assertThat(booking.getDiscountAmount()).isEqualByComparingTo("50000");
 
-        // Voucher usedCount tăng lên 1
+        // VR-02: lượt voucher chỉ bị trừ khi chủ xe xác nhận đơn, lúc gửi yêu cầu chưa trừ
         Voucher v = voucherRepository.findById(voucher10Id).orElseThrow();
-        assertThat(v.getUsedCount()).isEqualTo(1);
+        assertThat(v.getUsedCount()).isEqualTo(0);
     }
 
     @Test
@@ -453,7 +455,7 @@ class BookingPaymentAndVoucherIntegrationTest {
         Long bookingId = Long.valueOf(JsonPath.read(res.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
 
         Voucher v = voucherRepository.findById(voucherFixedId).orElseThrow();
-        assertThat(v.getUsedCount()).isEqualTo(1);
+        assertThat(v.getUsedCount()).isEqualTo(0); // VR-02: chưa trừ lượt khi mới gửi yêu cầu
 
         // Khách hủy đơn
         as(customerId, post("/api/bookings/" + bookingId + "/cancel")
@@ -547,6 +549,19 @@ class BookingPaymentAndVoucherIntegrationTest {
             entityManager.flush();
             return entity;
         });
+    }
+
+    /** BK-01: người thuê phải có GPLX đã duyệt, còn hạn. */
+    private com.carrental.entity.UserDocument driverLicense(Customer owner, String number) {
+        com.carrental.entity.UserDocument doc = new com.carrental.entity.UserDocument();
+        doc.setCustomer(owner);
+        doc.setDocType(com.carrental.enums.DocumentType.DRIVER_LICENSE);
+        doc.setDocNumber(number);
+        doc.setLicenseClass("B2");
+        doc.setExpiresAt(java.time.LocalDate.of(2099, 1, 1));
+        doc.setFrontImageUrl("private-local:front.png");
+        doc.setVerifyStatus(com.carrental.enums.VerificationStatus.APPROVED);
+        return doc;
     }
 
     private Customer customer(String name, String email, String phone, Role role) {
