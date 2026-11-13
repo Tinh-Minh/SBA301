@@ -11,10 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
-.env
-.env.local
-.env.*
-!.env.example
+
+# Ignore markdown documentation files
+*.md
 
 # Editor directories and files
 .vscode/*

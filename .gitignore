@@ -13,9 +13,3 @@
 !/FINAL_REPORT.md
 !/.gitignore
 /.idea/
-
-# Environment files
-.env
-.env.local
-*.env
-!*.env.example
