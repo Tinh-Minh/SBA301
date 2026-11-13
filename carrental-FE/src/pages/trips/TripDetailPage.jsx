@@ -6,6 +6,7 @@ import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { HandoverForm, HandoverView } from "@/components/booking/Handover.jsx";
 import { TripTimeline } from "@/components/booking/TripParts.jsx";
+import { CustomerReviewPanel } from "@/components/booking/CustomerReviewPanel.jsx";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useAuth } from "@/hooks/useAuth.js";
 import { tripService } from "@/services/tripService.js";
@@ -160,6 +161,7 @@ function Trip({ id }) {
           {role === "customer" && b.ownerContactedAt ? <p className="mt-2 text-[#065F46]">Chủ xe đã liên hệ lúc {formatDateTime(b.ownerContactedAt)}.</p> : null}
         </section>
         {((role === "customer" || role === "owner") && ["REQUESTED", "CONFIRMED"].includes(b.status)) || (role === "admin" && ["REQUESTED", "CONFIRMED", "PICKUP_PENDING", "IN_PROGRESS", "RETURN_PENDING"].includes(b.status)) ? <button type="button" onClick={() => setAsking("cancel")} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold text-[#B91C1C]">Huỷ đơn thuê</button> : null}
+        <CustomerReviewPanel bookingId={b.id} role={role}/>
         <Link to={`/cars/${b.carId}`} className="text-center text-sm font-bold text-[#666666]">Xem trang xe</Link>
       </aside>
     </div>

@@ -8,6 +8,11 @@ export const tripService = {
     mine: () => request("/api/bookings/my"),
     ownerList: () => request("/api/bookings/owner"),
     get: (id) => request(`/api/bookings/${id}`),
+    /** Đánh giá 2 chiều: đánh giá của chủ xe dành cho khách ở đơn này + uy tín chung của khách. */
+    customerReview: (id) => request(`/api/bookings/${id}/customer-review`),
+    reviewCustomer: (id, rating, comment) => request(`/api/bookings/${id}/customer-review`, { method: "POST", json: { rating: Number(rating), comment: comment?.trim() || null } }),
+    /** Khách báo đã trả xe (chốt mốc tính phí trễ). */
+    reportReturned: (id) => request(`/api/bookings/${id}/returned`, { method: "POST" }),
     cancel: (id, reason) => request(`/api/bookings/${id}/cancel`, { method: "POST", json: { reason } }),
     payDeposit: (id, method = "VNPAY", bankCode) => request("/api/transactions/booking-deposit", { method: "POST", json: { bookingId: id, method, bankCode } }),
     contacted: (id, contactNote) => request(`/api/bookings/${id}/contacted`, { method: "POST", json: { contacted: true, contactNote } }),

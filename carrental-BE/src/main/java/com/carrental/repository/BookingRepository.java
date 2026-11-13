@@ -47,6 +47,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
 
     long countByCustomerIdAndStatus(Long customerId, BookingStatus status);
 
+    boolean existsByCustomerIdAndOwnerId(Long customerId, Long ownerId);
+
     List<Booking> findAllByCarIdAndCustomerIdAndStatusOrderByCompletedAtAsc(Long carId, Long customerId, BookingStatus status);
 
     List<Booking> findAllByStatusAndDepositStatus(BookingStatus status, com.carrental.enums.PaymentStatus depositStatus);
