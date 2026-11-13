@@ -266,17 +266,8 @@ public class BookingService {
                 }
             }
             b.setDepositStatus(PaymentStatus.REFUNDED);
-            Transaction refundTx = Transaction.builder()
-                    .booking(b)
-                    .transactionType(TransactionType.BOOKING_REFUND)
-                    .amount(refundAmount)
-                    .method(PaymentMethod.VNPAY)
-                    .status(TransactionStatus.SUCCESS)
-                    .providerRef("REFUND_BK_" + b.getId() + "_" + System.currentTimeMillis())
-                    .paidAt(now())
-                    .build();
-            transactionRepository.save(refundTx);
-            log.info("Hoàn cọc đơn thuê bookingId={}, amount={}, refundAmount={}", b.getId(), b.getDepositAmount(), refundAmount);
+            createPendingRefund(b, refundAmount);
+            log.info("Tạo yêu cầu hoàn cọc bookingId={}, amount={}, refundAmount={}", b.getId(), b.getDepositAmount(), refundAmount);
         }
 
         return toResponse(bookingRepository.saveAndFlush(b));
@@ -285,6 +276,46 @@ public class BookingService {
     // ================================================================== chủ xe
 
     /** Chủ xe xác nhận đã gọi/nhắn cho khách và ghi lại nội dung trao đổi. */
+    /**
+     * Ghi nhận khoản hoàn tiền cho khách ở trạng thái PENDING: tiền chỉ được coi là đã hoàn khi
+     * quản trị viên xác nhận đã chuyển (hoặc cổng thanh toán xác nhận), không tự đánh dấu SUCCESS.
+     */
+    private Transaction createPendingRefund(Booking b, BigDecimal amount) {
+        Transaction refundTx = Transaction.builder()
+                .booking(b)
+                .transactionType(TransactionType.BOOKING_REFUND)
+                .amount(amount)
+                .method(PaymentMethod.VNPAY)
+                .status(TransactionStatus.PENDING)
+                .build();
+        return transactionRepository.save(refundTx);
+    }
+
+    /** Quản trị viên xác nhận đã chuyển khoản hoàn tiền cho khách (kèm mã tham chiếu ngân hàng/VNPay). */
+    @Transactional
+    public com.carrental.dto.response.TransactionResponse confirmRefund(Long transactionId, String providerRef) {
+        Customer user = currentUserService.getCurrentUser();
+        if (!currentUserService.isAdmin(user)) {
+            throw forbidden();
+        }
+        Transaction tx = transactionRepository.findById(transactionId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + transactionId));
+        if (tx.getTransactionType() != TransactionType.BOOKING_REFUND) {
+            throw bad("Chỉ xác nhận được giao dịch hoàn tiền");
+        }
+        if (tx.getStatus() != TransactionStatus.PENDING) {
+            throw conflict("Giao dịch hoàn tiền đã được xử lý");
+        }
+        if (blank(providerRef)) {
+            throw bad("Vui lòng nhập mã tham chiếu chuyển khoản hoàn tiền");
+        }
+        tx.setStatus(TransactionStatus.SUCCESS);
+        tx.setProviderRef(providerRef.trim());
+        tx.setPaidAt(now());
+        log.info("Admin xác nhận hoàn tiền transactionId={}, ref={}", transactionId, providerRef);
+        return com.carrental.dto.response.TransactionResponse.from(transactionRepository.save(tx));
+    }
+
     /**
      * Người thuê phải có danh tính đã duyệt (KYC VERIFIED) và giấy phép lái xe đã duyệt,
      * còn hạn đến hết thời gian thuê.
