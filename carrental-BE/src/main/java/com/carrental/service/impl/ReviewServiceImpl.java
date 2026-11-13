@@ -83,6 +83,15 @@ public class ReviewServiceImpl implements ReviewService {
     public ReviewResponse getById(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id));
+        if (!Boolean.TRUE.equals(review.getApproved())) {
+            boolean canView = currentUserService.optionalCurrentUser()
+                    .map(u -> currentUserService.isAdmin(u)
+                            || (review.getCustomer() != null && review.getCustomer().getId().equals(u.getId())))
+                    .orElse(false);
+            if (!canView) {
+                throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id);
+            }
+        }
         return ReviewResponse.from(review);
     }
 
@@ -106,7 +115,10 @@ public class ReviewServiceImpl implements ReviewService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ReviewResponse> getPaged(Long carId, Long customerId, Pageable pageable) {
-        Specification<Review> spec = buildFilterSpecification(carId, customerId);
+        boolean includeUnapproved = currentUserService.optionalCurrentUser()
+                .map(u -> currentUserService.isAdmin(u) || (customerId != null && customerId.equals(u.getId())))
+                .orElse(false);
+        Specification<Review> spec = buildFilterSpecification(carId, customerId, includeUnapproved);
         Page<Review> page = reviewRepository.findAll(spec, pageable);
         return PageResponse.from(page.map(ReviewResponse::from));
     }
@@ -194,7 +206,7 @@ public class ReviewServiceImpl implements ReviewService {
                 .findFirst().orElse(null);
     }
 
-    private Specification<Review> buildFilterSpecification(Long carId, Long customerId) {
+    private Specification<Review> buildFilterSpecification(Long carId, Long customerId, boolean includeUnapproved) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -203,6 +215,9 @@ public class ReviewServiceImpl implements ReviewService {
             }
             if (customerId != null) {
                 predicates.add(cb.equal(root.get("customer").get("id"), customerId));
+            }
+            if (!includeUnapproved) {
+                predicates.add(cb.isTrue(root.get("approved")));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

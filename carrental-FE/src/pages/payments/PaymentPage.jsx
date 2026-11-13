@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { LivePage, LiveState } from "@/components/LiveUi.jsx";
 import { transactionService } from "@/services/paymentService.js";
-import { formatMoney } from "@/utils/labels.js";
+import { formatMoney, transactionTypeLabels } from "@/utils/labels.js";
 
 function VNPayReturnResult({ searchParams }) {
     const [result, setResult] = useState(null);
@@ -29,13 +29,15 @@ function VNPayReturnResult({ searchParams }) {
                 <h1 className="text-xl font-bold text-[#B91C1C]">Xác thực thanh toán thất bại</h1>
                 <p className="text-sm text-[#666666]">{error.message || "Không thể xác thực kết quả giao dịch từ VNPay."}</p>
                 <div className="mt-4 flex justify-center gap-3">
-                    <Link to="/owner/subscriptions" className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Gói đăng tin của tôi</Link>
+                    <Link to="/trips" className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold text-[#292929]">Chuyến đi của tôi</Link>
+                    <Link to="/owner/subscriptions" className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Gói đăng tin</Link>
                 </div>
             </div>
         );
     }
 
     const isSuccess = result?.status === "SUCCESS";
+    const isBookingDeposit = Boolean(result?.bookingId);
     return (
         <div className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-6 shadow-sm text-center">
             <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-3xl font-bold ${isSuccess ? "bg-[#ECFDF5] text-[#047857]" : "bg-[#FEE2E2] text-[#EF4444]"}`}>
@@ -51,16 +53,33 @@ function VNPayReturnResult({ searchParams }) {
                         <span className="text-[#666666]">Mã giao dịch:</span>
                         <span className="font-bold">#{result.id}</span>
                     </div>
+                    {result.transactionType ? (
+                        <div className="flex justify-between">
+                            <span className="text-[#666666]">Loại giao dịch:</span>
+                            <span className="font-bold">{transactionTypeLabels[result.transactionType] ?? result.transactionType}</span>
+                        </div>
+                    ) : null}
                     {result.packageName ? (
                         <div className="flex justify-between gap-3">
                             <span className="text-[#666666]">Gói / xe:</span>
                             <span className="text-right font-bold">{result.packageName}<br/><span className="font-normal text-[#666666]">{result.carName} {result.carLicensePlate}</span></span>
+                        </div>
+                    ) : result.carName ? (
+                        <div className="flex justify-between gap-3">
+                            <span className="text-[#666666]">Xe thuê:</span>
+                            <span className="text-right font-bold">{result.carName} <span className="font-normal text-[#666666]">{result.carLicensePlate}</span></span>
                         </div>
                     ) : null}
                     {result.subscriptionCode ? (
                         <div className="flex justify-between">
                             <span className="text-[#666666]">Mã gói:</span>
                             <span className="font-bold">{result.subscriptionCode}</span>
+                        </div>
+                    ) : null}
+                    {result.bookingCode ? (
+                        <div className="flex justify-between">
+                            <span className="text-[#666666]">Mã đơn thuê:</span>
+                            <span className="font-bold">{result.bookingCode}</span>
                         </div>
                     ) : null}
                     {result.amount && (
@@ -76,10 +95,19 @@ function VNPayReturnResult({ searchParams }) {
                 </div>
             ) : null}
             <div className="mt-4 flex justify-center gap-3">
-                {result?.subscriptionId ? (
-                    <Link to={`/owner/subscriptions/${result.subscriptionId}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Xem gói đăng tin</Link>
-                ) : null}
-                <Link to="/owner/subscriptions" className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold text-[#292929]">Gói của tôi</Link>
+                {isBookingDeposit ? (
+                    <>
+                        <Link to={`/trips/${result.bookingId}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Xem chi tiết đơn thuê</Link>
+                        <Link to="/trips" className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold text-[#292929]">Chuyến đi của tôi</Link>
+                    </>
+                ) : (
+                    <>
+                        {result?.subscriptionId ? (
+                            <Link to={`/owner/subscriptions/${result.subscriptionId}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white">Xem gói đăng tin</Link>
+                        ) : null}
+                        <Link to="/owner/subscriptions" className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold text-[#292929]">Gói của tôi</Link>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -95,7 +123,7 @@ export default function PaymentLive() {
                 {isVnpayReturn ? (
                     <VNPayReturnResult searchParams={searchParams} />
                 ) : (
-                    <p className="text-sm">Thanh toán gói đăng tin bắt đầu từ <Link to="/owner/subscriptions" className="font-bold text-[#FC6C26]">gói của tôi</Link>.</p>
+                    <p className="text-sm">Thanh toán bắt đầu từ <Link to="/trips" className="font-bold text-[#FC6C26]">chuyến đi của tôi</Link> hoặc <Link to="/owner/subscriptions" className="font-bold text-[#FC6C26]">gói của tôi</Link>.</p>
                 )}
             </RequireAuth>
         </LivePage>

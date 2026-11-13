@@ -9,6 +9,8 @@ import com.carrental.enums.BookingStatus;
 import com.carrental.enums.HandoverType;
 import com.carrental.enums.PaymentMethod;
 import com.carrental.service.BookingService;
+import com.carrental.service.DashboardService;
+import com.carrental.service.RentalDashboardService;
 import com.carrental.service.TransactionService;
 import com.carrental.util.PageRequestFactory;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,7 +31,8 @@ public class BookingController {
 
     private final BookingService bookingService;
     private final TransactionService transactionService;
-    private final com.carrental.service.RentalDashboardService dashboardService;
+    private final RentalDashboardService rentalDashboardService;
+    private final DashboardService dashboardService;
     private final com.carrental.service.SettlementService settlementService;
 
     // ---------------------------------------------------------------- công khai
@@ -230,13 +233,13 @@ public class BookingController {
     @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/api/dashboards/owner")
     public ApiResponse<OwnerDashboardResponse> ownerDashboard() {
-        return ApiResponse.ok(dashboardService.owner());
+        return ApiResponse.ok(rentalDashboardService.owner());
     }
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")
     @GetMapping("/api/dashboards/customer")
     public ApiResponse<CustomerDashboardResponse> customerDashboard() {
-        return ApiResponse.ok(dashboardService.customer());
+        return ApiResponse.ok(rentalDashboardService.customer());
     }
 
     @PreAuthorize("hasRole('ADMIN')")

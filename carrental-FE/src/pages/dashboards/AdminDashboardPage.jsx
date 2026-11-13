@@ -5,7 +5,7 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { formatTrVnd } from "@/utils/owner.js";
 import { adminRoutes } from "@/routes/paths.js";
 import { formatDateTime } from "@/utils/datetime.js";
-import { kycStatusLabels } from "@/utils/labels.js";
+import { kycStatusLabels, transactionTypeLabels } from "@/utils/labels.js";
 import { getAdminOverview } from "@/services/adminService.js";
 import { tripService } from "@/services/tripService.js";
 import { Stat } from "@/components/dashboards/DashboardStat.jsx";
@@ -67,16 +67,20 @@ export default function AdminDashboard() {
           <Link to={adminRoutes.payouts} className="whitespace-nowrap text-sm font-bold text-[#FC6C26]">Xem tất cả →</Link>
         </div>
         <ul className="mt-4 flex flex-col gap-3">
-          {(revenue?.recentTransactions ?? []).map(item => <li key={item.id} className="rounded-xl border border-[#E9E9E7] p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-mono text-xs font-bold text-[#FC6C26]">#{item.id} • {item.subscriptionCode}</span>
-              <StatusPill tone={item.status === "SUCCESS" ? "success" : item.status === "FAILED" ? "danger" : "warning"}>{txStatus[item.status] ?? item.status}</StatusPill>
-            </div>
-            <p className="mt-1 truncate text-sm font-bold text-[#292929]">{item.packageName} • {item.carName}</p>
-            <p className="text-xs text-[#666666]">{formatDateTime(item.createdAt)}</p>
-            <p className="mt-1 text-sm"><Money amount={item.amount}/></p>
-          </li>)}
-          {!(revenue?.recentTransactions ?? []).length ? <li className="text-sm text-[#666666]">Chưa có giao dịch mua gói.</li> : null}
+          {(revenue?.recentTransactions ?? []).map(item => {
+            const refCode = item.subscriptionCode ?? item.bookingCode;
+            const title = item.packageName ?? transactionTypeLabels[item.transactionType] ?? "Giao dịch";
+            return <li key={item.id} className="rounded-xl border border-[#E9E9E7] p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-mono text-xs font-bold text-[#FC6C26]">#{item.id}{refCode ? ` • ${refCode}` : ""}</span>
+                <StatusPill tone={item.status === "SUCCESS" ? "success" : item.status === "FAILED" ? "danger" : "warning"}>{txStatus[item.status] ?? item.status}</StatusPill>
+              </div>
+              <p className="mt-1 truncate text-sm font-bold text-[#292929]">{[title, item.carName].filter(Boolean).join(" • ")}</p>
+              <p className="text-xs text-[#666666]">{formatDateTime(item.paidAt ?? item.createdAt)}</p>
+              <p className="mt-1 text-sm"><Money amount={item.amount}/></p>
+            </li>;
+          })}
+          {!(revenue?.recentTransactions ?? []).length ? <li className="text-sm text-[#666666]">Chưa có giao dịch thành công.</li> : null}
         </ul>
       </article>
     </section>

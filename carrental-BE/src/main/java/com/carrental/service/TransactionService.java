@@ -31,4 +31,7 @@ public interface TransactionService {
     PageResponse<TransactionResponse> getPaged(Long subscriptionId, Long bookingId, String transactionType, String status, Pageable pageable);
 
     String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
+
+    /** Quét và hủy các giao dịch PENDING quá hạn thanh toán. */
+    int expirePendingTransactions();
 }

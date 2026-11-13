@@ -18,11 +18,13 @@ import com.carrental.exception.AppException;
 import com.carrental.repository.BookingRepository;
 import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.VoucherRepository;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,14 +33,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.carrental.event.PaymentCompletedEvent;
-import com.carrental.util.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
+
 
 @Slf4j
 @Service
@@ -50,6 +54,12 @@ public class TransactionServiceImpl implements TransactionService {
     private final VNPayService vnPayService;
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Autowired(required = false)
+    private VoucherRepository voucherRepository;
+
+    @Value("${app.transaction.payment-timeout-minutes:15}")
+    private int transactionPaymentTimeoutMinutes;
 
     @Autowired
     public TransactionServiceImpl(
@@ -223,11 +233,15 @@ public class TransactionServiceImpl implements TransactionService {
         Specification<Transaction> spec = buildFilterSpecification(subscriptionId, bookingId, transactionType, status);
 
         if (!currentUserService.isAdmin(current)) {
-            spec = spec.and((root, query, cb) -> cb.or(
-                    cb.equal(root.get("subscription").get("customer").get("id"), current.getId()),
-                    cb.equal(root.get("booking").get("customer").get("id"), current.getId()),
-                    cb.equal(root.get("booking").get("owner").get("id"), current.getId())
-            ));
+            spec = spec.and((root, query, cb) -> {
+                Join<Transaction, CarSubscription> subJoin = root.join("subscription", JoinType.LEFT);
+                Join<Transaction, Booking> bookingJoin = root.join("booking", JoinType.LEFT);
+                return cb.or(
+                        cb.equal(subJoin.join("customer", JoinType.LEFT).get("id"), current.getId()),
+                        cb.equal(bookingJoin.join("customer", JoinType.LEFT).get("id"), current.getId()),
+                        cb.equal(bookingJoin.join("owner", JoinType.LEFT).get("id"), current.getId())
+                );
+            });
         }
 
         Page<Transaction> page = transactionRepository.findAll(spec, pageable);
@@ -238,11 +252,11 @@ public class TransactionServiceImpl implements TransactionService {
         Specification<Transaction> spec = (root, query, cb) -> cb.conjunction();
 
         if (subscriptionId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("subscription").get("id"), subscriptionId));
+            spec = spec.and((root, query, cb) -> cb.equal(root.join("subscription", JoinType.LEFT).get("id"), subscriptionId));
         }
 
         if (bookingId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("booking").get("id"), bookingId));
+            spec = spec.and((root, query, cb) -> cb.equal(root.join("booking", JoinType.LEFT).get("id"), bookingId));
         }
 
         if (transactionType != null && !transactionType.isBlank()) {
@@ -259,10 +273,13 @@ public class TransactionServiceImpl implements TransactionService {
                 TransactionStatus txStatus = TransactionStatus.valueOf(status.toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), txStatus));
                 if (txStatus == TransactionStatus.PENDING) {
-                    spec = spec.and((root, query, cb) -> cb.or(
-                            cb.equal(root.join("subscription", jakarta.persistence.criteria.JoinType.LEFT).get("status"), SubscriptionStatus.PENDING_PAYMENT),
-                            cb.isNotNull(root.get("booking"))
-                    ));
+                    spec = spec.and((root, query, cb) -> {
+                        Join<Transaction, CarSubscription> subJoin = root.join("subscription", JoinType.LEFT);
+                        return cb.or(
+                                cb.equal(subJoin.get("status"), SubscriptionStatus.PENDING_PAYMENT),
+                                cb.isNotNull(root.get("booking"))
+                        );
+                    });
                 }
             } catch (IllegalArgumentException e) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Trạng thái giao dịch không hợp lệ: " + status);
@@ -306,5 +323,37 @@ public class TransactionServiceImpl implements TransactionService {
             return;
         }
         throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập giao dịch này");
+    }
+
+    @Override
+    @Transactional
+    public int expirePendingTransactions() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(transactionPaymentTimeoutMinutes);
+        List<Transaction> staleList = transactionRepository.findByStatusAndCreatedAtBefore(TransactionStatus.PENDING, cutoff);
+        int count = 0;
+        for (Transaction tx : staleList) {
+            try {
+                tx.setStatus(TransactionStatus.FAILED);
+
+                // Nếu giao dịch liên kết gói đăng tin PENDING_PAYMENT → hủy gói
+                if (tx.getSubscription() != null) {
+                    CarSubscription sub = tx.getSubscription();
+                    if (sub.getStatus() == SubscriptionStatus.PENDING_PAYMENT) {
+                        sub.setStatus(SubscriptionStatus.CANCELLED);
+                        // Hoàn lại lượt dùng voucher nếu có
+                        if (sub.getVoucher() != null && voucherRepository != null) {
+                            voucherRepository.decreaseUsage(sub.getVoucher().getId());
+                        }
+                        log.info("Đã hủy gói đăng tin id={} do giao dịch id={} quá hạn thanh toán",
+                                sub.getId(), tx.getId());
+                    }
+                }
+
+                count++;
+            } catch (RuntimeException e) {
+                log.warn("Không thể hủy giao dịch PENDING id={}: {}", tx.getId(), e.getMessage());
+            }
+        }
+        return count;
     }
 }
