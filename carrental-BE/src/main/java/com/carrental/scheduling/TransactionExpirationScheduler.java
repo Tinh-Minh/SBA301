@@ -17,7 +17,7 @@ public class TransactionExpirationScheduler {
 
     private final TransactionService transactionService;
 
-    @Scheduled(cron = "15 * * * * *")
+    @Scheduled(cron = "1 * * * * *")
     public void expireStaleTransactions() {
         try {
             int n = transactionService.expirePendingTransactions();
@@ -29,3 +29,4 @@ public class TransactionExpirationScheduler {
         }
     }
 }
+
