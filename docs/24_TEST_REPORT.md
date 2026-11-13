@@ -1,6 +1,6 @@
 # Báo cáo kiểm thử – CarDB (nhánh `Test_All_Branches`)
 
-Tài liệu này gộp `BUG_REPORT.md`, `FIX_LOG.md`, `FINAL_REPORT.md` (đợt kiểm thử của Minh, 12–13/11/2026) và đợt kiểm thử, sửa lỗi nghiệp vụ trên nhánh `Test_All_Branches` (13/11/2026). Kế hoạch kiểm thử chi tiết xem [22_TEST_PLAN.md](22_TEST_PLAN.md).
+Tài liệu này gộp `BUG_REPORT.md`, `FIX_LOG.md`, `FINAL_REPORT.md` (đợt kiểm thử của Minh, 12–13/11/2026) và đợt kiểm thử, sửa lỗi nghiệp vụ trên nhánh `Test_All_Branches` (13/11/2026). Kế hoạch kiểm thử chi tiết xem [23_TEST_PLAN.md](23_TEST_PLAN.md).
 
 ## 1. Kết quả hiện tại
 

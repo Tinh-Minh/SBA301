@@ -97,6 +97,8 @@ Cập nhật: **2026-10-15**. **P01–P10 APPROVED**, R1/R2 P10 CLOSED theo [rev
 | [Trạng thái triển khai](IMPLEMENTATION_STATUS.md) | Bằng chứng triển khai và review từng prompt |
 | [Tài liệu đầu vào](reference/README.md) | Bản sao nguyên trạng 3 tài liệu người dùng gửi và nguồn kỹ thuật chính thức |
 | [AGENTS.md](../AGENTS.md) | Hướng dẫn ngắn cho AI khi tiếp tục làm việc trong repository |
+| [23 — Kế hoạch kiểm thử](23_TEST_PLAN.md) | Vai trò, luồng nghiệp vụ và các ca kiểm thử toàn hệ thống |
+| [24 — Báo cáo kiểm thử](24_TEST_REPORT.md) | Kết quả kiểm thử, lỗi đã sửa theo từng nhóm và tồn đọng đã biết |
 
 ## Cách hiểu mức độ xác nhận
 
