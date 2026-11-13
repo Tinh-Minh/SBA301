@@ -297,6 +297,25 @@ public class BookingService {
         return transactionRepository.save(refundTx);
     }
 
+    /** Khi quyết toán, nếu tiền cọc lớn hơn tổng chi phí chuyến đi thì hoàn phần dư cho khách. */
+    private void refundExcessDeposit(Booking b) {
+        if (b.getDepositStatus() != PaymentStatus.PAID || b.getDepositAmount() == null || b.getDepositAmount().signum() <= 0) {
+            return;
+        }
+        BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
+        BigDecimal total = b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO)
+                .add(nz(b.getExtraKmAmount())).add(nz(b.getLateAmount())).add(nz(b.getOtherFeeAmount()));
+        BigDecimal excess = b.getDepositAmount().subtract(total);
+        if (excess.signum() > 0) {
+            createPendingRefund(b, excess);
+            log.info("Hoàn phần cọc dư bookingId={}, excess={}", b.getId(), excess);
+        }
+    }
+
+    private static BigDecimal nz(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
     /** Quản trị viên xác nhận đã chuyển khoản hoàn tiền cho khách (kèm mã tham chiếu ngân hàng/VNPay). */
     @Transactional
     public com.carrental.dto.response.TransactionResponse confirmRefund(Long transactionId, String providerRef) {
@@ -511,6 +530,7 @@ public class BookingService {
                 b.setStatus(BookingStatus.COMPLETED);
                 b.setReturnedAt(now());
                 b.setCompletedAt(now());
+                refundExcessDeposit(b);
             }
         }
         handoverRepository.saveAndFlush(h);
