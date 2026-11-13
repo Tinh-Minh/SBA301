@@ -106,9 +106,17 @@ public class CarServiceImpl implements CarService {
         log.info("Update car id={}", carId);
         try {
             Car car = loadOwnedCar(carId);
+            String oldIdentity = identityOf(car);
+            java.math.BigDecimal oldPrice = car.getRentalPricePerDay();
             request.applyTo(car);
 
-            if (car.getStatus() == CarStatus.REJECTED) {
+            boolean approved = car.getStatus() == CarStatus.ACTIVE || car.getStatus() == CarStatus.INACTIVE;
+            if (approved && (!oldIdentity.equals(identityOf(car)) || priceChangedSharply(oldPrice, car.getRentalPricePerDay()))) {
+                // Đổi thông tin nhận dạng xe hoặc giá thay đổi mạnh: ẩn tin và chờ admin duyệt lại.
+                car.setStatus(CarStatus.PENDING_APPROVAL);
+                car.setListingStatus(com.carrental.enums.ListingStatus.UNLISTED);
+                log.info("Car id={} đổi thông tin quan trọng -> PENDING_APPROVAL, ẩn tin chờ duyệt lại", carId);
+            } else if (car.getStatus() == CarStatus.REJECTED) {
                 car.getStatus().validateTransitionTo(CarStatus.PENDING_APPROVAL);
                 car.setStatus(CarStatus.PENDING_APPROVAL);
                 car.setRejectReason(null);
@@ -126,6 +134,20 @@ public class CarServiceImpl implements CarService {
             log.error("Lỗi không mong muốn khi cập nhật xe carId={}", carId, e);
             throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể cập nhật thông tin xe");
         }
+    }
+
+    private static String identityOf(Car car) {
+        return String.join("|", String.valueOf(car.getBrand()), String.valueOf(car.getModel()),
+                String.valueOf(car.getManufactureYear()), String.valueOf(car.getLicensePlate())).toLowerCase();
+    }
+
+    /** Giá thuê/ngày thay đổi quá 50% so với giá đã được duyệt. */
+    private static boolean priceChangedSharply(java.math.BigDecimal before, java.math.BigDecimal after) {
+        if (before == null || after == null || before.signum() <= 0) {
+            return false;
+        }
+        java.math.BigDecimal ratio = after.subtract(before).abs().divide(before, 4, java.math.RoundingMode.HALF_UP);
+        return ratio.compareTo(new java.math.BigDecimal("0.5")) > 0;
     }
 
     @Override
