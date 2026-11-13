@@ -74,6 +74,8 @@ public class BookingService {
     private static final int MAX_ADVANCE_DAYS = 90;
     /** Số yêu cầu thuê đang chờ chủ xe xác nhận tối đa của một khách (chống spam giữ lịch). */
     static final int MAX_PENDING_REQUESTS = 3;
+    /** Thời hạn khách phải đặt cọc sau khi chủ xe xác nhận đơn. */
+    public static final Duration DEPOSIT_DUE = Duration.ofHours(2);
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BookingRepository bookingRepository;
@@ -630,6 +632,31 @@ public class BookingService {
         }
         bookingRepository.saveAll(stale);
         return stale.size();
+    }
+
+    /**
+     * Đơn đã xác nhận nhưng khách chưa đặt cọc sau {@link #DEPOSIT_DUE} (hoặc đã tới giờ nhận xe)
+     * thì tự huỷ để trả lịch xe cho khách khác.
+     */
+    @Transactional
+    public int cancelUnpaidDeposits() {
+        LocalDateTime now = now();
+        List<Booking> unpaid = bookingRepository.findAllByStatusAndDepositStatus(BookingStatus.CONFIRMED, PaymentStatus.UNPAID)
+                .stream()
+                .filter(b -> b.getDepositAmount() != null && b.getDepositAmount().signum() > 0)
+                .filter(b -> !b.getPickupAt().isAfter(now)
+                        || (b.getConfirmedAt() != null && !b.getConfirmedAt().plus(DEPOSIT_DUE).isAfter(now)))
+                .toList();
+        for (Booking b : unpaid) {
+            b.setStatus(BookingStatus.CANCELLED);
+            b.setCancelledBy("SYSTEM");
+            b.setCancelReason("Quá hạn " + DEPOSIT_DUE.toHours() + " giờ đặt cọc sau khi chủ xe xác nhận");
+            if (b.getVoucher() != null) {
+                voucherRepository.decreaseUsage(b.getVoucher().getId());
+            }
+        }
+        bookingRepository.saveAll(unpaid);
+        return unpaid.size();
     }
 
     private Voucher resolveVoucher(String voucherCode, BigDecimal rentalAmount, Customer customer) {
