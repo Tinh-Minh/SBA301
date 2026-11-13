@@ -18,6 +18,7 @@ import com.carrental.exception.AppException;
 import com.carrental.repository.BookingRepository;
 import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.VoucherRepository;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
@@ -36,7 +37,11 @@ import com.carrental.util.TimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -50,6 +55,12 @@ public class TransactionServiceImpl implements TransactionService {
     private final VNPayService vnPayService;
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
+
+    @Autowired(required = false)
+    private VoucherRepository voucherRepository;
+
+    @Value("${app.transaction.payment-timeout-minutes:15}")
+    private int transactionPaymentTimeoutMinutes;
 
     @Autowired
     public TransactionServiceImpl(
@@ -306,5 +317,37 @@ public class TransactionServiceImpl implements TransactionService {
             return;
         }
         throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền truy cập giao dịch này");
+    }
+
+    @Override
+    @Transactional
+    public int expirePendingTransactions() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(transactionPaymentTimeoutMinutes);
+        List<Transaction> staleList = transactionRepository.findByStatusAndCreatedAtBefore(TransactionStatus.PENDING, cutoff);
+        int count = 0;
+        for (Transaction tx : staleList) {
+            try {
+                tx.setStatus(TransactionStatus.FAILED);
+
+                // Nếu giao dịch liên kết gói đăng tin PENDING_PAYMENT → hủy gói
+                if (tx.getSubscription() != null) {
+                    CarSubscription sub = tx.getSubscription();
+                    if (sub.getStatus() == SubscriptionStatus.PENDING_PAYMENT) {
+                        sub.setStatus(SubscriptionStatus.CANCELLED);
+                        // Hoàn lại lượt dùng voucher nếu có
+                        if (sub.getVoucher() != null && voucherRepository != null) {
+                            voucherRepository.decreaseUsage(sub.getVoucher().getId());
+                        }
+                        log.info("Đã hủy gói đăng tin id={} do giao dịch id={} quá hạn thanh toán",
+                                sub.getId(), tx.getId());
+                    }
+                }
+
+                count++;
+            } catch (RuntimeException e) {
+                log.warn("Không thể hủy giao dịch PENDING id={}: {}", tx.getId(), e.getMessage());
+            }
+        }
+        return count;
     }
 }
