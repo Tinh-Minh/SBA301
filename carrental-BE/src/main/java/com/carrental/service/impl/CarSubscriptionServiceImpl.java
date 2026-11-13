@@ -175,7 +175,8 @@ public class CarSubscriptionServiceImpl implements CarSubscriptionService {
 
             LocalDateTime now = LocalDateTime.now(clock);
             if (subscription.getCurrentSlotEndDate() != null && subscription.getCurrentSlotEndDate().isAfter(now)) {
-                throw new AppException(HttpStatus.CONFLICT, "Slot hiện tại vẫn còn hiệu lực đến " + subscription.getCurrentSlotEndDate());
+                throw new AppException(HttpStatus.CONFLICT, "Slot hiện tại vẫn còn hiệu lực đến "
+                        + subscription.getCurrentSlotEndDate().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy")));
             }
 
             int slotDays = subscription.getDurationDaysPerSlot() != null ? subscription.getDurationDaysPerSlot() : 7;

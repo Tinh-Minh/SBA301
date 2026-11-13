@@ -101,6 +101,7 @@ function DocumentCard({ doc, busy, onApprove, onReject }) {
       <StatusPill tone={docTone[doc.verifyStatus]}>{verifyStatusLabels[doc.verifyStatus] ?? doc.verifyStatus}</StatusPill>
     </div>
     <p className="mt-1 text-xs text-[#666666]">Số: {doc.docNumberMasked ?? "—"} • nộp {formatDateTime(doc.createdAt)}</p>
+    {doc.rejectReason ? <p className="mt-1.5 rounded-lg bg-red-50 px-2.5 py-1.5 text-xs font-medium text-[#B91C1C]">Lý do từ chối: {doc.rejectReason}</p> : null}
     {(doc.hasFrontImage || doc.hasBackImage) && !images ? <button type="button" onClick={preview} className="mt-2 text-xs font-bold text-[#FC6C26]">Xem ảnh giấy tờ</button> : null}
     {failed ? <p className="mt-1 text-xs text-[#B91C1C]">Không tải được ảnh (backend có thể đang tắt lưu trữ file).</p> : null}
     {images ? <div className="mt-2 grid grid-cols-2 gap-2">{images.map(src => <img key={src} src={src} alt="Ảnh giấy tờ" className="h-24 w-full rounded-lg object-cover"/>)}</div> : null}

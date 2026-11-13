@@ -166,6 +166,12 @@
 
 /* ===== Style chung (từ globals.css) ===== */
 @layer base {
+  /* Lưới chỉ có một cột ngầm định (chưa đặt grid-cols-* ở màn hình nhỏ) không được nở theo nội dung
+     dài như bảng hay chữ nowrap, tránh tràn ngang trên điện thoại. Mọi lớp grid-cols-* vẫn ghi đè được. */
+  .grid { grid-template-columns: minmax(0, 1fr); }
+  /* Phần tử sr-only (position:absolute) trong bảng cuộn ngang không được thoát khỏi vùng cuộn. */
+  .overflow-x-auto { position: relative; }
+
   html { scroll-behavior:smooth;scroll-padding-top:100px;color-scheme:light; }
   body { margin:0;background:rgb(var(--color-page-bg));color:rgb(var(--color-text-primary)); }
   * { box-sizing:border-box; }

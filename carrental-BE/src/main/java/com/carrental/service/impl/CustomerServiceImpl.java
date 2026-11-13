@@ -13,33 +13,45 @@ import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.CustomerSummaryResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.entity.Customer;
+import com.carrental.entity.UserDocument;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.enums.KycStatus;
 import com.carrental.enums.Role;
+import com.carrental.enums.VerificationStatus;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
+import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
 import com.carrental.service.CustomerService;
+import com.carrental.service.PublicImageStorageService;
 import com.carrental.util.RequestChecks;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
@@ -55,14 +67,32 @@ public class CustomerServiceImpl implements CustomerService {
     private final CustomerProperties properties;
     private final Clock clock;
     private final AuthService authService;
+    private final UserDocumentRepository documents;
+    private final PublicImageStorageService publicImageStorageService;
 
     public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
             CustomerProperties properties, Clock clock, AuthService authService) {
+        this(customers, entityManager, properties, clock, authService, null, null);
+    }
+
+    public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
+            CustomerProperties properties, Clock clock, AuthService authService,
+            UserDocumentRepository documents) {
+        this(customers, entityManager, properties, clock, authService, documents, null);
+    }
+
+    @Autowired
+    public CustomerServiceImpl(CustomerRepository customers, EntityManager entityManager,
+            CustomerProperties properties, Clock clock, AuthService authService,
+            UserDocumentRepository documents,
+            PublicImageStorageService publicImageStorageService) {
         this.customers = customers;
         this.entityManager = entityManager;
         this.properties = properties;
         this.clock = clock;
         this.authService = authService;
+        this.documents = documents;
+        this.publicImageStorageService = publicImageStorageService;
     }
 
     @Override
@@ -88,7 +118,9 @@ public class CustomerServiceImpl implements CustomerService {
         String address = request.addressWasProvided() ? normalizedAddress(request.getAddress()) : null;
         String email = request.emailWasProvided() ? normalizedEmail(request.getEmail()) : null;
         String phone = request.phoneWasProvided() ? normalizedPhone(request.getPhone()) : null;
-        String avatarUrl = request.avatarUrlWasProvided() ? normalizedAvatar(request.getAvatarUrl()) : null;
+        if (request.avatarUrlWasProvided()) {
+            throw fieldError("avatarUrl", "Vui lòng tải ảnh đại diện bằng chức năng tải ảnh lên");
+        }
         String zaloPhone = request.zaloPhoneWasProvided() ? normalizedZaloPhone(request.getZaloPhone()) : null;
         String contactNote = request.contactNoteWasProvided() ? normalizedContactNote(request.getContactNote()) : null;
         boolean emailChanged = request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail());
@@ -105,7 +137,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         boolean changed = applyProfileUpdate(customer, request, fullName, dateOfBirth, address, email, phone,
-                avatarUrl, zaloPhone, contactNote);
+                zaloPhone, contactNote);
         if (changed) {
             customers.flush();
             // The database trigger is authoritative for updated_at; reload it after the write.
@@ -119,14 +151,30 @@ public class CustomerServiceImpl implements CustomerService {
     @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<CustomerSummaryResponse> listCustomers(CustomerListQuery query) {
         Page<Customer> page = customers.findAll(customerSpecification(query), query.pageable());
-        return PageResponse.from(page.map(CustomerSummaryResponse::from));
+        if (page.isEmpty() || documents == null) {
+            return PageResponse.from(page.map(CustomerSummaryResponse::from));
+        }
+        List<Long> customerIds = page.getContent().stream().map(Customer::getId).toList();
+        Set<Long> pendingCustomerIds = new HashSet<>(documents.findCustomerIdsWithPendingIdentity(
+                customerIds, UserDocumentServiceImpl.IDENTITY_DOC_TYPES, VerificationStatus.PENDING));
+        return PageResponse.from(page.map(c -> {
+            KycStatus effective = c.getKycStatus() != KycStatus.VERIFIED && pendingCustomerIds.contains(c.getId())
+                    ? KycStatus.PENDING
+                    : c.getKycStatus();
+            return CustomerSummaryResponse.from(c, effective);
+        }));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public CustomerAdminResponse getCustomer(long id) {
-        return customers.findById(id).map(CustomerAdminResponse::from)
-                .orElseThrow(RequestChecks::notFound);
+        Customer c = customers.findById(id).orElseThrow(RequestChecks::notFound);
+        boolean hasPending = documents != null && documents.existsByCustomerIdAndDocTypeInAndVerifyStatus(
+                c.getId(), UserDocumentServiceImpl.IDENTITY_DOC_TYPES, VerificationStatus.PENDING);
+        KycStatus effective = c.getKycStatus() != KycStatus.VERIFIED && hasPending
+                ? KycStatus.PENDING
+                : c.getKycStatus();
+        return CustomerAdminResponse.from(c, effective);
     }
 
     @Override
@@ -242,7 +290,21 @@ public class CustomerServiceImpl implements CustomerService {
         return (root, criteriaQuery, builder) -> {
             List<jakarta.persistence.criteria.Predicate> predicates = new ArrayList<>();
             if (query.status() != null) predicates.add(builder.equal(root.get("status"), query.status()));
-            if (query.kycStatus() != null) predicates.add(builder.equal(root.get("kycStatus"), query.kycStatus()));
+            if (query.kycStatus() != null) {
+                if (query.kycStatus() == KycStatus.PENDING) {
+                    Subquery<Long> pendingDocs = criteriaQuery.subquery(Long.class);
+                    Root<UserDocument> docRoot = pendingDocs.from(UserDocument.class);
+                    pendingDocs.select(docRoot.get("customer").get("id"))
+                            .where(
+                                    builder.equal(docRoot.get("verifyStatus"), VerificationStatus.PENDING),
+                                    docRoot.get("docType").in(UserDocumentServiceImpl.IDENTITY_DOC_TYPES));
+                    predicates.add(builder.or(
+                            builder.equal(root.get("kycStatus"), KycStatus.PENDING),
+                            root.get("id").in(pendingDocs)));
+                } else {
+                    predicates.add(builder.equal(root.get("kycStatus"), query.kycStatus()));
+                }
+            }
             if (query.role() != null) predicates.add(builder.equal(root.get("role"), query.role()));
             if (query.keyword() != null) {
                 String pattern = "%" + escapeLike(query.keyword().toLowerCase(Locale.ROOT)) + "%";
@@ -302,12 +364,27 @@ public class CustomerServiceImpl implements CustomerService {
         return phone;
     }
 
-    private String normalizedAvatar(String value) {
-        if (value == null) return null;
-        String avatar = value.strip();
-        if (avatar.isEmpty()) return null;
-        if (avatar.length() > 500) throw fieldError("avatarUrl", "Ảnh đại diện tối đa 500 ký tự");
-        return avatar;
+    @Override
+    @Transactional
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
+    public CustomerProfileResponse uploadAvatar(CurrentAccount account, MultipartFile file) {
+        if (account == null) throw new AppException(ErrorCode.INVALID_TOKEN);
+        if (file == null || file.isEmpty()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Vui lòng chọn một tệp ảnh đại diện");
+        }
+        if (publicImageStorageService == null) {
+            throw new AppException(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ lưu trữ ảnh tạm thời không khả dụng");
+        }
+        Customer customer = customers.findWithLockById(account.customerId())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+        if (customer.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.INVALID_TOKEN);
+
+        String storedUrl = publicImageStorageService.storeImage(file);
+        customer.setAvatarUrl(storedUrl);
+        customers.flush();
+        entityManager.refresh(customer);
+        log.info("customer-avatar-updated customerId={} url={}", customer.getId(), storedUrl);
+        return CustomerProfileResponse.from(customer);
     }
 
     private String normalizedZaloPhone(String value) {
@@ -344,7 +421,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private static boolean applyProfileUpdate(Customer customer, UpdateProfileRequest request, String fullName,
-            LocalDate dateOfBirth, String address, String email, String phone, String avatarUrl,
+            LocalDate dateOfBirth, String address, String email, String phone,
             String zaloPhone, String contactNote) {
         boolean changed = false;
         if (request.fullNameWasProvided() && !Objects.equals(fullName, customer.getFullName())) {
@@ -366,10 +443,6 @@ public class CustomerServiceImpl implements CustomerService {
         }
         if (request.phoneWasProvided() && !Objects.equals(phone, customer.getPhone())) {
             customer.setPhone(phone);
-            changed = true;
-        }
-        if (request.avatarUrlWasProvided() && !Objects.equals(avatarUrl, customer.getAvatarUrl())) {
-            customer.setAvatarUrl(avatarUrl);
             changed = true;
         }
         if (request.zaloPhoneWasProvided() && !Objects.equals(zaloPhone, customer.getZaloPhone())) {

@@ -1,7 +1,6 @@
 package com.carrental.dto.response;
 
 import com.carrental.entity.UserDocument;
-
 import com.carrental.enums.DocumentType;
 import com.carrental.enums.VerificationStatus;
 import java.time.LocalDateTime;
@@ -12,15 +11,26 @@ public record UserDocumentSummaryResponse(
         DocumentType docType,
         String docNumberMasked,
         VerificationStatus verifyStatus,
+        String rejectReason,
+        LocalDateTime verifiedAt,
         boolean hasFrontImage,
         boolean hasBackImage,
         LocalDateTime createdAt,
         LocalDateTime updatedAt) {
 
     public static UserDocumentSummaryResponse from(UserDocument document) {
-        return new UserDocumentSummaryResponse(document.getId(), document.getCustomer().getId(), document.getDocType(),
-                mask(document.getDocNumber()), document.getVerifyStatus(), true, document.getBackImageUrl() != null,
-                document.getCreatedAt(), document.getUpdatedAt());
+        return new UserDocumentSummaryResponse(
+                document.getId(),
+                document.getCustomer().getId(),
+                document.getDocType(),
+                mask(document.getDocNumber()),
+                document.getVerifyStatus(),
+                document.getRejectReason(),
+                document.getVerifiedAt(),
+                true,
+                document.getBackImageUrl() != null,
+                document.getCreatedAt(),
+                document.getUpdatedAt());
     }
 
     public static String mask(String value) {

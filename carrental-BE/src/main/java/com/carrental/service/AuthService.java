@@ -9,9 +9,15 @@ import com.carrental.security.CurrentAccount;
 
 public interface AuthService {
     CustomerProfileResponse register(RegisterRequest request);
+    default CustomerProfileResponse register(RegisterRequest request, String clientIp) {
+        return register(request);
+    }
     TokenResponse login(LoginRequest request);
     void verifyEmail(String token);
     void resendVerification(String email);
+    default void resendVerification(String email, String clientIp) {
+        resendVerification(email);
+    }
     void changePassword(CurrentAccount account, ChangePasswordRequest request);
     void notifyOwnerApproved(long customerId, String email, String fullName);
 }

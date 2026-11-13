@@ -117,8 +117,8 @@ class OwnerRoleUpgradeTest {
         when(customers.findWithLockById(10L)).thenReturn(Optional.of(unverified));
         when(customers.findWithLockById(11L)).thenReturn(Optional.of(verified));
 
-        CustomerServiceImpl service = new CustomerServiceImpl(customers, mock(EntityManager.class),
-                new CustomerProperties(), FIXED_CLOCK, mock(AuthService.class));
+        CustomerServiceImpl service = new CustomerServiceImpl(
+                customers, mock(EntityManager.class), new CustomerProperties(), FIXED_CLOCK, mock(AuthService.class));
 
         ChangeCustomerRoleRequest toOwner = new ChangeCustomerRoleRequest();
         toOwner.setRole(StringNode.valueOf("OWNER"));

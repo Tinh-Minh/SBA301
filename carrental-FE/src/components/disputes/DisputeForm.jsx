@@ -5,6 +5,7 @@ import { useState } from "react";
 import { LiveState, Primary, fieldClass } from "@/components/LiveUi.jsx";
 
 import { useApiMutation } from "@/hooks/useApiMutation.js";
+import { PhotoInput } from "@/components/booking/PhotoInput.jsx";
 import { disputeStatusLabels } from "@/utils/labels.js";
 
 export function Form({ orderId }) {
@@ -31,8 +32,10 @@ export function Form({ orderId }) {
     <form className="flex flex-col gap-3 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm" onSubmit={event => { event.preventDefault(); void send.run(); }}>
       <label className="text-xs font-semibold text-[#666666]">Lý do<textarea required value={reason} onChange={event => setReason(event.target.value)} rows={2} className={`${fieldClass} mt-1`}/></label>
       <label className="text-xs font-semibold text-[#666666]">Mô tả thêm<textarea value={description} onChange={event => setDescription(event.target.value)} rows={3} className={`${fieldClass} mt-1`}/></label>
-      <label className="text-xs font-semibold text-[#666666]">Bằng chứng (đường dẫn, không bắt buộc)<input value={fileUrl} onChange={event => setFileUrl(event.target.value)} placeholder="https://..." className={`${fieldClass} mt-1`}/></label>
-      <select value={fileType} onChange={event => setFileType(event.target.value)} className={fieldClass}><option value="IMAGE">Ảnh</option><option value="VIDEO">Video</option><option value="DOCUMENT">Tài liệu</option></select>
+      <div>
+        <p className="mb-1 text-xs font-semibold text-[#666666]">Ảnh bằng chứng (tải lên từ máy, không bắt buộc)</p>
+        <PhotoInput value={fileUrl} onChange={url => setFileUrl(url || "")} label="Tải ảnh bằng chứng" />
+      </div>
       {send.error ? <p className="text-sm text-[#B91C1C]">{send.error.message}</p> : null}
       <Primary type="submit" disabled={send.running}>{send.running ? "Đang gửi…" : "Gửi khiếu nại"}</Primary>
     </form>

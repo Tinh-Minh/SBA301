@@ -3,17 +3,21 @@ const ProfilePage = lazy(() => import("@/pages/account/ProfilePage.jsx"));
 const VerificationPage = lazy(() => import("@/pages/account/VerificationPage.jsx"));
 const PaymentPage = lazy(() => import("@/pages/payments/PaymentPage.jsx"));
 const MyReviewsPage = lazy(() => import("@/pages/reviews/MyReviewsPage.jsx"));
+const MyTripsPage = lazy(() => import("@/pages/trips/MyTripsPage.jsx"));
+const TripDetailPage = lazy(() => import("@/pages/trips/TripDetailPage.jsx"));
 import { page, AliasRedirect } from "@/routes/elements.jsx";
 
 export const customerPages = [
     page("account", <ProfilePage />),
+    page("trips", <MyTripsPage />, "Chuyến đi của tôi"),
+    page("trips/:id", <TripDetailPage />, "Chi tiết đơn thuê"),
     page("account/bank", <AliasRedirect to="/account" />),
     page("account/verification", <VerificationPage />),
-    page("account/orders", <AliasRedirect to="/my-trips" />),
-    page("account/history", <AliasRedirect to="/my-trips" />),
+    page("account/orders", <AliasRedirect to="/trips" />),
+    page("account/history", <AliasRedirect to="/trips" />),
     page("my-trips", <MyReviewsPage />, "Đánh giá của tôi"),
     page("booking/confirm", <AliasRedirect to="/explore" />),
-    page("orders/:id", <AliasRedirect to="/my-trips" />),
+    page("orders/:id", <AliasRedirect to="/trips" />),
     page("payment", <PaymentPage />),
     page("reviews", <MyReviewsPage />, "Đánh giá của tôi"),
     page("disputes", <AliasRedirect to="/my-trips" />),

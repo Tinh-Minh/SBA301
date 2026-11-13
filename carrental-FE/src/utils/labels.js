@@ -105,12 +105,26 @@ export function accountRoleLabel(user, ownerCarCount) {
 
 const FALLBACK_CAR_IMAGE = "/images/cardb-02d5cb41aa8f9514.webp";
 
+export function resolveAssetUrl(url) {
+    if (!url || typeof url !== "string")
+        return "";
+    const trimmed = url.trim();
+    if (!trimmed)
+        return "";
+    if (/^(https?:|blob:|data:)/i.test(trimmed))
+        return trimmed;
+    const base = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+    if (trimmed.startsWith("/"))
+        return `${base}${trimmed}`;
+    return trimmed;
+}
+
 export function carImage(item) {
     if (!item)
         return FALLBACK_CAR_IMAGE;
     if (item.primaryImageUrl)
-        return item.primaryImageUrl;
+        return resolveAssetUrl(item.primaryImageUrl);
     const images = Array.isArray(item.images) ? item.images : [];
     const primary = images.find(image => image.isPrimary || image.primary) ?? images[0];
-    return primary?.imageUrl || FALLBACK_CAR_IMAGE;
+    return resolveAssetUrl(primary?.imageUrl) || FALLBACK_CAR_IMAGE;
 }

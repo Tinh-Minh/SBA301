@@ -2,10 +2,14 @@ package com.carrental.service.impl;
 
 import com.carrental.config.VNPayConfig;
 import com.carrental.dto.response.TransactionResponse;
+import com.carrental.entity.Booking;
 import com.carrental.entity.Transaction;
+import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.TransactionStatus;
+import com.carrental.enums.TransactionType;
 import com.carrental.event.PaymentCompletedEvent;
 import com.carrental.exception.AppException;
+import com.carrental.repository.BookingRepository;
 import com.carrental.repository.TransactionRepository;
 import com.carrental.service.VNPayService;
 import com.carrental.util.TimeUtil;
@@ -34,6 +38,7 @@ public class VNPayServiceImpl implements VNPayService {
 
     private final VNPayConfig vnPayConfig;
     private final TransactionRepository transactionRepository;
+    private final BookingRepository bookingRepository;
     private final ApplicationEventPublisher eventPublisher;
 
     private static final DateTimeFormatter VNP_DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
@@ -71,8 +76,14 @@ public class VNPayServiceImpl implements VNPayService {
             vnpParams.put("vnp_BankCode", bankCode);
         }
         vnpParams.put("vnp_TxnRef", txnRef);
-        String subCode = transaction.getSubscription() != null ? transaction.getSubscription().getSubscriptionCode() : String.valueOf(transaction.getId());
-        vnpParams.put("vnp_OrderInfo", "Thanh toan goi cuoc " + subCode);
+        String orderInfo;
+        if (transaction.getBooking() != null) {
+            orderInfo = "Thanh toan dat coc don " + transaction.getBooking().getBookingCode();
+        } else {
+            String subCode = transaction.getSubscription() != null ? transaction.getSubscription().getSubscriptionCode() : String.valueOf(transaction.getId());
+            orderInfo = "Thanh toan goi cuoc " + subCode;
+        }
+        vnpParams.put("vnp_OrderInfo", orderInfo);
         vnpParams.put("vnp_OrderType", "other");
         vnpParams.put("vnp_Locale", "vn");
         vnpParams.put("vnp_ReturnUrl", vnPayConfig.getReturnUrl());
@@ -145,6 +156,11 @@ public class VNPayServiceImpl implements VNPayService {
                 transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + (transactionNo != null ? transactionNo : txnRef));
                 Transaction saved = transactionRepository.save(transaction);
+                if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
+                    Booking b = saved.getBooking();
+                    b.setDepositStatus(PaymentStatus.PAID);
+                    bookingRepository.save(b);
+                }
                 eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
                 transaction = saved;
             }
@@ -200,6 +216,11 @@ public class VNPayServiceImpl implements VNPayService {
                 transaction.setPaidAt(TimeUtil.nowVn());
                 transaction.setProviderRef("VNPAY_" + transactionNo);
                 Transaction saved = transactionRepository.save(transaction);
+                if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
+                    Booking b = saved.getBooking();
+                    b.setDepositStatus(PaymentStatus.PAID);
+                    bookingRepository.save(b);
+                }
                 eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
             } else {
                 transaction.setStatus(TransactionStatus.FAILED);

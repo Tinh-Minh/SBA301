@@ -9,11 +9,11 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/components/Icon.jsx";
 import { OwnerCrumb } from "@/components/owner/OwnerScreen.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
-import { calculatePlatformFee, formatVnd } from "@/utils/owner.js";
 import { ownerRoutes } from "@/routes/paths.js";
 import { carService } from "@/services/vehicleService.js";
+import { uploadImage } from "@/services/tripService.js";
 import { useAuth } from "@/hooks/useAuth.js";
-import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps } from "@/components/vehicles/VehicleRegistrationSteps.jsx";
+import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps, validateImageFile } from "@/components/vehicles/VehicleRegistrationSteps.jsx";
 import { repairDisplayText } from "@/utils/text.js";
 
 export default function OwnerVehicleNew() {
@@ -38,6 +38,11 @@ export default function OwnerVehicleNew() {
     }, [register]);
     const [zoom, setZoom] = useState(null);
     const [draftNote, setDraftNote] = useState("");
+    const [cavetFile, setCavetFile] = useState(null);
+    const [inspectionFile, setInspectionFile] = useState(null);
+    const [cavetError, setCavetError] = useState("");
+    const [inspectionError, setInspectionError] = useState("");
+    const [photoErrors, setPhotoErrors] = useState([]);
     useEffect(() => {
         const raw = localStorage.getItem(DRAFT_KEY);
         if (!raw)
@@ -63,7 +68,6 @@ export default function OwnerVehicleNew() {
     const dayPrice = parseVndInput(form.pricePerDay);
     const weekend = parseVndInput(form.weekendPrice);
     const deposit = parseVndInput(form.depositAmount);
-    const fee = dayPrice ? calculatePlatformFee(dayPrice, 10) : 0;
     const photoCount = Object.keys(photos).length;
     const stepResults = vehicleStepSchemas.map(schema => validateInput(schema, form));
     const ready = stepResults.map(result => result.success);
@@ -100,9 +104,51 @@ export default function OwnerVehicleNew() {
         else
             set({ city, area: "" });
     }
+    function revokeBlob(url) {
+        if (typeof url === "string" && url.startsWith("blob:"))
+            URL.revokeObjectURL(url);
+    }
+    function handleCavetFile(file) {
+        if (!file) {
+            revokeBlob(cavet);
+            setCavetFile(null);
+            setCavetError("");
+            return;
+        }
+        const err = validateImageFile(file);
+        if (err) {
+            setCavetError(err);
+            return;
+        }
+        revokeBlob(cavet);
+        const preview = URL.createObjectURL(file);
+        setCavetFile(file);
+        setCavetError("");
+        setCavet(preview);
+    }
+    function handleInspectionFile(file) {
+        if (!file) {
+            revokeBlob(inspection);
+            setInspectionFile(null);
+            setInspectionError("");
+            return;
+        }
+        const err = validateImageFile(file);
+        if (err) {
+            setInspectionError(err);
+            return;
+        }
+        revokeBlob(inspection);
+        const preview = URL.createObjectURL(file);
+        setInspectionFile(file);
+        setInspectionError("");
+        setInspection(preview);
+    }
     function addPhoto(id, url) {
+        setPhotoErrors([]);
         setPhotos(current => {
             const next = { ...current };
+            revokeBlob(current[id]?.url);
             if (url.trim())
                 next[id] = { url: url.trim() };
             else
@@ -110,24 +156,89 @@ export default function OwnerVehicleNew() {
             return next;
         });
     }
+    function handlePhotoFile(slotId, file) {
+        const err = validateImageFile(file);
+        if (err) {
+            setPhotoErrors([err]);
+            return;
+        }
+        setPhotoErrors([]);
+        const preview = URL.createObjectURL(file);
+        setPhotos(current => {
+            revokeBlob(current[slotId]?.url);
+            return { ...current, [slotId]: { url: preview, file } };
+        });
+    }
+    function handlePhotoFiles(files) {
+        const nextErrors = [];
+        const validFiles = [];
+        for (const file of files) {
+            const err = validateImageFile(file);
+            if (err)
+                nextErrors.push(err);
+            else
+                validFiles.push(file);
+        }
+        if (validFiles.length) {
+            const current = getValues("photos") || {};
+            const next = { ...current };
+            const emptySlotIds = photoSlots.map(s => s.id).filter(id => !next[id]);
+            const targetSlots = emptySlotIds.length >= validFiles.length
+                ? emptySlotIds
+                : [...emptySlotIds, ...photoSlots.map(s => s.id).filter(id => !emptySlotIds.includes(id))];
+            let placed = 0;
+            for (const file of validFiles) {
+                const slotId = targetSlots[placed];
+                if (!slotId) {
+                    nextErrors.push("Chỉ hỗ trợ tối đa 6 góc ảnh tiêu chuẩn khi tạo xe.");
+                    break;
+                }
+                revokeBlob(next[slotId]?.url);
+                next[slotId] = { url: URL.createObjectURL(file), file };
+                placed++;
+            }
+            set({ photos: next });
+        }
+        setPhotoErrors(nextErrors);
+    }
+    function removePhoto(slotId) {
+        setPhotoErrors([]);
+        setPhotos(current => {
+            const next = { ...current };
+            revokeBlob(next[slotId]?.url);
+            delete next[slotId];
+            return next;
+        });
+    }
     function saveDraft() {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, photos, cavet, inspection }));
+        const safePhotos = Object.fromEntries(
+            Object.entries(photos)
+                .filter(([, item]) => item?.url && !item.url.startsWith("blob:"))
+                .map(([id, item]) => [id, { url: item.url }])
+        );
+        const safeCavet = cavet?.startsWith("blob:") ? "" : cavet;
+        const safeInspection = inspection?.startsWith("blob:") ? "" : inspection;
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, photos: safePhotos, cavet: safeCavet, inspection: safeInspection }));
         setDraftNote("Đã lưu bản nháp trên máy này.");
     }
     async function submitCar(draft) {
         const car = await carService.create(draft);
-        const documents = [["REGISTRATION", cavet], ["INSPECTION", inspection]].filter(([, url]) => url.trim());
-        for (const [docType, fileUrl] of documents)
-            await carService.addDocument(car.id, { docType, fileUrl: fileUrl.trim() });
+        if (cavetFile) {
+            await carService.addDocument(car.id, { docType: "REGISTRATION", file: cavetFile });
+        }
+        if (inspectionFile) {
+            await carService.addDocument(car.id, { docType: "INSPECTION", file: inspectionFile });
+        }
         return car;
     }
     async function submit(values) {
-        const ordered = photoSlots.map(slot => photos[slot.id]?.url).filter(url => url && isUrl(url));
+        const photoEntries = photoSlots
+            .map(slot => photos[slot.id])
+            .filter(item => item && (item.file || (item.url && !item.url.startsWith("blob:") && isUrl(item.url))))
+            .map(item => ({ url: item.file ? "" : item.url.trim(), file: item.file ?? null }));
         const details = [
             form.powerNote.trim() ? `${form.fuelType === "ELECTRIC" ? "Pin/công suất" : "Động cơ"}: ${form.powerNote.trim()}` : "",
             form.rangeKm ? `Tầm vận hành: ${form.rangeKm} km` : "",
-            weekend ? `Giá cuối tuần: ${formatVnd(weekend)}` : "",
-            form.lateFee ? `Phí trễ giờ: ${formatVnd(Number(form.lateFee))}/giờ` : "",
             form.segment === OTHER && form.customSegment.trim() ? `Phân khúc: ${form.customSegment.trim()}` : "",
             form.cancellation,
         ].filter(Boolean).join(". ");
@@ -150,7 +261,9 @@ export default function OwnerVehicleNew() {
             depositAmount: values.depositAmount,
             kmLimitPerDay: values.kmLimitPerDay,
             extraKmFee: values.extraKmFee,
-            imageUrls: ordered,
+            weekendPricePerDay: weekend,
+            lateFeePerHour: form.lateFee ? Number(form.lateFee) : null,
+            photoEntries,
         });
         if (!car)
             return;
@@ -196,10 +309,10 @@ export default function OwnerVehicleNew() {
 
     {step > 1 ? <p className="text-sm text-muted-gray">Chủ xe đại diện <span className="font-semibold text-charcoal">{user?.fullName ?? "Chủ xe"}</span> • {subtitle}</p> : null}
 
-    {step === 1 ? <StepOne form={form} errors={visibleStepErrors} cavet={cavet} inspection={inspection} onChange={set} onBrand={chooseBrand} onSegment={chooseSegment} onCity={chooseCity} onCavet={files => setCavet(files)} onInspection={setInspection}/> : null}
+    {step === 1 ? <StepOne form={form} errors={visibleStepErrors} cavet={cavet} inspection={inspection} cavetFile={cavetFile} inspectionFile={inspectionFile} cavetError={cavetError} inspectionError={inspectionError} onChange={set} onBrand={chooseBrand} onSegment={chooseSegment} onCity={chooseCity} onCavet={files => setCavet(files)} onInspection={setInspection} onCavetFile={handleCavetFile} onInspectionFile={handleInspectionFile}/> : null}
     {step === 2 ? <StepTwo form={form} errors={visibleStepErrors} onChange={set}/> : null}
-    {step === 3 ? <StepThree form={form} errors={visibleStepErrors} dayPrice={dayPrice} weekend={weekend} fee={fee} onChange={set}/> : null}
-    {step === 4 ? <StepFour form={form} photos={photos} photoCount={photoCount} dayPrice={dayPrice} deposit={deposit} agreed={agreed} onAgree={setAgreed} onPhoto={addPhoto} onZoom={setZoom} hasCavet={Boolean(cavet.trim())} hasInspection={Boolean(inspection.trim())}/> : null}
+    {step === 3 ? <StepThree form={form} errors={visibleStepErrors} dayPrice={dayPrice} weekend={weekend} deposit={deposit} onChange={set}/> : null}
+    {step === 4 ? <StepFour form={form} photos={photos} photoCount={photoCount} photoErrors={photoErrors} dayPrice={dayPrice} deposit={deposit} agreed={agreed} onAgree={setAgreed} onPhoto={addPhoto} onPhotoFile={handlePhotoFile} onPhotoFiles={handlePhotoFiles} onRemovePhoto={removePhoto} onZoom={setZoom} hasCavet={Boolean(cavet.trim())} hasInspection={Boolean(inspection.trim())}/> : null}
 
     {step <= 3 && gaps.length ? <p className="text-sm text-muted-gray">{gaps.join(" ")}</p> : null}
     {draftNote ? <p className="text-sm font-semibold text-status-success-ink">{draftNote}</p> : null}

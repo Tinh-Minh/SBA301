@@ -12,7 +12,7 @@ public class AppException extends RuntimeException {
     private final HttpStatus status;
 
     public AppException(ErrorCode errorCode) {
-        this(errorCode, null, null);
+        this(errorCode, null, (Throwable) null);
     }
 
     public AppException(ErrorCode errorCode, Throwable cause) {
@@ -20,7 +20,7 @@ public class AppException extends RuntimeException {
     }
 
     public AppException(ErrorCode errorCode, String safeMessage) {
-        this(errorCode, safeMessage, null);
+        this(errorCode, safeMessage, (Throwable) null);
     }
 
     public AppException(ErrorCode errorCode, String safeMessage, Throwable cause) {
@@ -32,7 +32,11 @@ public class AppException extends RuntimeException {
     }
 
     public AppException(ErrorCode errorCode, List<FieldErrorResponse> fieldErrors) {
-        super(Objects.requireNonNull(errorCode).message());
+        this(errorCode, Objects.requireNonNull(errorCode).message(), fieldErrors);
+    }
+
+    public AppException(ErrorCode errorCode, String safeMessage, List<FieldErrorResponse> fieldErrors) {
+        super(safeMessage == null || safeMessage.isBlank() ? Objects.requireNonNull(errorCode).message() : safeMessage);
         this.errorCode = errorCode;
         this.fieldErrors = fieldErrors == null ? List.of() : List.copyOf(fieldErrors);
         this.status = errorCode.status();

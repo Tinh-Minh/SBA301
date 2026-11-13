@@ -7,18 +7,31 @@ import { adminRoutes } from "@/routes/paths.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { kycStatusLabels } from "@/utils/labels.js";
 import { getAdminOverview } from "@/services/adminService.js";
+import { tripService } from "@/services/tripService.js";
 import { Stat } from "@/components/dashboards/DashboardStat.jsx";
 
 const txStatus = { PENDING: "Chờ thanh toán", SUCCESS: "Thành công", FAILED: "Thất bại" };
+
+function BookingOverview() {
+    const { data } = useApiQuery(["admin", "bookings", "stats"], tripService.adminStats);
+    if (!data) return null;
+    return <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <Stat label="Đơn thuê" value={`${data.total} đơn`} hint={`${data.requested} chờ chủ xe • ${data.inProgress} đang thuê`}/>
+      <Stat label="Tranh chấp biên bản" value={`${data.disputedHandovers} biên bản`} hint="Khách yêu cầu chủ xe sửa hiện trạng"/>
+      <Stat label="Giá trị chuyến hoàn tất" value={formatTrVnd(data.completedValue)} hint={`${data.completed} chuyến hoàn tất`}/>
+      <Link to="/admin/bookings" className="flex items-center justify-center rounded-2xl border border-[#E9E9E7] bg-white p-4 text-sm font-bold text-[#FC6C26]">Quản lý đơn thuê →</Link>
+    </section>;
+}
 
 export default function AdminDashboard() {
     const { data, loading, error, reload } = useApiQuery(["admin", "dashboard"], getAdminOverview);
     const totals = data?.totals;
     const revenue = data?.revenue;
     return <div className="flex flex-col gap-5">
-    <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Doanh thu gói đăng tin, hồ sơ chờ duyệt và giao dịch gần nhất." actions={<button type="button" onClick={reload} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold">Làm mới</button>}/>
+    <AdminPageHeader code="A01" title="Tổng quan quản trị" description="Doanh thu gói đăng tin, đơn thuê, hồ sơ chờ duyệt và giao dịch gần nhất." actions={<button type="button" onClick={reload} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold">Làm mới</button>}/>
     <AdminState loading={loading && !data} error={error} label="tổng quan" onRetry={reload}/>
     {totals ? <>
+    <BookingOverview/>
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <Stat label="Doanh thu gói" value={formatTrVnd(revenue?.totalRevenue ?? 0)} hint={`${revenue?.totalPackagesSold ?? 0} gói đã bán`}/>
       <Stat label="Tin đang hiển thị" value={`${revenue?.activeListingsCount ?? 0} tin`} hint={revenue?.bestSellingPackageName ? `Bán chạy: ${revenue.bestSellingPackageName}` : "Chưa có gói bán chạy"}/>

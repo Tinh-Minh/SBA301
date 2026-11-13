@@ -6,7 +6,11 @@ import { transactionService } from "@/services/paymentService.js";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney } from "@/utils/labels.js";
 
-const statusLabel = { PENDING: "Chờ thanh toán", SUCCESS: "Thành công", FAILED: "Thất bại" };
+const statusLabel = { PENDING: "Chờ thanh toán", SUCCESS: "Thành công", FAILED: "Thất bại", CANCELLED: "Đã huỷ" };
+/** Giao dịch chưa thanh toán của gói đã bị huỷ là "Đã huỷ", không phải thanh toán thất bại. */
+const statusOf = row => row.status !== "SUCCESS" && row.subscriptionStatus === "CANCELLED" ? "CANCELLED" : row.status;
+/** Ưu tiên thời điểm thanh toán thật; chưa thanh toán thì dùng thời điểm tạo giao dịch. */
+const timeOf = row => row.paidAt ?? row.createdAt;
 
 export default function AdminPayouts() {
     const [page, setPage] = useState(0);
@@ -19,15 +23,15 @@ export default function AdminPayouts() {
     {rows.length ? <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white">
       <table className="w-full min-w-[720px] text-left text-sm">
         <thead className="text-xs uppercase text-[#666666]"><tr>
-          <th className="p-3">Mã</th><th className="p-3">Gói</th><th className="p-3">Xe</th><th className="p-3">Số tiền</th><th className="p-3">Trạng thái</th><th className="p-3">Thời điểm</th><th className="p-3"/>
+          <th className="p-3">Mã</th><th className="p-3">Gói</th><th className="p-3">Xe</th><th className="p-3">Số tiền</th><th className="p-3">Trạng thái</th><th className="p-3">Thanh toán / tạo lúc</th><th className="p-3"/>
         </tr></thead>
         <tbody>{rows.map(row => <tr key={row.id} className="border-t border-[#E9E9E7]">
           <td className="p-3 font-mono text-xs">#{row.id}</td>
           <td className="p-3">{row.packageName ?? "—"}<span className="block text-xs text-[#666666]">{row.subscriptionCode}</span></td>
           <td className="p-3">{row.carName}</td>
           <td className="p-3 font-semibold">{formatMoney(row.amount)}</td>
-          <td className="p-3">{statusLabel[row.status] ?? row.status}</td>
-          <td className="p-3">{formatDateTime(row.createdAt)}</td>
+          <td className="p-3">{statusLabel[statusOf(row)] ?? row.status}</td>
+          <td className="p-3">{formatDateTime(timeOf(row))}</td>
           <td className="p-3 text-right"><button type="button" onClick={() => setSelected(row)} className="font-bold text-[#FC6C26]">Chi tiết</button></td>
         </tr>)}</tbody>
       </table>
@@ -40,6 +44,7 @@ export default function AdminPayouts() {
         <dt className="text-[#666666]">Số tiền</dt><dd>{formatMoney(selected.amount)}</dd>
         <dt className="text-[#666666]">Cổng</dt><dd>{selected.method}</dd>
         <dt className="text-[#666666]">Mã đối soát</dt><dd>{selected.providerRef ?? "—"}</dd>
+        <dt className="text-[#666666]">Tạo lúc</dt><dd>{formatDateTime(selected.createdAt)}</dd>
         <dt className="text-[#666666]">Thanh toán lúc</dt><dd>{formatDateTime(selected.paidAt)}</dd>
       </dl> : null}
     </ConfirmDialog>

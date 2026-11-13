@@ -1,5 +1,5 @@
 import { parseDate } from "@/utils/datetime.js";
-import { toNumber } from "@/utils/labels.js";
+import { resolveAssetUrl, toNumber } from "@/utils/labels.js";
 
 const isoOrNull = (value) => parseDate(value)?.toISOString() ?? null;
 const money = (value) => Math.round(toNumber(value));
@@ -8,18 +8,24 @@ const money = (value) => Math.round(toNumber(value));
 export function normalizeCar(car) {
     if (!car)
         return car;
-    const images = Array.isArray(car.images) ? car.images.slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)) : [];
+    const images = Array.isArray(car.images)
+        ? car.images.slice()
+            .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+            .map(image => ({ ...image, imageUrl: resolveAssetUrl(image.imageUrl) || image.imageUrl }))
+        : [];
     const primary = images.find(image => image.isPrimary) ?? images[0];
     return {
         ...car,
         images,
         documents: Array.isArray(car.documents) ? car.documents : [],
-        primaryImageUrl: car.primaryImageUrl ?? primary?.imageUrl ?? null,
+        primaryImageUrl: resolveAssetUrl(car.primaryImageUrl ?? primary?.imageUrl) || null,
         pricePerHour: money(car.pricePerHour),
         pricePerDay: money(car.pricePerDay),
         depositAmount: money(car.depositAmount),
         extraKmFee: money(car.extraKmFee),
         kmLimitPerDay: car.kmLimitPerDay ?? null,
+        lateFeePerHour: car.lateFeePerHour == null ? null : money(car.lateFeePerHour),
+        weekendPricePerDay: car.weekendPricePerDay == null ? null : money(car.weekendPricePerDay),
     };
 }
 

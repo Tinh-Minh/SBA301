@@ -1,4 +1,5 @@
-import { httpUrlInput } from "@/utils/validateInput.js";
+import { mediaUrlInput, validateImageFile } from "@/utils/validateInput.js";
+import { resolveAssetUrl } from "@/utils/labels.js";
 import { digitsOnly as digitsOf, formatVndInput as grouped } from "@/utils/inputParser.js";
 import { Icon } from "@/components/Icon.jsx";
 import { Money } from "@/components/owner/Money.jsx";
@@ -11,14 +12,22 @@ export const steps = [
     { id: 3, title: "Giá thuê & Cọc", next: "Tiếp tục: Tải bộ ảnh niêm yết (Bước 4)", blurb: "Thiết lập đơn giá theo ngày, tiền cọc thế chấp và phí phụ trội." },
     { id: 4, title: "Hình ảnh niêm yết", next: "Gửi BQL CarDB thẩm định", blurb: "Tải ảnh thực tế và hoàn tất hồ sơ gửi CarDB thẩm định." },
 ];
-const brands = ["VinFast", "Mercedes-Benz", "BMW", "Porsche", "Audi", "Hyundai"];
+const brands = ["Toyota", "Honda", "Hyundai", "Kia", "Mazda", "Mitsubishi", "Ford", "VinFast", "Suzuki", "Nissan", "Mercedes-Benz", "BMW", "Audi", "Porsche"];
 export const modelsByBrand = {
-    VinFast: ["VF 9 Plus AWD", "VF 8 Plus", "VF 5 Plus"],
-    "Mercedes-Benz": ["GLC 300 4MATIC", "E 300 AMG"],
-    BMW: ["530i M Sport", "X5 xDrive40i"],
+    Toyota: ["Vios", "Camry", "Corolla Cross", "Fortuner", "Innova", "Veloz Cross"],
+    Honda: ["City", "Civic", "CR-V", "HR-V", "BR-V"],
+    Hyundai: ["Accent", "Creta", "Tucson", "Santa Fe", "Stargazer"],
+    Kia: ["Morning", "K3", "Seltos", "Sonet", "Carnival", "Sorento"],
+    Mazda: ["Mazda2", "Mazda3", "CX-5", "CX-8"],
+    Mitsubishi: ["Xpander", "Xforce", "Attrage", "Triton"],
+    Ford: ["Ranger", "Everest", "Territory"],
+    VinFast: ["VF 3", "VF 5 Plus", "VF 6", "VF 8 Plus", "VF 9 Plus AWD"],
+    Suzuki: ["Ertiga", "XL7", "Swift"],
+    Nissan: ["Almera", "Navara", "Kicks"],
+    "Mercedes-Benz": ["C 200", "E 300 AMG", "GLC 300 4MATIC"],
+    BMW: ["320i", "530i M Sport", "X5 xDrive40i"],
+    Audi: ["A4", "A6", "Q5"],
     Porsche: ["Macan GTS", "Cayenne"],
-    Audi: ["A6", "Q5"],
-    Hyundai: ["Santa Fe", "Tucson"],
 };
 const years = ["2026", "2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"];
 export const segments = [
@@ -133,7 +142,24 @@ function ChoiceSelect({ value, options, onPick, onType, placeholder, inputMode, 
     {shown === OTHER ? <input className={`${inputCls(error)} normal-case`} value={value} placeholder={placeholder} inputMode={inputMode} maxLength={maxLength} onChange={event => type(event.target.value)}/> : null}
   </>;
 }
-export function StepOne({ form, cavet, inspection, errors = {}, onChange, onBrand, onSegment, onCity, onCavet, onInspection }) {
+export function StepOne({
+    form,
+    cavet,
+    inspection,
+    cavetFile = null,
+    inspectionFile = null,
+    cavetError = "",
+    inspectionError = "",
+    errors = {},
+    onChange,
+    onBrand,
+    onSegment,
+    onCity,
+    onCavet,
+    onInspection,
+    onCavetFile,
+    onInspectionFile,
+}) {
     const models = modelsByBrand[form.brand] ?? [];
     const areaOptions = areas[form.city] ?? [];
     return <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
@@ -177,18 +203,64 @@ export function StepOne({ form, cavet, inspection, errors = {}, onChange, onBran
     </section>
     <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="text-base font-bold text-charcoal">Giấy tờ bắt buộc</h2>
-      <p className="text-xs text-muted-gray">Hệ thống lưu giấy tờ dạng đường dẫn (Google Drive, ảnh đã tải lên...). Có thể bổ sung sau khi gửi hồ sơ.</p>
-      <label className="rounded-xl border border-dashed border-card-border p-3 text-sm">
-        <span className="font-bold text-charcoal">Giấy đăng ký xe (cavet)</span>
-        <input type="url" value={cavet} placeholder="https://..." onChange={event => onCavet(event.target.value)} className={`${inputCls(errors.registrationUrl)} mt-2`}/>
-        {errors.registrationUrl ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{errors.registrationUrl}</span> : null}
-      </label>
-      <label className="rounded-xl border border-dashed border-card-border p-3 text-sm">
-        <span className="font-bold text-charcoal">Sổ kiểm định an toàn</span>
-        <input type="url" value={inspection} placeholder="https://..." onChange={event => onInspection(event.target.value)} className={`${inputCls(errors.inspectionUrl)} mt-2`}/>
-        {errors.inspectionUrl ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{errors.inspectionUrl}</span> : null}
+      <p className="text-xs text-muted-gray">Chọn ảnh JPG, PNG hoặc WebP từ máy (tối đa 5MB) để xem trước.</p>
+      <div className="rounded-xl border border-dashed border-card-border p-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-bold text-charcoal">Giấy đăng ký xe (cavet)</span>
+          <label className="cursor-pointer rounded-lg border border-card-border bg-bg-light px-2.5 py-1 text-xs font-bold text-charcoal hover:bg-accent-soft">
+            Chọn ảnh từ máy
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={event => {
+                const file = event.target.files?.[0] ?? null;
+                event.target.value = "";
+                if (file) onCavetFile?.(file);
+              }}
+            />
+          </label>
+        </div>
+        {cavet && isUrl(cavet) ? (
+          <div className="mt-2 overflow-hidden rounded-lg border border-card-border bg-bg-light">
+            <img src={resolveAssetUrl(cavet)} alt="Xem trước giấy đăng ký xe" className="h-28 w-full object-cover" />
+            <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-[11px] text-muted-gray">
+              <span className="truncate">{cavetFile ? `Tệp: ${cavetFile.name}` : cavet}</span>
+              <button type="button" onClick={() => { onCavetFile?.(null); onCavet(""); }} className="shrink-0 font-bold text-red-600 hover:underline">Xóa</button>
+            </div>
+          </div>
+        ) : null}
+        {(cavetError || errors.registrationUrl) ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{cavetError || errors.registrationUrl}</span> : null}
+      </div>
+      <div className="rounded-xl border border-dashed border-card-border p-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-bold text-charcoal">Sổ kiểm định an toàn</span>
+          <label className="cursor-pointer rounded-lg border border-card-border bg-bg-light px-2.5 py-1 text-xs font-bold text-charcoal hover:bg-accent-soft">
+            Chọn ảnh từ máy
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={event => {
+                const file = event.target.files?.[0] ?? null;
+                event.target.value = "";
+                if (file) onInspectionFile?.(file);
+              }}
+            />
+          </label>
+        </div>
+        {inspection && isUrl(inspection) ? (
+          <div className="mt-2 overflow-hidden rounded-lg border border-card-border bg-bg-light">
+            <img src={resolveAssetUrl(inspection)} alt="Xem trước sổ kiểm định" className="h-28 w-full object-cover" />
+            <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-[11px] text-muted-gray">
+              <span className="truncate">{inspectionFile ? `Tệp: ${inspectionFile.name}` : inspection}</span>
+              <button type="button" onClick={() => { onInspectionFile?.(null); onInspection(""); }} className="shrink-0 font-bold text-red-600 hover:underline">Xóa</button>
+            </div>
+          </div>
+        ) : null}
+        {(inspectionError || errors.inspectionUrl) ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{inspectionError || errors.inspectionUrl}</span> : null}
         <span className="mt-1 block text-xs text-muted-gray">Còn hạn tối thiểu 3 tháng khi niêm yết.</span>
-      </label>
+      </div>
       <div className="rounded-xl bg-status-green-bg px-3 py-3 text-xs leading-relaxed text-status-success-ink">
         <p className="font-bold">Bảo hiểm vật chất CarDB Care</p>
         Gói bảo hiểm gắn khi xe được duyệt. Chủ xe không thu phí bảo hiểm riêng trên giá thuê.
@@ -238,11 +310,11 @@ export function StepTwo({ form, errors = {}, onChange }) {
     </section>
   </div>;
 }
-export function StepThree({ form, dayPrice, weekend, fee, errors = {}, onChange }) {
+export function StepThree({ form, dayPrice, weekend, deposit, errors = {}, onChange }) {
     return <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.3fr)_300px]">
     <section className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="flex items-center gap-2 text-base font-bold text-charcoal"><Icon name="payments" className="text-[20px] text-brand-accent"/> Cài đặt bảng giá và tiền cọc</h2>
-      <p className="mt-1 text-sm text-muted-gray">Đơn giá ngày thường được lưu làm giá niêm yết. Tiền cọc chủ xe tự thu khi ký C10-A.</p>
+      <p className="mt-1 text-sm text-muted-gray">Đây là các điều khoản hiển thị cho khách khi gửi yêu cầu đặt xe. CarDB không thu hộ tiền thuê: khách thanh toán và đặt cọc trực tiếp cho chủ xe khi nhận xe.</p>
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <Field label="Đơn giá ngày thường (VND)" error={errors.pricePerDay}>
           <input inputMode="numeric" className={inputCls(errors.pricePerDay)} value={grouped(form.pricePerDay)} placeholder="Tối thiểu 10.000đ" onChange={event => onChange({ pricePerDay: digitsOf(event.target.value) })}/>
@@ -262,48 +334,108 @@ export function StepThree({ form, dayPrice, weekend, fee, errors = {}, onChange 
         <Field label="Phí quá km (VND)" error={errors.extraKmFee}>
           <input inputMode="numeric" className={inputCls(errors.extraKmFee)} value={grouped(form.extraKmFee)} placeholder="0 - 1.000.000đ" onChange={event => onChange({ extraKmFee: digitsOf(event.target.value) })}/>
         </Field>
-        <Field label="Phí trễ giờ (VND)" error={errors.lateFee}>
+        <Field label="Phí trễ giờ (VND / giờ)" error={errors.lateFee}>
           <input inputMode="numeric" className={inputCls(errors.lateFee)} value={grouped(form.lateFee)} placeholder="Không bắt buộc" onChange={event => onChange({ lateFee: digitsOf(event.target.value) })}/>
         </Field>
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-muted-gray">Khách hủy muộn hơn mốc đã chọn đền bù theo hợp đồng thuê. Phí trễ giờ chủ xe đối soát khi trả xe, không trừ vào payout.</p>
+      <p className="mt-4 text-xs leading-relaxed text-muted-gray">Tiền thuê tính theo ngày (24 giờ) và giờ lẻ: giá giờ = 1/10 giá ngày, thuê lẻ từ 10 giờ tính tròn 1 ngày. Phí quá km và phí trễ giờ do hai bên đối soát trong biên bản trả xe.</p>
     </section>
     <aside className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
-      <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">Bảng tính thu nhập</p>
+      <p className="text-[11px] font-bold uppercase tracking-wide text-muted-gray">Bảng giá niêm yết</p>
       <h2 className="mt-2 font-bold text-charcoal">{form.brand} {form.model}</h2>
       <p className="font-mono text-xs text-muted-gray">{form.licensePlate || "Chưa có biển số"} • {form.seats} chỗ</p>
       <dl className="mt-4 flex flex-col gap-2 text-sm">
         <div className="flex justify-between gap-3"><dt className="text-muted-gray">Ngày thường</dt><dd><Money amount={dayPrice ?? 0}/></dd></div>
-        <div className="flex justify-between gap-3"><dt className="text-muted-gray">Phí CarDB 10%</dt><dd><Money amount={fee} sign="-"/></dd></div>
-        <div className="flex justify-between gap-3 border-t border-card-border pt-2 font-bold"><dt>Thực nhận / ngày</dt><dd><Money amount={Math.max(0, (dayPrice ?? 0) - fee)} className="text-status-success-ink"/></dd></div>
-        <div className="flex justify-between gap-3 text-xs"><dt className="text-muted-gray">Cuối tuần</dt><dd>{weekend ? formatVnd(weekend) : "—"}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted-gray">Cuối tuần (T7, CN)</dt><dd>{weekend ? formatVnd(weekend) : "—"}</dd></div>
+        <div className="flex justify-between gap-3"><dt className="text-muted-gray">Giờ lẻ</dt><dd>{dayPrice ? `${formatVnd(Math.ceil(dayPrice / 10 / 1000) * 1000)}/giờ` : "—"}</dd></div>
+        <div className="flex justify-between gap-3 border-t border-card-border pt-2 font-bold"><dt>Tiền cọc</dt><dd>{deposit ? formatVnd(deposit) : "Miễn cọc"}</dd></div>
       </dl>
-      <p className="mt-4 rounded-xl bg-bg-light px-3 py-2 text-xs leading-relaxed text-muted-gray">Tiền thuê chuyển về tài khoản liên kết sau khi ký C10-B. Tiền cọc không nằm trong số thực nhận.</p>
+      <p className="mt-4 rounded-xl bg-bg-light px-3 py-2 text-xs leading-relaxed text-muted-gray">Chủ xe nhận toàn bộ tiền thuê trực tiếp từ khách. Chi phí trên CarDB chỉ là gói đăng tin để xe hiển thị trên sàn.</p>
     </aside>
   </div>;
 }
-export function StepFour({ form, photos, photoCount, dayPrice, deposit, agreed, onAgree, onPhoto, onZoom, hasCavet, hasInspection }) {
+export function StepFour({
+    form,
+    photos,
+    photoCount,
+    photoErrors = [],
+    dayPrice,
+    deposit,
+    agreed,
+    onAgree,
+    onPhoto,
+    onPhotoFile,
+    onPhotoFiles,
+    onRemovePhoto,
+    onZoom,
+    hasCavet,
+    hasInspection,
+}) {
     return <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.4fr)_320px]">
     <section className="rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-bold text-charcoal">Bộ ảnh niêm yết tiêu chuẩn</h2>
-        <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-bold text-charcoal">{photoCount}/6 đã chọn</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl bg-brand-accent px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-hover">
+            <Icon name="upload" className="text-[16px]"/>
+            Chọn nhiều ảnh từ máy
+            <input
+              type="file"
+              multiple
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={event => {
+                const picked = Array.from(event.target.files ?? []);
+                event.target.value = "";
+                if (picked.length) onPhotoFiles?.(picked);
+              }}
+            />
+          </label>
+          <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-bold text-charcoal">{photoCount}/6 đã chọn</span>
+        </div>
       </div>
-      <p className="mt-1 text-xs text-muted-gray">Dán đường dẫn ảnh (https://...). Ảnh góc trước làm ảnh đại diện, các ảnh còn lại hiển thị trong thư viện xe.</p>
+      <p className="mt-1 text-xs text-muted-gray">Chọn ảnh JPG, PNG hoặc WebP từ máy (tối đa 5MB/ảnh). Ảnh góc trước làm ảnh đại diện.</p>
+      {photoErrors.length ? (
+        <div role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-[#B91C1C]">
+          {photoErrors.map((msg, idx) => <p key={idx}>{msg}</p>)}
+        </div>
+      ) : null}
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         {photoSlots.map(slot => {
             const photo = photos[slot.id];
             const valid = photo && isUrl(photo.url);
             return <div key={slot.id} className="overflow-hidden rounded-xl border border-card-border">
             <div className="relative flex h-28 items-center justify-center bg-bg-light">
-              {valid ? <img src={photo.url} alt={slot.title} className="h-full w-full object-cover"/> : <span className="px-3 text-center text-xs text-muted-gray">{slot.hint}</span>}
+              {valid ? <img src={resolveAssetUrl(photo.url)} alt={slot.title} className="h-full w-full object-cover"/> : <span className="px-3 text-center text-xs text-muted-gray">{slot.hint}</span>}
               {slot.id === "front" ? <span className="absolute left-2 top-2 rounded-full bg-brand-accent px-2 py-0.5 text-[10px] font-bold text-white">Ảnh đại diện</span> : null}
             </div>
             <div className="p-2">
-              <p className="text-xs font-bold text-charcoal">{slot.title}</p>
-              <input type="url" value={photo?.url ?? ""} placeholder="https://..." onChange={event => onPhoto(slot.id, event.target.value)} className="mt-1 w-full rounded-lg border border-card-border px-2 py-1 text-[11px]"/>
-              {photo && !valid ? <p className="mt-1 text-[11px] text-on-error-container">Đường dẫn chưa hợp lệ.</p> : null}
-              {valid ? <button type="button" className="mt-1 text-[11px] font-bold text-charcoal" onClick={() => onZoom(photo.url)}>Phóng to</button> : null}
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-bold text-charcoal">{slot.title}</p>
+                <label className="cursor-pointer rounded border border-card-border bg-bg-light px-2 py-0.5 text-[11px] font-bold text-charcoal hover:bg-accent-soft">
+                  Chọn ảnh
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={event => {
+                      const file = event.target.files?.[0] ?? null;
+                      event.target.value = "";
+                      if (file) onPhotoFile?.(slot.id, file);
+                    }}
+                  />
+                </label>
+              </div>
+              {photo?.file ? (
+                <p className="mt-1 truncate text-[11px] font-medium text-charcoal">Tệp: {photo.file.name}</p>
+              ) : null}
+              {photo && !valid ? <p className="mt-1 text-[11px] text-on-error-container">Ảnh chưa hợp lệ.</p> : null}
+              {valid ? (
+                <div className="mt-1 flex items-center justify-between gap-2">
+                  <button type="button" className="text-[11px] font-bold text-charcoal hover:underline" onClick={() => onZoom(resolveAssetUrl(photo.url))}>Phóng to</button>
+                  <button type="button" className="text-[11px] font-bold text-red-600 hover:underline" onClick={() => onRemovePhoto?.(slot.id)}>Xóa ảnh</button>
+                </div>
+              ) : null}
             </div>
           </div>;
         })}
@@ -320,9 +452,9 @@ export function StepFour({ form, photos, photoCount, dayPrice, deposit, agreed, 
       <p className="mt-3 text-xs text-muted-gray">{form.pickupAddress ? `${form.pickupAddress}, ${form.city}` : "Chưa có địa chỉ giao xe"}</p>
       <ul className="mt-3 flex flex-col gap-1 text-xs text-charcoal">
         <li>{form.pickupAddress ? "Bãi giao nhận đã khai" : "Thiếu địa chỉ giao xe"}</li>
-        <li>{hasCavet && hasInspection ? "Cavet và đăng kiểm đã chọn" : "Thiếu giấy tờ"}</li>
+        <li>{hasCavet ? (hasInspection ? "Cà vẹt và đăng kiểm đã cung cấp" : "Đã có cà vẹt, chưa có đăng kiểm (bổ sung sau được)") : "Thiếu giấy đăng ký xe (cà vẹt)"}</li>
         <li>{dayPrice ? "Giá và hạn km đã thiết lập" : "Chưa có giá thuê"}</li>
-        <li>{photoCount}/6 góc ảnh</li>
+        <li>{photoCount}/6 góc ảnh (bắt buộc ảnh góc trước)</li>
       </ul>
       <label className="mt-4 flex items-start gap-2 text-xs leading-relaxed text-charcoal">
         <input type="checkbox" className="mt-0.5" checked={agreed} onChange={event => onAgree(event.target.checked)}/>
@@ -333,5 +465,6 @@ export function StepFour({ form, photos, photoCount, dayPrice, deposit, agreed, 
   </div>;
 }
 export function isUrl(value) {
-    return httpUrlInput.safeParse(value).success;
+    return mediaUrlInput.safeParse(value).success;
 }
+export { validateImageFile };

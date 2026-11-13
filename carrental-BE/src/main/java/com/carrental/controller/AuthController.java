@@ -13,6 +13,7 @@ import com.carrental.dto.response.TokenResponse;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
 import com.carrental.web.RequestTraceFilter;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
@@ -34,10 +35,13 @@ public class AuthController {
     }
 
     @PostMapping(path = "/register", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponse<CustomerProfileResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> register(
+            @Valid @RequestBody RegisterRequest request,
+            HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .cacheControl(CacheControl.noStore())
-                .body(ApiResponse.success(authService.register(request), RequestTraceFilter.currentTraceId()));
+                .body(ApiResponse.success(authService.register(request, clientIp), RequestTraceFilter.currentTraceId()));
     }
 
     @PostMapping(path = "/login", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -53,9 +57,24 @@ public class AuthController {
 
     @PostMapping(path = "/resend-verification", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<Void>> resendVerification(
-            @Valid @RequestBody ResendVerificationRequest request) {
-        authService.resendVerification(request.email());
+            @Valid @RequestBody ResendVerificationRequest request,
+            HttpServletRequest httpRequest) {
+        String clientIp = extractClientIp(httpRequest);
+        authService.resendVerification(request.email(), clientIp);
         return ok(null);
+    }
+
+    private static String extractClientIp(HttpServletRequest request) {
+        if (request == null) return "127.0.0.1";
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isBlank()) {
+            return forwarded.split(",")[0].trim();
+        }
+        String realIp = request.getHeader("X-Real-IP");
+        if (realIp != null && !realIp.isBlank()) {
+            return realIp.trim();
+        }
+        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
     }
 
     @PostMapping(path = "/change-password", consumes = MediaType.APPLICATION_JSON_VALUE)

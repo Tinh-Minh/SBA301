@@ -119,7 +119,7 @@ class CarSubscriptionFlowIntegrationTest {
         now = LocalDateTime.now(VN);
         clock.setTo(now);
         tx.executeWithoutResult(s -> {
-            for (String entity : List.of("Transaction", "Review", "CarSubscription", "CarImage", "CarDocument", "Car",
+            for (String entity : List.of("HandoverItem", "Handover", "Booking", "CarSafetyRecord", "Transaction", "Review", "CarSubscription", "CarImage", "CarDocument", "Car",
                     "ListingPackage", "Voucher", "Customer")) {
                 entityManager.createQuery("delete from " + entity).executeUpdate();
             }

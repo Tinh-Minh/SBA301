@@ -1,5 +1,6 @@
 import { endpoints } from "@/services/endpoints.js";
 import { fetchAllPages, request, toPage } from "@/services/api.js";
+import { uploadImages } from "@/services/tripService.js";
 import { normalizeCar } from "@/utils/apiResponse.js";
 import { isApprovedCar } from "@/utils/owner.js";
 
@@ -36,6 +37,8 @@ function carPayload(draft) {
         depositAmount: numberOrNull(draft.depositAmount) ?? 0,
         kmLimitPerDay: numberOrNull(draft.kmLimitPerDay),
         extraKmFee: numberOrNull(draft.extraKmFee),
+        weekendPricePerDay: numberOrNull(draft.weekendPricePerDay),
+        lateFeePerHour: numberOrNull(draft.lateFeePerHour),
     };
 }
 
@@ -44,12 +47,23 @@ async function getCar(id) {
 }
 
 export const carService = {
-    /** POST /api/cars — xe mới luôn ở PENDING_APPROVAL; ảnh gửi tiếp qua POST /api/cars/{id}/images. */
+    /** POST /api/cars — tải ảnh multipart trước (nếu có) để tránh tạo xe mồ côi khi ảnh lỗi, giữ đúng thứ tự ảnh đại diện. */
     async create(draft) {
+        const photoEntries = Array.isArray(draft.photoEntries) ? draft.photoEntries : [];
+        let orderedUrls = [];
+        if (photoEntries.length) {
+            const fileEntries = photoEntries.filter(entry => entry.file);
+            const uploadedUrls = fileEntries.length ? await uploadImages(fileEntries.map(entry => entry.file)) : [];
+            let fileCursor = 0;
+            orderedUrls = photoEntries
+                .map(entry => (entry.file ? uploadedUrls[fileCursor++] : entry.url?.trim()))
+                .filter(Boolean);
+        } else {
+            orderedUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
+        }
         const created = await request(endpoints.cars.list, { method: "POST", json: { licensePlate: draft.licensePlate.trim().toUpperCase(), ...carPayload(draft) } });
-        const imageUrls = (draft.imageUrls ?? []).map(url => url.trim()).filter(Boolean);
-        if (imageUrls.length)
-            await this.addImages(created.id, imageUrls);
+        if (orderedUrls.length)
+            await this.addImages(created.id, orderedUrls);
         return getCar(created.id);
     },
     /** GET /api/cars/my-cars (tóm tắt) + GET /api/cars/{id} để có đủ địa chỉ, cọc, km... */
@@ -74,21 +88,36 @@ export const carService = {
     async setStatus(id, status) {
         return normalizeCar(await request(endpoints.cars.byIdStatus(id), { method: "PATCH", query: { status } }));
     },
-    /** POST /api/cars/{id}/images — backend chỉ nhận URL ảnh. */
+    /** POST /api/cars/{id}/images (JSON URL) */
     async addImages(id, urls, { firstIsPrimary = true } = {}) {
         return request(endpoints.cars.byIdImages(id), {
             method: "POST",
             json: urls.map((imageUrl, index) => ({ imageUrl, isPrimary: firstIsPrimary && index === 0, sortOrder: index })),
         });
     },
+    /** POST /api/cars/{id}/images (multipart/form-data) */
+    async uploadImages(id, files, primaryIndex = null) {
+        const form = new FormData();
+        for (const file of files)
+            form.append("files", file);
+        if (primaryIndex !== null && primaryIndex !== undefined)
+            form.append("primaryIndex", String(primaryIndex));
+        return request(endpoints.cars.byIdImages(id), { method: "POST", body: form });
+    },
     removeImage: (id, imageId) => request(endpoints.cars.byIdImagesById(id, imageId), { method: "DELETE" }),
     setPrimaryImage: (id, imageId) => request(endpoints.cars.byIdImagesByIdPrimary(id, imageId), { method: "PATCH" }),
-    /** POST /api/cars/{id}/documents { docType, fileUrl, expiresAt } */
-    addDocument: (id, { docType, fileUrl, expiresAt }) => request(endpoints.cars.byIdDocuments(id), { method: "POST", json: { docType, fileUrl, expiresAt: expiresAt || null } }),
+    /** POST /api/cars/{id}/documents (multipart: docType, file, expiresAt) */
+    addDocument: (id, { docType, file, expiresAt }) => {
+        const formData = new FormData();
+        formData.append("docType", docType);
+        if (file) formData.append("file", file);
+        if (expiresAt) formData.append("expiresAt", expiresAt);
+        return request(endpoints.cars.byIdDocuments(id), { method: "POST", body: formData });
+    },
     listDocuments: (id) => request(endpoints.cars.byIdDocuments(id)),
     /** GET /api/cars/search — tìm xe đang ACTIVE và LISTED. */
-    async search({ city, carType, brand, seats, minPrice, maxPrice, listingStatus, page = 0, size = 12, sortBy = "createdAt", direction = "DESC" } = {}) {
-        const result = toPage(await request(endpoints.cars.search, { query: { city, carType, brand, seats, minPrice, maxPrice, listingStatus, page, size, sortBy, direction } }));
+    async search({ city, carType, brand, seats, minPrice, maxPrice, transmission, fuelType, pickupAt, returnAt, page = 0, size = 12, sortBy = "createdAt", direction = "DESC" } = {}) {
+        const result = toPage(await request(endpoints.cars.search, { query: { city, carType, brand, seats, minPrice, maxPrice, transmission, fuelType, pickupAt, returnAt, page, size, sortBy, direction } }));
         return { ...result, content: result.content.map(normalizeCar) };
     },
     getPublic: getCar,
