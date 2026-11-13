@@ -57,8 +57,28 @@ public class BookingController {
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")
     @GetMapping("/api/bookings/my")
-    public ApiResponse<List<BookingResponse>> mine() {
-        return ApiResponse.ok(bookingService.mineAsCustomer());
+    public ApiResponse<List<BookingResponse>> mine(@RequestParam(required = false) String sort) {
+        return ApiResponse.ok(sortBookings(bookingService.mineAsCustomer(), sort));
+    }
+
+    /** Chỉ hỗ trợ sắp xếp theo createdAt/pickupAt; trường lạ trả 400 thay vì bị bỏ qua. */
+    private static List<BookingResponse> sortBookings(List<BookingResponse> bookings, String sort) {
+        if (sort == null || sort.isBlank()) {
+            return bookings;
+        }
+        String[] parts = sort.split(",");
+        java.util.Comparator<BookingResponse> comparator = switch (parts[0].trim()) {
+            case "createdAt" -> java.util.Comparator.comparing(BookingResponse::createdAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            case "pickupAt" -> java.util.Comparator.comparing(BookingResponse::pickupAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder()));
+            default -> throw new com.carrental.exception.AppException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Không hỗ trợ sắp xếp theo '" + parts[0].trim() + "'");
+        };
+        if (parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim())) {
+            comparator = comparator.reversed();
+        }
+        return bookings.stream().sorted(comparator).toList();
     }
 
     @PreAuthorize("hasRole('OWNER')")
