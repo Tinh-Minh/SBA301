@@ -240,9 +240,10 @@ public class BookingService {
         if (!admin && !isCustomer && !isOwner) {
             throw forbidden();
         }
-        if (b.getStatus() != BookingStatus.REQUESTED && b.getStatus() != BookingStatus.CONFIRMED
-                && !(admin && b.getStatus().isOpen())) {
-            throw conflict("Chỉ huỷ được đơn chưa bàn giao xe");
+        // Kể cả admin: đơn đã bắt đầu bàn giao/đang thuê phải xử lý qua biên bản và quyết toán, không huỷ thẳng.
+        boolean adminCancellable = admin && b.getStatus() == BookingStatus.PICKUP_PENDING;
+        if (b.getStatus() != BookingStatus.REQUESTED && b.getStatus() != BookingStatus.CONFIRMED && !adminCancellable) {
+            throw conflict("Chỉ huỷ được đơn chưa bàn giao xe. Đơn đang thuê cần xử lý qua biên bản trả xe");
         }
         if (!admin && b.getStatus() == BookingStatus.CONFIRMED && !b.getPickupAt().isAfter(now())) {
             throw conflict("Đã quá giờ nhận xe, không thể tự huỷ đơn. Vui lòng liên hệ hỗ trợ");
