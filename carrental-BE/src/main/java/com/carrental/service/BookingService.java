@@ -278,14 +278,16 @@ public class BookingService {
         BigDecimal fee = BigDecimal.ZERO;
         BigDecimal refund = paid;
         String rule = "hoàn 100%";
+        // Vắng mặt khi nhận xe không được hưởng 1 giờ miễn phí: luôn tính mức phí sát ngày.
+        boolean noShow = by.endsWith("NO_SHOW");
         if (confirmed && (by.startsWith("CUSTOMER"))) {
-            fee = BookingMoneyPolicy.cancellationFee(tripValue, b.getDepositPaidAt(), b.getPickupAt(), now).min(paid);
+            fee = BookingMoneyPolicy.cancellationFee(tripValue, noShow ? null : b.getDepositPaidAt(), b.getPickupAt(), now).min(paid);
             refund = paid.subtract(fee);
-            rule = BookingMoneyPolicy.cancellationRule(b.getDepositPaidAt(), b.getPickupAt(), now);
+            rule = BookingMoneyPolicy.cancellationRule(noShow ? null : b.getDepositPaidAt(), b.getPickupAt(), now);
         } else if (confirmed && by.startsWith("OWNER")) {
-            fee = BookingMoneyPolicy.cancellationFee(tripValue, b.getConfirmedAt(), b.getPickupAt(), now);
+            fee = BookingMoneyPolicy.cancellationFee(tripValue, noShow ? null : b.getConfirmedAt(), b.getPickupAt(), now);
             refund = paid.add(paid.signum() > 0 ? fee : BigDecimal.ZERO);
-            rule = BookingMoneyPolicy.cancellationRule(b.getConfirmedAt(), b.getPickupAt(), now);
+            rule = BookingMoneyPolicy.cancellationRule(noShow ? null : b.getConfirmedAt(), b.getPickupAt(), now);
         }
         b.setStatus(BookingStatus.CANCELLED);
         b.setCancelReason(reason);
