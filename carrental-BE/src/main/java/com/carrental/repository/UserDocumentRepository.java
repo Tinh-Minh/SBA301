@@ -10,6 +10,8 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserDocumentRepository extends JpaRepository<UserDocument, Long>, JpaSpecificationExecutor<UserDocument> {
 
@@ -30,4 +32,10 @@ public interface UserDocumentRepository extends JpaRepository<UserDocument, Long
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<UserDocument> findWithLockById(Long id);
+
+    @Query("SELECT DISTINCT d.customer.id FROM UserDocument d WHERE d.customer.id IN :customerIds AND d.docType IN :docTypes AND d.verifyStatus = :status")
+    List<Long> findCustomerIdsWithPendingIdentity(
+            @Param("customerIds") Collection<Long> customerIds,
+            @Param("docTypes") Collection<DocumentType> docTypes,
+            @Param("status") VerificationStatus status);
 }

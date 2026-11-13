@@ -222,16 +222,13 @@ export default function OwnerVehicleNew() {
         setDraftNote("Đã lưu bản nháp trên máy này.");
     }
     async function submitCar(draft) {
-        const resolvedCavetUrl = cavetFile
-            ? await uploadImage(cavetFile)
-            : (cavet && !cavet.startsWith("blob:") ? cavet.trim() : "");
-        const resolvedInspectionUrl = inspectionFile
-            ? await uploadImage(inspectionFile)
-            : (inspection && !inspection.startsWith("blob:") ? inspection.trim() : "");
         const car = await carService.create(draft);
-        const documents = [["REGISTRATION", resolvedCavetUrl], ["INSPECTION", resolvedInspectionUrl]].filter(([, url]) => Boolean(url));
-        for (const [docType, fileUrl] of documents)
-            await carService.addDocument(car.id, { docType, fileUrl });
+        if (cavetFile) {
+            await carService.addDocument(car.id, { docType: "REGISTRATION", file: cavetFile });
+        }
+        if (inspectionFile) {
+            await carService.addDocument(car.id, { docType: "INSPECTION", file: inspectionFile });
+        }
         return car;
     }
     async function submit(values) {

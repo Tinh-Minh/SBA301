@@ -3,6 +3,7 @@ package com.carrental.security;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
 import com.carrental.repository.CustomerRepository;
+import java.time.Instant;
 import java.util.List;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.dao.DataAccessException;
@@ -39,10 +40,21 @@ public class CurrentAccountJwtAuthenticationConverter implements Converter<Jwt, 
             throw new InvalidCurrentAccountException();
         }
         // Token cấp trước lần đổi mật khẩu gần nhất không còn hiệu lực
-        if (customer.getPasswordChangedAt() != null && jwt.getIssuedAt() != null
-                && jwt.getIssuedAt().isBefore(customer.getPasswordChangedAt()
-                        .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toInstant())) {
-            throw new InvalidCurrentAccountException();
+        if (customer.getPasswordChangedAt() != null) {
+            long currentPwdEpoch = customer.getPasswordChangedAt()
+                    .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toEpochSecond();
+            Object tokenPca = jwt.getClaims().get("pca");
+            if (tokenPca instanceof Number num) {
+                if (num.longValue() < currentPwdEpoch) {
+                    throw new InvalidCurrentAccountException();
+                }
+            } else if (jwt.getIssuedAt() != null) {
+                Instant pwdChangedInstant = customer.getPasswordChangedAt()
+                        .atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toInstant();
+                if (jwt.getIssuedAt().isBefore(pwdChangedInstant)) {
+                    throw new InvalidCurrentAccountException();
+                }
+            }
         }
         CurrentAccount principal = new CurrentAccount(customerId, customer.getRole());
         return UsernamePasswordAuthenticationToken.authenticated(principal, null,

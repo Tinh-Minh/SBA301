@@ -83,10 +83,15 @@ export const userDocumentService = {
         for (const [key, value] of Object.entries({ dateOfBirthOnDoc, issueDate, expiresAt }))
             if (value)
                 form.append(key, toLocalDate(value));
+        const cleanFileName = (file, side) => {
+            const ext = (file?.name?.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+            const safeExt = ext === "png" ? "png" : "jpg";
+            return `${side}.${safeExt}`;
+        };
         if (frontImage)
-            form.append("frontImage", frontImage);
+            form.append("frontImage", frontImage, cleanFileName(frontImage, "front"));
         if (backImage)
-            form.append("backImage", backImage);
+            form.append("backImage", backImage, cleanFileName(backImage, "back"));
         return request(endpoints.userDocuments.list, { method: "POST", body: form });
     },
     async image(id, side) {

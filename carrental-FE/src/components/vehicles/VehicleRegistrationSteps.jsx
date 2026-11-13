@@ -203,7 +203,7 @@ export function StepOne({
     </section>
     <section className="flex flex-col gap-3 rounded-2xl border border-card-border bg-white p-5 shadow-sm">
       <h2 className="text-base font-bold text-charcoal">Giấy tờ bắt buộc</h2>
-      <p className="text-xs text-muted-gray">Chọn ảnh JPG, PNG hoặc WebP từ máy (tối đa 5MB) để xem trước, hoặc dán đường dẫn ảnh.</p>
+      <p className="text-xs text-muted-gray">Chọn ảnh JPG, PNG hoặc WebP từ máy (tối đa 5MB) để xem trước.</p>
       <div className="rounded-xl border border-dashed border-card-border p-3 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="font-bold text-charcoal">Giấy đăng ký xe (cavet)</span>
@@ -230,16 +230,6 @@ export function StepOne({
             </div>
           </div>
         ) : null}
-        <input
-          type="url"
-          value={cavet?.startsWith("blob:") ? "" : cavet}
-          placeholder="Hoặc dán URL https://..."
-          onChange={event => {
-            if (cavetFile) onCavetFile?.(null);
-            onCavet(event.target.value);
-          }}
-          className={`${inputCls(cavetError || errors.registrationUrl)} mt-2`}
-        />
         {(cavetError || errors.registrationUrl) ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{cavetError || errors.registrationUrl}</span> : null}
       </div>
       <div className="rounded-xl border border-dashed border-card-border p-3 text-sm">
@@ -268,16 +258,6 @@ export function StepOne({
             </div>
           </div>
         ) : null}
-        <input
-          type="url"
-          value={inspection?.startsWith("blob:") ? "" : inspection}
-          placeholder="Hoặc dán URL https://..."
-          onChange={event => {
-            if (inspectionFile) onInspectionFile?.(null);
-            onInspection(event.target.value);
-          }}
-          className={`${inputCls(inspectionError || errors.inspectionUrl)} mt-2`}
-        />
         {(inspectionError || errors.inspectionUrl) ? <span role="alert" className="mt-1 block text-xs font-semibold text-[#B91C1C]">{inspectionError || errors.inspectionUrl}</span> : null}
         <span className="mt-1 block text-xs text-muted-gray">Còn hạn tối thiểu 3 tháng khi niêm yết.</span>
       </div>
@@ -414,7 +394,7 @@ export function StepFour({
           <span className="rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-bold text-charcoal">{photoCount}/6 đã chọn</span>
         </div>
       </div>
-      <p className="mt-1 text-xs text-muted-gray">Chọn ảnh JPG, PNG hoặc WebP từ máy (tối đa 5MB/ảnh) hoặc dán URL. Ảnh góc trước làm ảnh đại diện.</p>
+      <p className="mt-1 text-xs text-muted-gray">Chọn ảnh JPG, PNG hoặc WebP từ máy (tối đa 5MB/ảnh). Ảnh góc trước làm ảnh đại diện.</p>
       {photoErrors.length ? (
         <div role="alert" className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-[#B91C1C]">
           {photoErrors.map((msg, idx) => <p key={idx}>{msg}</p>)}
@@ -449,14 +429,7 @@ export function StepFour({
               {photo?.file ? (
                 <p className="mt-1 truncate text-[11px] font-medium text-charcoal">Tệp: {photo.file.name}</p>
               ) : null}
-              <input
-                type="url"
-                value={photo?.url?.startsWith("blob:") ? "" : (photo?.url ?? "")}
-                placeholder="Hoặc dán URL https://..."
-                onChange={event => onPhoto(slot.id, event.target.value)}
-                className="mt-1 w-full rounded-lg border border-card-border px-2 py-1 text-[11px]"
-              />
-              {photo && !valid ? <p className="mt-1 text-[11px] text-on-error-container">Đường dẫn chưa hợp lệ.</p> : null}
+              {photo && !valid ? <p className="mt-1 text-[11px] text-on-error-container">Ảnh chưa hợp lệ.</p> : null}
               {valid ? (
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <button type="button" className="text-[11px] font-bold text-charcoal hover:underline" onClick={() => onZoom(resolveAssetUrl(photo.url))}>Phóng to</button>

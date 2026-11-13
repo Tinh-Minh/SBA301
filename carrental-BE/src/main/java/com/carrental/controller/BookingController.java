@@ -1,19 +1,26 @@
 package com.carrental.controller;
 
 import com.carrental.dto.booking.BookingDtos.*;
+import com.carrental.dto.request.BookingDepositPaymentRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.PageResponse;
+import com.carrental.dto.response.TransactionResponse;
 import com.carrental.enums.BookingStatus;
 import com.carrental.enums.HandoverType;
+import com.carrental.enums.PaymentMethod;
 import com.carrental.service.BookingService;
+import com.carrental.service.TransactionService;
 import com.carrental.util.PageRequestFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /** Đơn thuê xe và biên bản bàn giao. */
 @RestController
@@ -21,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final TransactionService transactionService;
     private final com.carrental.service.RentalDashboardService dashboardService;
 
     // ---------------------------------------------------------------- công khai
@@ -29,8 +37,9 @@ public class BookingController {
     public ApiResponse<QuoteResponse> quote(
             @PathVariable Long carId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime pickupAt,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime returnAt) {
-        return ApiResponse.ok(bookingService.quote(carId, pickupAt, returnAt));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime returnAt,
+            @RequestParam(required = false) String voucherCode) {
+        return ApiResponse.ok(bookingService.quote(carId, pickupAt, returnAt, voucherCode));
     }
 
     @GetMapping("/api/cars/{carId}/availability")
@@ -70,6 +79,18 @@ public class BookingController {
         return ApiResponse.ok("Đã huỷ đơn thuê", bookingService.cancel(id, request.reason()));
     }
 
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
+    @PostMapping("/api/bookings/{id}/deposit-payment")
+    public ApiResponse<TransactionResponse> payDeposit(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "VNPAY") PaymentMethod method,
+            @RequestParam(required = false) String bankCode,
+            HttpServletRequest request) {
+        return ApiResponse.ok("Tạo giao dịch thanh toán tiền cọc thành công",
+                transactionService.createBookingDepositPayment(
+                        new BookingDepositPaymentRequest(id, method, bankCode), request));
+    }
+
     // ---------------------------------------------------------------- chủ xe
 
     @PreAuthorize("hasRole('OWNER')")
@@ -93,17 +114,19 @@ public class BookingController {
     // ---------------------------------------------------------------- biên bản
 
     @PreAuthorize("hasRole('OWNER')")
-    @PostMapping("/api/bookings/{id}/handovers/{type}")
+    @PostMapping(path = "/api/bookings/{id}/handovers/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<BookingResponse> submitHandover(@PathVariable Long id, @PathVariable HandoverType type,
-                                                       @Valid @RequestBody SubmitHandoverRequest request) {
-        return ApiResponse.ok("Đã gửi biên bản cho khách xác nhận", bookingService.submitHandover(id, type, request));
+                                                       @Valid @RequestPart("data") SubmitHandoverRequest request,
+                                                       @RequestPart("photos") List<MultipartFile> photos) {
+        return ApiResponse.ok("Đã gửi biên bản cho khách xác nhận", bookingService.submitHandover(id, type, request, photos));
     }
 
     @PreAuthorize("hasRole('OWNER')")
-    @PutMapping("/api/bookings/{id}/handovers/{type}")
+    @PutMapping(path = "/api/bookings/{id}/handovers/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<BookingResponse> reviseHandover(@PathVariable Long id, @PathVariable HandoverType type,
-                                                       @Valid @RequestBody ReviseHandoverRequest request) {
-        return ApiResponse.ok("Đã gửi lại biên bản đã chỉnh sửa", bookingService.reviseHandover(id, type, request));
+                                                       @Valid @RequestPart("data") ReviseHandoverRequest request,
+                                                       @RequestPart("photos") List<MultipartFile> photos) {
+        return ApiResponse.ok("Đã gửi lại biên bản đã chỉnh sửa", bookingService.reviseHandover(id, type, request, photos));
     }
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")

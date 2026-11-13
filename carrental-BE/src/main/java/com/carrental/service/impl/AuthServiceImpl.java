@@ -1,11 +1,13 @@
 package com.carrental.service.impl;
 
+import com.carrental.config.MailEnvironmentStartupLogger;
 import com.carrental.config.security.JwtProperties;
 import com.carrental.dto.request.auth.AuthInputNormalizer;
 import com.carrental.dto.request.auth.ChangePasswordRequest;
 import com.carrental.dto.request.auth.LoginRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
 import com.carrental.dto.response.CustomerProfileResponse;
+import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.dto.response.TokenResponse;
 import com.carrental.entity.Customer;
 import com.carrental.enums.Role;
@@ -15,6 +17,7 @@ import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
+import com.carrental.service.MailRateLimiter;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -71,7 +74,21 @@ public class AuthServiceImpl implements AuthService {
     private final String mailFrom;
     private final String mailUsername;
     private final String mailPassword;
+    private final MailRateLimiter mailRateLimiter;
     private final Map<String, Instant> resendRequests = new HashMap<>();
+
+    public AuthServiceImpl(CustomerRepository customers, PasswordEncoder passwordEncoder,
+            JwtEncoder jwtEncoder,
+            JwtDecoder jwtDecoder, JwtProperties jwtProperties, Clock clock,
+            ObjectProvider<JavaMailSender> mailSenderProvider,
+            String frontendBaseUrl,
+            String mailFrom,
+            String mailUsername,
+            String mailPassword) {
+        this(customers, passwordEncoder, jwtEncoder, jwtDecoder, jwtProperties, clock,
+                mailSenderProvider, frontendBaseUrl, mailFrom, mailUsername, mailPassword,
+                new MailRateLimiter(clock));
+    }
 
     @Autowired
     public AuthServiceImpl(CustomerRepository customers, PasswordEncoder passwordEncoder,
@@ -81,7 +98,8 @@ public class AuthServiceImpl implements AuthService {
             @Value("${app.frontend.base-url:http://localhost:3000}") String frontendBaseUrl,
             @Value("${app.mail.from:}") String mailFrom,
             @Value("${spring.mail.username:}") String mailUsername,
-            @Value("${spring.mail.password:}") String mailPassword) {
+            @Value("${spring.mail.password:}") String mailPassword,
+            MailRateLimiter mailRateLimiter) {
         this.customers = customers;
         this.passwordEncoder = passwordEncoder;
         this.jwtEncoder = jwtEncoder;
@@ -93,15 +111,23 @@ public class AuthServiceImpl implements AuthService {
         this.mailFrom = mailFrom;
         this.mailUsername = mailUsername;
         this.mailPassword = mailPassword;
+        this.mailRateLimiter = mailRateLimiter != null ? mailRateLimiter : new MailRateLimiter(clock);
     }
 
     @Override
     @Transactional
     public CustomerProfileResponse register(RegisterRequest request) {
+        return register(request, "127.0.0.1");
+    }
+
+    @Override
+    @Transactional
+    public CustomerProfileResponse register(RegisterRequest request, String clientIp) {
         Customer customer = request.toEntity(passwordEncoder.encode(request.getPassword()));
         if (customers.existsByEmailIgnoreCase(customer.getEmail()) || customers.existsByPhone(customer.getPhone())) {
             throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS);
         }
+        mailRateLimiter.checkAndRecord(customer.getEmail(), clientIp);
         try {
             Customer saved = customers.saveAndFlush(customer);
             sendVerificationEmail(saved);
@@ -172,21 +198,21 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public void resendVerification(String email) {
+        resendVerification(email, "127.0.0.1");
+    }
+
+    @Override
+    @Transactional
+    public void resendVerification(String email, String clientIp) {
         String normalizedEmail = AuthInputNormalizer.email(email);
         if (normalizedEmail == null || normalizedEmail.isBlank()) return;
+
+        mailRateLimiter.checkAndRecord(normalizedEmail, clientIp);
+
         customers.findByEmailIgnoreCase(normalizedEmail)
                 .filter(customer -> customer.getRole() == Role.CUSTOMER)
                 .filter(customer -> !Boolean.TRUE.equals(customer.getEmailVerified()))
-                .ifPresent(customer -> {
-                    Instant now = clock.instant();
-                    if (!claimResend(normalizedEmail, now)) return;
-                    try {
-                        sendVerificationEmail(customer);
-                    } catch (RuntimeException exception) {
-                        releaseResend(normalizedEmail, now);
-                        throw exception;
-                    }
-                });
+                .ifPresent(this::sendVerificationEmail);
     }
 
     private boolean claimResend(String email, Instant now) {
@@ -247,8 +273,10 @@ public class AuthServiceImpl implements AuthService {
         try {
             mailSender.send(message);
         } catch (MailException exception) {
-            log.warn("Email delivery unavailable traceId={} exceptionType={}",
-                    RequestTraceFilter.currentTraceId(), exception.getClass().getSimpleName());
+            log.warn("Email delivery unavailable traceId={} exceptionType={} detail={}",
+                    RequestTraceFilter.currentTraceId(),
+                    exception.getClass().getSimpleName(),
+                    MailEnvironmentStartupLogger.summarizeMailFailure(exception, customer.getEmail()));
             throw new AppException(ErrorCode.DEPENDENCY_UNAVAILABLE, exception);
         }
     }
@@ -256,12 +284,16 @@ public class AuthServiceImpl implements AuthService {
     private TokenResponse issueToken(Customer customer) {
         Instant issuedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS);
         Instant expiresAt = issuedAt.plus(jwtProperties.accessTokenTtl());
+        long pwdEpoch = customer.getPasswordChangedAt() != null
+                ? customer.getPasswordChangedAt().atZone(java.time.ZoneId.of("Asia/Ho_Chi_Minh")).toEpochSecond()
+                : 0L;
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(jwtProperties.issuer())
                 .audience(List.of(jwtProperties.audience()))
                 .subject(customer.getId().toString())
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
+                .claim("pca", pwdEpoch)
                 .build();
         JwsHeader headers = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = jwtEncoder.encode(JwtEncoderParameters.from(headers, claims)).getTokenValue();
@@ -276,13 +308,27 @@ public class AuthServiceImpl implements AuthService {
         Customer customer = customers.findWithLockById(account.customerId())
                 .orElseThrow(() -> new AppException(ErrorCode.AUTHENTICATION_FAILED));
         if (customer.getStatus() != CustomerStatus.ACTIVE) throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
+
+        // 1. Kiểm tra mật khẩu cũ khớp BCrypt không
         if (!passwordEncoder.matches(request.getCurrentPassword(), customer.getPasswordHash())) {
-            throw new AppException(ErrorCode.AUTHENTICATION_FAILED);
+            throw new AppException(ErrorCode.CURRENT_PASSWORD_INCORRECT, "Mật khẩu hiện tại không chính xác",
+                    List.of(new FieldErrorResponse("currentPassword", "Mật khẩu hiện tại không chính xác")));
         }
+
+        // 2. Không cho trùng mật khẩu cũ
+        if (passwordEncoder.matches(request.getNewPassword(), customer.getPasswordHash())) {
+            throw new AppException(ErrorCode.VALIDATION_ERROR, "Mật khẩu mới không được trùng với mật khẩu hiện tại",
+                    List.of(new FieldErrorResponse("newPassword", "Mật khẩu mới không được trùng với mật khẩu hiện tại")));
+        }
+
+        // 3. Cập nhật mật khẩu mới và thời điểm đổi mật khẩu để vô hiệu hóa token cũ
         customer.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        // Vô hiệu mọi token đã cấp trước lần đổi mật khẩu này (làm tròn xuống giây vì iat của JWT tính theo giây)
-        customer.setPasswordChangedAt(java.time.LocalDateTime.ofInstant(
-                clock.instant().truncatedTo(ChronoUnit.SECONDS), java.time.ZoneId.of("Asia/Ho_Chi_Minh")));
+        java.time.LocalDateTime newChangedAt = java.time.LocalDateTime.ofInstant(
+                clock.instant().truncatedTo(ChronoUnit.SECONDS), java.time.ZoneId.of("Asia/Ho_Chi_Minh"));
+        if (customer.getPasswordChangedAt() != null && !newChangedAt.isAfter(customer.getPasswordChangedAt())) {
+            newChangedAt = customer.getPasswordChangedAt().plusSeconds(1);
+        }
+        customer.setPasswordChangedAt(newChangedAt);
         log.info("auth-change-password customerId={}", customer.getId());
     }
 

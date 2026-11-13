@@ -71,6 +71,13 @@ public class CustomerController {
         return ok(customerService.updateMe(account, request));
     }
 
+    @org.springframework.web.bind.annotation.PostMapping(path = "/me/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<CustomerProfileResponse>> uploadAvatar(
+            @AuthenticationPrincipal CurrentAccount account,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        return ok(customerService.uploadAvatar(account, file));
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<PageResponse<CustomerSummaryResponse>>> listCustomers(

@@ -1,5 +1,6 @@
 package com.carrental.event;
 
+import com.carrental.entity.Booking;
 import com.carrental.entity.Car;
 import com.carrental.entity.CarSubscription;
 import com.carrental.entity.Transaction;
@@ -7,6 +8,7 @@ import com.carrental.enums.ListingStatus;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.SubscriptionStatus;
 import com.carrental.enums.TransactionType;
+import com.carrental.repository.BookingRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.CarSubscriptionRepository;
 import com.carrental.util.TimeUtil;
@@ -27,6 +29,7 @@ public class PaymentEventListener {
 
     private final CarSubscriptionRepository carSubscriptionRepository;
     private final CarRepository carRepository;
+    private final BookingRepository bookingRepository;
 
     @Async
     @EventListener
@@ -70,6 +73,13 @@ public class PaymentEventListener {
                     carRepository.save(car);
                     log.info("Chuyển trạng thái xe carId={} sang LISTED", car.getId());
                 }
+            }
+        } else if (transaction.getTransactionType() == TransactionType.BOOKING_DEPOSIT) {
+            Booking booking = transaction.getBooking();
+            if (booking != null && booking.getDepositStatus() != PaymentStatus.PAID) {
+                booking.setDepositStatus(PaymentStatus.PAID);
+                bookingRepository.save(booking);
+                log.info("Cập nhật depositStatus=PAID cho bookingId={}", booking.getId());
             }
         }
     }

@@ -23,8 +23,12 @@ public record CustomerAdminResponse(
         String address) {
 
     public static CustomerAdminResponse from(Customer customer) {
+        return from(customer, customer.getKycStatus());
+    }
+
+    public static CustomerAdminResponse from(Customer customer, KycStatus effectiveKycStatus) {
         return new CustomerAdminResponse(customer.getId(), customer.getFullName(), customer.getEmail(),
-                customer.getPhone(), customer.getRole(), customer.getStatus(), customer.getKycStatus(),
+                customer.getPhone(), customer.getRole(), customer.getStatus(), effectiveKycStatus,
                 customer.getEmailVerified(), customer.getCreatedAt(), customer.getUpdatedAt(),
                 customer.getDateOfBirth(), customer.getAddress());
     }

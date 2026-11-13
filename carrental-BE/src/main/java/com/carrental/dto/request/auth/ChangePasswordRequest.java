@@ -8,7 +8,6 @@ import tools.jackson.databind.JsonNode;
 public final class ChangePasswordRequest {
 
     @NotBlank(message = "Mật khẩu hiện tại không được để trống")
-    @ValidPassword
     private String currentPassword;
 
     @NotBlank(message = "Mật khẩu mới không được để trống")

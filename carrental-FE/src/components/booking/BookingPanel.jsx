@@ -16,6 +16,7 @@ export function BookingPanel({ car }) {
     const { loggedIn, user } = useAuth();
     const [pickupAt, setPickupAt] = useState(() => (params.get("pickupAt") || defaultWindow().pickupAt).slice(0, 16));
     const [returnAt, setReturnAt] = useState(() => (params.get("returnAt") || defaultWindow().returnAt).slice(0, 16));
+    const [voucherCode, setVoucherCode] = useState("");
     const [quote, setQuote] = useState(null);
     const [error, setError] = useState("");
     const [note, setNote] = useState("");
@@ -29,16 +30,22 @@ export function BookingPanel({ car }) {
         if (problem) { setError(problem); return; }
         setError("");
         let alive = true;
-        tripService.quote(car.id, toApiTime(pickupAt), toApiTime(returnAt))
+        tripService.quote(car.id, toApiTime(pickupAt), toApiTime(returnAt), voucherCode.trim() || undefined)
             .then(q => alive && setQuote(q)).catch(e => alive && setError(e.message));
         return () => { alive = false; };
-    }, [car.id, pickupAt, returnAt]);
+    }, [car.id, pickupAt, returnAt, voucherCode]);
 
     async function book() {
         setSending(true);
         setError("");
         try {
-            const created = await tripService.create({ carId: car.id, pickupAt: toApiTime(pickupAt), returnAt: toApiTime(returnAt), customerNote: note.trim() || null });
+            const created = await tripService.create({
+                carId: car.id,
+                pickupAt: toApiTime(pickupAt),
+                returnAt: toApiTime(returnAt),
+                customerNote: note.trim() || null,
+                voucherCode: voucherCode.trim() || null,
+            });
             navigate(`/trips/${created.id}?created=1`);
         } catch (e) {
             setError(e.message);
@@ -58,13 +65,18 @@ export function BookingPanel({ car }) {
       <label className="text-xs font-semibold text-[#666666]">Nhận xe<input type="datetime-local" value={pickupAt} onChange={e => setPickupAt(e.target.value)} className={`${fieldClass} mt-1`}/></label>
       <label className="text-xs font-semibold text-[#666666]">Trả xe<input type="datetime-local" value={returnAt} min={pickupAt} onChange={e => setReturnAt(e.target.value)} className={`${fieldClass} mt-1`}/></label>
     </div>
+    <div className="mt-3">
+      <label htmlFor="booking-voucher" className="text-xs font-semibold text-[#666666]">Mã voucher giảm giá (tuỳ chọn)<input id="booking-voucher" type="text" placeholder="VD: CHAOBANMOI" value={voucherCode} onChange={e => setVoucherCode(e.target.value.toUpperCase())} className={`${fieldClass} mt-1`}/></label>
+    </div>
     {busy.data?.length ? <p className="mt-2 text-xs text-[#666666]"><Icon name="event_busy" className="text-[14px]"/> Xe đã có lịch: {busy.data.slice(0, 3).map(r => `${formatDateTime(r.from)} → ${formatDateTime(r.to)}`).join("; ")}</p> : null}
 
     {quote ? <dl className="mt-4 flex flex-col gap-1.5 rounded-xl bg-[#FFF7F2] p-4 text-sm">
       <div className="flex justify-between"><dt className="text-[#666666]">Thời gian thuê</dt><dd className="font-semibold">{durationLabel(quote.rentalDays, quote.rentalHours)}</dd></div>
       {quote.breakdown.map(line => <div key={line} className="flex justify-between text-xs text-[#666666]"><dt>{line}</dt></div>)}
-      <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê</dt><dd className="text-lg font-black text-[#FC6C26]">{formatMoney(quote.rentalAmount)}</dd></div>
-      <div className="flex justify-between"><dt className="text-[#666666]">Tiền cọc (hoàn lại khi trả xe)</dt><dd className="font-semibold">{quote.depositAmount ? formatMoney(quote.depositAmount) : "Miễn cọc"}</dd></div>
+      <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê gốc</dt><dd className="text-base font-bold">{formatMoney(quote.rentalAmount)}</dd></div>
+      {quote.discountAmount ? <div className="flex justify-between text-xs text-[#166534]"><dt>Giảm giá voucher ({quote.voucherCode})</dt><dd className="font-bold">-{formatMoney(quote.discountAmount)}</dd></div> : null}
+      <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê sau giảm</dt><dd className="text-lg font-black text-[#FC6C26]">{formatMoney(quote.payableRentalAmount || quote.rentalAmount)}</dd></div>
+      <div className="flex justify-between"><dt className="text-[#666666]">Tiền cọc (thanh toán VNPay sau khi chủ xe xác nhận)</dt><dd className="font-semibold">{quote.depositAmount ? formatMoney(quote.depositAmount) : "Miễn cọc"}</dd></div>
       {quote.includedKm ? <div className="flex justify-between text-xs text-[#666666]"><dt>Km bao gồm</dt><dd>{quote.includedKm} km{quote.extraKmFee ? `, vượt ${formatMoney(quote.extraKmFee)}/km` : ""}</dd></div> : null}
       {quote.lateFeePerHour ? <div className="flex justify-between text-xs text-[#666666]"><dt>Trả trễ</dt><dd>{formatMoney(quote.lateFeePerHour)}/giờ</dd></div> : null}
       {!quote.available ? <p role="alert" className="mt-1 font-semibold text-[#B91C1C]">{quote.unavailableReason}</p> : null}

@@ -1,9 +1,7 @@
 package com.carrental.service.impl;
 
 import com.carrental.dto.request.CarCreateRequest;
-import com.carrental.dto.request.CarDocumentRequest;
 import com.carrental.dto.request.CarDocumentVerifyRequest;
-import com.carrental.dto.request.CarImageRequest;
 import com.carrental.dto.request.CarUpdateRequest;
 import com.carrental.dto.response.CarDocumentResponse;
 import com.carrental.dto.response.CarImageResponse;
@@ -14,6 +12,7 @@ import com.carrental.entity.Car;
 import com.carrental.entity.CarDocument;
 import com.carrental.entity.CarImage;
 import com.carrental.entity.Customer;
+import com.carrental.enums.CarDocumentType;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.enums.ListingStatus;
@@ -40,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -390,62 +390,6 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
-    public List<CarImageResponse> addCarImages(Long carId, List<CarImageRequest> requests) {
-        log.info("Add car images carId={}, count={}", carId, requests != null ? requests.size() : 0);
-        try {
-            Car car = loadOwnedCar(carId);
-
-            if (requests == null || requests.isEmpty()) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Danh sách ảnh không được để trống");
-            }
-
-            long currentCount = carImageRepository.countByCarId(carId);
-            if (currentCount + requests.size() > MAX_CAR_IMAGES) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Mỗi xe chỉ được có tối đa " + MAX_CAR_IMAGES + " hình ảnh");
-            }
-
-            long primaryRequestsCount = requests.stream().filter(r -> Boolean.TRUE.equals(r.getIsPrimary())).count();
-            if (primaryRequestsCount > 1) {
-                throw new AppException(HttpStatus.BAD_REQUEST, "Chỉ được chỉ định tối đa 1 ảnh đại diện trong một lần tải lên");
-            }
-
-            if (primaryRequestsCount == 1) {
-                clearPrimary(carId);
-            }
-
-            boolean isFirstImageEver = (currentCount == 0);
-
-            List<CarImage> entities = new ArrayList<>();
-            for (int i = 0; i < requests.size(); i++) {
-                CarImageRequest req = requests.get(i);
-                boolean isPrimary = Boolean.TRUE.equals(req.getIsPrimary()) || (isFirstImageEver && i == 0);
-
-                CarImage image = CarImage.builder()
-                        .car(car)
-                        .imageUrl(req.getImageUrl())
-                        .isPrimary(isPrimary)
-                        .sortOrder(req.getSortOrder() != null ? req.getSortOrder() : 0)
-                        .build();
-                entities.add(image);
-            }
-
-            return carImageRepository.saveAllAndFlush(entities).stream()
-                    .map(CarImageResponse::from)
-                    .toList();
-        } catch (AppException e) {
-            log.warn("Thêm ảnh xe thất bại carId={}: {}", carId, e.getMessage());
-            throw e;
-        } catch (DataAccessException e) {
-            log.warn("Lỗi dữ liệu khi thêm ảnh xe carId={}: {}", carId, e.getMessage());
-            throw DbErrors.toAppException(e, "Không thể lưu hình ảnh xe");
-        } catch (Exception e) {
-            log.error("Lỗi không mong muốn khi thêm ảnh xe carId={}", carId, e);
-            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Không thể lưu hình ảnh xe");
-        }
-    }
-
-    @Override
-    @Transactional
     public List<CarImageResponse> addCarImages(Long carId, List<MultipartFile> files, Integer primaryIndex) {
         log.info("Upload multipart car images carId={}, count={}", carId, files != null ? files.size() : 0);
         List<String> storedUrls = List.of();
@@ -556,24 +500,30 @@ public class CarServiceImpl implements CarService {
 
     @Override
     @Transactional
-    public CarDocumentResponse addCarDocument(Long carId, CarDocumentRequest request) {
-        log.info("Add car document carId={}, docType={}", carId, request.getDocType());
+    public CarDocumentResponse addCarDocument(Long carId, CarDocumentType docType, LocalDate expiresAt, MultipartFile file) {
+        log.info("Add car document carId={}, docType={}", carId, docType);
         try {
             Car car = loadOwnedCar(carId);
 
-            if (request.getExpiresAt() != null && request.getExpiresAt().isBefore(TimeUtil.nowVn().toLocalDate())) {
+            if (expiresAt != null && expiresAt.isBefore(TimeUtil.nowVn().toLocalDate())) {
                 throw new AppException(HttpStatus.BAD_REQUEST, "Giấy tờ xe đã hết hạn sử dụng");
             }
 
-            CarDocument doc = carDocumentRepository.findByCarIdAndDocType(carId, request.getDocType())
-                    .orElse(CarDocument.builder().car(car).docType(request.getDocType()).build());
+            if (file == null || file.isEmpty()) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Tệp giấy tờ xe không được để trống");
+            }
+
+            String storedFileUrl = publicImageStorageService.storeImage(file);
+
+            CarDocument doc = carDocumentRepository.findByCarIdAndDocType(carId, docType)
+                    .orElse(CarDocument.builder().car(car).docType(docType).build());
 
             if (doc.getId() != null && doc.getVerifyStatus() != null) {
                 doc.getVerifyStatus().validateTransitionTo(VerificationStatus.PENDING);
             }
 
-            doc.setFileUrl(request.getFileUrl());
-            doc.setExpiresAt(request.getExpiresAt());
+            doc.setFileUrl(storedFileUrl);
+            doc.setExpiresAt(expiresAt);
             doc.setVerifyStatus(VerificationStatus.PENDING);
             doc.setRejectReason(null);
             doc.setVerifiedBy(null);

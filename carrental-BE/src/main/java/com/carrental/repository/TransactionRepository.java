@@ -18,12 +18,12 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<Transaction, Long>, JpaSpecificationExecutor<Transaction> {
 
-    @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer"})
+    @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer", "booking", "booking.car", "booking.customer", "booking.owner"})
     @Override
     Optional<Transaction> findById(Long id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer"})
+    @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer", "booking", "booking.car", "booking.customer", "booking.owner"})
     Optional<Transaction> findWithLockingById(Long id);
 
     default Optional<Transaction> findByIdForUpdate(Long id) {
@@ -34,6 +34,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     Optional<Transaction> findFirstBySubscriptionIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
             Long subscriptionId, TransactionType transactionType, TransactionStatus status);
+
+    Optional<Transaction> findFirstByBookingIdAndTransactionTypeAndStatusOrderByCreatedAtDesc(
+            Long bookingId, TransactionType transactionType, TransactionStatus status);
+
+    List<Transaction> findAllByBookingIdOrderByCreatedAtDesc(Long bookingId);
 
     List<Transaction> findAllBySubscriptionIdAndStatus(Long subscriptionId, TransactionStatus status);
 

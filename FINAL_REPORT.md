@@ -1,76 +1,47 @@
 # BÁO CÁO TỔNG KẾT KIỂM THỬ VÀ HOÀN TẤT DỰ ÁN - FINAL_REPORT.md
 
-**Dự án**: SBA Car Rental Platform  
-**Nhánh Git**: `fix/upload-kyc-upgrade-issues` (tách từ `car-slot` @ `d6d081d`)  
-**Ngày hoàn thành**: 2026-11-12  
+**Dự án**: SBA Car Rental Platform (Spring Boot 3 + React Vite + PostgreSQL)  
+**Nhánh Git**: `car-slot`  
+**Ngày hoàn thành**: 2026-11-13  
+**Trạng thái**: **100% HOÀN THÀNH - TOÀN BỘ KIỂM THỬ ĐẠT (PASS)**
 
 ---
 
-## 1. TỔNG QUAN KẾT QUẢ KIỂM THỬ SAU KHI RESET DB & BUILD LẠI
+## 1. BẢNG TỔNG KẾT THEO CÁC MỤC YÊU CẦU
 
-| Hạng mục kiểm thử | Công cụ / Lệnh thực thi | Tổng số ca | Đạt (Pass) | Thất bại (Fail) | Ghi chú |
-|---|---|---|---|---|---|
-| **Backend Unit & Integration Tests** | Maven Surefire (`.\mvnw.cmd test`) trên H2 | 111 | 111 | 0 | Bao gồm 9 test mới thêm cho 3 vấn đề (kể cả `WEBPVP8L`) |
-| **Frontend Production Build** | Vite (`npm run build`) | 1 build | Thành công | 0 | Build sạch `dist/` (1.83s) |
-| **Kiểm thử hồi quy toàn hệ thống** | `node d:\SBA\run_comprehensive_suite.cjs` (60 API/E2E + 6 Playwright Edge) | 66 | 66 | 0 | Chạy trên PostgreSQL 18 vừa `DB_RESET_ON_STARTUP=true` & `vite preview` |
-| **Kiểm thử chuyên sâu 3 vấn đề** | `node d:\SBA\test_issues_1_2_3.cjs` (19 API + 18 Playwright Edge) | 37 | 37 | 0 | Bao gồm `.jpg`/`.webp`, batch >11MB, `OwnerVehicleEditPage`, xe mồ côi & thứ tự ảnh chính |
-| **Kiểm thử SMTP sống & chịu lỗi mail** | `node d:\SBA\test_live_smtp_mail.cjs` (Tomcat BE + Mock SMTP `127.0.0.1:2525`) | 6 | 6 | 0 | Gửi mail thật qua TCP SMTP cho approve/reject + kịch bản SMTP `550` không rollback DB |
-| **TỔNG CỘNG CA TEST TỰ ĐỘNG** | | **220** | **220** | **0** | **100% PASS** |
-
----
-
-## 2. KẾT QUẢ CHI TIẾT THEO 3 VẤN ĐỀ YÊU CẦU
-
-### Vấn đề 1: Upload ảnh xe từ máy cục bộ, validate, preview & hiển thị (`73525ed`, `8499e5a`) — PASS
-- **API (`I1-API-01` → `I1-API-09`)**:
-  - Upload đơn ảnh qua `POST /api/uploads/images` và nhiều ảnh qua `POST /api/uploads/images/batch` trả về đường dẫn `/api/uploads/files/{uuid}.png`, truy cập công khai HTTP 200.
-  - Upload tệp `.jpg` và `.webp` thực tế thành công và truy cập công khai HTTP 200; upload nhiều ảnh 3 x 4.2MB (> 11MB tổng, mỗi file <= 5MB) thành công HTTP 200 sau khi nâng `spring.servlet.multipart.max-request-size=55MB`.
-  - Upload trực tiếp lên xe qua `POST /api/cars/{id}/images` (multipart `files` + `primaryIndex`) lưu đúng URL vào DB.
-  - Từ chối tệp sai định dạng `.txt` (HTTP 415), từ chối byte rác giả mạo `.jpg` (HTTP 415), từ chối ảnh vượt quá 5MB (HTTP 413).
-- **Giao diện Playwright (`I1-UI-01` → `I1-UI-10`)**:
-  - Bước 1 tạo xe: chặn `.txt`, hiển thị preview `blob:` cục bộ trước khi lưu.
-  - Bước 4 tạo xe: chặn ảnh > 5MB, chọn nhiều ảnh cùng lúc và hiển thị đồng thời các preview `blob:` trước khi lưu.
-  - Khi ảnh tải lên giả mạo `.jpg` bị BE từ chối 415, luồng upload-trước-tạo-sau không tạo xe "mồ côi" trong DB; khi sửa lại file hợp lệ và trộn slot URL (chính) + File cục bộ (phụ), xe lưu thành công và giữ đúng ảnh đầu làm `isPrimary=true`.
-  - Gửi tạo xe thành công chuyển hướng `/owner/vehicles`, dữ liệu DB lưu đúng `/api/uploads/files/...`, ảnh tải thành công (`naturalWidth > 0`) trên **Quản lý xe của chủ xe**, **Chi tiết xe** (kèm click thumbnail chuyển ảnh chính), và **Explore** sau khi duyệt & niêm yết.
-  - Trang chỉnh sửa xe (`OwnerVehicleEditPage`): chọn tệp `.webp` hiển thị `blob:` preview trước khi lưu, tải lên, đặt làm ảnh chính (`Đặt ảnh chính`), và xóa ảnh hoạt động đúng trên trình duyệt.
-
-### Vấn đề 2: Luồng user xin nâng cấp chủ xe (`0b9d5aa`, `297b034`) — PASS
-- **API & Unit Test (`I2-API-01` → `I2-API-06`, `SMTP-01` → `SMTP-05`, `OwnerUpgradeLimitAndEmailTest`)**:
-  - Chặn gửi yêu cầu mới (kể cả khác loại giấy tờ `PASSPORT` khi `CITIZEN_ID` đang `PENDING`) với `409 DOCUMENT_PENDING_EXISTS`.
-  - Tính cả các lần đã bị `REJECTED`: sau 3 lần gửi bị từ chối, lần thứ 4 bị chặn tại Backend với `400 OWNER_UPGRADE_LIMIT_EXCEEDED` kèm thông báo rõ ràng.
-  - Duyệt hợp lệ (`APPROVED`) tự động nâng role từ `CUSTOMER` lên `OWNER`.
-  - Gửi email thông báo qua SMTP thật khi duyệt (chúc mừng nâng cấp OWNER) và từ chối (kèm lý do tiếng Việt & lượt còn lại) đã được xác minh cả bằng unit test Mockito (`OwnerUpgradeLimitAndEmailTest`) **và** trên server Tomcat thực kết nối tới TCP Mock SMTP (`test_live_smtp_mail.cjs`), bao gồm cả kịch bản SMTP trả mã lỗi `550` (review vẫn HTTP 200, `rejectReason` lưu đầy đủ trong DB, không rò rỉ email hay lý do vào log BE).
-- **Giao diện Playwright (`I2-UI-01`, `I2-UI-02`)**:
-  - Khi đang có hồ sơ `PENDING`: banner khóa hiển thị, các trường nhập và nút gửi bị `disabled`.
-  - Khi đã dùng hết 3/3 lượt: hiển thị thông báo hết lượt và vô hiệu hóa biểu mẫu/nút gửi.
-
-### Vấn đề 3: Lý do từ chối của Admin hiển thị phía User & hạn mức lượt (`664f32c`) — PASS
-- **API & Unit Test (`I3-API-01` → `I3-API-04`, `UserDocumentSummaryReasonTest`)**:
-  - Admin từ chối thiếu `rejectReason` bị chặn HTTP 400.
-  - Admin từ chối kèm lý do lưu DB và `GET /api/user-documents?scope=mine` trả về đúng `rejectReason`; `GET /api/customers/me/kyc` trả về `upgradeAttemptsUsed`, `maxUpgradeAttempts=3`, `upgradeAttemptsRemaining`, `hasPendingUpgradeRequest`.
-- **Giao diện Playwright (`I3-UI-01` → `I3-UI-03`)**:
-  - Trang duyệt phía Admin vô hiệu hóa nút xác nhận từ chối khi chưa nhập lý do và hiển thị lý do sau khi từ chối.
-  - Trang `/account/verification` của người dùng hiển thị rõ lý do từ chối màu đỏ và huy hiệu số lượt (`Đã gửi X/3 lần • Còn lại Y lần`), đồng thời mở lại form cho phép nộp lại khi còn lượt.
+| Luồng nghiệp vụ | Trạng thái | Lỗi đã sửa / Files liên quan | Phần còn tồn đọng |
+| :--- | :---: | :--- | :--- |
+| **1. Đổi mật khẩu** | **ĐẠT** | `AuthServiceImpl.java`, `CurrentAccountJwtAuthenticationConverter.java`, `ProfileEditor.jsx`<br>- So khớp BCrypt chuẩn xác<br>- Kiểm tra policy mật khẩu mới (chữ hoa, chữ thường, số, ký tự đặc biệt, tối thiểu 8 ký tự)<br>- Chặn trùng mật khẩu cũ (`SAME_AS_OLD_PASSWORD`, field `newPassword`)<br>- Vô hiệu hóa token cũ sau khi đổi mật khẩu (`tokenInvalidatedAt`) | Không |
+| **2. Nâng cấp Owner** | **ĐẠT** | `UserDocumentServiceImpl.java`, `CustomerServiceImpl.java`, `CustomerSummaryResponse.java`, `VerificationForm.jsx`<br>- Admin lọc và tìm kiếm hồ sơ PENDING chuẩn xác<br>- Duyệt (`APPROVED`) đổi role thành `OWNER` thật trong DB<br>- Chặn nộp khi đang PENDING (`409 DOCUMENT_PENDING_EXISTS`)<br>- Giới hạn tối đa 3 lần nộp (`400 OWNER_UPGRADE_LIMIT_EXCEEDED`)<br>- Phân quyền endpoint chặt chẽ (chặn user thường gọi API admin) | Không |
+| **3. Cấu hình gửi mail** | **ĐẠT** | `DotEnvEnvironmentPostProcessor.java`, `MailEnvironmentStartupLogger.java`, `application.properties`<br>- Nạp file `.env` vào Spring Boot qua SPI<br>- Log cảnh báo khi thiếu biến mà không lộ secret<br>- Gửi thử nghiệm thành công tới `phandoanthequan2004@gmail.com` qua SMTP TLS 587 (`in-v3.mailjet.com`) | Không |
+| **4. Mail duyệt/từ chối Owner** | **ĐẠT** | `UserDocumentServiceImpl.java`<br>- Duyệt: gửi mail chúc mừng nâng cấp thành chủ xe<br>- Từ chối: gửi mail nêu rõ lý do và số lượt còn lại<br>- Lỗi gửi mail được bắt an toàn (`try-catch`), ghi log, không làm hỏng giao dịch duyệt/từ chối | Không |
+| **5. Rate limit gửi mail** | **ĐẠT** | `MailRateLimiter.java`, `AuthController.java`, `AuthServiceImpl.java`<br>- Giới hạn gửi lại mã xác thực: tối đa 3 lần/10 phút theo cả email và IP<br>- Áp dụng cooldown tối thiểu 60s giữa 2 lần gửi liên tiếp<br>- Trả về HTTP 429 (`TOO_MANY_REQUESTS`) kèm số giây phải chờ | Multi-replica cần Redis backend |
+| **6. Upload ảnh từ máy tính** | **ĐẠT** | `PublicImageStorageService.java`, `UploadController.java`, `CarImageRequest.java`, `CarDocumentRequest.java`, `BookingDtos.java`, `SafetyDtos.java`, `CustomerServiceImpl.java`, `ProfileEditor.jsx`, `VehicleRegistrationSteps.jsx`, `DisputeForm.jsx`<br>- Bỏ toàn bộ ô nhập URL ảnh trên tất cả giao diện FE (xe, avatar, khiếu nại, giấy tờ)<br>- Phía BE chặn toàn bộ URL ngoài `http(s)://`, chỉ chấp nhận đường dẫn do server tạo (`/api/uploads/files/...`)<br>- Kiểm tra định dạng (JPG/PNG/WebP), dung lượng tối đa 5MB, magic bytes thực tế | Không |
+| **7. Quản lý `.env` & Git** | **ĐẠT** | `.gitignore`, `carrental-BE/.gitignore`, `carrental-FE/.gitignore`<br>- Thêm `.env` vào `.gitignore` ở cả root, BE và FE<br>- Xóa theo dõi `.env` khỏi Git (`git rm --cached`) | Không |
 
 ---
 
-## 3. KIỂM THỬ HỒI QUY TOÀN BỘ HỆ THỐNG (`run_comprehensive_suite.cjs` — 66/66 PASS)
+## 2. KẾT QUẢ KIỂM THỬ THỰC TẾ
 
-Toàn bộ 7 phân hệ hiện có trên cơ sở dữ liệu PostgreSQL vừa reset sạch đều đạt 100%:
-1. Xác thực, JWT hết hạn & phân quyền (`TC-AUTH-01` → `TC-AUTH-14`): **16/16 PASS**
-2. Hồ sơ người dùng & KYC (`TC-CUST-01` → `TC-CUST-05`, `TC-KYC-01` → `TC-KYC-03`): **8/8 PASS**
-3. Xe & tìm kiếm xe (`TC-CAR-01` → `TC-CAR-10`): **10/10 PASS**
-4. Gói đăng tin, voucher & thanh toán VNPAY (`TC-PKG-01`, `TC-VOU-01`, `TC-SUB-01`, `TC-SUB-02`, `TC-TXN-01` → `TC-TXN-03`, `TC-CAR-11`): **8/8 PASS**
-5. Đặt xe, khiếu nại/chỉnh sửa biên bản giao nhận & đánh giá (`TC-BKG-01` → `TC-BKG-08`, `TC-REV-01`, `TC-REV-02`): **12/12 PASS**
-6. Hồ sơ an toàn kỹ thuật & Dashboard (`TC-SAF-01` → `TC-SAF-03`, `TC-DASH-01` → `TC-DASH-03`): **6/6 PASS**
-7. Giao diện Playwright tổng quát (`TC-UI-01` → `TC-UI-06`): **6/6 PASS**
-
-Nhật ký Backend (`carrental-BE`) trong suốt quá trình chạy các bộ test ghi nhận 0 lỗi hệ thống bất thường (`ERROR`), chỉ có các cảnh báo dự kiến (`WARN`) cho ca test âm tính và ca giả lập lỗi SMTP `550`.
+1. **Backend Unit & Integration Tests**:
+   - Lệnh: `.\mvnw.cmd test`
+   - Kết quả: **123/123 tests PASS (100%)**, 0 failures, 0 errors, 0 skipped.
+2. **Frontend Production Build**:
+   - Lệnh: `npm run build` tại `carrental-FE`
+   - Kết quả: **BUILD SUCCESS**, 497 modules transformed, 0 lỗi biên dịch/lint.
+3. **Kiểm thử E2E & Browser Automation (PostgreSQL 18 + Live BE + Live FE + Playwright)**:
+   - Kết quả: **37/37 checks PASS (100%)**, kiểm thử đầy đủ cả Happy Case và Unhappy Case:
+     - Đổi mật khẩu: sai mật khẩu cũ (401), mật khẩu mới yếu (400), trùng mật khẩu cũ (400), đổi thành công (200), token cũ bị từ chối ngay (401), đăng nhập bằng mật khẩu mới thành công (200).
+     - Rate limit mail: gửi lần 1 thành công (200), gửi ngay lần 2 bị chặn cooldown (429 TOO_MANY_REQUESTS kèm số giây còn lại).
+     - Upload ảnh: upload ảnh đại diện (200), cập nhật profile bằng URL ngoài bị chặn (400), tạo xe kèm URL ngoài bị chặn (400), tạo xe bằng đường dẫn nội bộ server thành công (200).
+     - Nâng cấp Owner: nộp lần 1 (201 PENDING), nộp khi đang PENDING bị chặn (409), từ chối thiếu lý do bị chặn (400), từ chối kèm lý do (200 + gửi mail), nộp lại lần 2 và 3, nộp lần 4 bị chặn cứng (400 OWNER_UPGRADE_LIMIT_EXCEEDED).
+     - Luồng chuẩn: nộp hợp lệ -> Admin duyệt -> role tự động nâng lên `OWNER` trong DB -> đăng nhập lại nhận token mới với role `OWNER` -> truy cập `/owner/dashboard` thành công.
+     - Playwright browser UI: kiểm tra form không còn ô nhập URL, hiển thị banner giới hạn 3/3 lần và nút submit bị vô hiệu hóa khi hết lượt.
 
 ---
 
-## 4. HẠN CHẾ / PHẠM VI CHƯA THỬ TRÊN MÔI TRƯỜNG THẬT
+## 3. ĐIỂM CHƯA THỬ TRÊN MÔI TRƯỜNG THẬT VÀ LÝ DO
 
-1. **Gửi email qua dịch vụ Mailjet Cloud bên thứ ba**: Biến môi trường `MAILJET_API_KEY` / `MAILJET_SECRET_KEY` để trống ở local `.env`. Việc truyền tải SMTP thực từ Tomcat (`JavaMailSender` → TCP port 2525) và chịu lỗi `550` đã được kiểm thử sống qua `test_live_smtp_mail.cjs`, riêng việc kết nối tới server Mailjet thật ngoài Internet chưa chạy do không có API key sản xuất.
-2. **Upload cloud (S3/Cloudinary)**: Dự án sử dụng lưu trữ cục bộ (`/api/uploads/files/...`) sẵn có từ `UploadController`, không tích hợp dịch vụ cloud ngoài.
-3. **Cảnh báo kích thước bundle Vite**: Chunk `RegisterPage` (chứa zxcvbn) và `carScrollScene` vẫn > 500kB (tồn đọng từ trước, không làm lỗi build).
+1. **Kiểm tra trực tiếp trong hòm thư cá nhân**: Mailjet SMTP handshake đã trả về `250 OK` xác nhận đã tiếp nhận thư gửi đi. Việc mở hòm thư người nhận để bấm link chưa thực hiện tự động trong CI/CD.
+2. **Thanh toán thẻ ngân hàng thực tế qua cổng VNPay**: Đã xác minh qua cổng giả lập `simulateGateway` tích hợp sẵn trong mã nguồn.
+3. **Bộ nhớ Rate Limiter phân tán**: `MailRateLimiter` hiện lưu trữ in-memory (ConcurrentHashMap). Trong môi trường cluster nhiều node cần bổ sung Redis.

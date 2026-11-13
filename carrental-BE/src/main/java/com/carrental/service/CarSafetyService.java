@@ -36,6 +36,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Hồ sơ an toàn của xe: lịch sử đăng kiểm, bảo hiểm, bảo dưỡng, sửa chữa và bản tóm tắt
@@ -53,6 +54,7 @@ public class CarSafetyService {
     private final CarRepository carRepository;
     private final CarDocumentRepository carDocumentRepository;
     private final CurrentUserService currentUserService;
+    private final PublicImageStorageService publicImageStorageService;
     private final Clock clock;
 
     // ------------------------------------------------------------------ đọc
@@ -102,6 +104,23 @@ public class CarSafetyService {
         record.setRejectReason(null);
         record.setVerifiedBy(null);
         record.setVerifiedAt(null);
+        return SafetyRecordResponse.full(recordRepository.saveAndFlush(record));
+    }
+
+    @Transactional
+    public SafetyRecordResponse uploadRecordFile(Long carId, Long recordId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Tệp đính kèm không được để trống");
+        }
+        loadOwnedCar(carId);
+        CarSafetyRecord record = findRecord(carId, recordId);
+        String storedUrl = publicImageStorageService.storeImage(file);
+        record.setFileUrl(storedUrl);
+        record.setVerifyStatus(VerificationStatus.PENDING);
+        record.setRejectReason(null);
+        record.setVerifiedBy(null);
+        record.setVerifiedAt(null);
+        log.info("Chủ xe tải tệp chứng từ an toàn carId={}, recordId={}, url={}", carId, recordId, storedUrl);
         return SafetyRecordResponse.full(recordRepository.saveAndFlush(record));
     }
 
@@ -278,7 +297,6 @@ public class CarSafetyService {
                 : request.recordType() == SafetyRecordType.INSPECTION ? SafetyRecordResult.PASSED
                 : SafetyRecordResult.NOT_APPLICABLE);
         record.setNote(blankToNull(request.note()));
-        record.setFileUrl(blankToNull(request.fileUrl()));
     }
 
     private static String blankToNull(String value) {
