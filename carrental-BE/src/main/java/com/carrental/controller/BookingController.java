@@ -152,7 +152,7 @@ public class BookingController {
     @PutMapping(path = "/api/bookings/{id}/handovers/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<BookingResponse> reviseHandover(@PathVariable Long id, @PathVariable HandoverType type,
                                                        @Valid @RequestPart("data") ReviseHandoverRequest request,
-                                                       @RequestPart("photos") List<MultipartFile> photos) {
+                                                       @RequestPart(value = "photos", required = false) List<MultipartFile> photos) {
         return ApiResponse.ok("Đã gửi lại biên bản đã chỉnh sửa", bookingService.reviseHandover(id, type, request, photos));
     }
 
