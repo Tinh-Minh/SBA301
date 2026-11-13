@@ -30,6 +30,13 @@ export const getMyProfile = () => request(endpoints.customers.me);
 /** GET /api/customers/me/kyc */
 export const getMyKyc = () => request(endpoints.customers.meKyc);
 
+/** POST /api/customers/me/avatar (multipart/form-data) */
+export function uploadMyAvatar(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return request(endpoints.customers.meAvatar, { method: "POST", body: formData });
+}
+
 /** PUT /api/customers/me — profile and listing contact fields. */
 export function updateMyProfile({ fullName, dateOfBirth, address, email, phone, avatarUrl, zaloPhone, contactNote }) {
     const json = {};
@@ -43,8 +50,6 @@ export function updateMyProfile({ fullName, dateOfBirth, address, email, phone, 
         json.email = email.trim();
     if (phone !== undefined)
         json.phone = phone.trim().replace(/\s+/g, "");
-    if (avatarUrl !== undefined)
-        json.avatarUrl = avatarUrl?.trim() ? avatarUrl.trim() : null;
     if (zaloPhone !== undefined)
         json.zaloPhone = zaloPhone?.trim() ? zaloPhone.trim() : null;
     if (contactNote !== undefined)
