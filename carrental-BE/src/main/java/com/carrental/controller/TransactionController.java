@@ -22,15 +22,6 @@ import java.util.Map;
 public class TransactionController {
 
     private final TransactionService transactionService;
-    private final com.carrental.service.BookingService bookingService;
-
-    /** Admin xác nhận đã chuyển tiền hoàn cọc cho khách. Body: {"providerRef": "mã chuyển khoản"}. */
-    @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/{id}/confirm-refund")
-    public ApiResponse<TransactionResponse> confirmRefund(@PathVariable Long id,
-                                                         @RequestBody Map<String, String> body) {
-        return ApiResponse.ok("Đã xác nhận hoàn tiền", bookingService.confirmRefund(id, body.get("providerRef")));
-    }
 
     @PreAuthorize("hasRole('OWNER')")
     @PostMapping("/package-payment")

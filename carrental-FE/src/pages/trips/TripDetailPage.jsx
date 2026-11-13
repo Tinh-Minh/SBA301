@@ -109,7 +109,7 @@ function Trip({ id }) {
 
         {asking ? <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
           <h2 className="font-bold">{asking === "reject" ? "Lý do từ chối" : "Lý do huỷ đơn"}</h2>
-          {asking === "cancel" ? <p className="mt-1 text-xs text-[#666666]">Lưu ý: Nếu đơn đã thanh toán tiền cọc qua VNPay, hệ thống sẽ tự động hoàn cọc theo quy định (hoàn 100% nếu hủy trước 24h hoặc do chủ xe/admin hủy; hoàn 70% nếu khách hủy trong vòng 24h trước khi nhận xe).</p> : null}
+          {asking === "cancel" ? <p className="mt-1 text-xs text-[#666666]">Lưu ý: CarDB không hoàn tiền cọc khi huỷ đơn. Vui lòng cân nhắc trước khi huỷ.</p> : null}
           <textarea rows={2} value={reason} maxLength={500} onChange={e => setReason(e.target.value)} className={`${fieldClass} mt-2`}/>
           <div className="mt-2 flex gap-2">
             <button type="button" disabled={busy || !reason.trim()} onClick={() => run(() => asking === "reject" ? tripService.reject(b.id, reason.trim()) : tripService.cancel(b.id, reason.trim()), () => setAsking(null))} className="rounded-xl bg-[#B91C1C] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Xác nhận</button>

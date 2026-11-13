@@ -469,64 +469,6 @@ class BookingPaymentAndVoucherIntegrationTest {
         assertThat(v.getUsedCount()).isEqualTo(0);
     }
 
-    @Test
-    @DisplayName("Hủy đơn thuê ĐÃ ĐẶT CỌC: hoàn cọc rõ ràng và ghi nhận trong Transaction (BOOKING_REFUND)")
-    void cancelPaidBookingTriggersDepositRefundTransaction() throws Exception {
-        // Đặt trước 3 ngày (> 24h)
-        LocalDateTime pickup = now.plusDays(3).withHour(8).withMinute(0);
-        LocalDateTime dropoff = pickup.plusDays(2);
-
-        String createBody = """
-            {
-                "carId": %d,
-                "pickupAt": "%s",
-                "returnAt": "%s",
-                "voucherCode": "GIAM10"
-            }
-        """.formatted(carId, pickup, dropoff);
-        ResultActions res = as(customerId, post("/api/bookings").contentType(MediaType.APPLICATION_JSON).content(createBody))
-                .andExpect(status().isOk());
-        Long bookingId = Long.valueOf(JsonPath.read(res.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
-
-        // Chủ xe accept
-        as(ownerId, post("/api/bookings/" + bookingId + "/contacted")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"contacted\": true, \"contactNote\": \"Đã gọi điện\"}"));
-        as(ownerId, post("/api/bookings/" + bookingId + "/accept"));
-
-        // Khách cọc tiền
-        String depositBody = "{\"bookingId\": " + bookingId + ", \"method\": \"VNPAY\"}";
-        ResultActions txRes = as(customerId, post("/api/transactions/booking-deposit").contentType(MediaType.APPLICATION_JSON).content(depositBody))
-                .andExpect(status().isOk());
-        Long txId = Long.valueOf(JsonPath.read(txRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
-        as(customerId, post("/api/transactions/" + txId + "/simulate-gateway")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"simulateSuccess\": true}"));
-
-        Booking b = bookingRepository.findById(bookingId).orElseThrow();
-        assertThat(b.getDepositStatus()).isEqualTo(PaymentStatus.PAID);
-
-        // Khách hủy đơn trước 24h
-        as(customerId, post("/api/bookings/" + bookingId + "/cancel")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\": \"Có việc bận đột xuất\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.data.depositStatus").value("REFUNDED"));
-
-        // Kiểm tra Transaction hoàn cọc được ghi nhận
-        List<Transaction> txs = transactionRepository.findAllByBookingIdOrderByCreatedAtDesc(bookingId);
-        assertThat(txs).hasSize(2);
-        Transaction refundTx = txs.stream().filter(t -> t.getTransactionType() == TransactionType.BOOKING_REFUND).findFirst().orElseThrow();
-        assertThat(refundTx.getStatus()).isEqualTo(TransactionStatus.SUCCESS);
-        assertThat(refundTx.getAmount()).isEqualByComparingTo("2000000"); // 100% hoàn lại 2.000.000đ
-        assertThat(refundTx.getProviderRef()).startsWith("REFUND_BK_");
-
-        // Lượt voucher cũng được hoàn trả
-        Voucher v = voucherRepository.findById(voucher10Id).orElseThrow();
-        assertThat(v.getUsedCount()).isEqualTo(0);
-    }
-
     // =========================================================================
     // HELPERS
     // =========================================================================

@@ -8,7 +8,6 @@ import com.carrental.entity.CarImage;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Handover;
 import com.carrental.entity.HandoverItem;
-import com.carrental.entity.Transaction;
 import com.carrental.entity.Voucher;
 import com.carrental.enums.BookingStatus;
 import com.carrental.enums.CarStatus;
@@ -19,11 +18,8 @@ import com.carrental.enums.HandoverItemStatus;
 import com.carrental.enums.HandoverStatus;
 import com.carrental.enums.HandoverType;
 import com.carrental.enums.ListingStatus;
-import com.carrental.enums.PaymentMethod;
 import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.Role;
-import com.carrental.enums.TransactionStatus;
-import com.carrental.enums.TransactionType;
 import com.carrental.enums.VoucherStatus;
 import com.carrental.exception.AppException;
 import com.carrental.repository.BookingRepository;
@@ -31,7 +27,6 @@ import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.HandoverRepository;
 import com.carrental.repository.ReviewRepository;
-import com.carrental.repository.TransactionRepository;
 import com.carrental.repository.VoucherRepository;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
@@ -84,7 +79,6 @@ public class BookingService {
     private final CarImageRepository carImageRepository;
     private final ReviewRepository reviewRepository;
     private final VoucherRepository voucherRepository;
-    private final TransactionRepository transactionRepository;
     private final CurrentUserService currentUserService;
     private final CarSafetyService carSafetyService;
     private final com.carrental.repository.UserDocumentRepository userDocumentRepository;
@@ -261,40 +255,10 @@ public class BookingService {
             voucherRepository.decreaseUsage(b.getVoucher().getId());
         }
 
-        // Hoàn tiền cọc nếu đơn đã cọc
-        if (b.getDepositStatus() == PaymentStatus.PAID && b.getDepositAmount() != null && b.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal refundAmount = b.getDepositAmount();
-            if (isCustomer && !admin && !isOwner) {
-                // Khách tự hủy trong vòng 24 giờ trước giờ nhận xe: hoàn 70% cọc
-                if (b.getPickupAt().isBefore(now().plusHours(24))) {
-                    refundAmount = b.getDepositAmount().multiply(BigDecimal.valueOf(70)).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
-                }
-            }
-            b.setDepositStatus(PaymentStatus.REFUNDED);
-            createPendingRefund(b, refundAmount);
-            log.info("Tạo yêu cầu hoàn cọc bookingId={}, amount={}, refundAmount={}", b.getId(), b.getDepositAmount(), refundAmount);
-        }
-
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
     // ================================================================== chủ xe
-
-    /** Chủ xe xác nhận đã gọi/nhắn cho khách và ghi lại nội dung trao đổi. */
-    /**
-     * Ghi nhận khoản hoàn tiền cho khách ở trạng thái PENDING: tiền chỉ được coi là đã hoàn khi
-     * quản trị viên xác nhận đã chuyển (hoặc cổng thanh toán xác nhận), không tự đánh dấu SUCCESS.
-     */
-    private Transaction createPendingRefund(Booking b, BigDecimal amount) {
-        Transaction refundTx = Transaction.builder()
-                .booking(b)
-                .transactionType(TransactionType.BOOKING_REFUND)
-                .amount(amount)
-                .method(PaymentMethod.VNPAY)
-                .status(TransactionStatus.PENDING)
-                .build();
-        return transactionRepository.save(refundTx);
-    }
 
     @Transactional
     public BookingResponse reportReturned(Long id) {
@@ -308,50 +272,6 @@ public class BookingService {
             b.setReturnReportedAt(now());
         }
         return toResponse(bookingRepository.saveAndFlush(b));
-    }
-
-    /** Khi quyết toán, nếu tiền cọc lớn hơn tổng chi phí chuyến đi thì hoàn phần dư cho khách. */
-    private void refundExcessDeposit(Booking b) {
-        if (b.getDepositStatus() != PaymentStatus.PAID || b.getDepositAmount() == null || b.getDepositAmount().signum() <= 0) {
-            return;
-        }
-        BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
-        BigDecimal total = b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO)
-                .add(nz(b.getExtraKmAmount())).add(nz(b.getLateAmount())).add(nz(b.getOtherFeeAmount()));
-        BigDecimal excess = b.getDepositAmount().subtract(total);
-        if (excess.signum() > 0) {
-            createPendingRefund(b, excess);
-            log.info("Hoàn phần cọc dư bookingId={}, excess={}", b.getId(), excess);
-        }
-    }
-
-    private static BigDecimal nz(BigDecimal value) {
-        return value == null ? BigDecimal.ZERO : value;
-    }
-
-    /** Quản trị viên xác nhận đã chuyển khoản hoàn tiền cho khách (kèm mã tham chiếu ngân hàng/VNPay). */
-    @Transactional
-    public com.carrental.dto.response.TransactionResponse confirmRefund(Long transactionId, String providerRef) {
-        Customer user = currentUserService.getCurrentUser();
-        if (!currentUserService.isAdmin(user)) {
-            throw forbidden();
-        }
-        Transaction tx = transactionRepository.findById(transactionId)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + transactionId));
-        if (tx.getTransactionType() != TransactionType.BOOKING_REFUND) {
-            throw bad("Chỉ xác nhận được giao dịch hoàn tiền");
-        }
-        if (tx.getStatus() != TransactionStatus.PENDING) {
-            throw conflict("Giao dịch hoàn tiền đã được xử lý");
-        }
-        if (blank(providerRef)) {
-            throw bad("Vui lòng nhập mã tham chiếu chuyển khoản hoàn tiền");
-        }
-        tx.setStatus(TransactionStatus.SUCCESS);
-        tx.setProviderRef(providerRef.trim());
-        tx.setPaidAt(now());
-        log.info("Admin xác nhận hoàn tiền transactionId={}, ref={}", transactionId, providerRef);
-        return com.carrental.dto.response.TransactionResponse.from(transactionRepository.save(tx));
     }
 
     /**
@@ -373,6 +293,7 @@ public class BookingService {
         }
     }
 
+    /** Chủ xe xác nhận đã gọi/nhắn cho khách và ghi lại nội dung trao đổi. */
     @Transactional
     public BookingResponse markContacted(Long id, ContactRequest request) {
         Booking b = ownedBooking(id);
@@ -549,7 +470,6 @@ public class BookingService {
                 b.setStatus(BookingStatus.COMPLETED);
                 b.setReturnedAt(now());
                 b.setCompletedAt(now());
-                refundExcessDeposit(b);
             }
         }
         handoverRepository.saveAndFlush(h);
