@@ -8,8 +8,6 @@ export const transactionService = {
     vnpayReturn: (params) => request(endpoints.transactions.vnpayReturn, { query: { ...params, format: "json" } }),
     /** GET /api/transactions — danh sách giao dịch có phân trang (admin). */
     listPage: async (query) => toPage(await request(endpoints.transactions.list, { query })),
-    /** POST /api/transactions/{id}/confirm-refund — admin xác nhận đã chuyển tiền hoàn cọc cho khách. */
-    confirmRefund: (id, providerRef) => request(`/api/transactions/${id}/confirm-refund`, { method: "POST", json: { providerRef } }),
     /** GET /api/transactions — giao dịch gói đăng tin của người đang đăng nhập. */
     listRecent: async () => toPage(await request(endpoints.transactions.list, { query: { page: 0, size: 50, sort: "id,desc" } })).content,
 };
