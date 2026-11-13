@@ -509,7 +509,7 @@ public class BookingService {
                 open.put(item.getId(), item);
             }
         }
-        Map<Long, ItemDecision> decisions = request.decisions().stream()
+        Map<Long, ItemDecision> decisions = (request.decisions() == null ? List.<ItemDecision>of() : request.decisions()).stream()
                 .collect(Collectors.toMap(ItemDecision::itemId, d -> d, (x, y) -> y));
         if (!decisions.keySet().equals(open.keySet())) {
             throw bad("Vui lòng phản hồi đầy đủ các hạng mục đang chờ xác nhận");

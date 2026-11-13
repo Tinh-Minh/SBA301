@@ -71,7 +71,8 @@ public final class BookingDtos {
             @Size(max = 1000, message = "Ghi chú tối đa 1000 ký tự") String disputeNote) {}
 
     public record RespondHandoverRequest(
-            @NotEmpty(message = "Vui lòng xem và phản hồi các hạng mục") List<@Valid ItemDecision> decisions,
+            /** Có thể rỗng khi không còn hạng mục chờ (vd chủ xe chỉ điều chỉnh phí theo phản đối của khách). */
+            List<@Valid ItemDecision> decisions,
             @Size(max = 1000) String customerNote,
             /** Biên bản trả xe: khách không đồng ý số tiền phí phát sinh (ghi lý do vào customerNote). */
             Boolean disputeFees) {}

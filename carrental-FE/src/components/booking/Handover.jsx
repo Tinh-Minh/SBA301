@@ -150,7 +150,7 @@ export function HandoverView({ handover, booking, mode, busy, error, onRespond, 
         </li>;
     })}</ul>
 
-    {mode === "respond" && open.length ? <div className="mt-4 flex flex-col gap-2">
+    {mode === "respond" && (open.length || handover.status === "SUBMITTED") ? <div className="mt-4 flex flex-col gap-2">
       <textarea rows={2} value={note} maxLength={1000} onChange={e => setNote(e.target.value)} placeholder="Ghi chú thêm cho chủ xe (tuỳ chọn)" className={fieldClass}/>
       {handover.type === "RETURN" ? <label className="flex items-center gap-2 text-sm text-[#292929]">
         <input type="checkbox" checked={disputeFees} onChange={e => setDisputeFees(e.target.checked)}/>
