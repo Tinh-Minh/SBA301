@@ -82,6 +82,7 @@ public class BookingService {
     private final VoucherRepository voucherRepository;
     private final TransactionRepository transactionRepository;
     private final CurrentUserService currentUserService;
+    private final CarSafetyService carSafetyService;
     private final PublicImageStorageService publicImageStorageService;
     private final Clock clock;
 
@@ -171,6 +172,10 @@ public class BookingService {
         }
         if (car.getOwner().getId().equals(customer.getId())) {
             throw bad("Bạn không thể đặt xe của chính mình");
+        }
+        if (carSafetyService.isUnsafe(car)) {
+            throw new AppException(HttpStatus.CONFLICT,
+                    "Xe đang có đăng kiểm/bảo hiểm hết hạn hoặc không đạt nên tạm thời không nhận đặt");
         }
         validateWindow(request.pickupAt(), request.returnAt());
         // Khoá dòng xe để hai yêu cầu cùng lúc không vượt qua kiểm tra trùng lịch.
