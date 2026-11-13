@@ -37,7 +37,7 @@ DB_USERNAME=postgres
 DB_PASSWORD=<mật khẩu postgres trên máy bạn>
 ```
 
-Lần chạy đầu (database trống) BE tự tạo bảng và nạp dữ liệu mẫu. Muốn làm sạch dữ liệu, chạy BE một lần với `DB_RESET_ON_STARTUP=true`, hoặc chạy file [`seeddb.sql`](seeddb.sql) bằng pgAdmin/psql.
+Lần chạy đầu (database trống) BE tự tạo bảng và nạp dữ liệu mẫu. Muốn làm sạch dữ liệu, chạy BE một lần với `DB_RESET_ON_STARTUP=true` **và** `DB_RESET_CONFIRM=XOA-TOAN-BO-DU-LIEU` (thiếu chuỗi xác nhận thì dữ liệu được giữ nguyên), hoặc chạy file [`seeddb.sql`](seeddb.sql) bằng pgAdmin/psql.
 
 ### 2. Backend – http://localhost:8080
 
