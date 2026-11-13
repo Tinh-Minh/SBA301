@@ -54,7 +54,13 @@ export function Editor({ profile, kyc, onSaved }) {
         setNewPassword("");
         setPasswordNote("Đã đổi mật khẩu thành công. Các phiên khác sẽ phải đăng nhập lại.");
     });
-    return <div className="flex flex-col gap-4"><section aria-busy={save.running} className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
+    const currentPasswordError = password.error?.fieldErrors?.find(e => e.field === "currentPassword")?.message
+      || (password.error?.code === "CURRENT_PASSWORD_INCORRECT" ? (password.error?.message?.split(":")?.[0] || password.error.message) : null);
+  const newPasswordError = password.error?.fieldErrors?.find(e => e.field === "newPassword")?.message
+      || (password.error?.message?.includes("trùng") ? password.error.message : null);
+  const generalPasswordError = (!currentPasswordError && !newPasswordError) ? password.error?.message : null;
+
+  return <div className="flex flex-col gap-4"><section aria-busy={save.running} className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 className="text-lg font-bold">Thông tin cá nhân</h2>
@@ -121,10 +127,16 @@ export function Editor({ profile, kyc, onSaved }) {
     <h2 className="text-lg font-bold">Đổi mật khẩu</h2>
     <form onSubmit={event => { event.preventDefault(); void password.run(); }} className="flex flex-col gap-4">
       <div className="grid gap-3 sm:grid-cols-2">
-        <label htmlFor="profile-current-password" className="text-xs font-semibold text-[#666666]">Mật khẩu hiện tại<input id="profile-current-password" required autoComplete="current-password" type="password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} className={`${profileInputClass} mt-1`}/></label>
-        <label htmlFor="profile-new-password" className="text-xs font-semibold text-[#666666]">Mật khẩu mới<input id="profile-new-password" required minLength={8} autoComplete="new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} className={`${profileInputClass} mt-1`}/></label>
+        <div>
+          <label htmlFor="profile-current-password" className="text-xs font-semibold text-[#666666]">Mật khẩu hiện tại<input id="profile-current-password" required autoComplete="current-password" type="password" value={currentPassword} onChange={event => setCurrentPassword(event.target.value)} className={`${profileInputClass} mt-1`}/></label>
+          {currentPasswordError ? <p role="alert" className="mt-1 text-xs text-[#B91C1C]">{currentPasswordError}</p> : null}
+        </div>
+        <div>
+          <label htmlFor="profile-new-password" className="text-xs font-semibold text-[#666666]">Mật khẩu mới<input id="profile-new-password" required minLength={8} autoComplete="new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} className={`${profileInputClass} mt-1`}/></label>
+          {newPasswordError ? <p role="alert" className="mt-1 text-xs text-[#B91C1C]">{newPasswordError}</p> : null}
+        </div>
       </div>
-      {password.error ? <p role="alert" aria-live="assertive" className="text-sm text-[#B91C1C]">{password.error.message}</p> : passwordNote ? <p role="status" aria-live="polite" className="text-sm text-[#166534]">{passwordNote}</p> : null}
+      {generalPasswordError ? <p role="alert" aria-live="assertive" className="text-sm text-[#B91C1C]">{generalPasswordError}</p> : passwordNote ? <p role="status" aria-live="polite" className="text-sm text-[#166534]">{passwordNote}</p> : null}
       <button type="submit" disabled={password.running} className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#B9430C] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#8F3208] disabled:opacity-60 focus-visible:outline-[#B9430C]">{password.running ? "Đang đổi…" : "Cập nhật mật khẩu"}</button>
     </form>
   </section></div>;

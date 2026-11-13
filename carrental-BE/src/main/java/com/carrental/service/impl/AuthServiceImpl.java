@@ -311,7 +311,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 1. Kiểm tra mật khẩu cũ khớp BCrypt không
         if (!passwordEncoder.matches(request.getCurrentPassword(), customer.getPasswordHash())) {
-            throw new AppException(ErrorCode.AUTHENTICATION_FAILED, "Mật khẩu hiện tại không chính xác",
+            throw new AppException(ErrorCode.CURRENT_PASSWORD_INCORRECT, "Mật khẩu hiện tại không chính xác",
                     List.of(new FieldErrorResponse("currentPassword", "Mật khẩu hiện tại không chính xác")));
         }
 

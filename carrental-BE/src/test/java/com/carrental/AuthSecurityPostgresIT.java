@@ -637,7 +637,7 @@ class AuthSecurityPostgresIT {
         String validBody = objectMapper.writeValueAsString(Map.of("currentPassword", PASSWORD, "newPassword", newPassword));
         assertThat(post("/api/auth/change-password", validBody).statusCode()).isEqualTo(401);
         assertError(post("/api/auth/change-password", objectMapper.writeValueAsString(
-                Map.of("currentPassword", "wrong password", "newPassword", newPassword)), headers), 401, "AUTHENTICATION_FAILED");
+                Map.of("currentPassword", "wrong password", "newPassword", newPassword)), headers), 400, "CURRENT_PASSWORD_INCORRECT");
         HttpResponse<String> weakPassword = post("/api/auth/change-password", objectMapper.writeValueAsString(
                 Map.of("currentPassword", PASSWORD, "newPassword", "tiny")), headers);
         assertThat(weakPassword.statusCode()).isEqualTo(400);

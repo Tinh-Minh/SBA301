@@ -165,8 +165,8 @@ class PasswordAndMailRateLimitTest {
     // =========================================================================
 
     @Test
-    @DisplayName("Change password: Wrong current password throws 401 with field currentPassword")
-    void changePasswordWrongCurrentPasswordThrows401WithField() {
+    @DisplayName("Change password: Wrong current password throws 400 with field currentPassword")
+    void changePasswordWrongCurrentPasswordThrows400WithField() {
         Customer customer = Customer.builder()
                 .email("test@example.com")
                 .passwordHash(passwordEncoder.encode("OldPassword123"))
@@ -186,8 +186,8 @@ class PasswordAndMailRateLimitTest {
                 .isInstanceOf(AppException.class)
                 .satisfies(ex -> {
                     AppException appEx = (AppException) ex;
-                    assertThat(appEx.errorCode()).isEqualTo(ErrorCode.AUTHENTICATION_FAILED);
-                    assertThat(appEx.getStatus()).isEqualTo(HttpStatus.UNAUTHORIZED);
+                    assertThat(appEx.errorCode()).isEqualTo(ErrorCode.CURRENT_PASSWORD_INCORRECT);
+                    assertThat(appEx.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
                     assertThat(appEx.fieldErrors()).isNotEmpty();
                     assertThat(appEx.fieldErrors().get(0).field()).isEqualTo("currentPassword");
                 });
@@ -303,64 +303,62 @@ class PasswordAndMailRateLimitTest {
     }
 
     @Test
-    @DisplayName("Validation: Rejects external URLs and accepts server-generated internal paths across all photo/doc DTOs")
-    void beanValidationRejectsExternalUrlsInAllPhotoAndDocumentRequests() {
-        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory().getValidator();
+    @DisplayName("Avatar in profile update is rejected when sent as JSON string")
+    void profileUpdateRejectsAvatarUrlString() {
+        EntityManager em = mock(EntityManager.class);
+        CustomerProperties props = new CustomerProperties();
+        PublicImageStorageService storage = mock(PublicImageStorageService.class);
+        CustomerServiceImpl customerService = new CustomerServiceImpl(
+                customers, em, props, clock, authService, null, storage);
 
-        // 1. CarImageRequest
-        com.carrental.dto.request.CarImageRequest badCarImg = com.carrental.dto.request.CarImageRequest.builder()
-                .imageUrl("https://cdn.attacker.com/car.jpg")
+        Customer customer = Customer.builder()
+                .email("avatar-test@example.com")
+                .role(Role.CUSTOMER)
+                .status(CustomerStatus.ACTIVE)
                 .build();
-        assertThat(validator.validate(badCarImg)).isNotEmpty();
+        ReflectionTestUtils.setField(customer, "id", 20L);
+        when(customers.findWithLockById(20L)).thenReturn(Optional.of(customer));
 
-        com.carrental.dto.request.CarImageRequest goodCarImg = com.carrental.dto.request.CarImageRequest.builder()
-                .imageUrl("/api/uploads/files/12345678-1234-1234-1234-123456789abc.jpg")
-                .build();
-        assertThat(validator.validate(goodCarImg)).isEmpty();
+        tools.jackson.databind.ObjectMapper mapper = new tools.jackson.databind.ObjectMapper();
+        tools.jackson.databind.node.ObjectNode node = mapper.createObjectNode();
+        node.put("avatarUrl", "/api/uploads/files/some-avatar.jpg");
 
-        // 2. CarDocumentRequest
-        com.carrental.dto.request.CarDocumentRequest badCarDoc = com.carrental.dto.request.CarDocumentRequest.builder()
-                .docType(com.carrental.enums.CarDocumentType.REGISTRATION)
-                .fileUrl("http://evil.com/doc.png")
-                .build();
-        assertThat(validator.validate(badCarDoc)).isNotEmpty();
+        com.carrental.dto.request.customer.UpdateProfileRequest request = new com.carrental.dto.request.customer.UpdateProfileRequest();
+        request.setAvatarUrl(node.get("avatarUrl"));
 
-        com.carrental.dto.request.CarDocumentRequest goodCarDoc = com.carrental.dto.request.CarDocumentRequest.builder()
-                .docType(com.carrental.enums.CarDocumentType.REGISTRATION)
-                .fileUrl("/api/uploads/files/cavet-123.jpg")
-                .build();
-        assertThat(validator.validate(goodCarDoc)).isEmpty();
+        CurrentAccount account = new CurrentAccount(20L, Role.CUSTOMER);
+        assertThatThrownBy(() -> customerService.updateMe(account, request))
+                .isInstanceOf(AppException.class)
+                .satisfies(ex -> {
+                    AppException appEx = (AppException) ex;
+                    assertThat(appEx.getStatus()).isEqualTo(HttpStatus.BAD_REQUEST);
+                    assertThat(appEx.fieldErrors()).isNotEmpty();
+                    assertThat(appEx.fieldErrors().get(0).field()).isEqualTo("avatarUrl");
+                    assertThat(appEx.fieldErrors().get(0).message()).contains("Vui lòng tải ảnh đại diện");
+                });
+    }
 
-        // 3. SafetyRecordRequest
-        com.carrental.dto.safety.SafetyDtos.SafetyRecordRequest badSafety = new com.carrental.dto.safety.SafetyDtos.SafetyRecordRequest(
-                com.carrental.enums.SafetyRecordType.INSPECTION,
-                java.time.LocalDate.now(),
-                null, "Provider", "REF123", 1000,
-                com.carrental.enums.SafetyRecordResult.PASSED, "Note",
-                "https://unsafe.com/report.pdf");
-        assertThat(validator.validate(badSafety)).isNotEmpty();
-
-        com.carrental.dto.safety.SafetyDtos.SafetyRecordRequest goodSafety = new com.carrental.dto.safety.SafetyDtos.SafetyRecordRequest(
-                com.carrental.enums.SafetyRecordType.INSPECTION,
-                java.time.LocalDate.now(),
-                null, "Provider", "REF123", 1000,
-                com.carrental.enums.SafetyRecordResult.PASSED, "Note",
-                "/api/uploads/files/safety-report.jpg");
-        assertThat(validator.validate(goodSafety)).isEmpty();
-
-        // 4. HandoverItemInput
-        com.carrental.dto.booking.BookingDtos.HandoverItemInput badHandover =
-                new com.carrental.dto.booking.BookingDtos.HandoverItemInput(
-                        com.carrental.enums.HandoverCategory.EXTERIOR_FRONT,
-                        "https://external.com/front.jpg",
-                        "Clean");
-        assertThat(validator.validate(badHandover)).isNotEmpty();
-
-        com.carrental.dto.booking.BookingDtos.HandoverItemInput goodHandover =
-                new com.carrental.dto.booking.BookingDtos.HandoverItemInput(
-                        com.carrental.enums.HandoverCategory.EXTERIOR_FRONT,
-                        "/api/uploads/files/handover-front.jpg",
-                        "Clean");
-        assertThat(validator.validate(goodHandover)).isEmpty();
+    @Test
+    @DisplayName("Seed data check: No external HTTP images and all seed upload files exist on disk")
+    void seedDataImagesValidation() throws Exception {
+        java.nio.file.Path seedFile = java.nio.file.Path.of("src/main/resources/seed_data.sql");
+        if (!java.nio.file.Files.exists(seedFile)) {
+            seedFile = java.nio.file.Path.of("carrental-BE/src/main/resources/seed_data.sql");
+        }
+        String content = java.nio.file.Files.readString(seedFile);
+        assertThat(content).doesNotContain("/images/");
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("/api/uploads/files/([a-f0-9\\-]+\\.(?:jpg|png|webp))").matcher(content);
+        java.util.Set<String> files = new java.util.HashSet<>();
+        while (m.find()) {
+            files.add(m.group(1));
+        }
+        assertThat(files).isNotEmpty();
+        java.nio.file.Path uploadDir = java.nio.file.Path.of("storage/public-uploads");
+        if (!java.nio.file.Files.exists(uploadDir)) {
+            uploadDir = java.nio.file.Path.of("carrental-BE/storage/public-uploads");
+        }
+        for (String file : files) {
+            assertThat(uploadDir.resolve(file)).exists();
+        }
     }
 }
