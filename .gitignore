@@ -5,11 +5,8 @@
 !/carrental-BE/
 !/carrental-FE/
 !/docs/
-!/BACKEND_CONVENTIONS.md
+!/README.md
 !/seeddb.sql
-!/TEST_PLAN.md
-!/BUG_REPORT.md
-!/FIX_LOG.md
-!/FINAL_REPORT.md
+!/docker-compose.yml
 !/.gitignore
 /.idea/
