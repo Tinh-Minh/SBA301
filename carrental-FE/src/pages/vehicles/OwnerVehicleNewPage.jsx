@@ -19,6 +19,7 @@ import { repairDisplayText } from "@/utils/text.js";
 export default function OwnerVehicleNew() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const draftKey = `${DRAFT_KEY}:${user?.id ?? "anonymous"}`;
     const create = useApiMutation(submitCar);
     const [step, setStep] = useState(1);
     const [reached, setReached] = useState(1);
@@ -47,7 +48,7 @@ export default function OwnerVehicleNew() {
     const [inspectionError, setInspectionError] = useState("");
     const [photoErrors, setPhotoErrors] = useState([]);
     useEffect(() => {
-        const raw = localStorage.getItem(DRAFT_KEY);
+        const raw = localStorage.getItem(draftKey);
         if (!raw)
             return;
         try {
@@ -66,7 +67,7 @@ export default function OwnerVehicleNew() {
             }
         }
         catch { /* bản nháp hỏng thì bỏ qua */ }
-    }, []);
+    }, [draftKey]);
     const segment = segments.find(item => item.id === form.segment) ?? segments[0];
     const dayPrice = parseVndInput(form.pricePerDay);
     const weekend = parseVndInput(form.weekendPrice);
@@ -230,7 +231,7 @@ export default function OwnerVehicleNew() {
         );
         const safeCavet = cavet?.startsWith("blob:") ? "" : cavet;
         const safeInspection = inspection?.startsWith("blob:") ? "" : inspection;
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, photos: safePhotos, cavet: safeCavet, inspection: safeInspection }));
+        localStorage.setItem(draftKey, JSON.stringify({ form, step, photos: safePhotos, cavet: safeCavet, inspection: safeInspection }));
         setDraftNote("Đã lưu bản nháp trên máy này.");
     }
     async function submitCar(draft) {
@@ -279,7 +280,7 @@ export default function OwnerVehicleNew() {
         });
         if (!car)
             return;
-        localStorage.removeItem(DRAFT_KEY);
+        localStorage.removeItem(draftKey);
         navigate(ownerRoutes.vehicles);
     }
     const subtitle = `${form.brand} ${form.model} • ${form.licensePlate || "Chưa có biển số"}`;
