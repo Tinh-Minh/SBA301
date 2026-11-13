@@ -4,6 +4,8 @@ import { AuthLayout } from "@/components/auth/AuthLayout.jsx";
 import { resendVerification, verifyEmail } from "@/services/authService.js";
 
 const PENDING_EMAIL_KEY = "cardb:pending-verification-email";
+const VERIFICATION_LAST_SENT_AT_KEY = "cardb:verification-last-sent-at";
+const RESEND_COOLDOWN_MS = 60_000;
 
 function verificationTokenFromLocation() {
     const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -19,6 +21,23 @@ export default function VerifyEmailPage() {
     const [message, setMessage] = useState("");
     const [resendError, setResendError] = useState("");
     const [isResending, setIsResending] = useState(false);
+    const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+    useEffect(() => {
+        const updateCooldown = () => {
+            const pendingEmail = window.sessionStorage.getItem(PENDING_EMAIL_KEY) || "";
+            const startedAt = Number(window.sessionStorage.getItem(VERIFICATION_LAST_SENT_AT_KEY));
+            const sameEmail = pendingEmail.trim().toLowerCase() === email.trim().toLowerCase();
+            if (!sameEmail || !Number.isFinite(startedAt) || startedAt <= 0) {
+                setCooldownSeconds(0);
+                return;
+            }
+            setCooldownSeconds(Math.max(0, Math.ceil((startedAt + RESEND_COOLDOWN_MS - Date.now()) / 1000)));
+        };
+        updateCooldown();
+        const timer = window.setInterval(updateCooldown, 1000);
+        return () => window.clearInterval(timer);
+    }, [email]);
 
     useEffect(() => {
         const token = tokenRef.current;
@@ -30,6 +49,8 @@ export default function VerifyEmailPage() {
             setStatus("verified");
             setMessage("Email đã được xác minh. Bạn có thể đăng nhập.");
             window.sessionStorage.removeItem(PENDING_EMAIL_KEY);
+            window.sessionStorage.removeItem(VERIFICATION_LAST_SENT_AT_KEY);
+            setCooldownSeconds(0);
         }).catch(error => {
             setStatus("failed");
             setMessage(error.message || "Liên kết xác minh không hợp lệ hoặc đã hết hạn.");
@@ -43,6 +64,8 @@ export default function VerifyEmailPage() {
         try {
             await resendVerification(email);
             window.sessionStorage.setItem(PENDING_EMAIL_KEY, email.trim());
+            window.sessionStorage.setItem(VERIFICATION_LAST_SENT_AT_KEY, String(Date.now()));
+            setCooldownSeconds(60);
             setStatus("sent");
             setMessage("Nếu email hợp lệ và chưa xác minh, liên kết mới sẽ được gửi tới hộp thư của bạn.");
         } catch (error) {
@@ -77,8 +100,8 @@ export default function VerifyEmailPage() {
                 </div>
             </div>
             {resendError ? <p className="text-sm text-red-700" role="alert">{resendError}</p> : null}
-            <button className="auth-submit" type="submit" disabled={isResending || !email.trim()}>
-                {isResending ? "Đang gửi…" : "Gửi lại liên kết"}
+            <button className="auth-submit" type="submit" disabled={isResending || cooldownSeconds > 0 || !email.trim()}>
+                {isResending ? "Đang gửi…" : cooldownSeconds > 0 ? `Gửi lại sau ${cooldownSeconds}s` : "Gửi lại liên kết"}
             </button>
         </form> : null}
         <p className="auth-switch">
