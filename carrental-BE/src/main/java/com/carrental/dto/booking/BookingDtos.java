@@ -48,8 +48,6 @@ public final class BookingDtos {
 
     public record HandoverItemInput(
             @NotNull(message = "Thiếu hạng mục") HandoverCategory category,
-            @NotBlank(message = "Mỗi hạng mục cần ảnh hiện trạng")
-            @Size(max = 500) @Pattern(regexp = URL_REGEX, message = "Đường dẫn ảnh không hợp lệ") String photoUrl,
             @Size(max = 1000, message = "Mô tả tối đa 1000 ký tự") String conditionNote) {}
 
     public record SubmitHandoverRequest(
@@ -74,8 +72,6 @@ public final class BookingDtos {
 
     public record ItemRevision(
             @NotNull Long itemId,
-            @NotBlank(message = "Mục cần sửa phải có ảnh mới hoặc ảnh cũ")
-            @Size(max = 500) @Pattern(regexp = URL_REGEX, message = "Đường dẫn ảnh không hợp lệ") String photoUrl,
             @Size(max = 1000) String conditionNote) {}
 
     public record ReviseHandoverRequest(

@@ -12,8 +12,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /** Đơn thuê xe và biên bản bàn giao. */
 @RestController
@@ -93,17 +95,19 @@ public class BookingController {
     // ---------------------------------------------------------------- biên bản
 
     @PreAuthorize("hasRole('OWNER')")
-    @PostMapping("/api/bookings/{id}/handovers/{type}")
+    @PostMapping(path = "/api/bookings/{id}/handovers/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<BookingResponse> submitHandover(@PathVariable Long id, @PathVariable HandoverType type,
-                                                       @Valid @RequestBody SubmitHandoverRequest request) {
-        return ApiResponse.ok("Đã gửi biên bản cho khách xác nhận", bookingService.submitHandover(id, type, request));
+                                                       @Valid @RequestPart("data") SubmitHandoverRequest request,
+                                                       @RequestPart("photos") List<MultipartFile> photos) {
+        return ApiResponse.ok("Đã gửi biên bản cho khách xác nhận", bookingService.submitHandover(id, type, request, photos));
     }
 
     @PreAuthorize("hasRole('OWNER')")
-    @PutMapping("/api/bookings/{id}/handovers/{type}")
+    @PutMapping(path = "/api/bookings/{id}/handovers/{type}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<BookingResponse> reviseHandover(@PathVariable Long id, @PathVariable HandoverType type,
-                                                       @Valid @RequestBody ReviseHandoverRequest request) {
-        return ApiResponse.ok("Đã gửi lại biên bản đã chỉnh sửa", bookingService.reviseHandover(id, type, request));
+                                                       @Valid @RequestPart("data") ReviseHandoverRequest request,
+                                                       @RequestPart("photos") List<MultipartFile> photos) {
+        return ApiResponse.ok("Đã gửi lại biên bản đã chỉnh sửa", bookingService.reviseHandover(id, type, request, photos));
     }
 
     @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER')")

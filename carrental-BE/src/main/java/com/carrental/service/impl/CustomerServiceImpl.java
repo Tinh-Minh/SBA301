@@ -116,7 +116,9 @@ public class CustomerServiceImpl implements CustomerService {
         String address = request.addressWasProvided() ? normalizedAddress(request.getAddress()) : null;
         String email = request.emailWasProvided() ? normalizedEmail(request.getEmail()) : null;
         String phone = request.phoneWasProvided() ? normalizedPhone(request.getPhone()) : null;
-        String avatarUrl = request.avatarUrlWasProvided() ? normalizedAvatar(request.getAvatarUrl()) : null;
+        if (request.avatarUrlWasProvided()) {
+            throw fieldError("avatarUrl", "Vui lòng tải ảnh đại diện bằng chức năng tải ảnh lên");
+        }
         String zaloPhone = request.zaloPhoneWasProvided() ? normalizedZaloPhone(request.getZaloPhone()) : null;
         String contactNote = request.contactNoteWasProvided() ? normalizedContactNote(request.getContactNote()) : null;
         boolean emailChanged = request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail());
@@ -133,7 +135,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
 
         boolean changed = applyProfileUpdate(customer, request, fullName, dateOfBirth, address, email, phone,
-                avatarUrl, zaloPhone, contactNote);
+                zaloPhone, contactNote);
         if (changed) {
             customers.flush();
             // The database trigger is authoritative for updated_at; reload it after the write.
@@ -363,17 +365,6 @@ public class CustomerServiceImpl implements CustomerService {
         return CustomerProfileResponse.from(customer);
     }
 
-    private String normalizedAvatar(String value) {
-        if (value == null) return null;
-        String avatar = value.strip();
-        if (avatar.isEmpty()) return null;
-        if (avatar.length() > 500) throw fieldError("avatarUrl", "Ảnh đại diện tối đa 500 ký tự");
-        if (avatar.startsWith("http://") || avatar.startsWith("https://")) {
-            throw fieldError("avatarUrl", "Vui lòng tải ảnh lên từ máy tính, không dùng URL ngoài");
-        }
-        return avatar;
-    }
-
     private String normalizedZaloPhone(String value) {
         if (value == null) return null;
         String normalized = value.strip();
@@ -408,7 +399,7 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     private static boolean applyProfileUpdate(Customer customer, UpdateProfileRequest request, String fullName,
-            LocalDate dateOfBirth, String address, String email, String phone, String avatarUrl,
+            LocalDate dateOfBirth, String address, String email, String phone,
             String zaloPhone, String contactNote) {
         boolean changed = false;
         if (request.fullNameWasProvided() && !Objects.equals(fullName, customer.getFullName())) {
@@ -430,10 +421,6 @@ public class CustomerServiceImpl implements CustomerService {
         }
         if (request.phoneWasProvided() && !Objects.equals(phone, customer.getPhone())) {
             customer.setPhone(phone);
-            changed = true;
-        }
-        if (request.avatarUrlWasProvided() && !Objects.equals(avatarUrl, customer.getAvatarUrl())) {
-            customer.setAvatarUrl(avatarUrl);
             changed = true;
         }
         if (request.zaloPhoneWasProvided() && !Objects.equals(zaloPhone, customer.getZaloPhone())) {

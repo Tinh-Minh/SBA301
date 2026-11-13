@@ -7,7 +7,7 @@ import { safetyService } from "@/services/tripService.js";
 import { formatDate } from "@/utils/datetime.js";
 
 const verifyMeta = { PENDING: { label: "Chờ CarDB xác minh", tone: "warning" }, APPROVED: { label: "Đã xác minh", tone: "success" }, REJECTED: { label: "Bị từ chối", tone: "danger" } };
-const blank = { recordType: "INSPECTION", performedAt: "", expiresAt: "", provider: "", referenceNumber: "", odometerKm: "", result: "PASSED", note: "", fileUrl: "" };
+const blank = { recordType: "INSPECTION", performedAt: "", expiresAt: "", provider: "", referenceNumber: "", odometerKm: "", result: "PASSED", note: "", fileUrl: "", file: null };
 
 /** Chủ xe khai báo lịch sử đăng kiểm, bảo hiểm, bảo dưỡng, sửa chữa cho một xe. */
 export function SafetyManager({ carId }) {
@@ -22,8 +22,16 @@ export function SafetyManager({ carId }) {
     async function save() {
         setBusy(true); setError("");
         try {
-            await safetyService.create(carId, { ...form, expiresAt: form.expiresAt || null, odometerKm: form.odometerKm ? Number(form.odometerKm) : null,
-                result: form.recordType === "INSPECTION" ? form.result : "NOT_APPLICABLE", fileUrl: form.fileUrl || null });
+            const { file, fileUrl, ...rest } = form;
+            const res = await safetyService.create(carId, {
+                ...rest,
+                expiresAt: form.expiresAt || null,
+                odometerKm: form.odometerKm ? Number(form.odometerKm) : null,
+                result: form.recordType === "INSPECTION" ? form.result : "NOT_APPLICABLE"
+            });
+            if (form.file) {
+                await safetyService.uploadFile(carId, res.id, form.file);
+            }
             setForm(blank); setOpen(false); await safety.reload();
         } catch (e) { setError(e.message); } finally { setBusy(false); }
     }
@@ -47,7 +55,7 @@ export function SafetyManager({ carId }) {
       <label className="text-xs font-semibold text-muted-gray">Số km lúc đó<input type="number" min="0" value={form.odometerKm} onChange={set("odometerKm")} className={`${fieldClass} mt-1`}/></label>
       {form.recordType === "INSPECTION" ? <label className="text-xs font-semibold text-muted-gray">Kết quả<select value={form.result} onChange={set("result")} className={`${fieldClass} mt-1`}><option value="PASSED">Đạt</option><option value="FAILED">Không đạt</option></select></label> : null}
       <label className="text-xs font-semibold text-muted-gray sm:col-span-2">Ghi chú<input value={form.note} onChange={set("note")} className={`${fieldClass} mt-1`}/></label>
-      <div className="sm:col-span-2 lg:col-span-3"><p className="mb-1 text-xs font-semibold text-muted-gray">Ảnh chứng từ</p><PhotoInput value={form.fileUrl} onChange={url => setForm(f => ({ ...f, fileUrl: url }))} label="Tải ảnh chứng từ"/></div>
+      <div className="sm:col-span-2 lg:col-span-3"><p className="mb-1 text-xs font-semibold text-muted-gray">Ảnh chứng từ</p><PhotoInput value={form.fileUrl} onChange={(url, file) => setForm(f => ({ ...f, fileUrl: url, file }))} label="Tải ảnh chứng từ"/></div>
       <button type="button" disabled={busy || !form.performedAt || (needsExpiry && !form.expiresAt)} onClick={save} className="self-start rounded-xl bg-brand-accent px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{busy ? "Đang lưu…" : "Lưu bản ghi"}</button>
     </div> : null}
     {error ? <p role="alert" className="mt-3 rounded-xl bg-[#FEF2F2] px-3 py-2 text-sm text-[#B91C1C]">{error}</p> : null}

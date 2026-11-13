@@ -1,18 +1,19 @@
 package com.carrental.service;
 
 import com.carrental.dto.request.CarCreateRequest;
-import com.carrental.dto.request.CarDocumentRequest;
 import com.carrental.dto.request.CarDocumentVerifyRequest;
-import com.carrental.dto.request.CarImageRequest;
 import com.carrental.dto.request.CarUpdateRequest;
 import com.carrental.dto.response.CarDocumentResponse;
 import com.carrental.dto.response.CarImageResponse;
 import com.carrental.dto.response.CarResponse;
 import com.carrental.dto.response.CarSummaryResponse;
 import com.carrental.dto.response.PageResponse;
+import com.carrental.enums.CarDocumentType;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.enums.ListingStatus;
+import org.springframework.web.multipart.MultipartFile;
+import java.time.LocalDate;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -59,8 +60,6 @@ public interface CarService {
     CarResponse rejectCar(Long carId, String reason);
 
     // Car Images
-    List<CarImageResponse> addCarImages(Long carId, List<CarImageRequest> requests);
-
     List<CarImageResponse> addCarImages(Long carId, List<MultipartFile> files, Integer primaryIndex);
 
     void deleteCarImage(Long carId, Long imageId);
@@ -68,7 +67,7 @@ public interface CarService {
     CarImageResponse setPrimaryCarImage(Long carId, Long imageId);
 
     // Car Documents
-    CarDocumentResponse addCarDocument(Long carId, CarDocumentRequest request);
+    CarDocumentResponse addCarDocument(Long carId, CarDocumentType docType, LocalDate expiresAt, MultipartFile file);
 
     List<CarDocumentResponse> getCarDocuments(Long carId);
 

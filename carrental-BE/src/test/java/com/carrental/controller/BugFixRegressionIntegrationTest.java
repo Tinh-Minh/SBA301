@@ -59,10 +59,12 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import org.springframework.mock.web.MockMultipartFile;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -232,8 +234,10 @@ class BugFixRegressionIntegrationTest {
     void adminCannotApproveCarWithoutVerifiedRegistration() throws Exception {
         as(adminId, post("/api/admin/cars/" + pendingApprovalCarId + "/approve")).andExpect(status().isConflict());
 
-        String doc = as(ownerId, post("/api/cars/" + pendingApprovalCarId + "/documents")
-                .content("{\"docType\":\"REGISTRATION\",\"fileUrl\":\"/images/docs/cavet.jpg\"}"))
+        MockMultipartFile file = new MockMultipartFile("file", "cavet.jpg", "image/jpeg", createValidJpg());
+        String doc = asMultipart(ownerId, multipart("/api/cars/" + pendingApprovalCarId + "/documents")
+                .file(file)
+                .param("docType", "REGISTRATION"))
                 .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         Long docId = ((Number) JsonPath.read(doc, "$.data.id")).longValue();
         // Giấy tờ còn chờ xác minh => vẫn chưa duyệt được
@@ -249,17 +253,36 @@ class BugFixRegressionIntegrationTest {
     // ===================================================================== F2-06
 
     @Test
-    void carImageAndDocumentUrlsRejectScriptSchemes() throws Exception {
-        for (String bad : List.of("javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4=", "//evil.example/x.png", "ftp://x/y.png", "https://cdn.example.com/a.jpg", "http://evil.com/x.png")) {
+    void carImageAndDocumentEndpointsRejectJsonAndOnlyAcceptValidMultipart() throws Exception {
+        for (String bad : List.of("javascript:alert(1)", "data:text/html;base64,PHNjcmlwdD4=", "//evil.example/x.png", "ftp://x/y.png", "https://cdn.example.com/a.jpg", "http://evil.com/x.png", "/api/uploads/files/test.jpg")) {
+            // Gửi JSON thay vì file multipart phải bị từ chối với 415 Unsupported Media Type
             as(ownerId, post("/api/cars/" + carId + "/images").content("[{\"imageUrl\":\"" + bad + "\"}]"))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnsupportedMediaType());
             as(ownerId, post("/api/cars/" + carId + "/documents")
                     .content("{\"docType\":\"INSURANCE\",\"fileUrl\":\"" + bad + "\"}"))
-                    .andExpect(status().isBadRequest());
+                    .andExpect(status().isUnsupportedMediaType());
         }
-        as(ownerId, post("/api/cars/" + carId + "/images")
-                .content("[{\"imageUrl\":\"/images/cars/a.jpg\"}]"))
+
+        // Gửi file giả dạng (đuôi .jpg nhưng nội dung text) phải bị từ chối 415
+        MockMultipartFile fakeFile = new MockMultipartFile("file", "fake.jpg", "image/jpeg", "this is not an image".getBytes());
+        asMultipart(ownerId, multipart("/api/cars/" + carId + "/documents").file(fakeFile).param("docType", "INSURANCE"))
+                .andExpect(status().isUnsupportedMediaType());
+
+        // File ảnh JPEG thật hợp lệ qua multipart thành công
+        MockMultipartFile validFile = new MockMultipartFile("file", "insurance.jpg", "image/jpeg", createValidJpg());
+        asMultipart(ownerId, multipart("/api/cars/" + carId + "/documents").file(validFile).param("docType", "INSURANCE"))
                 .andExpect(status().isOk());
+    }
+
+    private static byte[] createValidJpg() {
+        try {
+            java.awt.image.BufferedImage img = new java.awt.image.BufferedImage(4, 4, java.awt.image.BufferedImage.TYPE_INT_RGB);
+            java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+            javax.imageio.ImageIO.write(img, "jpg", out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // ===================================================================== F2-07
@@ -325,6 +348,18 @@ class BugFixRegressionIntegrationTest {
                 List.of(new SimpleGrantedAuthority("ROLE_" + customer.getRole().name()))));
         try {
             return mockMvc.perform(req.contentType(MediaType.APPLICATION_JSON));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    private ResultActions asMultipart(Long userId, org.springframework.test.web.servlet.RequestBuilder req) throws Exception {
+        Customer customer = customerRepository.findById(userId).orElseThrow();
+        SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(
+                new CurrentAccount(customer.getId(), customer.getRole()), null,
+                List.of(new SimpleGrantedAuthority("ROLE_" + customer.getRole().name()))));
+        try {
+            return mockMvc.perform(req);
         } finally {
             SecurityContextHolder.clearContext();
         }

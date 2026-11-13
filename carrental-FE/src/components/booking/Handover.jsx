@@ -32,17 +32,19 @@ export function HandoverForm({ type, booking, busy, error, onSubmit }) {
     const setItem = (id, patch) => setItems(current => ({ ...current, [id]: { ...current[id], ...patch } }));
 
     function submit() {
-        const missing = handoverCategories.filter(c => c.required && !items[c.id]?.photoUrl).map(c => c.label);
+        const missing = handoverCategories.filter(c => c.required && !items[c.id]?.file && !items[c.id]?.photoUrl).map(c => c.label);
         if (!odometer) return setLocalError("Vui lòng nhập số km trên đồng hồ.");
         if (missing.length) return setLocalError(`Còn thiếu ảnh: ${missing.join(", ")}.`);
         if (Number(fee) > 0 && !feeNote.trim()) return setLocalError("Vui lòng ghi rõ lý do phí khác.");
         setLocalError("");
-        onSubmit({
+        const activeCategories = handoverCategories.filter(c => items[c.id]?.file || items[c.id]?.photoUrl);
+        const data = {
             odometerKm: Number(odometer), fuelPercent: Number(fuel), ownerNote: note.trim() || null,
             otherFeeAmount: fee ? Number(fee) : null, otherFeeNote: feeNote.trim() || null,
-            items: handoverCategories.filter(c => items[c.id]?.photoUrl)
-                .map(c => ({ category: c.id, photoUrl: items[c.id].photoUrl, conditionNote: items[c.id].note?.trim() || null })),
-        });
+            items: activeCategories.map(c => ({ category: c.id, conditionNote: items[c.id].note?.trim() || null })),
+        };
+        const photos = activeCategories.map(c => items[c.id].file);
+        onSubmit({ data, photos });
     }
 
     return <section className="rounded-2xl border border-[#FDBA8C] bg-white p-5 shadow-sm">
@@ -60,7 +62,7 @@ export function HandoverForm({ type, booking, busy, error, onSubmit }) {
     </div> : null}
     <ul className="mt-4 grid gap-3 md:grid-cols-2">{handoverCategories.map(c => <li key={c.id} className="rounded-xl border border-[#E9E9E7] p-3">
       <p className="mb-2 text-sm font-semibold text-[#292929]">{c.label} {c.required ? <span className="text-[#B91C1C]">*</span> : <span className="text-xs font-normal text-[#666666]">(tuỳ chọn)</span>}</p>
-      <PhotoInput value={items[c.id]?.photoUrl} onChange={url => setItem(c.id, { photoUrl: url })}/>
+      <PhotoInput value={items[c.id]?.photoUrl} onChange={(url, file) => setItem(c.id, { photoUrl: url, file })}/>
       <input value={items[c.id]?.note ?? ""} maxLength={1000} onChange={e => setItem(c.id, { note: e.target.value })} placeholder="Mô tả hiện trạng (VD: trầy 2cm cản trước)" className={`${fieldClass} mt-2`}/>
     </li>)}</ul>
     {localError || error ? <p role="alert" className="mt-3 rounded-xl bg-[#FEF2F2] px-3 py-2 text-sm text-[#B91C1C]">{localError || error}</p> : null}
@@ -91,7 +93,9 @@ export function HandoverView({ handover, booking, mode, busy, error, onRespond, 
     }
     function revise() {
         setLocalError("");
-        onRevise({ revisions: disputed.map(i => ({ itemId: i.id, photoUrl: revisions[i.id]?.photoUrl ?? i.photoUrl, conditionNote: revisions[i.id]?.note ?? i.conditionNote })) });
+        const data = { revisions: disputed.map(i => ({ itemId: i.id, conditionNote: revisions[i.id]?.note ?? i.conditionNote })) };
+        const photos = disputed.map(i => revisions[i.id]?.file);
+        onRevise({ data, photos });
     }
     const acceptAll = () => setDecisions(Object.fromEntries(open.map(i => [i.id, { accepted: true }])));
 
@@ -131,7 +135,7 @@ export function HandoverView({ handover, booking, mode, busy, error, onRespond, 
               {d?.accepted === false ? <textarea rows={2} value={d.note} onChange={e => setDecisions(c => ({ ...c, [item.id]: { accepted: false, note: e.target.value } }))} placeholder="Cần sửa gì? VD: ảnh mờ, thiếu vết xước ở cửa trái…" className={fieldClass}/> : null}
             </div> : null}
             {canRevise ? <div className="flex flex-col gap-2 rounded-lg bg-[#FFF7F2] p-2">
-              <PhotoInput value={revisions[item.id]?.photoUrl ?? item.photoUrl} onChange={url => setRevisions(c => ({ ...c, [item.id]: { ...c[item.id], photoUrl: url } }))} label="Chụp lại"/>
+              <PhotoInput value={revisions[item.id]?.photoUrl ?? item.photoUrl} onChange={(url, file) => setRevisions(c => ({ ...c, [item.id]: { ...c[item.id], photoUrl: url, file } }))} label="Chụp lại"/>
               <textarea rows={2} value={revisions[item.id]?.note ?? item.conditionNote ?? ""} onChange={e => setRevisions(c => ({ ...c, [item.id]: { ...c[item.id], note: e.target.value } }))} placeholder="Mô tả lại hiện trạng" className={fieldClass}/>
             </div> : null}
           </div>

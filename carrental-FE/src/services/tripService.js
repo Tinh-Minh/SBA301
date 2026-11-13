@@ -12,8 +12,26 @@ export const tripService = {
     contacted: (id, contactNote) => request(`/api/bookings/${id}/contacted`, { method: "POST", json: { contacted: true, contactNote } }),
     accept: (id) => request(`/api/bookings/${id}/accept`, { method: "POST" }),
     reject: (id, reason) => request(`/api/bookings/${id}/reject`, { method: "POST", json: { reason } }),
-    submitHandover: (id, type, body) => request(`/api/bookings/${id}/handovers/${type}`, { method: "POST", json: body }),
-    reviseHandover: (id, type, body) => request(`/api/bookings/${id}/handovers/${type}`, { method: "PUT", json: body }),
+    submitHandover: (id, type, { data, photos }) => {
+        const form = new FormData();
+        form.append("data", new Blob([JSON.stringify(data)], { type: "application/json" }));
+        if (Array.isArray(photos)) {
+            for (const p of photos) {
+                if (p instanceof File || p instanceof Blob) form.append("photos", p);
+            }
+        }
+        return request(`/api/bookings/${id}/handovers/${type}`, { method: "POST", body: form });
+    },
+    reviseHandover: (id, type, { data, photos }) => {
+        const form = new FormData();
+        form.append("data", new Blob([JSON.stringify(data)], { type: "application/json" }));
+        if (Array.isArray(photos)) {
+            for (const p of photos) {
+                if (p instanceof File || p instanceof Blob) form.append("photos", p);
+            }
+        }
+        return request(`/api/bookings/${id}/handovers/${type}`, { method: "PUT", body: form });
+    },
     respondHandover: (id, type, body) => request(`/api/bookings/${id}/handovers/${type}/respond`, { method: "POST", json: body }),
     ownerDashboard: () => request("/api/dashboards/owner"),
     customerDashboard: () => request("/api/dashboards/customer"),
@@ -25,6 +43,11 @@ export const safetyService = {
     summary: (carId) => request(`/api/cars/${carId}/safety`, { auth: "optional" }),
     create: (carId, body) => request(`/api/cars/${carId}/safety-records`, { method: "POST", json: body }),
     update: (carId, id, body) => request(`/api/cars/${carId}/safety-records/${id}`, { method: "PUT", json: body }),
+    uploadFile: (carId, id, file) => {
+        const form = new FormData();
+        form.append("file", file);
+        return request(`/api/cars/${carId}/safety-records/${id}/file`, { method: "POST", body: form });
+    },
     remove: (carId, id) => request(`/api/cars/${carId}/safety-records/${id}`, { method: "DELETE" }),
     adminList: async (query) => toPage(await request("/api/admin/safety-records", { query })),
     verify: (carId, id, body) => request(`/api/admin/cars/${carId}/safety-records/${id}/verify`, { method: "PATCH", json: body }),

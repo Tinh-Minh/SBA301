@@ -29,11 +29,7 @@ public final class SafetyDtos {
             @Min(value = 0, message = "Số km không được âm")
             @Max(value = 2_000_000, message = "Số km không hợp lệ") Integer odometerKm,
             SafetyRecordResult result,
-            @Size(max = 1000, message = "Ghi chú tối đa 1000 ký tự") String note,
-            @Size(max = 500, message = "Đường dẫn tệp tối đa 500 ký tự")
-            @Pattern(regexp = "^$|^/(?!/)\\S+$",
-                    message = "Vui lòng tải tệp lên từ máy tính, không dùng URL ngoài")
-            String fileUrl) {}
+            @Size(max = 1000, message = "Ghi chú tối đa 1000 ký tự") String note) {}
 
     public record SafetyVerifyRequest(
             @NotNull(message = "Vui lòng chọn kết quả xác minh") VerificationStatus verifyStatus,

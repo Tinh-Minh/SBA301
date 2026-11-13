@@ -16,7 +16,8 @@ application-local.properties
 /config/keys/
 
 # Local file storage for private documents/images
-/storage/
+/storage/*
+!/storage/public-uploads/
 
 # Ignore markdown documentation files
 *.md

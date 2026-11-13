@@ -11,6 +11,7 @@ import com.carrental.service.CarSafetyService;
 import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 /** Hồ sơ an toàn của xe: đăng kiểm, bảo hiểm, bảo dưỡng, sửa chữa. */
 @RestController
@@ -48,6 +50,13 @@ public class CarSafetyController {
                                                     @Valid @RequestBody SafetyRecordRequest request) {
         return ApiResponse.ok("Đã cập nhật bản ghi, chờ CarDB xác minh lại",
                 safetyService.update(carId, recordId, request));
+    }
+
+    @PreAuthorize("hasRole('OWNER')")
+    @PostMapping(path = "/api/cars/{carId}/safety-records/{recordId}/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ApiResponse<SafetyRecordResponse> uploadFile(@PathVariable Long carId, @PathVariable Long recordId,
+                                                        @RequestParam("file") MultipartFile file) {
+        return ApiResponse.ok("Tải tệp chứng từ thành công", safetyService.uploadRecordFile(carId, recordId, file));
     }
 
     @PreAuthorize("hasRole('OWNER')")

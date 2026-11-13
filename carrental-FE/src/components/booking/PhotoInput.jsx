@@ -13,7 +13,7 @@ export function PhotoInput({ value, onChange, label = "Chụp / chọn ảnh" })
         if (file.size > 5 * 1024 * 1024) { setError("Ảnh tối đa 5MB."); return; }
         setBusy(true);
         setError("");
-        try { onChange(await uploadImage(file)); }
+        try { onChange(await uploadImage(file), file); }
         catch (e) { setError(e.message); }
         finally { setBusy(false); }
     }

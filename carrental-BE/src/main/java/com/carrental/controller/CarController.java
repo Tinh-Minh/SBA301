@@ -1,8 +1,6 @@
 package com.carrental.controller;
 
 import com.carrental.dto.request.CarCreateRequest;
-import com.carrental.dto.request.CarDocumentRequest;
-import com.carrental.dto.request.CarImageRequest;
 import com.carrental.dto.request.CarUpdateRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.CarDocumentResponse;
@@ -10,6 +8,7 @@ import com.carrental.dto.response.CarImageResponse;
 import com.carrental.dto.response.CarResponse;
 import com.carrental.dto.response.CarSummaryResponse;
 import com.carrental.dto.response.PageResponse;
+import com.carrental.enums.CarDocumentType;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CarType;
 import com.carrental.enums.ListingStatus;
@@ -18,6 +17,7 @@ import com.carrental.util.PageRequestFactory;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import java.time.LocalDate;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -170,16 +171,6 @@ public class CarController {
         return ApiResponse.ok("Cập nhật trạng thái xe thành công", carService.updateCarStatusByOwner(id, status));
     }
 
-    // Tải lên danh sách ảnh xe (JSON URL)
-    @PreAuthorize("hasRole('OWNER')")
-    @PostMapping(path = "/{id}/images", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ApiResponse<List<CarImageResponse>> addCarImages(
-            @PathVariable Long id,
-            @Valid @RequestBody List<CarImageRequest> requests
-    ) {
-        return ApiResponse.ok("Tải ảnh xe thành công", carService.addCarImages(id, requests));
-    }
-
     // Tải lên danh sách ảnh xe trực tiếp từ file máy (multipart/form-data)
     @PreAuthorize("hasRole('OWNER')")
     @PostMapping(path = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -212,14 +203,17 @@ public class CarController {
         return ApiResponse.ok("Cập nhật ảnh chính thành công", carService.setPrimaryCarImage(id, imageId));
     }
 
-    // Thêm giấy tờ xe (cà vẹt, đăng kiểm, bảo hiểm)
+    // Thêm giấy tờ xe (cà vẹt, đăng kiểm, bảo hiểm) qua file multipart
     @PreAuthorize("hasRole('OWNER')")
-    @PostMapping("/{id}/documents")
+    @PostMapping(path = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<CarDocumentResponse> addCarDocument(
             @PathVariable Long id,
-            @Valid @RequestBody CarDocumentRequest request
+            @RequestParam("docType") CarDocumentType docType,
+            @RequestParam(value = "expiresAt", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate expiresAt,
+            @RequestParam("file") MultipartFile file
     ) {
-        return ApiResponse.ok("Gửi giấy tờ xe thành công, chờ admin duyệt", carService.addCarDocument(id, request));
+        return ApiResponse.ok("Tải giấy tờ xe thành công", carService.addCarDocument(id, docType, expiresAt, file));
     }
 
     // Xem danh sách giấy tờ của xe

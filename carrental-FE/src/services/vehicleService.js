@@ -106,8 +106,14 @@ export const carService = {
     },
     removeImage: (id, imageId) => request(endpoints.cars.byIdImagesById(id, imageId), { method: "DELETE" }),
     setPrimaryImage: (id, imageId) => request(endpoints.cars.byIdImagesByIdPrimary(id, imageId), { method: "PATCH" }),
-    /** POST /api/cars/{id}/documents { docType, fileUrl, expiresAt } */
-    addDocument: (id, { docType, fileUrl, expiresAt }) => request(endpoints.cars.byIdDocuments(id), { method: "POST", json: { docType, fileUrl, expiresAt: expiresAt || null } }),
+    /** POST /api/cars/{id}/documents (multipart: docType, file, expiresAt) */
+    addDocument: (id, { docType, file, expiresAt }) => {
+        const formData = new FormData();
+        formData.append("docType", docType);
+        if (file) formData.append("file", file);
+        if (expiresAt) formData.append("expiresAt", expiresAt);
+        return request(endpoints.cars.byIdDocuments(id), { method: "POST", body: formData });
+    },
     listDocuments: (id) => request(endpoints.cars.byIdDocuments(id)),
     /** GET /api/cars/search — tìm xe đang ACTIVE và LISTED. */
     async search({ city, carType, brand, seats, minPrice, maxPrice, transmission, fuelType, pickupAt, returnAt, page = 0, size = 12, sortBy = "createdAt", direction = "DESC" } = {}) {

@@ -327,28 +327,28 @@ CREATE INDEX idx_reviews_car ON reviews(car_id);
 INSERT INTO customers (id, full_name, email, phone, password_hash, date_of_birth, address, avatar_url, zalo_phone, contact_note, email_verified, kyc_status, role, status)
 VALUES
 -- Quản trị viên
-(1, 'Quản Trị Viên Hệ Thống', 'admin@carrental.vn', '0900000001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1990-01-15', 'Tòa nhà CarRental, Quận 1, TP. Hồ Chí Minh', '/images/avatars/user-1-admin.jpg', '0900000001', 'Hỗ trợ kỹ thuật 24/7', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
-(2, 'Kiểm Duyệt Viên Admin', 'admin2@carrental.vn', '0900000002', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1993-05-20', 'Trung tâm Vận hành CarRental, Cầu Giấy, Hà Nội', '/images/avatars/user-2-admin2.jpg', '0900000002', 'Duyệt hồ sơ xe & KYC', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
+(1, 'Quản Trị Viên Hệ Thống', 'admin@carrental.vn', '0900000001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1990-01-15', 'Tòa nhà CarRental, Quận 1, TP. Hồ Chí Minh', '/api/uploads/files/2c5f911e-7fca-5f03-9e07-855e7edc5f22.jpg', '0900000001', 'Hỗ trợ kỹ thuật 24/7', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
+(2, 'Kiểm Duyệt Viên Admin', 'admin2@carrental.vn', '0900000002', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1993-05-20', 'Trung tâm Vận hành CarRental, Cầu Giấy, Hà Nội', '/api/uploads/files/d8e2a857-d924-50ed-b544-acb8212e6bdb.jpg', '0900000002', 'Duyệt hồ sơ xe & KYC', true, 'VERIFIED', 'ADMIN', 'ACTIVE'),
 
 -- Chủ xe (Owners)
-(3, 'Trần Thị Bình', 'binh@gmail.com', '0912345678', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1988-08-12', '123 Nguyễn Thị Thập, Tân Phú, Quận 7, TP. Hồ Chí Minh', '/images/avatars/user-3-binh.jpg', '0912345678', 'Gọi tiện nhất 8h00 - 21h00', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
-(4, 'Nguyễn Văn An', 'an@gmail.com', '0923456789', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1985-03-25', '456 Lê Văn Việt, Tăng Nhơn Phú A, TP. Thủ Đức, TP. Hồ Chí Minh', '/images/avatars/user-4-an.jpg', '0923456789', 'Zalo hoặc gọi trực tiếp', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
-(5, 'Phạm Huy Hoàng', 'hoang@gmail.com', '0934567890', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1982-11-05', '789 Nguyễn Trãi, Thanh Xuân, Hà Nội', '/images/avatars/user-5-hoang.jpg', '0934567890', 'Giao xe tận nơi khu vực nội thành', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
-(6, 'Võ Tuyết Mai', 'mai@gmail.com', '0945678901', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1991-09-18', '101 Trần Phú, Hải Châu, Đà Nẵng', '/images/avatars/user-6-mai.jpg', '0945678901', 'Hỗ trợ khách du lịch chu đáo', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(3, 'Trần Thị Bình', 'binh@gmail.com', '0912345678', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1988-08-12', '123 Nguyễn Thị Thập, Tân Phú, Quận 7, TP. Hồ Chí Minh', '/api/uploads/files/1d8c6477-9dd0-550b-99c8-8ea3d95919fb.jpg', '0912345678', 'Gọi tiện nhất 8h00 - 21h00', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(4, 'Nguyễn Văn An', 'an@gmail.com', '0923456789', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1985-03-25', '456 Lê Văn Việt, Tăng Nhơn Phú A, TP. Thủ Đức, TP. Hồ Chí Minh', '/api/uploads/files/e7ba2884-b364-590d-be74-9a8587610a75.jpg', '0923456789', 'Zalo hoặc gọi trực tiếp', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(5, 'Phạm Huy Hoàng', 'hoang@gmail.com', '0934567890', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1982-11-05', '789 Nguyễn Trãi, Thanh Xuân, Hà Nội', '/api/uploads/files/ff13efdb-8622-530e-8165-1fb47b52eab7.jpg', '0934567890', 'Giao xe tận nơi khu vực nội thành', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(6, 'Võ Tuyết Mai', 'mai@gmail.com', '0945678901', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1991-09-18', '101 Trần Phú, Hải Châu, Đà Nẵng', '/api/uploads/files/e8816ba1-e48a-566f-9f71-5a643da82383.jpg', '0945678901', 'Hỗ trợ khách du lịch chu đáo', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
 
 -- Chủ xe có xe bị từ chối (Owner)
-(7, 'Lê Minh Cường', 'cuong@gmail.com', '0956789012', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1989-06-30', '234 Cộng Hòa, Phường 13, Tân Bình, TP. Hồ Chí Minh', '/images/avatars/user-7-cuong.jpg', '0956789012', 'Chủ xe Fortuner, đang bổ sung đăng kiểm', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
+(7, 'Lê Minh Cường', 'cuong@gmail.com', '0956789012', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1989-06-30', '234 Cộng Hòa, Phường 13, Tân Bình, TP. Hồ Chí Minh', '/api/uploads/files/cb5b79eb-7fb5-536b-994b-42364e41bee1.jpg', '0956789012', 'Chủ xe Fortuner, đang bổ sung đăng kiểm', true, 'VERIFIED', 'OWNER', 'ACTIVE'),
 
 -- Khách hàng thuê xe (Customers)
-(8, 'Đặng Quốc Dũng', 'dung@gmail.com', '0967890123', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1986-12-14', '567 Cầu Giấy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội', '/images/avatars/user-8-dung.jpg', '0967890123', 'Thường xuyên thuê xe tự lái', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(9, 'Nguyễn Văn Khách', 'khach@gmail.com', '0978901234', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1995-04-02', '12 Hai Bà Trưng, Bến Nghé, Quận 1, TP. Hồ Chí Minh', '/images/avatars/user-9-khach.jpg', '0978901234', 'Khách thuê tự lái', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
-(10, 'Đỗ Thùy Linh', 'linh@gmail.com', '0989012345', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1997-10-28', '88 Láng Hạ, Đống Đa, Hà Nội', '/images/avatars/user-10-linh.jpg', '0989012345', 'Thích xe gia đình 7 chỗ', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(8, 'Đặng Quốc Dũng', 'dung@gmail.com', '0967890123', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1986-12-14', '567 Cầu Giấy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội', '/api/uploads/files/a0558a04-1a1b-5e2c-959c-f5dbd10a85db.jpg', '0967890123', 'Thường xuyên thuê xe tự lái', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(9, 'Nguyễn Văn Khách', 'khach@gmail.com', '0978901234', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1995-04-02', '12 Hai Bà Trưng, Bến Nghé, Quận 1, TP. Hồ Chí Minh', '/api/uploads/files/1f58e05e-76a4-5413-9cf7-a025a3de0e8d.jpg', '0978901234', 'Khách thuê tự lái', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
+(10, 'Đỗ Thùy Linh', 'linh@gmail.com', '0989012345', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1997-10-28', '88 Láng Hạ, Đống Đa, Hà Nội', '/api/uploads/files/ac191ec7-ff50-5f5c-b273-f4aeed1c3ebb.jpg', '0989012345', 'Thích xe gia đình 7 chỗ', true, 'VERIFIED', 'CUSTOMER', 'ACTIVE'),
 
 -- Tài khoản trạng thái chờ duyệt, từ chối, khóa để test unhappy cases
-(11, 'Hoàng Hải Nam', 'nam@gmail.com', '0990123456', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '2000-02-17', '68 Quang Trung, Gò Vấp, TP. Hồ Chí Minh', '/images/avatars/user-11-nam.jpg', '0990123456', NULL, false, 'PENDING', 'CUSTOMER', 'ACTIVE'),
-(12, 'Huỳnh Đăng Khoa', 'khoa@gmail.com', '0901112233', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1996-07-22', '350 Hoàng Diệu, Hải Châu, Đà Nẵng', '/images/avatars/user-12-khoa.jpg', '0901112233', NULL, true, 'REJECTED', 'CUSTOMER', 'ACTIVE'),
-(13, 'Tài Khoản Bị Khóa', 'locked@gmail.com', '0909990001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1994-01-01', 'Hà Nội', '/images/avatars/user-13-locked.jpg', NULL, NULL, false, 'NONE', 'CUSTOMER', 'LOCKED'),
-(14, 'Tài Khoản Test', 'tester99@gmail.com', '0909999999', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1998-05-12', 'TP. Hồ Chí Minh', '/images/avatars/user-14-tester.jpg', '0909999999', NULL, true, 'NONE', 'CUSTOMER', 'ACTIVE');
+(11, 'Hoàng Hải Nam', 'nam@gmail.com', '0990123456', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '2000-02-17', '68 Quang Trung, Gò Vấp, TP. Hồ Chí Minh', '/api/uploads/files/b8f7bc47-1567-5409-b10f-43975ada5400.jpg', '0990123456', NULL, false, 'PENDING', 'CUSTOMER', 'ACTIVE'),
+(12, 'Huỳnh Đăng Khoa', 'khoa@gmail.com', '0901112233', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1996-07-22', '350 Hoàng Diệu, Hải Châu, Đà Nẵng', '/api/uploads/files/5bd61151-a766-5c14-a974-54641dd28269.jpg', '0901112233', NULL, true, 'REJECTED', 'CUSTOMER', 'ACTIVE'),
+(13, 'Tài Khoản Bị Khóa', 'locked@gmail.com', '0909990001', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1994-01-01', 'Hà Nội', '/api/uploads/files/e305a3ac-f1f8-5f31-b69e-13d775931f36.jpg', NULL, NULL, false, 'NONE', 'CUSTOMER', 'LOCKED'),
+(14, 'Tài Khoản Test', 'tester99@gmail.com', '0909999999', '$2a$10$iEVX/3h3GJTGjyBMNfa0Eu77coVZYfGPbRzXIVgxqv7n39iYoBQNK', '1998-05-12', 'TP. Hồ Chí Minh', '/api/uploads/files/5754c22f-7afc-58ce-8322-c270fa9540cc.jpg', '0909999999', NULL, true, 'NONE', 'CUSTOMER', 'ACTIVE');
 
 SELECT setval(pg_get_serial_sequence('customers', 'id'), (SELECT COALESCE(MAX(id), 1) FROM customers));
 
@@ -358,38 +358,38 @@ SELECT setval(pg_get_serial_sequence('customers', 'id'), (SELECT COALESCE(MAX(id
 INSERT INTO user_documents (id, customer_id, doc_type, doc_number, full_name_on_doc, date_of_birth_on_doc, issue_place, issue_date, expires_at, license_class, front_image_url, back_image_url, verify_status, reject_reason, verified_by, verified_at)
 VALUES
 -- CCCD & Bằng lái xe của Chủ xe Bình (id=3)
-(1, 3, 'CITIZEN_ID', '079188001234', 'TRẦN THỊ BÌNH', '1988-08-12', 'Cục Cảnh sát QLHC về TTXH', '2021-05-10', '2048-08-12', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(2, 3, 'DRIVER_LICENSE', '790158823456', 'TRẦN THỊ BÌNH', '1988-08-12', 'Sở GTVT TP. Hồ Chí Minh', '2019-06-15', '2029-06-15', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(1, 3, 'CITIZEN_ID', '079188001234', 'TRẦN THỊ BÌNH', '1988-08-12', 'Cục Cảnh sát QLHC về TTXH', '2021-05-10', '2048-08-12', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(2, 3, 'DRIVER_LICENSE', '790158823456', 'TRẦN THỊ BÌNH', '1988-08-12', 'Sở GTVT TP. Hồ Chí Minh', '2019-06-15', '2029-06-15', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Bằng lái của Chủ xe An (id=4)
-(3, 4, 'CITIZEN_ID', '079185002345', 'NGUYỄN VĂN AN', '1985-03-25', 'Cục Cảnh sát QLHC về TTXH', '2021-08-20', '2045-03-25', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(4, 4, 'DRIVER_LICENSE', '790158834567', 'NGUYỄN VĂN AN', '1985-03-25', 'Sở GTVT TP. Hồ Chí Minh', '2018-04-10', '2028-04-10', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(3, 4, 'CITIZEN_ID', '079185002345', 'NGUYỄN VĂN AN', '1985-03-25', 'Cục Cảnh sát QLHC về TTXH', '2021-08-20', '2045-03-25', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(4, 4, 'DRIVER_LICENSE', '790158834567', 'NGUYỄN VĂN AN', '1985-03-25', 'Sở GTVT TP. Hồ Chí Minh', '2018-04-10', '2028-04-10', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Bằng lái của Chủ xe Hoàng (id=5)
-(5, 5, 'CITIZEN_ID', '001182003456', 'PHẠM HUY HOÀNG', '1982-11-05', 'Cục Cảnh sát QLHC về TTXH', '2021-09-12', '2042-11-05', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(6, 5, 'DRIVER_LICENSE', '010158845678', 'PHẠM HUY HOÀNG', '1982-11-05', 'Sở GTVT Hà Nội', '2017-10-18', '2027-10-18', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(5, 5, 'CITIZEN_ID', '001182003456', 'PHẠM HUY HOÀNG', '1982-11-05', 'Cục Cảnh sát QLHC về TTXH', '2021-09-12', '2042-11-05', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(6, 5, 'DRIVER_LICENSE', '010158845678', 'PHẠM HUY HOÀNG', '1982-11-05', 'Sở GTVT Hà Nội', '2017-10-18', '2027-10-18', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Bằng lái của Chủ xe Mai (id=6)
-(7, 6, 'CITIZEN_ID', '048191004567', 'VÕ TUYẾT MAI', '1991-09-18', 'Cục Cảnh sát QLHC về TTXH', '2022-01-14', '2051-09-18', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(8, 6, 'DRIVER_LICENSE', '480158856789', 'VÕ TUYẾT MAI', '1991-09-18', 'Sở GTVT Đà Nẵng', '2020-03-22', '2030-03-22', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(7, 6, 'CITIZEN_ID', '048191004567', 'VÕ TUYẾT MAI', '1991-09-18', 'Cục Cảnh sát QLHC về TTXH', '2022-01-14', '2051-09-18', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(8, 6, 'DRIVER_LICENSE', '480158856789', 'VÕ TUYẾT MAI', '1991-09-18', 'Sở GTVT Đà Nẵng', '2020-03-22', '2030-03-22', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- CCCD & Bằng lái của Cường (id=7) & Dũng (id=8)
-(9, 7, 'CITIZEN_ID', '079189005678', 'LÊ MINH CƯỜNG', '1989-06-30', 'Cục Cảnh sát QLHC về TTXH', '2021-03-11', '2049-06-30', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(10, 7, 'DRIVER_LICENSE', '790158867890', 'LÊ MINH CƯỜNG', '1989-06-30', 'Sở GTVT TP. Hồ Chí Minh', '2021-08-15', '2031-08-15', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(11, 8, 'CITIZEN_ID', '001186006789', 'ĐẶNG QUỐC DŨNG', '1986-12-14', 'Cục Cảnh sát QLHC về TTXH', '2021-07-09', '2046-12-14', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(12, 8, 'DRIVER_LICENSE', '010158878901', 'ĐẶNG QUỐC DŨNG', '1986-12-14', 'Sở GTVT Hà Nội', '2020-11-20', '2030-11-20', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(9, 7, 'CITIZEN_ID', '079189005678', 'LÊ MINH CƯỜNG', '1989-06-30', 'Cục Cảnh sát QLHC về TTXH', '2021-03-11', '2049-06-30', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(10, 7, 'DRIVER_LICENSE', '790158867890', 'LÊ MINH CƯỜNG', '1989-06-30', 'Sở GTVT TP. Hồ Chí Minh', '2021-08-15', '2031-08-15', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
+(11, 8, 'CITIZEN_ID', '001186006789', 'ĐẶNG QUỐC DŨNG', '1986-12-14', 'Cục Cảnh sát QLHC về TTXH', '2021-07-09', '2046-12-14', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(12, 8, 'DRIVER_LICENSE', '010158878901', 'ĐẶNG QUỐC DŨNG', '1986-12-14', 'Sở GTVT Hà Nội', '2020-11-20', '2030-11-20', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giấy tờ của Khách thuê Khách (id=9) & Linh (id=10, id doc 17-18 ở dưới)
-(13, 9, 'CITIZEN_ID', '079195007890', 'NGUYỄN VĂN KHÁCH', '1995-04-02', 'Cục Cảnh sát QLHC về TTXH', '2022-04-18', '2055-04-02', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(14, 9, 'DRIVER_LICENSE', '790158889012', 'NGUYỄN VĂN KHÁCH', '1995-04-02', 'Sở GTVT TP. Hồ Chí Minh', '2021-05-12', '2031-05-12', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(17, 10, 'CITIZEN_ID', '001197010123', 'ĐỖ THÙY LINH', '1997-10-28', 'Cục Cảnh sát QLHC về TTXH', '2022-06-14', '2057-10-28', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'APPROVED', NULL, 1, vn_now()),
-(18, 10, 'DRIVER_LICENSE', '010158890123', 'ĐỖ THÙY LINH', '1997-10-28', 'Sở GTVT Hà Nội', '2022-03-08', '2032-03-08', 'B2', '/images/docs/gplx_front.jpg', '/images/docs/gplx_back.jpg', 'APPROVED', NULL, 1, vn_now()),
+(13, 9, 'CITIZEN_ID', '079195007890', 'NGUYỄN VĂN KHÁCH', '1995-04-02', 'Cục Cảnh sát QLHC về TTXH', '2022-04-18', '2055-04-02', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(14, 9, 'DRIVER_LICENSE', '790158889012', 'NGUYỄN VĂN KHÁCH', '1995-04-02', 'Sở GTVT TP. Hồ Chí Minh', '2021-05-12', '2031-05-12', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
+(17, 10, 'CITIZEN_ID', '001197010123', 'ĐỖ THÙY LINH', '1997-10-28', 'Cục Cảnh sát QLHC về TTXH', '2022-06-14', '2057-10-28', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'APPROVED', NULL, 1, vn_now()),
+(18, 10, 'DRIVER_LICENSE', '010158890123', 'ĐỖ THÙY LINH', '1997-10-28', 'Sở GTVT Hà Nội', '2022-03-08', '2032-03-08', 'B2', '/api/uploads/files/2c3394cc-4b55-5a35-a8a7-1d667082f4cf.jpg', '/api/uploads/files/e0d9d084-d67b-5bc3-bb49-cce335698212.jpg', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giấy tờ PENDING chờ duyệt của Nam (id=11)
-(15, 11, 'CITIZEN_ID', '079200008901', 'HOÀNG HẢI NAM', '2000-02-17', 'Cục Cảnh sát QLHC về TTXH', '2023-01-10', '2060-02-17', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'PENDING', NULL, NULL, NULL),
+(15, 11, 'CITIZEN_ID', '079200008901', 'HOÀNG HẢI NAM', '2000-02-17', 'Cục Cảnh sát QLHC về TTXH', '2023-01-10', '2060-02-17', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'PENDING', NULL, NULL, NULL),
 
 -- Giấy tờ REJECTED của Khoa (id=12)
-(16, 12, 'CITIZEN_ID', '048196009012', 'HUỲNH ĐĂNG KHOA', '1996-07-22', 'Cục Cảnh sát QLHC về TTXH', '2022-09-05', '2056-07-22', NULL, '/images/docs/cccd_front.jpg', '/images/docs/cccd_back.jpg', 'REJECTED', 'Ảnh chụp bị chói flash và mất góc dưới, vui lòng chụp lại rõ nét cả 2 mặt', 1, vn_now());
+(16, 12, 'CITIZEN_ID', '048196009012', 'HUỲNH ĐĂNG KHOA', '1996-07-22', 'Cục Cảnh sát QLHC về TTXH', '2022-09-05', '2056-07-22', NULL, '/api/uploads/files/c5cf27e2-0cae-5f3d-8344-5106879557e5.jpg', '/api/uploads/files/6af465b8-666e-5987-80d7-e900b5c7b3c3.jpg', 'REJECTED', 'Ảnh chụp bị chói flash và mất góc dưới, vui lòng chụp lại rõ nét cả 2 mặt', 1, vn_now());
 
 SELECT setval(pg_get_serial_sequence('user_documents', 'id'), (SELECT COALESCE(MAX(id), 1) FROM user_documents));
 
@@ -515,54 +515,54 @@ SELECT setval(pg_get_serial_sequence('cars', 'id'), (SELECT COALESCE(MAX(id), 1)
 INSERT INTO car_images (id, car_id, image_url, is_primary, sort_order)
 VALUES
 -- Car 1: Honda City RS
-(1, 1, '/images/cars/car-1-honda-city-1.jpg', true, 0),
-(2, 1, '/images/cars/car-1-honda-city-2.jpg', false, 1),
-(3, 1, '/images/cars/car-1-honda-city-3.jpg', false, 2),
+(1, 1, '/api/uploads/files/943de0a0-520a-50e5-b8ce-94cb3cd2b8d3.jpg', true, 0),
+(2, 1, '/api/uploads/files/e620e849-51e8-5e28-9c37-24494f7ed3d5.jpg', false, 1),
+(3, 1, '/api/uploads/files/95673221-042c-5ddf-969a-5ca69b7d0cf5.jpg', false, 2),
 
 -- Car 2: Toyota Vios G
-(4, 2, '/images/cars/car-2-toyota-vios-1.jpg', true, 0),
-(5, 2, '/images/cars/car-2-toyota-vios-2.jpg', false, 1),
-(6, 2, '/images/cars/car-2-toyota-vios-3.jpg', false, 2),
+(4, 2, '/api/uploads/files/6f96d773-13b5-5dfc-9831-12565eed9ef0.jpg', true, 0),
+(5, 2, '/api/uploads/files/a9c300e1-b20d-5702-82e9-c2f8a0ae63b5.jpg', false, 1),
+(6, 2, '/api/uploads/files/c2dcd2c1-39d9-5d1b-bf31-b89339dce37b.jpg', false, 2),
 
 -- Car 3: Mazda CX-5
-(7, 3, '/images/cars/car-3-mazda-cx5-1.jpg', true, 0),
-(8, 3, '/images/cars/car-3-mazda-cx5-2.jpg', false, 1),
-(9, 3, '/images/cars/car-3-mazda-cx5-3.jpg', false, 2),
+(7, 3, '/api/uploads/files/f9cf6765-ea87-5928-9620-a66351bde19c.jpg', true, 0),
+(8, 3, '/api/uploads/files/698114a8-245f-532f-b1a9-1a7c4bb7a7dd.jpg', false, 1),
+(9, 3, '/api/uploads/files/48ded715-c38d-51da-944b-8fc980aea1be.jpg', false, 2),
 
 -- Car 4: Hyundai Accent AT
-(10, 4, '/images/cars/car-4-hyundai-accent-1.jpg', true, 0),
-(11, 4, '/images/cars/car-4-hyundai-accent-2.jpg', false, 1),
-(12, 4, '/images/cars/car-4-hyundai-accent-3.jpg', false, 2),
+(10, 4, '/api/uploads/files/87fe553d-e27b-51fb-a7c6-4fc5c84ec305.jpg', true, 0),
+(11, 4, '/api/uploads/files/a2275826-bfab-5482-8770-7ad740e06cd2.jpg', false, 1),
+(12, 4, '/api/uploads/files/5b19961f-05ee-5219-9257-02bb1a6ae11c.jpg', false, 2),
 
 -- Car 5: Kia Carnival
-(13, 5, '/images/cars/car-5-kia-carnival-1.jpg', true, 0),
-(14, 5, '/images/cars/car-5-kia-carnival-2.jpg', false, 1),
-(15, 5, '/images/cars/car-5-kia-carnival-3.jpg', false, 2),
+(13, 5, '/api/uploads/files/0dc6aa64-c355-5060-ac35-dd0964b52f91.jpg', true, 0),
+(14, 5, '/api/uploads/files/3d8553bf-3b53-5bdb-b595-d82c0e2a304c.jpg', false, 1),
+(15, 5, '/api/uploads/files/9e086c44-9cd5-58bd-8220-9023d7548a7b.jpg', false, 2),
 
 -- Car 6: Mercedes-Benz C200
-(16, 6, '/images/cars/car-6-mercedes-c200-1.jpg', true, 0),
-(17, 6, '/images/cars/car-6-mercedes-c200-2.jpg', false, 1),
-(18, 6, '/images/cars/car-6-mercedes-c200-3.jpg', false, 2),
+(16, 6, '/api/uploads/files/b8b669fa-5573-5cbf-a6fa-d6a30c233d57.jpg', true, 0),
+(17, 6, '/api/uploads/files/6bfc9ab3-c6f1-5d57-9d3c-8ad76bed9cc4.jpg', false, 1),
+(18, 6, '/api/uploads/files/ba9fe8ed-2d05-5d31-87b7-ab624c847f1c.jpg', false, 2),
 
 -- Car 7: VinFast VF8
-(19, 7, '/images/cars/car-7-vinfast-vf8-1.jpg', true, 0),
-(20, 7, '/images/cars/car-7-vinfast-vf8-2.jpg', false, 1),
-(21, 7, '/images/cars/car-7-vinfast-vf8-3.jpg', false, 2),
+(19, 7, '/api/uploads/files/49114f01-bddc-5a84-8698-37906383084b.jpg', true, 0),
+(20, 7, '/api/uploads/files/3f2aab7f-0dce-58f0-be85-1600a0694545.jpg', false, 1),
+(21, 7, '/api/uploads/files/dfd659ce-4d8b-50b3-9f2a-1b0e28a708ae.jpg', false, 2),
 
 -- Car 8: Mitsubishi Xpander Cross
-(22, 8, '/images/cars/car-8-xpander-cross-1.jpg', true, 0),
-(23, 8, '/images/cars/car-8-xpander-cross-2.jpg', false, 1),
-(24, 8, '/images/cars/car-8-xpander-cross-3.jpg', false, 2),
+(22, 8, '/api/uploads/files/7a43a095-3f51-5f7e-aa7a-7c7237cd7af8.jpg', true, 0),
+(23, 8, '/api/uploads/files/64174ffb-9b67-54ad-a771-ff5ab49f4694.jpg', false, 1),
+(24, 8, '/api/uploads/files/05686512-0ee3-59cd-9a6f-9b40a0c73cc3.jpg', false, 2),
 
 -- Car 9: Ford Ranger Wildtrak
-(25, 9, '/images/cars/car-9-ford-ranger-1.jpg', true, 0),
-(26, 9, '/images/cars/car-9-ford-ranger-2.jpg', false, 1),
-(27, 9, '/images/cars/car-9-ford-ranger-3.jpg', false, 2),
+(25, 9, '/api/uploads/files/b7dd3d4c-f651-5ee1-90f3-e30a1cd93974.jpg', true, 0),
+(26, 9, '/api/uploads/files/fb4fd203-a45f-541a-a0a6-9f0417d1515f.jpg', false, 1),
+(27, 9, '/api/uploads/files/e4ca535f-2824-5a51-ace8-7d6f5bf7e9c6.jpg', false, 2),
 
 -- Car 10: Toyota Fortuner
-(28, 10, '/images/cars/car-10-toyota-fortuner-1.jpg', true, 0),
-(29, 10, '/images/cars/car-10-toyota-fortuner-2.jpg', false, 1),
-(30, 10, '/images/cars/car-10-toyota-fortuner-3.jpg', false, 2);
+(28, 10, '/api/uploads/files/556a1d41-285b-574e-a3f4-148d36596587.jpg', true, 0),
+(29, 10, '/api/uploads/files/c80db083-ed39-5abf-b72b-b7e1b40862ae.jpg', false, 1),
+(30, 10, '/api/uploads/files/2a16b926-86c8-5df4-b5f1-04b62141b09a.jpg', false, 2);
 
 SELECT setval(pg_get_serial_sequence('car_images', 'id'), (SELECT COALESCE(MAX(id), 1) FROM car_images));
 
@@ -572,35 +572,35 @@ SELECT setval(pg_get_serial_sequence('car_images', 'id'), (SELECT COALESCE(MAX(i
 INSERT INTO car_documents (id, car_id, doc_type, file_url, expires_at, verify_status, reject_reason, verified_by, verified_at)
 VALUES
 -- Giấy tờ Xe 1: Đã duyệt APPROVED
-(1, 1, 'REGISTRATION', '/images/docs/car-1-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(2, 1, 'INSPECTION', '/images/docs/car-1-inspection.jpg', '2027-06-30', 'APPROVED', NULL, 1, vn_now()),
-(3, 1, 'INSURANCE', '/images/docs/car-1-insurance.jpg', '2027-01-15', 'APPROVED', NULL, 1, vn_now()),
+(1, 1, 'REGISTRATION', '/api/uploads/files/06f4e4bc-1b00-59a0-8329-2ee43d9a65a5.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(2, 1, 'INSPECTION', '/api/uploads/files/4c3ab39c-a78d-58fe-8e7a-1bbd8cf469a9.jpg', '2027-06-30', 'APPROVED', NULL, 1, vn_now()),
+(3, 1, 'INSURANCE', '/api/uploads/files/c042362f-206d-5926-aacb-9a8c7915dc86.jpg', '2027-01-15', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giấy tờ Xe 2: Đã duyệt APPROVED
-(4, 2, 'REGISTRATION', '/images/docs/car-2-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(5, 2, 'INSPECTION', '/images/docs/car-2-inspection.jpg', '2027-08-20', 'APPROVED', NULL, 1, vn_now()),
+(4, 2, 'REGISTRATION', '/api/uploads/files/6fdb347a-6e95-574f-a065-cd99e11d840b.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(5, 2, 'INSPECTION', '/api/uploads/files/2c60e1f8-33dc-5632-be9e-fa0a5de5f647.jpg', '2027-08-20', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giấy tờ Xe 3: Đã duyệt APPROVED
-(6, 3, 'REGISTRATION', '/images/docs/car-3-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(7, 3, 'INSPECTION', '/images/docs/car-3-inspection.jpg', '2027-11-10', 'APPROVED', NULL, 1, vn_now()),
+(6, 3, 'REGISTRATION', '/api/uploads/files/e6aa6f91-9244-5ecf-a33d-510299653f88.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(7, 3, 'INSPECTION', '/api/uploads/files/3ccd8414-dca1-5ea6-9857-126f24984b98.jpg', '2027-11-10', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giấy tờ Xe 4: Đã duyệt APPROVED
-(8, 4, 'REGISTRATION', '/images/docs/car-4-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(9, 4, 'INSPECTION', '/images/docs/car-4-inspection.jpg', '2027-09-18', 'APPROVED', NULL, 1, vn_now()),
+(8, 4, 'REGISTRATION', '/api/uploads/files/59273625-2175-5cbf-bb09-ae3491aba589.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(9, 4, 'INSPECTION', '/api/uploads/files/d7fbfb8a-f512-5a07-978d-7454a8bd2a20.jpg', '2027-09-18', 'APPROVED', NULL, 1, vn_now()),
 
 -- Giấy tờ Xe 5, 6, 7, 8: Đã duyệt APPROVED
-(10, 5, 'REGISTRATION', '/images/docs/car-5-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(11, 6, 'REGISTRATION', '/images/docs/car-6-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(12, 7, 'REGISTRATION', '/images/docs/car-7-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(13, 8, 'REGISTRATION', '/images/docs/car-8-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(10, 5, 'REGISTRATION', '/api/uploads/files/a38e0a33-e104-5e95-bd02-034f6f08ab37.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(11, 6, 'REGISTRATION', '/api/uploads/files/1db092b4-c38d-5efe-8886-0f4fd9d50207.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(12, 7, 'REGISTRATION', '/api/uploads/files/7c7e0dfc-d461-562c-a858-ab49c6a1b8e1.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(13, 8, 'REGISTRATION', '/api/uploads/files/83c2eed5-9542-58bf-8e9b-faab185d0cec.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
 
 -- Giấy tờ Xe 9: PENDING (Chờ duyệt)
-(14, 9, 'REGISTRATION', '/images/docs/car-9-registration.jpg', NULL, 'PENDING', NULL, NULL, NULL),
-(15, 9, 'INSPECTION', '/images/docs/car-9-inspection.jpg', '2027-03-15', 'PENDING', NULL, NULL, NULL),
+(14, 9, 'REGISTRATION', '/api/uploads/files/12c76b96-f0dc-519b-902f-f056fb6cd467.jpg', NULL, 'PENDING', NULL, NULL, NULL),
+(15, 9, 'INSPECTION', '/api/uploads/files/b3823876-4d61-5a4b-bf0a-daa59be452f1.jpg', '2027-03-15', 'PENDING', NULL, NULL, NULL),
 
 -- Giấy tờ Xe 10: REJECTED (Bị từ chối)
-(16, 10, 'REGISTRATION', '/images/docs/car-10-registration.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
-(17, 10, 'INSPECTION', '/images/docs/car-10-inspection.jpg', '2024-01-01', 'REJECTED', 'Giấy chứng nhận đăng kiểm đã hết hạn từ 01/01/2024, vui lòng đăng kiểm lại và bổ sung ảnh mới', 1, vn_now());
+(16, 10, 'REGISTRATION', '/api/uploads/files/613d0c74-db9c-5c52-8590-daf6fc4037fa.jpg', NULL, 'APPROVED', NULL, 1, vn_now()),
+(17, 10, 'INSPECTION', '/api/uploads/files/c2bcf701-11e1-52ab-bc85-9cef65a61b85.jpg', '2024-01-01', 'REJECTED', 'Giấy chứng nhận đăng kiểm đã hết hạn từ 01/01/2024, vui lòng đăng kiểm lại và bổ sung ảnh mới', 1, vn_now());
 
 SELECT setval(pg_get_serial_sequence('car_documents', 'id'), (SELECT COALESCE(MAX(id), 1) FROM car_documents));
 

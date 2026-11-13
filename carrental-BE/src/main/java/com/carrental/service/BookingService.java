@@ -46,6 +46,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * Quy trình đặt xe: yêu cầu → chủ xe liên hệ & xác nhận → biên bản nhận xe (khách xác nhận từng mục)
@@ -68,6 +69,7 @@ public class BookingService {
     private final CarImageRepository carImageRepository;
     private final ReviewRepository reviewRepository;
     private final CurrentUserService currentUserService;
+    private final PublicImageStorageService publicImageStorageService;
     private final Clock clock;
 
     // ================================================================== báo giá / lịch
@@ -229,11 +231,14 @@ public class BookingService {
     // ================================================================== biên bản bàn giao
 
     @Transactional
-    public BookingResponse submitHandover(Long id, HandoverType type, SubmitHandoverRequest request) {
+    public BookingResponse submitHandover(Long id, HandoverType type, SubmitHandoverRequest request, List<MultipartFile> photos) {
         Booking b = ownedBooking(id);
         requireStatus(b, type == HandoverType.PICKUP ? BookingStatus.CONFIRMED : BookingStatus.IN_PROGRESS);
         if (handoverRepository.findByBookingIdAndHandoverType(id, type).isPresent()) {
             throw conflict("Biên bản đã được lập, hãy chỉnh sửa theo yêu cầu của khách");
+        }
+        if (photos == null || photos.size() != request.items().size()) {
+            throw bad("Số lượng ảnh tải lên (" + (photos != null ? photos.size() : 0) + ") phải khớp với số hạng mục (" + request.items().size() + ")");
         }
         Set<HandoverCategory> provided = request.items().stream().map(HandoverItemInput::category)
                 .collect(Collectors.toSet());
@@ -254,12 +259,14 @@ public class BookingService {
             throw conflict("Chỉ lập biên bản nhận xe trong vòng 24 giờ trước giờ nhận xe");
         }
 
+        List<String> storedUrls = publicImageStorageService.storeBatch(photos);
         Handover h = Handover.builder().booking(b).handoverType(type).odometerKm(request.odometerKm())
                 .fuelPercent(request.fuelPercent()).ownerNote(trim(request.ownerNote())).submittedAt(now()).build();
         int order = 0;
-        for (HandoverItemInput input : request.items()) {
+        for (int i = 0; i < request.items().size(); i++) {
+            HandoverItemInput input = request.items().get(i);
             h.getItems().add(HandoverItem.builder().handover(h).category(input.category())
-                    .photoUrl(input.photoUrl().trim()).conditionNote(trim(input.conditionNote()))
+                    .photoUrl(storedUrls.get(i)).conditionNote(trim(input.conditionNote()))
                     .sortOrder(order++).build());
         }
         handoverRepository.saveAndFlush(h);
@@ -332,11 +339,14 @@ public class BookingService {
 
     /** Chủ xe sửa đúng các mục khách yêu cầu rồi gửi lại cho khách. */
     @Transactional
-    public BookingResponse reviseHandover(Long id, HandoverType type, ReviseHandoverRequest request) {
+    public BookingResponse reviseHandover(Long id, HandoverType type, ReviseHandoverRequest request, List<MultipartFile> photos) {
         Booking b = ownedBooking(id);
         Handover h = handover(id, type);
         if (h.getStatus() != HandoverStatus.DISPUTED) {
             throw conflict("Biên bản không có mục nào cần sửa");
+        }
+        if (photos == null || photos.size() != request.revisions().size()) {
+            throw bad("Số lượng ảnh tải lên (" + (photos != null ? photos.size() : 0) + ") phải khớp với số mục cần sửa (" + request.revisions().size() + ")");
         }
         Map<Long, HandoverItem> disputed = new HashMap<>();
         for (HandoverItem item : h.getItems()) {
@@ -348,9 +358,11 @@ public class BookingService {
         if (!revised.equals(disputed.keySet())) {
             throw bad("Vui lòng sửa đúng và đủ các mục khách yêu cầu");
         }
-        for (ItemRevision r : request.revisions()) {
+        List<String> storedUrls = publicImageStorageService.storeBatch(photos);
+        for (int i = 0; i < request.revisions().size(); i++) {
+            ItemRevision r = request.revisions().get(i);
             HandoverItem item = disputed.get(r.itemId());
-            item.setPhotoUrl(r.photoUrl().trim());
+            item.setPhotoUrl(storedUrls.get(i));
             item.setConditionNote(trim(r.conditionNote()));
             item.setStatus(HandoverItemStatus.REVISED);
         }
