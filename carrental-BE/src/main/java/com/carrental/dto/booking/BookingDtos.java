@@ -4,6 +4,7 @@ import com.carrental.entity.Booking;
 import com.carrental.entity.Handover;
 import com.carrental.entity.HandoverItem;
 import com.carrental.enums.BookingStatus;
+import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.HandoverCategory;
 import com.carrental.enums.HandoverItemStatus;
 import com.carrental.enums.HandoverStatus;
@@ -36,7 +37,8 @@ public final class BookingDtos {
             @NotNull(message = "Vui lòng chọn thời gian nhận xe") LocalDateTime pickupAt,
             @NotNull(message = "Vui lòng chọn thời gian trả xe") LocalDateTime returnAt,
             @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự") String contactPhone,
-            @Size(max = 1000, message = "Lời nhắn tối đa 1000 ký tự") String customerNote) {}
+            @Size(max = 1000, message = "Lời nhắn tối đa 1000 ký tự") String customerNote,
+            @Size(max = 50, message = "Mã voucher tối đa 50 ký tự") String voucherCode) {}
 
     public record ContactRequest(
             @AssertTrue(message = "Vui lòng xác nhận đã liên hệ với khách") boolean contacted,
@@ -102,7 +104,21 @@ public final class BookingDtos {
             BigDecimal lateFeePerHour,
             boolean available,
             String unavailableReason,
-            List<String> breakdown) {}
+            List<String> breakdown,
+            String voucherCode,
+            BigDecimal discountAmount,
+            BigDecimal payableRentalAmount) {
+
+        public QuoteResponse(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, long totalHours,
+                int rentalDays, int rentalHours, BigDecimal pricePerDay, BigDecimal weekendPricePerDay,
+                BigDecimal pricePerHour, BigDecimal dayAmount, BigDecimal hourAmount, BigDecimal rentalAmount,
+                BigDecimal depositAmount, Integer kmLimitPerDay, Integer includedKm, BigDecimal extraKmFee,
+                BigDecimal lateFeePerHour, boolean available, String unavailableReason, List<String> breakdown) {
+            this(carId, pickupAt, returnAt, totalHours, rentalDays, rentalHours, pricePerDay, weekendPricePerDay,
+                    pricePerHour, dayAmount, hourAmount, rentalAmount, depositAmount, kmLimitPerDay, includedKm,
+                    extraKmFee, lateFeePerHour, available, unavailableReason, breakdown, null, BigDecimal.ZERO, rentalAmount);
+        }
+    }
 
     public record BusyRange(LocalDateTime from, LocalDateTime to) {}
 
@@ -173,12 +189,20 @@ public final class BookingDtos {
             LocalDateTime completedAt,
             LocalDateTime createdAt,
             boolean reviewed,
-            List<HandoverResponse> handovers) {
+            List<HandoverResponse> handovers,
+            String voucherCode,
+            BigDecimal discountAmount,
+            PaymentStatus depositStatus,
+            BigDecimal remainingAmount) {
 
         public static BookingResponse from(Booking b, String imageUrl, boolean reviewed, List<Handover> handovers) {
             var car = b.getCar();
             // Số điện thoại hai bên chỉ hiện khi đơn còn hiệu lực (đã gửi yêu cầu trở đi), không lộ ra đơn bị từ chối.
             boolean sharePhones = b.getStatus() != BookingStatus.REJECTED && b.getStatus() != BookingStatus.EXPIRED;
+            String vCode = b.getVoucher() != null ? b.getVoucher().getCode() : null;
+            BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
+            PaymentStatus depStatus = b.getDepositStatus() != null ? b.getDepositStatus() : PaymentStatus.UNPAID;
+            BigDecimal rem = b.getFinalAmount();
             return new BookingResponse(
                     b.getId(), b.getBookingCode(), b.getStatus(),
                     car.getId(), (car.getBrand() + " " + car.getModel()).trim(), car.getLicensePlate(), imageUrl,
@@ -194,7 +218,8 @@ public final class BookingDtos {
                     b.getRejectReason(), b.getCancelReason(), b.getCancelledBy(), b.getPickedUpAt(), b.getReturnedAt(),
                     b.getPickupOdometerKm(), b.getReturnOdometerKm(), b.getExtraKmAmount(), b.getLateAmount(),
                     b.getOtherFeeAmount(), b.getOtherFeeNote(), b.getFinalAmount(), b.getCompletedAt(), b.getCreatedAt(),
-                    reviewed, handovers.stream().map(HandoverResponse::from).toList());
+                    reviewed, handovers.stream().map(HandoverResponse::from).toList(),
+                    vCode, discount, depStatus, rem);
         }
     }
 

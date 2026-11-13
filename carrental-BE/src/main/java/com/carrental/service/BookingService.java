@@ -8,23 +8,34 @@ import com.carrental.entity.CarImage;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Handover;
 import com.carrental.entity.HandoverItem;
+import com.carrental.entity.Transaction;
+import com.carrental.entity.Voucher;
 import com.carrental.enums.BookingStatus;
 import com.carrental.enums.CarStatus;
 import com.carrental.enums.CustomerStatus;
+import com.carrental.enums.DiscountType;
 import com.carrental.enums.HandoverCategory;
 import com.carrental.enums.HandoverItemStatus;
 import com.carrental.enums.HandoverStatus;
 import com.carrental.enums.HandoverType;
 import com.carrental.enums.ListingStatus;
+import com.carrental.enums.PaymentMethod;
+import com.carrental.enums.PaymentStatus;
 import com.carrental.enums.Role;
+import com.carrental.enums.TransactionStatus;
+import com.carrental.enums.TransactionType;
+import com.carrental.enums.VoucherStatus;
 import com.carrental.exception.AppException;
 import com.carrental.repository.BookingRepository;
 import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.HandoverRepository;
 import com.carrental.repository.ReviewRepository;
+import com.carrental.repository.TransactionRepository;
+import com.carrental.repository.VoucherRepository;
 import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Duration;
@@ -68,6 +79,8 @@ public class BookingService {
     private final CarRepository carRepository;
     private final CarImageRepository carImageRepository;
     private final ReviewRepository reviewRepository;
+    private final VoucherRepository voucherRepository;
+    private final TransactionRepository transactionRepository;
     private final CurrentUserService currentUserService;
     private final PublicImageStorageService publicImageStorageService;
     private final Clock clock;
@@ -76,11 +89,35 @@ public class BookingService {
 
     @Transactional(readOnly = true)
     public QuoteResponse quote(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt) {
+        return quote(carId, pickupAt, returnAt, null);
+    }
+
+    @Transactional(readOnly = true)
+    public QuoteResponse quote(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, String voucherCode) {
         Car car = publicCar(carId);
         validateWindow(pickupAt, returnAt);
         boolean free = bookingRepository.findOverlapping(carId, pickupAt, returnAt, HOLDING).isEmpty();
-        return BookingPricing.quote(car, pickupAt, returnAt, free,
+        QuoteResponse base = BookingPricing.quote(car, pickupAt, returnAt, free,
                 free ? null : "Xe đã có lịch thuê trùng với thời gian bạn chọn");
+        if (voucherCode == null || voucherCode.isBlank()) {
+            return base;
+        }
+        Customer customer = null;
+        try {
+            customer = currentUserService.getCurrentUser();
+        } catch (Exception ignored) {}
+        Voucher voucher = resolveVoucher(voucherCode, base.rentalAmount(), customer);
+        BigDecimal discount = calculateDiscount(voucher, base.rentalAmount());
+        BigDecimal payable = base.rentalAmount().subtract(discount).max(BigDecimal.ZERO);
+        List<String> breakdown = new ArrayList<>(base.breakdown());
+        breakdown.add("Giảm giá voucher (" + voucher.getCode() + "): -" + BookingPricing.vnd(discount));
+        return new QuoteResponse(
+                base.carId(), base.pickupAt(), base.returnAt(), base.totalHours(),
+                base.rentalDays(), base.rentalHours(), base.pricePerDay(), base.weekendPricePerDay(),
+                base.pricePerHour(), base.dayAmount(), base.hourAmount(), base.rentalAmount(),
+                base.depositAmount(), base.kmLimitPerDay(), base.includedKm(), base.extraKmFee(),
+                base.lateFeePerHour(), base.available(), base.unavailableReason(), breakdown,
+                voucher.getCode(), discount, payable);
     }
 
     @Transactional(readOnly = true)
@@ -149,6 +186,14 @@ public class BookingService {
         }
 
         QuoteResponse q = BookingPricing.quote(car, request.pickupAt(), request.returnAt(), true, null);
+        Voucher voucher = resolveVoucher(request.voucherCode(), q.rentalAmount(), customer);
+        BigDecimal discount = calculateDiscount(voucher, q.rentalAmount());
+        if (voucher != null && voucherRepository.increaseUsage(voucher.getId()) == 0) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Voucher đã hết lượt sử dụng");
+        }
+        PaymentStatus initialDepositStatus = (q.depositAmount() == null || q.depositAmount().compareTo(BigDecimal.ZERO) <= 0)
+                ? PaymentStatus.PAID : PaymentStatus.UNPAID;
+
         Booking booking = Booking.builder()
                 .bookingCode(newCode())
                 .car(car).customer(customer).owner(car.getOwner())
@@ -156,7 +201,10 @@ public class BookingService {
                 .rentalDays(q.rentalDays()).rentalHours(q.rentalHours())
                 .pricePerDay(q.pricePerDay()).pricePerHour(q.pricePerHour())
                 .dayAmount(q.dayAmount()).hourAmount(q.hourAmount()).rentalAmount(q.rentalAmount())
+                .voucher(voucher)
+                .discountAmount(discount)
                 .depositAmount(q.depositAmount())
+                .depositStatus(initialDepositStatus)
                 .kmLimitPerDay(car.getKmLimitPerDay()).extraKmFee(car.getExtraKmFee())
                 .lateFeePerHour(car.getLateFeePerHour())
                 .contactPhone(blank(request.contactPhone()) ? customer.getPhone() : request.contactPhone().trim())
@@ -183,6 +231,35 @@ public class BookingService {
         b.setStatus(BookingStatus.CANCELLED);
         b.setCancelReason(reason.trim());
         b.setCancelledBy(admin ? "ADMIN" : isOwner ? "OWNER" : "CUSTOMER");
+
+        // Hoàn lại lượt voucher nếu đơn bị hủy
+        if (b.getVoucher() != null) {
+            voucherRepository.decreaseUsage(b.getVoucher().getId());
+        }
+
+        // Hoàn tiền cọc nếu đơn đã cọc
+        if (b.getDepositStatus() == PaymentStatus.PAID && b.getDepositAmount() != null && b.getDepositAmount().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal refundAmount = b.getDepositAmount();
+            if (isCustomer && !admin && !isOwner) {
+                // Khách tự hủy trong vòng 24 giờ trước giờ nhận xe: hoàn 70% cọc
+                if (b.getPickupAt().isBefore(now().plusHours(24))) {
+                    refundAmount = b.getDepositAmount().multiply(BigDecimal.valueOf(70)).divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+                }
+            }
+            b.setDepositStatus(PaymentStatus.REFUNDED);
+            Transaction refundTx = Transaction.builder()
+                    .booking(b)
+                    .transactionType(TransactionType.BOOKING_REFUND)
+                    .amount(refundAmount)
+                    .method(PaymentMethod.VNPAY)
+                    .status(TransactionStatus.SUCCESS)
+                    .providerRef("REFUND_BK_" + b.getId() + "_" + System.currentTimeMillis())
+                    .paidAt(now())
+                    .build();
+            transactionRepository.save(refundTx);
+            log.info("Hoàn cọc đơn thuê bookingId={}, amount={}, refundAmount={}", b.getId(), b.getDepositAmount(), refundAmount);
+        }
+
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
@@ -225,6 +302,9 @@ public class BookingService {
         requireStatus(b, BookingStatus.REQUESTED);
         b.setStatus(BookingStatus.REJECTED);
         b.setRejectReason(reason.trim());
+        if (b.getVoucher() != null) {
+            voucherRepository.decreaseUsage(b.getVoucher().getId());
+        }
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
@@ -259,7 +339,7 @@ public class BookingService {
             throw conflict("Chỉ lập biên bản nhận xe trong vòng 24 giờ trước giờ nhận xe");
         }
 
-        List<String> storedUrls = publicImageStorageService.storeBatch(photos);
+        List<String> storedUrls = publicImageStorageService.storeImages(photos);
         Handover h = Handover.builder().booking(b).handoverType(type).odometerKm(request.odometerKm())
                 .fuelPercent(request.fuelPercent()).ownerNote(trim(request.ownerNote())).submittedAt(now()).build();
         int order = 0;
@@ -358,7 +438,7 @@ public class BookingService {
         if (!revised.equals(disputed.keySet())) {
             throw bad("Vui lòng sửa đúng và đủ các mục khách yêu cầu");
         }
-        List<String> storedUrls = publicImageStorageService.storeBatch(photos);
+        List<String> storedUrls = publicImageStorageService.storeImages(photos);
         for (int i = 0; i < request.revisions().size(); i++) {
             ItemRevision r = request.revisions().get(i);
             HandoverItem item = disputed.get(r.itemId());
@@ -415,7 +495,17 @@ public class BookingService {
         b.setLateAmount(late);
         b.setOtherFeeAmount(other);
         b.setOtherFeeNote(trim(otherFeeNote));
-        b.setFinalAmount(b.getRentalAmount().add(extraKm).add(late).add(other));
+
+        BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
+        BigDecimal actualRental = b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO);
+        BigDecimal totalTripCost = actualRental.add(extraKm).add(late).add(other);
+
+        // Trừ tiền cọc nếu khách đã thanh toán cọc
+        BigDecimal paidDeposit = (b.getDepositStatus() == PaymentStatus.PAID && b.getDepositAmount() != null)
+                ? b.getDepositAmount() : BigDecimal.ZERO;
+        BigDecimal remainingToPay = totalTripCost.subtract(paidDeposit).max(BigDecimal.ZERO);
+
+        b.setFinalAmount(remainingToPay);
     }
 
     // ================================================================== đọc
@@ -475,9 +565,57 @@ public class BookingService {
     @Transactional
     public int expireStaleRequests() {
         List<Booking> stale = bookingRepository.findAllByStatusAndPickupAtBefore(BookingStatus.REQUESTED, now());
-        stale.forEach(b -> b.setStatus(BookingStatus.EXPIRED));
+        for (Booking b : stale) {
+            b.setStatus(BookingStatus.EXPIRED);
+            if (b.getVoucher() != null) {
+                voucherRepository.decreaseUsage(b.getVoucher().getId());
+            }
+        }
         bookingRepository.saveAll(stale);
         return stale.size();
+    }
+
+    private Voucher resolveVoucher(String voucherCode, BigDecimal rentalAmount, Customer customer) {
+        if (voucherCode == null || voucherCode.isBlank()) {
+            return null;
+        }
+        Voucher voucher = voucherRepository.findByCodeIgnoreCase(voucherCode.trim())
+                .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Mã voucher không tồn tại"));
+        LocalDateTime now = now();
+        if (voucher.getStatus() != VoucherStatus.ACTIVE
+                || now.isBefore(voucher.getStartAt()) || !now.isBefore(voucher.getEndAt())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Voucher đã hết hạn hoặc chưa đến thời gian sử dụng");
+        }
+        if (rentalAmount.compareTo(voucher.getMinOrderAmount()) < 0) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Đơn thuê chưa đạt giá trị tối thiểu "
+                    + voucher.getMinOrderAmount().toPlainString() + "đ để dùng voucher");
+        }
+        if (voucher.getUsageLimit() != null && voucher.getUsedCount() >= voucher.getUsageLimit()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Voucher đã hết lượt sử dụng");
+        }
+        if (customer != null) {
+            long used = bookingRepository.countByVoucherIdAndCustomerIdAndStatusNotIn(
+                    voucher.getId(), customer.getId(),
+                    List.of(BookingStatus.CANCELLED, BookingStatus.REJECTED, BookingStatus.EXPIRED));
+            if (used >= voucher.getPerUserLimit()) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Bạn đã dùng hết lượt của voucher này");
+            }
+        }
+        return voucher;
+    }
+
+    private static BigDecimal calculateDiscount(Voucher voucher, BigDecimal price) {
+        if (voucher == null) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal discount = voucher.getDiscountValue();
+        if (voucher.getDiscountType() == DiscountType.PERCENT) {
+            discount = price.multiply(voucher.getDiscountValue()).divide(BigDecimal.valueOf(100), 0, RoundingMode.DOWN);
+            if (voucher.getMaxDiscount() != null) {
+                discount = discount.min(voucher.getMaxDiscount());
+            }
+        }
+        return discount.min(price);
     }
 
     // ================================================================== helpers

@@ -1,5 +1,6 @@
 package com.carrental.controller;
 
+import com.carrental.dto.request.BookingDepositPaymentRequest;
 import com.carrental.dto.request.PackagePaymentRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.PageResponse;
@@ -31,7 +32,16 @@ public class TransactionController {
                 transactionService.createPackagePayment(request, servletRequest));
     }
 
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
+    @PostMapping("/booking-deposit")
+    public ApiResponse<TransactionResponse> createBookingDepositPayment(
+            @Valid @RequestBody BookingDepositPaymentRequest request,
+            HttpServletRequest servletRequest) {
+        return ApiResponse.ok("Tạo giao dịch thanh toán tiền cọc thành công",
+                transactionService.createBookingDepositPayment(request, servletRequest));
+    }
+
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     @GetMapping("/{id}/vnpay-url")
     public ApiResponse<Map<String, String>> getVNPayUrl(
             @PathVariable Long id,
@@ -41,13 +51,13 @@ public class TransactionController {
         return ApiResponse.ok(Map.of("paymentUrl", paymentUrl));
     }
 
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     @GetMapping("/{id}")
     public ApiResponse<TransactionResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(transactionService.getById(id));
     }
 
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     @PostMapping("/{id}/simulate-gateway")
     public ApiResponse<TransactionResponse> simulateGateway(
             @PathVariable Long id,
@@ -59,16 +69,17 @@ public class TransactionController {
         return ApiResponse.ok(success ? "Giả lập thanh toán thành công" : "Giả lập thanh toán thất bại", response);
     }
 
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
     @GetMapping
     public ApiResponse<PageResponse<TransactionResponse>> getPaged(
             @RequestParam(required = false) Long subscriptionId,
+            @RequestParam(required = false) Long bookingId,
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id,desc") String sort) {
         Pageable pageable = PageRequestFactory.of(page, size, sort);
-        return ApiResponse.ok(transactionService.getPaged(subscriptionId, type, status, pageable));
+        return ApiResponse.ok(transactionService.getPaged(subscriptionId, bookingId, type, status, pageable));
     }
 }

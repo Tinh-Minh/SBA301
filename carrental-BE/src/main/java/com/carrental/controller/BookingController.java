@@ -1,12 +1,17 @@
 package com.carrental.controller;
 
 import com.carrental.dto.booking.BookingDtos.*;
+import com.carrental.dto.request.BookingDepositPaymentRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.PageResponse;
+import com.carrental.dto.response.TransactionResponse;
 import com.carrental.enums.BookingStatus;
 import com.carrental.enums.HandoverType;
+import com.carrental.enums.PaymentMethod;
 import com.carrental.service.BookingService;
+import com.carrental.service.TransactionService;
 import com.carrental.util.PageRequestFactory;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class BookingController {
 
     private final BookingService bookingService;
+    private final TransactionService transactionService;
     private final com.carrental.service.RentalDashboardService dashboardService;
 
     // ---------------------------------------------------------------- công khai
@@ -31,8 +37,9 @@ public class BookingController {
     public ApiResponse<QuoteResponse> quote(
             @PathVariable Long carId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime pickupAt,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime returnAt) {
-        return ApiResponse.ok(bookingService.quote(carId, pickupAt, returnAt));
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime returnAt,
+            @RequestParam(required = false) String voucherCode) {
+        return ApiResponse.ok(bookingService.quote(carId, pickupAt, returnAt, voucherCode));
     }
 
     @GetMapping("/api/cars/{carId}/availability")
@@ -70,6 +77,18 @@ public class BookingController {
     @PostMapping("/api/bookings/{id}/cancel")
     public ApiResponse<BookingResponse> cancel(@PathVariable Long id, @Valid @RequestBody ReasonRequest request) {
         return ApiResponse.ok("Đã huỷ đơn thuê", bookingService.cancel(id, request.reason()));
+    }
+
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'OWNER', 'ADMIN')")
+    @PostMapping("/api/bookings/{id}/deposit-payment")
+    public ApiResponse<TransactionResponse> payDeposit(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "VNPAY") PaymentMethod method,
+            @RequestParam(required = false) String bankCode,
+            HttpServletRequest request) {
+        return ApiResponse.ok("Tạo giao dịch thanh toán tiền cọc thành công",
+                transactionService.createBookingDepositPayment(
+                        new BookingDepositPaymentRequest(id, method, bankCode), request));
     }
 
     // ---------------------------------------------------------------- chủ xe

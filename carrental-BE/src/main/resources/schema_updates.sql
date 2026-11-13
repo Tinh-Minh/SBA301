@@ -119,3 +119,13 @@ CREATE TABLE IF NOT EXISTS handover_items (
     dispute_note   VARCHAR(1000),
     sort_order     INT          NOT NULL DEFAULT 0
 );
+
+-- Hỗ trợ voucher và tiền cọc cho đơn thuê xe
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS voucher_id BIGINT REFERENCES vouchers(id);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(14,0) DEFAULT 0;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS deposit_status VARCHAR(20) DEFAULT 'UNPAID';
+
+-- Hỗ trợ giao dịch cho đơn thuê xe
+ALTER TABLE transactions ALTER COLUMN subscription_id DROP NOT NULL;
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS booking_id BIGINT REFERENCES bookings(id);
+

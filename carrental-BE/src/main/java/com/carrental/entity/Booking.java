@@ -1,6 +1,7 @@
 package com.carrental.entity;
 
 import com.carrental.enums.BookingStatus;
+import com.carrental.enums.PaymentStatus;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,6 +42,19 @@ public class Booking extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
     private BookingStatus status = BookingStatus.REQUESTED;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "voucher_id")
+    private Voucher voucher;
+
+    @Column(name = "discount_amount", precision = 14, scale = 0)
+    @Builder.Default
+    private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "deposit_status", nullable = false, length = 20)
+    @Builder.Default
+    private PaymentStatus depositStatus = PaymentStatus.UNPAID;
 
     // ----- báo giá chốt tại thời điểm đặt (giữ nguyên dù chủ xe đổi giá sau này)
     @Column(name = "rental_days", nullable = false)

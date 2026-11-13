@@ -1,5 +1,6 @@
 package com.carrental.service;
 
+import com.carrental.dto.request.BookingDepositPaymentRequest;
 import com.carrental.dto.request.PackagePaymentRequest;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.TransactionResponse;
@@ -14,9 +15,17 @@ public interface TransactionService {
         return createPackagePayment(request, null);
     }
 
+    TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request, HttpServletRequest servletRequest);
+
+    default TransactionResponse createBookingDepositPayment(BookingDepositPaymentRequest request) {
+        return createBookingDepositPayment(request, null);
+    }
+
     TransactionResponse getById(Long id);
 
     PageResponse<TransactionResponse> getPaged(Long subscriptionId, String transactionType, String status, Pageable pageable);
+
+    PageResponse<TransactionResponse> getPaged(Long subscriptionId, Long bookingId, String transactionType, String status, Pageable pageable);
 
     String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
 

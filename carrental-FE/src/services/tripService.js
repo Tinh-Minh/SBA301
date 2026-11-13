@@ -2,13 +2,14 @@ import { request, toPage } from "@/services/api.js";
 
 /** Đơn thuê xe, biên bản bàn giao, hồ sơ an toàn, bảng theo dõi và tải ảnh. */
 export const tripService = {
-    quote: (carId, pickupAt, returnAt) => request(`/api/cars/${carId}/quote`, { auth: false, query: { pickupAt, returnAt } }),
+    quote: (carId, pickupAt, returnAt, voucherCode) => request(`/api/cars/${carId}/quote`, { auth: false, query: { pickupAt, returnAt, voucherCode } }),
     availability: (carId) => request(`/api/cars/${carId}/availability`, { auth: false }),
     create: (body) => request("/api/bookings", { method: "POST", json: body }),
     mine: () => request("/api/bookings/my"),
     ownerList: () => request("/api/bookings/owner"),
     get: (id) => request(`/api/bookings/${id}`),
     cancel: (id, reason) => request(`/api/bookings/${id}/cancel`, { method: "POST", json: { reason } }),
+    payDeposit: (id, method = "VNPAY", bankCode) => request("/api/transactions/booking-deposit", { method: "POST", json: { bookingId: id, method, bankCode } }),
     contacted: (id, contactNote) => request(`/api/bookings/${id}/contacted`, { method: "POST", json: { contacted: true, contactNote } }),
     accept: (id) => request(`/api/bookings/${id}/accept`, { method: "POST" }),
     reject: (id, reason) => request(`/api/bookings/${id}/reject`, { method: "POST", json: { reason } }),

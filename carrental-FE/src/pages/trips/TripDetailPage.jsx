@@ -77,9 +77,37 @@ function Trip({ id }) {
           </div>
         </section> : null}
 
+        {role === "customer" && b.status === "CONFIRMED" && b.depositStatus !== "PAID" && Number(b.depositAmount) > 0 ? (
+          <section className="rounded-2xl border border-[#FDBA8C] bg-[#FFF7F2] p-5 shadow-sm">
+            <h2 className="text-base font-bold text-[#292929]">Thanh toán tiền cọc</h2>
+            <p className="mt-1 text-sm text-[#666666]">
+              Chủ xe đã xác nhận đơn. Vui lòng thanh toán tiền cọc <b>{formatMoney(b.depositAmount)}</b> qua VNPay để hoàn tất đặt xe trước khi nhận xe.
+            </p>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                disabled={busy}
+                onClick={async () => {
+                  try {
+                    const res = await tripService.payDeposit(b.id, "VNPAY");
+                    if (res?.paymentUrl) {
+                      window.location.href = res.paymentUrl;
+                    }
+                  } catch (e) {
+                    setError(e.message);
+                  }
+                }}
+                className="rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e05615] disabled:opacity-50"
+              >
+                Thanh toán tiền cọc qua VNPay
+              </button>
+            </div>
+          </section>
+        ) : null}
+
         {asking ? <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
           <h2 className="font-bold">{asking === "reject" ? "Lý do từ chối" : "Lý do huỷ đơn"}</h2>
-          {asking === "cancel" ? <p className="mt-1 text-xs text-[#666666]">Lưu ý: Hệ thống không thu tiền hay giữ cọc. Nếu bạn và đối tác đã chuyển tiền hoặc tiền cọc trực tiếp, vui lòng tự liên hệ đối chiếu và hoàn lại.</p> : null}
+          {asking === "cancel" ? <p className="mt-1 text-xs text-[#666666]">Lưu ý: Nếu đơn đã thanh toán tiền cọc qua VNPay, hệ thống sẽ tự động hoàn cọc theo quy định (hoàn 100% nếu hủy trước 24h hoặc do chủ xe/admin hủy; hoàn 70% nếu khách hủy trong vòng 24h trước khi nhận xe).</p> : null}
           <textarea rows={2} value={reason} maxLength={500} onChange={e => setReason(e.target.value)} className={`${fieldClass} mt-2`}/>
           <div className="mt-2 flex gap-2">
             <button type="button" disabled={busy || !reason.trim()} onClick={() => run(() => asking === "reject" ? tripService.reject(b.id, reason.trim()) : tripService.cancel(b.id, reason.trim()), () => setAsking(null))} className="rounded-xl bg-[#B91C1C] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Xác nhận</button>
@@ -113,14 +141,16 @@ function Trip({ id }) {
             {b.rentalDays ? <Row term={`${b.rentalDays} ngày`} value={formatMoney(b.dayAmount)}/> : null}
             {b.rentalHours ? <Row term={`${b.rentalHours} giờ lẻ × ${formatMoney(b.pricePerHour)}`} value={formatMoney(b.hourAmount)}/> : null}
             <Row term="Tiền thuê" value={formatMoney(b.rentalAmount)} strong/>
+            {b.voucherCode ? <Row term={`Voucher (${b.voucherCode})`} value={<span className="text-[#166534]">-{formatMoney(b.discountAmount)}</span>}/> : null}
+            {b.voucherCode && b.discountAmount ? <Row term="Tiền thuê sau giảm" value={formatMoney(Math.max(0, (b.rentalAmount || 0) - (b.discountAmount || 0)))} strong/> : null}
             {Number(b.extraKmAmount) ? <Row term="Phí quá km" value={formatMoney(b.extraKmAmount)}/> : null}
             {Number(b.lateAmount) ? <Row term="Phí trả trễ" value={formatMoney(b.lateAmount)}/> : null}
             {Number(b.otherFeeAmount) ? <Row term={`Phí khác: ${b.otherFeeNote ?? ""}`} value={formatMoney(b.otherFeeAmount)}/> : null}
-            {b.finalAmount ? <Row term="Tổng thanh toán" value={<span className="text-[#FC6C26]">{formatMoney(b.finalAmount)}</span>} strong/> : null}
-            <Row term="Tiền cọc dự kiến (tự thỏa thuận)" value={Number(b.depositAmount) ? formatMoney(b.depositAmount) : "Miễn cọc"}/>
+            <Row term="Tiền cọc" value={Number(b.depositAmount) ? <span>{formatMoney(b.depositAmount)} <b className={b.depositStatus === "PAID" ? "text-[#166534]" : b.depositStatus === "REFUNDED" ? "text-[#666666]" : "text-[#D97706]"}>({b.depositStatus === "PAID" ? "Đã cọc qua VNPay" : b.depositStatus === "REFUNDED" ? "Đã hoàn cọc" : "Chưa cọc"})</b></span> : "Miễn cọc"}/>
+            {b.finalAmount !== undefined && b.finalAmount !== null ? <Row term="Phần còn lại phải thanh toán" value={<span className="text-lg font-black text-[#FC6C26]">{formatMoney(b.finalAmount)}</span>} strong/> : null}
             {b.kmLimitPerDay ? <Row term="Giới hạn km" value={`${b.kmLimitPerDay} km/ngày`}/> : null}
           </dl>
-          <p className="mt-2 text-xs text-[#666666]">Các khoản này hai bên thanh toán trực tiếp với nhau, hệ thống chỉ ghi nhận. Nếu có hủy đơn hoặc phát sinh hoàn cọc, hai bên tự thỏa thuận đối chiếu.</p>
+          <p className="mt-2 text-xs text-[#666666]">Tiền cọc thanh toán trực tuyến qua cổng VNPay. Khi trả xe, phần tiền còn lại và phí phát sinh được tính trừ cọc để hai bên đối chiếu và hoàn tất.</p>
         </section>
         <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm shadow-sm">
           <h2 className="mb-2 font-bold">{role === "owner" ? "Khách thuê" : "Chủ xe"}</h2>
