@@ -204,9 +204,7 @@ public class BookingService {
         QuoteResponse q = BookingPricing.quote(car, request.pickupAt(), request.returnAt(), true, null);
         Voucher voucher = resolveVoucher(request.voucherCode(), q.rentalAmount(), customer);
         BigDecimal discount = calculateDiscount(voucher, q.rentalAmount());
-        if (voucher != null && voucherRepository.increaseUsage(voucher.getId()) == 0) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Voucher đã hết lượt sử dụng");
-        }
+        // Lượt voucher chỉ bị trừ khi chủ xe xác nhận đơn (xem accept), tránh spam yêu cầu để chiếm lượt.
         PaymentStatus initialDepositStatus = (q.depositAmount() == null || q.depositAmount().compareTo(BigDecimal.ZERO) <= 0)
                 ? PaymentStatus.NOT_REQUIRED : PaymentStatus.UNPAID;
 
@@ -253,12 +251,13 @@ public class BookingService {
                 && b.getPickupAt().isBefore(now().plusHours(24))) {
             throw conflict("Chủ xe không thể huỷ đơn đã xác nhận trong vòng 24 giờ trước giờ nhận xe. Vui lòng liên hệ quản trị viên");
         }
+        boolean voucherCounted = b.getStatus() != BookingStatus.REQUESTED;
         b.setStatus(BookingStatus.CANCELLED);
         b.setCancelReason(reason.trim());
         b.setCancelledBy(admin ? "ADMIN" : isOwner ? "OWNER" : "CUSTOMER");
 
-        // Hoàn lại lượt voucher nếu đơn bị hủy
-        if (b.getVoucher() != null) {
+        // Hoàn lại lượt voucher nếu lượt đã được tính (đơn đã được xác nhận)
+        if (b.getVoucher() != null && voucherCounted) {
             voucherRepository.decreaseUsage(b.getVoucher().getId());
         }
 
@@ -406,6 +405,12 @@ public class BookingService {
         if (!bookingRepository.findOverlapping(b.getCar().getId(), b.getPickupAt(), b.getReturnAt(), HOLDING).isEmpty()) {
             throw conflict("Xe đã có đơn khác được xác nhận trùng thời gian");
         }
+        // Trừ lượt voucher tại thời điểm xác nhận; voucher vừa hết lượt thì đơn vẫn được nhận nhưng bỏ giảm giá.
+        if (b.getVoucher() != null && voucherRepository.increaseUsage(b.getVoucher().getId()) == 0) {
+            log.info("Voucher {} hết lượt khi xác nhận đơn {}, bỏ giảm giá", b.getVoucher().getCode(), b.getId());
+            b.setVoucher(null);
+            b.setDiscountAmount(BigDecimal.ZERO);
+        }
         b.setStatus(BookingStatus.CONFIRMED);
         b.setConfirmedAt(now());
         // Các yêu cầu khác trùng giờ không thể được nhận nữa: từ chối ngay để khách không phải chờ vô ích.
@@ -417,9 +422,6 @@ public class BookingService {
             }
             other.setStatus(BookingStatus.REJECTED);
             other.setRejectReason("Xe đã được xác nhận cho khách khác trong khung giờ này");
-            if (other.getVoucher() != null) {
-                voucherRepository.decreaseUsage(other.getVoucher().getId());
-            }
         }
         bookingRepository.saveAll(competing);
         return toResponse(bookingRepository.saveAndFlush(b));
@@ -431,9 +433,6 @@ public class BookingService {
         requireStatus(b, BookingStatus.REQUESTED);
         b.setStatus(BookingStatus.REJECTED);
         b.setRejectReason(reason.trim());
-        if (b.getVoucher() != null) {
-            voucherRepository.decreaseUsage(b.getVoucher().getId());
-        }
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 
@@ -719,9 +718,6 @@ public class BookingService {
         List<Booking> stale = bookingRepository.findAllByStatusAndPickupAtBefore(BookingStatus.REQUESTED, now());
         for (Booking b : stale) {
             b.setStatus(BookingStatus.EXPIRED);
-            if (b.getVoucher() != null) {
-                voucherRepository.decreaseUsage(b.getVoucher().getId());
-            }
         }
         bookingRepository.saveAll(stale);
         return stale.size();
