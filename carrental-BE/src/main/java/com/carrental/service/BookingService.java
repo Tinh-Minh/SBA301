@@ -197,7 +197,7 @@ public class BookingService {
             throw new AppException(HttpStatus.BAD_REQUEST, "Voucher đã hết lượt sử dụng");
         }
         PaymentStatus initialDepositStatus = (q.depositAmount() == null || q.depositAmount().compareTo(BigDecimal.ZERO) <= 0)
-                ? PaymentStatus.PAID : PaymentStatus.UNPAID;
+                ? PaymentStatus.NOT_REQUIRED : PaymentStatus.UNPAID;
 
         Booking booking = Booking.builder()
                 .bookingCode(newCode())
