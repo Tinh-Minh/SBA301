@@ -27,6 +27,10 @@ public class Review {
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
+    /** Đơn thuê được đánh giá: mỗi chuyến hoàn tất được đánh giá đúng một lần. */
+    @Column(name = "booking_id")
+    private Long bookingId;
+
     @Column(name = "rating", nullable = false)
     private Integer rating;
 

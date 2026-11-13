@@ -797,7 +797,7 @@ public class BookingService {
         String image = carImageRepository.findByCarIdAndIsPrimaryTrue(b.getCar().getId())
                 .map(CarImage::getImageUrl).orElse(null);
         boolean reviewed = b.getStatus() == BookingStatus.COMPLETED
-                && reviewRepository.existsByCarIdAndCustomerId(b.getCar().getId(), b.getCustomer().getId());
+                && reviewRepository.existsByBookingId(b.getId());
         return BookingResponse.from(b, image, reviewed, handoverRepository.findAllByBookingIdOrderByIdAsc(b.getId()));
     }
 

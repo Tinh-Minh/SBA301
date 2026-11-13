@@ -23,6 +23,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
 
     boolean existsByCarIdAndCustomerId(Long carId, Long customerId);
 
+    boolean existsByBookingId(Long bookingId);
+
     Page<Review> findByCarId(Long carId, Pageable pageable);
 
     Page<Review> findByCustomerId(Long customerId, Pageable pageable);

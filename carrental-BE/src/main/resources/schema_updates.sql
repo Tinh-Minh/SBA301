@@ -145,3 +145,12 @@ ALTER TABLE car_subscriptions ADD COLUMN IF NOT EXISTS paused_at TIMESTAMP;
 
 -- Mốc trả xe thực tế để tính phí trễ (khách báo trả xe hoặc lần đầu chủ xe lập biên bản trả).
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS return_reported_at TIMESTAMP;
+
+-- Đánh giá gắn với từng đơn thuê (mỗi chuyến hoàn tất được đánh giá một lần).
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS booking_id BIGINT REFERENCES bookings(id) ON DELETE SET NULL;
+UPDATE reviews r SET booking_id = (
+    SELECT b.id FROM bookings b
+    WHERE b.car_id = r.car_id AND b.customer_id = r.customer_id AND b.status = 'COMPLETED'
+    ORDER BY b.completed_at DESC NULLS LAST LIMIT 1)
+WHERE r.booking_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_reviews_booking ON reviews (booking_id) WHERE booking_id IS NOT NULL;

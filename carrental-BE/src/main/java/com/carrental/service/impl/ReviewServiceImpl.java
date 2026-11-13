@@ -61,12 +61,14 @@ public class ReviewServiceImpl implements ReviewService {
             throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ có thể đánh giá xe sau khi hoàn tất chuyến thuê xe này");
         }
 
-        if (reviewRepository.existsByCarIdAndCustomerId(car.getId(), customer.getId())) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Bạn đã gửi đánh giá cho chiếc xe này rồi");
+        com.carrental.entity.Booking trip = unreviewedTrip(car.getId(), customer.getId());
+        if (trip == null) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Bạn đã đánh giá tất cả các chuyến thuê xe này");
         }
 
         Review review = Review.builder()
                 .car(car)
+                .bookingId(trip.getId())
                 .customer(customer)
                 .rating(request.getRating())
                 .comment(request.getComment())
@@ -149,10 +151,10 @@ public class ReviewServiceImpl implements ReviewService {
 
         boolean hasCompletedTrip = bookingRepository.existsByCarIdAndCustomerIdAndStatus(
                 car.getId(), customer.getId(), com.carrental.enums.BookingStatus.COMPLETED);
-        boolean alreadyReviewed = reviewRepository.existsByCarIdAndCustomerId(car.getId(), customer.getId());
+        boolean alreadyReviewed = hasCompletedTrip && unreviewedTrip(car.getId(), customer.getId()) == null;
 
         if (alreadyReviewed) {
-            return new ReviewEligibilityResponse(false, "Bạn đã gửi đánh giá cho chiếc xe này rồi", hasCompletedTrip, true, false);
+            return new ReviewEligibilityResponse(false, "Bạn đã đánh giá tất cả các chuyến thuê xe này", hasCompletedTrip, true, false);
         }
 
         if (!hasCompletedTrip) {
@@ -160,6 +162,14 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         return new ReviewEligibilityResponse(true, null, true, false, false);
+    }
+
+    /** Chuyến hoàn tất cũ nhất của khách với xe này mà chưa được đánh giá (mỗi chuyến một đánh giá). */
+    private com.carrental.entity.Booking unreviewedTrip(Long carId, Long customerId) {
+        return bookingRepository.findAllByCarIdAndCustomerIdAndStatusOrderByCompletedAtAsc(
+                        carId, customerId, com.carrental.enums.BookingStatus.COMPLETED).stream()
+                .filter(b -> !reviewRepository.existsByBookingId(b.getId()))
+                .findFirst().orElse(null);
     }
 
     private Specification<Review> buildFilterSpecification(Long carId, Long customerId) {
