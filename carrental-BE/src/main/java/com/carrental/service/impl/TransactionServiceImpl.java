@@ -22,6 +22,8 @@ import com.carrental.repository.VoucherRepository;
 import com.carrental.service.CurrentUserService;
 import com.carrental.service.TransactionService;
 import com.carrental.service.VNPayService;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -235,11 +237,15 @@ public class TransactionServiceImpl implements TransactionService {
         Specification<Transaction> spec = buildFilterSpecification(subscriptionId, bookingId, transactionType, status);
 
         if (!currentUserService.isAdmin(current)) {
-            spec = spec.and((root, query, cb) -> cb.or(
-                    cb.equal(root.get("subscription").get("customer").get("id"), current.getId()),
-                    cb.equal(root.get("booking").get("customer").get("id"), current.getId()),
-                    cb.equal(root.get("booking").get("owner").get("id"), current.getId())
-            ));
+            spec = spec.and((root, query, cb) -> {
+                Join<Transaction, CarSubscription> subJoin = root.join("subscription", JoinType.LEFT);
+                Join<Transaction, Booking> bookingJoin = root.join("booking", JoinType.LEFT);
+                return cb.or(
+                        cb.equal(subJoin.join("customer", JoinType.LEFT).get("id"), current.getId()),
+                        cb.equal(bookingJoin.join("customer", JoinType.LEFT).get("id"), current.getId()),
+                        cb.equal(bookingJoin.join("owner", JoinType.LEFT).get("id"), current.getId())
+                );
+            });
         }
 
         Page<Transaction> page = transactionRepository.findAll(spec, pageable);
@@ -250,11 +256,11 @@ public class TransactionServiceImpl implements TransactionService {
         Specification<Transaction> spec = (root, query, cb) -> cb.conjunction();
 
         if (subscriptionId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("subscription").get("id"), subscriptionId));
+            spec = spec.and((root, query, cb) -> cb.equal(root.join("subscription", JoinType.LEFT).get("id"), subscriptionId));
         }
 
         if (bookingId != null) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("booking").get("id"), bookingId));
+            spec = spec.and((root, query, cb) -> cb.equal(root.join("booking", JoinType.LEFT).get("id"), bookingId));
         }
 
         if (transactionType != null && !transactionType.isBlank()) {
@@ -269,10 +275,13 @@ public class TransactionServiceImpl implements TransactionService {
                 TransactionStatus txStatus = TransactionStatus.valueOf(status.toUpperCase());
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), txStatus));
                 if (txStatus == TransactionStatus.PENDING) {
-                    spec = spec.and((root, query, cb) -> cb.or(
-                            cb.equal(root.get("subscription").get("status"), SubscriptionStatus.PENDING_PAYMENT),
-                            cb.isNotNull(root.get("booking"))
-                    ));
+                    spec = spec.and((root, query, cb) -> {
+                        Join<Transaction, CarSubscription> subJoin = root.join("subscription", JoinType.LEFT);
+                        return cb.or(
+                                cb.equal(subJoin.get("status"), SubscriptionStatus.PENDING_PAYMENT),
+                                cb.isNotNull(root.get("booking"))
+                        );
+                    });
                 }
             } catch (IllegalArgumentException ignored) {}
         }

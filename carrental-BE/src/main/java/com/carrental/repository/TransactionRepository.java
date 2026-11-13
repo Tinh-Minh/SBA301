@@ -45,7 +45,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     List<Transaction> findByStatusAndCreatedAtBefore(TransactionStatus status, LocalDateTime cutoff);
 
-    @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer"})
+    @EntityGraph(attributePaths = {"subscription", "subscription.car", "subscription.listingPackage", "subscription.customer", "booking", "booking.car", "booking.customer", "booking.owner"})
     List<Transaction> findTop10ByStatusOrderByCreatedAtDesc(TransactionStatus status);
 
     long countByStatusAndTransactionType(TransactionStatus status, TransactionType transactionType);

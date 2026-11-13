@@ -135,10 +135,19 @@ public class DashboardServiceImpl implements DashboardService {
         return list.stream().filter(p).count();
     }
 
-    /** Doanh thu thực = đơn hoàn tất (tính cả phí phát sinh). */
+    /** Doanh thu thực = tổng giá trị đơn hoàn tất (tiền thuê sau giảm giá + phí phát sinh). */
     private static BigDecimal revenue(List<Booking> list) {
         return list.stream().filter(b -> b.getStatus() == BookingStatus.COMPLETED)
-                .map(b -> b.getFinalAmount() != null ? b.getFinalAmount() : b.getRentalAmount())
+                .map(DashboardServiceImpl::completedTripValue)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    private static BigDecimal completedTripValue(Booking b) {
+        BigDecimal rental = b.getRentalAmount() != null ? b.getRentalAmount() : BigDecimal.ZERO;
+        BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
+        BigDecimal extraKm = b.getExtraKmAmount() != null ? b.getExtraKmAmount() : BigDecimal.ZERO;
+        BigDecimal late = b.getLateAmount() != null ? b.getLateAmount() : BigDecimal.ZERO;
+        BigDecimal other = b.getOtherFeeAmount() != null ? b.getOtherFeeAmount() : BigDecimal.ZERO;
+        return rental.subtract(discount).max(BigDecimal.ZERO).add(extraKm).add(late).add(other);
     }
 }

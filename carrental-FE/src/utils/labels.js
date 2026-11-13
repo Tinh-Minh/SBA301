@@ -42,6 +42,9 @@ export const orderStatusTone = {
 export const paymentStatusLabels = { UNPAID: "Chưa thanh toán", PAID: "Đã thanh toán", REFUNDED: "Đã hoàn tiền" };
 export const transactionStatusLabels = { PENDING: "Đang chờ", SUCCESS: "Thành công", FAILED: "Thất bại", CANCELLED: "Đã hủy" };
 export const transactionTypeLabels = {
+    PACKAGE_PAYMENT: "Mua gói đăng tin",
+    BOOKING_DEPOSIT: "Đặt cọc thuê xe",
+    BOOKING_REFUND: "Hoàn cọc thuê xe",
     DEPOSIT: "Tiền cọc",
     RENTAL_PAYMENT: "Tiền thuê",
     EXTRA_FEE: "Phụ phí",
