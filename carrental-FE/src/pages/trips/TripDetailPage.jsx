@@ -83,6 +83,7 @@ function Trip({ id }) {
             <h2 className="text-base font-bold text-[#292929]">Thanh toán tiền cọc</h2>
             <p className="mt-1 text-sm text-[#666666]">
               Chủ xe đã xác nhận đơn. Vui lòng thanh toán tiền cọc <b>{formatMoney(b.depositAmount)}</b> qua VNPay để hoàn tất đặt xe trước khi nhận xe.
+              {b.confirmedAt ? <> Hạn đặt cọc: <b>{formatDateTime(new Date(new Date(b.confirmedAt).getTime() + 2 * 3600 * 1000))}</b> — quá hạn đơn sẽ tự huỷ.</> : null}
             </p>
             <div className="mt-3 flex gap-2">
               <button
@@ -161,6 +162,17 @@ function Trip({ id }) {
           {role === "customer" && b.ownerContactedAt ? <p className="mt-2 text-[#065F46]">Chủ xe đã liên hệ lúc {formatDateTime(b.ownerContactedAt)}.</p> : null}
         </section>
         {((role === "customer" || role === "owner") && ["REQUESTED", "CONFIRMED"].includes(b.status)) || (role === "admin" && ["REQUESTED", "CONFIRMED", "PICKUP_PENDING", "IN_PROGRESS", "RETURN_PENDING"].includes(b.status)) ? <button type="button" onClick={() => setAsking("cancel")} className="rounded-xl border border-[#E9E9E7] bg-white px-4 py-2 text-sm font-bold text-[#B91C1C]">Huỷ đơn thuê</button> : null}
+        {role === "customer" && b.status === "IN_PROGRESS" ? (
+          <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm shadow-sm">
+            <h2 className="mb-1 font-bold">Trả xe</h2>
+            {b.returnReportedAt
+              ? <p className="text-[#065F46]">Bạn đã báo trả xe lúc {formatDateTime(b.returnReportedAt)}. Phí trễ (nếu có) được tính đến thời điểm này.</p>
+              : <>
+                  <p className="text-[#666666]">Khi đã giao lại xe cho chủ xe, bấm nút dưới để chốt giờ trả (dùng để tính phí trễ).</p>
+                  <button type="button" disabled={busy} onClick={() => run(() => tripService.reportReturned(b.id))} className="mt-2 rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Tôi đã trả xe</button>
+                </>}
+          </section>
+        ) : null}
         <CustomerReviewPanel bookingId={b.id} role={role}/>
         <Link to={`/cars/${b.carId}`} className="text-center text-sm font-bold text-[#666666]">Xem trang xe</Link>
       </aside>

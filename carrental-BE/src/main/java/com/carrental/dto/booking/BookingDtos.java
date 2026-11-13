@@ -199,7 +199,8 @@ public final class BookingDtos {
             String voucherCode,
             BigDecimal discountAmount,
             PaymentStatus depositStatus,
-            BigDecimal remainingAmount) {
+            BigDecimal remainingAmount,
+            LocalDateTime returnReportedAt) {
 
         public static BookingResponse from(Booking b, String imageUrl, boolean reviewed, List<Handover> handovers) {
             var car = b.getCar();
@@ -225,7 +226,7 @@ public final class BookingDtos {
                     b.getPickupOdometerKm(), b.getReturnOdometerKm(), b.getExtraKmAmount(), b.getLateAmount(),
                     b.getOtherFeeAmount(), b.getOtherFeeNote(), b.getFinalAmount(), b.getCompletedAt(), b.getCreatedAt(),
                     reviewed, handovers.stream().map(HandoverResponse::from).toList(),
-                    vCode, discount, depStatus, rem);
+                    vCode, discount, depStatus, rem, b.getReturnReportedAt());
         }
     }
 
