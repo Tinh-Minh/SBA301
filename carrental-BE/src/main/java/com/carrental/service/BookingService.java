@@ -167,7 +167,8 @@ public class BookingService {
         }
         Car car = carRepository.findWithOwnerById(request.carId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + request.carId()));
-        if (car.getStatus() != CarStatus.ACTIVE || car.getListingStatus() != ListingStatus.LISTED) {
+        if (car.getStatus() != CarStatus.ACTIVE || car.getListingStatus() != ListingStatus.LISTED
+                || car.getOwner().getStatus() != com.carrental.enums.CustomerStatus.ACTIVE) {
             throw new AppException(HttpStatus.CONFLICT, "Xe hiện không nhận đặt (chưa duyệt hoặc tin đăng đã ẩn)");
         }
         if (car.getOwner().getId().equals(customer.getId())) {

@@ -162,7 +162,8 @@ public class CarServiceImpl implements CarService {
                     .map(u -> currentUserService.isOwner(car, u) || currentUserService.isAdmin(u))
                     .orElse(false);
 
-            if (!canViewFull && car.getStatus() != CarStatus.ACTIVE) {
+            if (!canViewFull && (car.getStatus() != CarStatus.ACTIVE
+                    || car.getOwner() == null || car.getOwner().getStatus() != com.carrental.enums.CustomerStatus.ACTIVE)) {
                 throw new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy xe id=" + carId);
             }
 
@@ -304,6 +305,8 @@ public class CarServiceImpl implements CarService {
             Specification<Car> spec = (root, query, cb) -> {
                 List<Predicate> ps = new ArrayList<>();
                 ps.add(cb.equal(root.get("status"), CarStatus.ACTIVE));
+                // Chủ xe bị khoá: ẩn toàn bộ tin đăng khỏi trang công khai.
+                ps.add(cb.equal(root.get("owner").get("status"), com.carrental.enums.CustomerStatus.ACTIVE));
 
                 if (listingStatus != null) {
                     ps.add(cb.equal(root.get("listingStatus"), listingStatus));
