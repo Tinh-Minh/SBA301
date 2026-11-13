@@ -8,17 +8,16 @@ import com.carrental.entity.Customer;
 import com.carrental.enums.BookingStatus;
 import com.carrental.enums.HandoverStatus;
 import com.carrental.repository.BookingRepository;
+import com.carrental.repository.CarDocumentRepository;
 import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.repository.CarSafetyRecordRepository;
-import com.carrental.repository.CarDocumentRepository;
 import com.carrental.repository.HandoverRepository;
 import com.carrental.repository.ReviewRepository;
 import com.carrental.repository.TransactionRepository;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
@@ -34,7 +33,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Bảng theo dõi: chủ xe (từng xe + tổng), khách hàng, và số liệu đơn thuê cho admin. */
+/** Bảng theo dõi: chủ xe (từng xe + tổng) và khách hàng. */
 @Service
 @RequiredArgsConstructor
 public class RentalDashboardService {
@@ -121,19 +120,6 @@ public class RentalDashboardService {
                 bookings.stream().map(bookingService::toResponse).toList());
     }
 
-    @Transactional(readOnly = true)
-    public AdminBookingStats admin() {
-        List<Booking> all = bookingRepository.findAll();
-        long disputed = handoverRepository.findAll().stream().filter(h -> h.getStatus() == HandoverStatus.DISPUTED).count();
-        return new AdminBookingStats(all.size(), count(all, b -> b.getStatus() == BookingStatus.REQUESTED),
-                count(all, b -> b.getStatus() == BookingStatus.CONFIRMED),
-                count(all, b -> b.getStatus() == BookingStatus.PICKUP_PENDING || b.getStatus() == BookingStatus.IN_PROGRESS
-                        || b.getStatus() == BookingStatus.RETURN_PENDING),
-                count(all, b -> b.getStatus() == BookingStatus.COMPLETED),
-                count(all, b -> CLOSED_BAD.contains(b.getStatus())), disputed, revenue(all),
-                all.stream().map(b -> b.getCreatedAt().toLocalDate()).min(Comparator.naturalOrder()).orElse(LocalDate.now(clock)));
-    }
-
     // ------------------------------------------------------------------ helpers
 
     private boolean ownerMustAct(Booking b) {
@@ -191,3 +177,4 @@ public class RentalDashboardService {
         return carImageRepository.findByCarIdAndIsPrimaryTrue(carId).map(CarImage::getImageUrl).orElse(null);
     }
 }
+
