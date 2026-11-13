@@ -161,7 +161,6 @@ function CarReviews({ carId }) {
         myBookings.reload();
     });
     const [open, setOpen] = useState(false);
-    const [noticeOpen, setNoticeOpen] = useState(false);
     const [sentPending, setSentPending] = useState(false);
     const form = useForm({ resolver: zodResolver(reviewSchema), defaultValues: { rating: 5, comment: "" } });
     const data = summary.data;
@@ -197,14 +196,9 @@ function CarReviews({ carId }) {
           Viết đánh giá
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={() => setNoticeOpen(true)}
-          className="rounded-xl border border-[#E9E9E7] bg-[#F7F7F5] px-4 py-2 text-sm font-semibold text-[#888888] hover:bg-[#EFEFEF]"
-          title="Chỉ khách hàng đã hoàn tất chuyến thuê xe này mới có thể viết đánh giá"
-        >
-          Viết đánh giá
-        </button>
+        <span className="text-xs text-[#888888]">
+          Chỉ khách đã hoàn tất chuyến thuê xe này mới có thể viết đánh giá
+        </span>
       )}
     </div>
     {sentPending && (
@@ -224,18 +218,6 @@ function CarReviews({ carId }) {
         <label className="text-xs font-semibold text-[#666666]">Nhận xét<textarea maxLength={2000} rows={4} className="mt-1 w-full rounded-xl border border-[#E9E9E7] px-3 py-2 text-sm" {...form.register("comment")}/></label>
         <FormErrors errors={form.formState.errors}/>
       </form>
-    </ConfirmDialog>
-    <ConfirmDialog
-      open={noticeOpen}
-      title="Chưa đủ điều kiện đánh giá"
-      confirmLabel="Đã hiểu"
-      onClose={() => setNoticeOpen(false)}
-      onConfirm={() => setNoticeOpen(false)}
-    >
-      <div className="py-2 text-sm text-[#444444]">
-        <p>Để đảm bảo tính xác thực và công bằng cho các chủ xe, chỉ những khách hàng <b>đã thuê và hoàn tất chuyến đi</b> đối với chiếc xe này mới có quyền gửi đánh giá.</p>
-        <p className="mt-2 text-xs text-[#666666]">Sau khi hoàn thành chuyến đi và ký xác nhận biên bản trả xe, bạn có thể quay lại đây hoặc vào mục <i>Chuyến đi của tôi</i> để viết đánh giá.</p>
-      </div>
     </ConfirmDialog>
   </section>;
 }
