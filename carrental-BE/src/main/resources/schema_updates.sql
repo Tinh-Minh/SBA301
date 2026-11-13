@@ -135,3 +135,7 @@ ALTER TABLE transactions ADD COLUMN IF NOT EXISTS booking_id BIGINT REFERENCES b
 ALTER TABLE transactions DROP CONSTRAINT IF EXISTS fk_transactions_booking;
 ALTER TABLE transactions ADD CONSTRAINT fk_transactions_booking
     FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE;
+
+-- Cột kiểm duyệt đánh giá (entity Review.approved). DB cũ: đánh giá đã có coi như đã duyệt.
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE reviews ALTER COLUMN approved SET DEFAULT FALSE;

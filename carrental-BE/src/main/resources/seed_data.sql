@@ -291,6 +291,7 @@ CREATE TABLE reviews (
     customer_id     BIGINT       NOT NULL REFERENCES customers(id),
     rating          INT          NOT NULL CHECK (rating BETWEEN 1 AND 5),
     comment         TEXT,
+    approved        BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMP    NOT NULL DEFAULT vn_now()
 );
 
@@ -715,6 +716,7 @@ VALUES
 (10, 6, 4, 5, 'Xe Đức chạy cảm giác lái cực kỳ chắc chắn, nội thất đèn viền đổi màu buổi tối rất đẹp mắt. Giá thuê xứng đáng với chất lượng.', vn_now() - INTERVAL '1 days'),
 (11, 7, 9, 5, 'Trải nghiệm VF8 quá đã! Khả năng tăng tốc tức thì dính lưng ghế, trợ lý Vivi hiểu lệnh giọng nói tiếng Việt chuẩn xác. Chi phí sạc điện rẻ hơn xăng rất nhiều.', vn_now() - INTERVAL '9 days'),
 (12, 8, 10, 5, 'Xpander Cross gầm cao leo dốc bán đảo Sơn Trà thoải mái, chở đủ 7 người lớn vẫn chạy êm ái. Chị Mai chuẩn bị sẵn cả nước suối và khăn lạnh trên xe.', vn_now() - INTERVAL '3 days');
+UPDATE reviews SET approved = TRUE; -- đánh giá mẫu coi như đã được duyệt
 
 SELECT setval(pg_get_serial_sequence('reviews', 'id'), (SELECT COALESCE(MAX(id), 1) FROM reviews));
 
