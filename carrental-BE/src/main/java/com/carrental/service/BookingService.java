@@ -72,6 +72,8 @@ public class BookingService {
             BookingStatus.PICKUP_PENDING, BookingStatus.IN_PROGRESS, BookingStatus.RETURN_PENDING);
     private static final Duration MIN_LEAD = Duration.ofHours(1);
     private static final int MAX_ADVANCE_DAYS = 90;
+    /** Số yêu cầu thuê đang chờ chủ xe xác nhận tối đa của một khách (chống spam giữ lịch). */
+    static final int MAX_PENDING_REQUESTS = 3;
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final BookingRepository bookingRepository;
@@ -176,6 +178,10 @@ public class BookingService {
             throw bad("Bạn không thể đặt xe của chính mình");
         }
         requireVerifiedDriver(customer, request.returnAt());
+        if (bookingRepository.countByCustomerIdAndStatus(customer.getId(), BookingStatus.REQUESTED) >= MAX_PENDING_REQUESTS) {
+            throw new AppException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đang có " + MAX_PENDING_REQUESTS
+                    + " yêu cầu thuê chờ chủ xe xác nhận. Vui lòng chờ phản hồi hoặc huỷ bớt trước khi gửi thêm");
+        }
         if (carSafetyService.isUnsafe(car)) {
             throw new AppException(HttpStatus.CONFLICT,
                     "Xe đang có đăng kiểm/bảo hiểm hết hạn hoặc không đạt nên tạm thời không nhận đặt");

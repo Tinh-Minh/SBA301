@@ -45,5 +45,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
 
     long countByStatus(BookingStatus status);
 
+    long countByCustomerIdAndStatus(Long customerId, BookingStatus status);
+
     boolean existsByBookingCode(String bookingCode);
 }
