@@ -335,6 +335,12 @@ public class CustomerServiceImpl implements CustomerService {
         if (date.isAfter(LocalDate.now(clock))) {
             throw fieldError("dateOfBirth", "Ngày sinh không được ở tương lai");
         }
+        if (date.isAfter(LocalDate.now(clock).minusYears(18))) {
+            throw fieldError("dateOfBirth", "Bạn phải đủ 18 tuổi để sử dụng dịch vụ thuê xe");
+        }
+        if (date.isBefore(LocalDate.now(clock).minusYears(100))) {
+            throw fieldError("dateOfBirth", "Ngày sinh không hợp lệ");
+        }
         return date;
     }
 
