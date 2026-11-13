@@ -394,6 +394,10 @@ public class BookingService {
                 && request.odometerKm() < b.getPickupOdometerKm()) {
             throw bad("Số km khi trả (" + request.odometerKm() + ") không được nhỏ hơn lúc nhận (" + b.getPickupOdometerKm() + ")");
         }
+        if (type == HandoverType.PICKUP && b.getDepositAmount() != null && b.getDepositAmount().signum() > 0
+                && b.getDepositStatus() != PaymentStatus.PAID) {
+            throw conflict("Khách chưa đặt cọc, chưa thể lập biên bản giao xe");
+        }
         if (type == HandoverType.PICKUP && b.getPickupAt().minusHours(24).isAfter(now())) {
             throw conflict("Chỉ lập biên bản nhận xe trong vòng 24 giờ trước giờ nhận xe");
         }
