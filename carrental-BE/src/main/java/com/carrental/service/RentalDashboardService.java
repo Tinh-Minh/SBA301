@@ -154,10 +154,22 @@ public class RentalDashboardService {
         return list.stream().filter(p).count();
     }
 
+    /**
+     * Doanh thu của chủ xe cho một đơn hoàn tất: tiền thuê GỐC + phí phát sinh.
+     * Khoản giảm giá voucher do nền tảng chịu (bù cho chủ xe), không trừ vào doanh thu chủ xe.
+     */
+    static BigDecimal ownerEarning(Booking b) {
+        return nz(b.getRentalAmount()).add(nz(b.getExtraKmAmount())).add(nz(b.getLateAmount())).add(nz(b.getOtherFeeAmount()));
+    }
+
+    private static BigDecimal nz(BigDecimal v) {
+        return v == null ? BigDecimal.ZERO : v;
+    }
+
     /** Doanh thu thực = đơn hoàn tất (tính cả phí phát sinh). */
     private static BigDecimal revenue(List<Booking> list) {
         return list.stream().filter(b -> b.getStatus() == BookingStatus.COMPLETED)
-                .map(b -> b.getFinalAmount() != null ? b.getFinalAmount() : b.getRentalAmount())
+                .map(RentalDashboardService::ownerEarning)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
@@ -179,7 +191,7 @@ public class RentalDashboardService {
             if (b.getStatus() != BookingStatus.COMPLETED) continue;
             BigDecimal[] slot = map.get(YearMonth.from(b.getPickupAt()));
             if (slot == null) continue;
-            slot[0] = slot[0].add(b.getFinalAmount() != null ? b.getFinalAmount() : b.getRentalAmount());
+            slot[0] = slot[0].add(ownerEarning(b));
             slot[1] = slot[1].add(BigDecimal.ONE);
         }
         List<MonthlyPoint> out = new ArrayList<>();
