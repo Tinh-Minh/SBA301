@@ -36,8 +36,10 @@ public final class BookingDtos {
             @NotNull(message = "Vui lòng chọn xe") Long carId,
             @NotNull(message = "Vui lòng chọn thời gian nhận xe") LocalDateTime pickupAt,
             @NotNull(message = "Vui lòng chọn thời gian trả xe") LocalDateTime returnAt,
-            @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự") String contactPhone,
-            @Size(max = 1000, message = "Lời nhắn tối đa 1000 ký tự") String customerNote,
+            @Size(max = 20, message = "Số điện thoại tối đa 20 ký tự")
+            @Pattern(regexp = "^$|^\\s*(\\+84|0)[0-9]{9,10}\\s*$", message = "Số điện thoại không hợp lệ") String contactPhone,
+            @Size(max = 1000, message = "Lời nhắn tối đa 1000 ký tự")
+            @Pattern(regexp = "^[^<>]*$", message = "Lời nhắn không được chứa ký tự < hoặc >") String customerNote,
             @Size(max = 50, message = "Mã voucher tối đa 50 ký tự") String voucherCode) {}
 
     public record ContactRequest(
