@@ -13,8 +13,3 @@
 !/FINAL_REPORT.md
 !/.gitignore
 /.idea/
-
-# Bi mat cuc bo - khong commit (dung .env.example lam mau)
-.env
-**/.env
-!**/.env.example
