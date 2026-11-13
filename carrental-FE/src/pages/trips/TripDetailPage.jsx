@@ -79,6 +79,7 @@ function Trip({ id }) {
 
         {asking ? <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
           <h2 className="font-bold">{asking === "reject" ? "Lý do từ chối" : "Lý do huỷ đơn"}</h2>
+          {asking === "cancel" ? <p className="mt-1 text-xs text-[#666666]">Lưu ý: Hệ thống không thu tiền hay giữ cọc. Nếu bạn và đối tác đã chuyển tiền hoặc tiền cọc trực tiếp, vui lòng tự liên hệ đối chiếu và hoàn lại.</p> : null}
           <textarea rows={2} value={reason} maxLength={500} onChange={e => setReason(e.target.value)} className={`${fieldClass} mt-2`}/>
           <div className="mt-2 flex gap-2">
             <button type="button" disabled={busy || !reason.trim()} onClick={() => run(() => asking === "reject" ? tripService.reject(b.id, reason.trim()) : tripService.cancel(b.id, reason.trim()), () => setAsking(null))} className="rounded-xl bg-[#B91C1C] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Xác nhận</button>
@@ -116,10 +117,10 @@ function Trip({ id }) {
             {Number(b.lateAmount) ? <Row term="Phí trả trễ" value={formatMoney(b.lateAmount)}/> : null}
             {Number(b.otherFeeAmount) ? <Row term={`Phí khác: ${b.otherFeeNote ?? ""}`} value={formatMoney(b.otherFeeAmount)}/> : null}
             {b.finalAmount ? <Row term="Tổng thanh toán" value={<span className="text-[#FC6C26]">{formatMoney(b.finalAmount)}</span>} strong/> : null}
-            <Row term="Tiền cọc (hoàn lại)" value={Number(b.depositAmount) ? formatMoney(b.depositAmount) : "Miễn cọc"}/>
+            <Row term="Tiền cọc dự kiến (tự thỏa thuận)" value={Number(b.depositAmount) ? formatMoney(b.depositAmount) : "Miễn cọc"}/>
             {b.kmLimitPerDay ? <Row term="Giới hạn km" value={`${b.kmLimitPerDay} km/ngày`}/> : null}
           </dl>
-          <p className="mt-2 text-xs text-[#666666]">Khách thanh toán trực tiếp cho chủ xe khi nhận/trả xe. CarDB lưu biên bản làm bằng chứng cho hai bên.</p>
+          <p className="mt-2 text-xs text-[#666666]">Các khoản này hai bên thanh toán trực tiếp với nhau, hệ thống chỉ ghi nhận. Nếu có hủy đơn hoặc phát sinh hoàn cọc, hai bên tự thỏa thuận đối chiếu.</p>
         </section>
         <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm shadow-sm">
           <h2 className="mb-2 font-bold">{role === "owner" ? "Khách thuê" : "Chủ xe"}</h2>

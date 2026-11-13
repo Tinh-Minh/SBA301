@@ -64,7 +64,7 @@ export function BookingPanel({ car }) {
       <div className="flex justify-between"><dt className="text-[#666666]">Thời gian thuê</dt><dd className="font-semibold">{durationLabel(quote.rentalDays, quote.rentalHours)}</dd></div>
       {quote.breakdown.map(line => <div key={line} className="flex justify-between text-xs text-[#666666]"><dt>{line}</dt></div>)}
       <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê</dt><dd className="text-lg font-black text-[#FC6C26]">{formatMoney(quote.rentalAmount)}</dd></div>
-      <div className="flex justify-between"><dt className="text-[#666666]">Tiền cọc (hoàn lại khi trả xe)</dt><dd className="font-semibold">{quote.depositAmount ? formatMoney(quote.depositAmount) : "Miễn cọc"}</dd></div>
+      <div className="flex justify-between"><dt className="text-[#666666]">Tiền cọc dự kiến (tự thỏa thuận, thanh toán trực tiếp)</dt><dd className="font-semibold">{quote.depositAmount ? formatMoney(quote.depositAmount) : "Miễn cọc"}</dd></div>
       {quote.includedKm ? <div className="flex justify-between text-xs text-[#666666]"><dt>Km bao gồm</dt><dd>{quote.includedKm} km{quote.extraKmFee ? `, vượt ${formatMoney(quote.extraKmFee)}/km` : ""}</dd></div> : null}
       {quote.lateFeePerHour ? <div className="flex justify-between text-xs text-[#666666]"><dt>Trả trễ</dt><dd>{formatMoney(quote.lateFeePerHour)}/giờ</dd></div> : null}
       {!quote.available ? <p role="alert" className="mt-1 font-semibold text-[#B91C1C]">{quote.unavailableReason}</p> : null}
