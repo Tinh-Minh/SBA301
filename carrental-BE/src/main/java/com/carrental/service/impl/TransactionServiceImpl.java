@@ -264,7 +264,7 @@ public class TransactionServiceImpl implements TransactionService {
                 spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), txStatus));
                 if (txStatus == TransactionStatus.PENDING) {
                     spec = spec.and((root, query, cb) -> cb.or(
-                            cb.equal(root.get("subscription").get("status"), SubscriptionStatus.PENDING_PAYMENT),
+                            cb.equal(root.join("subscription", jakarta.persistence.criteria.JoinType.LEFT).get("status"), SubscriptionStatus.PENDING_PAYMENT),
                             cb.isNotNull(root.get("booking"))
                     ));
                 }
