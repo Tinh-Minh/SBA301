@@ -9,6 +9,7 @@ const AdminVouchersPage = lazy(() => import("@/pages/vouchers/AdminVouchersPage.
 const AdminPackagesPage = lazy(() => import("@/pages/pricing/AdminPackagesPage.jsx"));
 const AdminBookingsPage = lazy(() => import("@/pages/admin/AdminBookingsPage.jsx"));
 const AdminSafetyPage = lazy(() => import("@/pages/admin/AdminSafetyPage.jsx"));
+const AdminSettlementsPage = lazy(() => import("@/pages/payouts/AdminSettlementsPage.jsx"));
 import { page, AliasRedirect } from "@/routes/elements.jsx";
 import { Outlet, useLocation } from "react-router";
 import AdminLayout from "@/components/layouts/AdminLayout.jsx";
@@ -29,6 +30,7 @@ const adminNavigation = [
     { code: "A05", href: adminRoutes.subscriptions, label: "Quản lý Đăng tin", icon: "workspace_premium" },
     { code: "A08", href: adminRoutes.packages, label: "Cấu hình Gói cước", icon: "sell" },
     { code: "A06", href: adminRoutes.payouts, label: "Giao dịch gói", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
+    { code: "A11", href: "/admin/settlements", label: "Hoàn tiền & Chi trả", icon: "account_balance" },
     { code: "A07", href: "/admin/reviews", label: "Đánh giá xe", icon: "reviews" },
 ];
 
@@ -53,6 +55,7 @@ export const adminPages = [
     page("admin/safety", <AdminSafetyPage />, "Hồ sơ an toàn xe"),
     page("admin/subscriptions", <AdminSubscriptionsPage />, "Gói đăng tin toàn hệ thống"),
     page("admin/payouts", <AdminPayoutsPage />, "Giao dịch & Chi trả"),
+    page("admin/settlements", <AdminSettlementsPage />, "Hoàn tiền & Chi trả"),
     page("admin/users", <AdminUsersPage />, "Người dùng & KYC"),
     page("admin/vehicles", <AdminVehiclesPage />, "Duyệt xe"),
     page("admin/vouchers", <AdminVouchersPage />, "Voucher & Khuyến mãi"),

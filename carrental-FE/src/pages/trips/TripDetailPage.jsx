@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { HandoverForm, HandoverView } from "@/components/booking/Handover.jsx";
 import { TripTimeline } from "@/components/booking/TripParts.jsx";
 import { CustomerReviewPanel } from "@/components/booking/CustomerReviewPanel.jsx";
+import { BookingMoneyPanel, CANCEL_POLICY, estimateCancelFee } from "@/components/booking/BookingMoneyPanel.jsx";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { useAuth } from "@/hooks/useAuth.js";
 import { tripService } from "@/services/tripService.js";
@@ -44,7 +45,7 @@ function Trip({ id }) {
 
     return <div className="flex flex-col gap-5">
     <Link to={role === "owner" ? "/owner/bookings" : isAdmin ? "/admin/bookings" : "/trips"} className="inline-flex items-center gap-1 text-sm text-[#666666]"><Icon name="arrow_back" className="text-[16px]"/>Danh sách đơn thuê</Link>
-    {params.get("created") ? <p role="status" className="rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5] p-4 text-sm text-[#065F46]"><b>Đã gửi yêu cầu thuê xe.</b> Chủ xe sẽ gọi cho bạn để thống nhất chi tiết. Bạn chưa phải thanh toán gì trên CarDB.</p> : null}
+    {params.get("created") ? <p role="status" className="rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5] p-4 text-sm text-[#065F46]"><b>Đã tạo yêu cầu thuê xe.</b> Vui lòng thanh toán cọc 40% trong 30 phút để yêu cầu được gửi tới chủ xe.</p> : null}
     <header className="flex flex-col gap-4 rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -56,8 +57,8 @@ function Trip({ id }) {
       </div>
       <TripTimeline booking={b}/>
       {b.rejectReason ? <p className="rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Chủ xe từ chối: {b.rejectReason}</p> : null}
-      {b.cancelReason ? <p className="rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Đơn đã huỷ ({b.cancelledBy === "OWNER" ? "chủ xe" : b.cancelledBy === "ADMIN" ? "quản trị viên" : "khách"}): {b.cancelReason}</p> : null}
-      {b.status === "EXPIRED" ? <p className="rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Chủ xe chưa xác nhận trước giờ nhận xe nên yêu cầu đã hết hạn.</p> : null}
+      {b.cancelReason ? <p className="rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Đơn đã huỷ ({({ OWNER: "chủ xe", ADMIN: "quản trị viên", CUSTOMER: "khách", CUSTOMER_NO_SHOW: "khách không đến", OWNER_NO_SHOW: "chủ xe không giao xe", SYSTEM: "hệ thống" })[b.cancelledBy] ?? "khách"}): {b.cancelReason}</p> : null}
+      {b.status === "EXPIRED" ? <p className="rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Yêu cầu đã hết hạn{b.cancelReason ? "" : " (chưa thanh toán cọc hoặc chủ xe chưa xác nhận kịp)"}.</p> : null}
     </header>
 
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -73,43 +74,22 @@ function Trip({ id }) {
             </div>}
           <h2 className="mt-5 text-base font-bold text-[#292929]">Bước 2: Nhận hoặc từ chối đơn</h2>
           <div className="mt-2 flex flex-wrap gap-2">
-            <button type="button" disabled={busy || !b.ownerContactedAt} onClick={() => run(() => tripService.accept(b.id))} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Xác nhận cho thuê</button>
+            <button type="button" disabled={busy || !b.ownerContactedAt || b.depositStatus !== "PAID"} title={b.depositStatus !== "PAID" ? "Khách chưa thanh toán cọc" : undefined} onClick={() => run(() => tripService.accept(b.id))} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Xác nhận cho thuê</button>
             <button type="button" disabled={busy} onClick={() => setAsking("reject")} className="rounded-xl border border-[#E9E9E7] px-4 py-2 text-sm font-bold">Từ chối</button>
           </div>
         </section> : null}
 
-        {role === "customer" && b.status === "CONFIRMED" && b.depositStatus !== "PAID" && Number(b.depositAmount) > 0 ? (
-          <section className="rounded-2xl border border-[#FDBA8C] bg-[#FFF7F2] p-5 shadow-sm">
-            <h2 className="text-base font-bold text-[#292929]">Thanh toán tiền cọc</h2>
-            <p className="mt-1 text-sm text-[#666666]">
-              Chủ xe đã xác nhận đơn. Vui lòng thanh toán tiền cọc <b>{formatMoney(b.depositAmount)}</b> qua VNPay để hoàn tất đặt xe trước khi nhận xe.
-              {b.confirmedAt ? <> Hạn đặt cọc: <b>{formatDateTime(new Date(new Date(b.confirmedAt).getTime() + 2 * 3600 * 1000))}</b> — quá hạn đơn sẽ tự huỷ.</> : null}
-            </p>
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                disabled={busy}
-                onClick={async () => {
-                  try {
-                    const res = await tripService.payDeposit(b.id, "VNPAY");
-                    if (res?.paymentUrl) {
-                      window.location.href = res.paymentUrl;
-                    }
-                  } catch (e) {
-                    setError(e.message);
-                  }
-                }}
-                className="rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e05615] disabled:opacity-50"
-              >
-                Thanh toán tiền cọc qua VNPay
-              </button>
-            </div>
-          </section>
-        ) : null}
+        <BookingMoneyPanel booking={b} role={role} onChanged={query.reload}/>
 
         {asking ? <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
           <h2 className="font-bold">{asking === "reject" ? "Lý do từ chối" : "Lý do huỷ đơn"}</h2>
-          {asking === "cancel" ? <p className="mt-1 text-xs text-[#666666]">Lưu ý: CarDB không hoàn tiền cọc khi huỷ đơn. Vui lòng cân nhắc trước khi huỷ.</p> : null}
+          {asking === "cancel" ? <div className="mt-2 rounded-xl bg-[#F7F7F5] p-3 text-xs text-[#444444]">
+            <p className="font-bold">Chính sách huỷ chuyến</p>
+            <ul className="mt-1">{CANCEL_POLICY.map(([when, fee]) => <li key={when}>• {when}: {fee}</li>)}</ul>
+            {role === "owner"
+              ? <p className="mt-2">Chủ xe huỷ: khách được hoàn 100% và nhận đền bù. Bạn bị phạt <b>{formatMoney(estimateCancelFee(b, "owner"))}</b> (cấn trừ vào lần chi trả sau); huỷ từ 3 lần/30 ngày sẽ bị tạm ẩn tin.</p>
+              : <p className="mt-2">Phí huỷ ước tính: <b>{formatMoney(estimateCancelFee(b, "customer"))}</b>. Phần còn lại được hoàn về tài khoản ngân hàng của bạn trong 1–3 ngày làm việc.</p>}
+          </div> : null}
           <textarea rows={2} value={reason} maxLength={500} onChange={e => setReason(e.target.value)} className={`${fieldClass} mt-2`}/>
           <div className="mt-2 flex gap-2">
             <button type="button" disabled={busy || !reason.trim()} onClick={() => run(() => asking === "reject" ? tripService.reject(b.id, reason.trim()) : tripService.cancel(b.id, reason.trim()), () => setAsking(null))} className="rounded-xl bg-[#B91C1C] px-4 py-2 text-sm font-bold text-white disabled:opacity-40">Xác nhận</button>
@@ -117,7 +97,7 @@ function Trip({ id }) {
           </div>
         </section> : null}
 
-        {role === "owner" && b.status === "CONFIRMED" && !pickup ? <HandoverForm type="PICKUP" booking={b} busy={busy} error={error} onSubmit={body => run(() => tripService.submitHandover(b.id, "PICKUP", body))}/> : null}
+        {role === "owner" && b.status === "CONFIRMED" && !pickup && b.rentalPaymentStatus === "PAID" ? <HandoverForm type="PICKUP" booking={b} busy={busy} error={error} onSubmit={body => run(() => tripService.submitHandover(b.id, "PICKUP", body))}/> : null}
         {pickup ? <HandoverView handover={pickup} booking={b} busy={busy} error={error}
           mode={role === "customer" && pickup.status === "SUBMITTED" ? "respond" : role === "owner" && pickup.status === "DISPUTED" ? "revise" : "view"}
           onRespond={body => run(() => tripService.respondHandover(b.id, "PICKUP", body))}
@@ -148,11 +128,13 @@ function Trip({ id }) {
             {Number(b.extraKmAmount) ? <Row term="Phí quá km" value={formatMoney(b.extraKmAmount)}/> : null}
             {Number(b.lateAmount) ? <Row term="Phí trả trễ" value={formatMoney(b.lateAmount)}/> : null}
             {Number(b.otherFeeAmount) ? <Row term={`Phí khác: ${b.otherFeeNote ?? ""}`} value={formatMoney(b.otherFeeAmount)}/> : null}
-            <Row term="Tiền cọc" value={Number(b.depositAmount) ? <span>{formatMoney(b.depositAmount)} <b className={b.depositStatus === "PAID" ? "text-[#166534]" : b.depositStatus === "REFUNDED" ? "text-[#666666]" : "text-[#D97706]"}>({b.depositStatus === "PAID" ? "Đã cọc qua VNPay" : b.depositStatus === "REFUNDED" ? "Đã hoàn cọc" : "Chưa cọc"})</b></span> : "Miễn cọc"}/>
-            {b.finalAmount !== undefined && b.finalAmount !== null ? <Row term="Phần còn lại phải thanh toán" value={<span className="text-lg font-black text-[#FC6C26]">{formatMoney(b.finalAmount)}</span>} strong/> : null}
+            {Number(b.fuelFeeAmount) ? <Row term="Phí xăng/pin hụt" value={formatMoney(b.fuelFeeAmount)}/> : null}
+            <Row term="Cọc 40% (trả khi đặt xe)" value={<span>{formatMoney(b.depositAmount)} <b className={b.depositStatus === "PAID" ? "text-[#166534]" : "text-[#D97706]"}>({b.depositStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"})</b></span>}/>
+            <Row term="Còn lại (trả trước khi nhận xe)" value={<span>{formatMoney(b.rentalRemainingAmount)} <b className={b.rentalPaymentStatus === "PAID" ? "text-[#166534]" : "text-[#D97706]"}>({b.rentalPaymentStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"})</b></span>}/>
+            {Number(b.finalAmount) ? <Row term="Phí phát sinh khi trả xe" value={<span className="text-lg font-black text-[#FC6C26]">{formatMoney(b.finalAmount)} <b className="text-xs">({b.extraFeeStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"})</b></span>} strong/> : null}
             {b.kmLimitPerDay ? <Row term="Giới hạn km" value={`${b.kmLimitPerDay} km/ngày`}/> : null}
           </dl>
-          <p className="mt-2 text-xs text-[#666666]">Tiền cọc thanh toán trực tuyến qua cổng VNPay. Khi trả xe, phần tiền còn lại và phí phát sinh được tính trừ cọc để hai bên đối chiếu và hoàn tất.</p>
+          <p className="mt-2 text-xs text-[#666666]">Mọi khoản thanh toán qua VNPay trên CarDB: cọc 40% khi đặt xe, phần còn lại trước khi nhận xe, phí phát sinh khi trả xe. Tiền hoàn và tiền thuê được chuyển khoản trong 1–3 ngày làm việc.</p>
         </section>
         <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm shadow-sm">
           <h2 className="mb-2 font-bold">{role === "owner" ? "Khách thuê" : "Chủ xe"}</h2>
