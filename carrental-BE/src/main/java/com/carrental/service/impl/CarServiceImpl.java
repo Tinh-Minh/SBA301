@@ -115,6 +115,7 @@ public class CarServiceImpl implements CarService {
                 // Đổi thông tin nhận dạng xe hoặc giá thay đổi mạnh: ẩn tin và chờ admin duyệt lại.
                 car.setStatus(CarStatus.PENDING_APPROVAL);
                 car.setListingStatus(com.carrental.enums.ListingStatus.UNLISTED);
+                pauseOrResumeSubscription(car, CarStatus.INACTIVE); // K10: tạm dừng slot trong lúc chờ duyệt lại
                 log.info("Car id={} đổi thông tin quan trọng -> PENDING_APPROVAL, ẩn tin chờ duyệt lại", carId);
             } else if (car.getStatus() == CarStatus.REJECTED) {
                 car.getStatus().validateTransitionTo(CarStatus.PENDING_APPROVAL);
@@ -412,6 +413,7 @@ public class CarServiceImpl implements CarService {
 
             car.setRejectReason(null);
             car.setStatus(CarStatus.ACTIVE);
+            pauseOrResumeSubscription(car, CarStatus.ACTIVE); // duyệt lại xong: cộng bù thời gian slot đã tạm dừng
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
             log.warn("Duyệt xe thất bại carId={}: {}", carId, e.getMessage());
