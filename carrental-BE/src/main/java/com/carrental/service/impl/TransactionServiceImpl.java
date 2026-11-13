@@ -51,14 +51,6 @@ public class TransactionServiceImpl implements TransactionService {
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher eventPublisher;
 
-    @org.springframework.beans.factory.annotation.Value("${app.payment.simulate-gateway-enabled:false}")
-    private boolean simulateGatewayEnabled;
-
-    /** Dùng cho unit test dựng service bằng tay (không qua Spring). */
-    public void setSimulateGatewayEnabled(boolean simulateGatewayEnabled) {
-        this.simulateGatewayEnabled = simulateGatewayEnabled;
-    }
-
     @Autowired
     public TransactionServiceImpl(
             TransactionRepository transactionRepository,
@@ -220,53 +212,6 @@ public class TransactionServiceImpl implements TransactionService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + id));
         validateAccess(transaction);
         return TransactionResponse.from(transaction);
-    }
-
-    @Override
-    @Transactional
-    public TransactionResponse simulateGateway(Long id) {
-        return simulateGateway(id, true);
-    }
-
-    @Override
-    @Transactional
-    public TransactionResponse simulateGateway(Long id, boolean success) {
-        // Cổng giả lập chỉ dành cho dev/test. Mặc định TẮT để chủ xe không thể tự xác nhận
-        // thanh toán và đăng tin miễn phí trên môi trường thật.
-        if (!simulateGatewayEnabled) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Chức năng giả lập thanh toán đang tắt trên môi trường này");
-        }
-
-        Transaction transaction = transactionRepository.findById(id)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy giao dịch id=" + id));
-        validateAccess(transaction);
-
-        if (transaction.getStatus() == TransactionStatus.SUCCESS) {
-            return TransactionResponse.from(transaction);
-        }
-        transaction.getStatus().validateTransitionTo(success ? TransactionStatus.SUCCESS : TransactionStatus.FAILED);
-
-        if (!success) {
-            transaction.setStatus(TransactionStatus.FAILED);
-            Transaction failed = transactionRepository.save(transaction);
-            log.info("Giả lập thanh toán THẤT BẠI cho transaction id={}", failed.getId());
-            return TransactionResponse.from(failed);
-        }
-
-        transaction.setStatus(TransactionStatus.SUCCESS);
-        transaction.setPaidAt(TimeUtil.nowVn());
-        transaction.setProviderRef("SIMULATED_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12).toUpperCase());
-        Transaction saved = transactionRepository.save(transaction);
-        if (saved.getTransactionType() == TransactionType.BOOKING_DEPOSIT && saved.getBooking() != null) {
-            Booking b = saved.getBooking();
-            b.setDepositStatus(PaymentStatus.PAID);
-            bookingRepository.save(b);
-        }
-        if (eventPublisher != null) {
-            eventPublisher.publishEvent(new PaymentCompletedEvent(saved));
-        }
-        log.info("Giả lập thanh toán thành công cho transaction id={}, providerRef={}", saved.getId(), saved.getProviderRef());
-        return TransactionResponse.from(saved);
     }
 
     @Override

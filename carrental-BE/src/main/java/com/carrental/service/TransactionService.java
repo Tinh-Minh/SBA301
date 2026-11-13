@@ -28,9 +28,4 @@ public interface TransactionService {
     PageResponse<TransactionResponse> getPaged(Long subscriptionId, Long bookingId, String transactionType, String status, Pageable pageable);
 
     String getVNPayUrl(Long transactionId, String bankCode, HttpServletRequest request);
-
-    TransactionResponse simulateGateway(Long transactionId);
-
-    /** @param success false để giả lập cổng thanh toán báo thất bại */
-    TransactionResponse simulateGateway(Long transactionId, boolean success);
 }
