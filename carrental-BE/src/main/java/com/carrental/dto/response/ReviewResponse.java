@@ -16,7 +16,9 @@ public record ReviewResponse(
         Integer rating,
         String comment,
         Boolean approved,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        String ownerReply,
+        LocalDateTime ownerRepliedAt
 ) {
     public static ReviewResponse from(Review r) {
         if (r == null) return null;
@@ -40,7 +42,9 @@ public record ReviewResponse(
                 r.getRating(),
                 r.getComment(),
                 Boolean.TRUE.equals(r.getApproved()),
-                r.getCreatedAt()
+                r.getCreatedAt(),
+                r.getOwnerReply(),
+                r.getOwnerRepliedAt()
         );
     }
 }

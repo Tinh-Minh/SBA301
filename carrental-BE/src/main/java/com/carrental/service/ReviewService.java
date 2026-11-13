@@ -27,6 +27,9 @@ public interface ReviewService {
     /** Admin duyệt đánh giá để hiển thị công khai. */
     ReviewResponse approveByAdmin(Long id);
 
+    /** Chủ xe phản hồi (hoặc sửa phản hồi) cho đánh giá về xe của mình. */
+    ReviewResponse replyAsOwner(Long id, String reply);
+
     /** Kiểm tra xem tài khoản hiện tại có đủ điều kiện đánh giá xe hay không. */
     ReviewEligibilityResponse checkEligibility(Long carId);
 }

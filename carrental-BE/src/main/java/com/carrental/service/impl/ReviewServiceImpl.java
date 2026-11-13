@@ -113,6 +113,28 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     @Transactional
+    public ReviewResponse replyAsOwner(Long id, String reply) {
+        Customer user = currentUserService.getCurrentUser();
+        Review review = reviewRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id));
+        if (review.getCar().getOwner() == null || !review.getCar().getOwner().getId().equals(user.getId())) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Chỉ chủ xe mới được phản hồi đánh giá về xe của mình");
+        }
+        String text = reply == null ? "" : reply.trim();
+        if (text.isEmpty() || text.length() > 1000) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Nội dung phản hồi từ 1 đến 1000 ký tự");
+        }
+        if (text.contains("<") || text.contains(">")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Phản hồi không được chứa ký tự < hoặc >");
+        }
+        review.setOwnerReply(text);
+        review.setOwnerRepliedAt(java.time.LocalDateTime.now());
+        log.info("Chủ xe {} phản hồi đánh giá id={}", user.getId(), id);
+        return ReviewResponse.from(reviewRepository.save(review));
+    }
+
+    @Override
+    @Transactional
     public ReviewResponse approveByAdmin(Long id) {
         Review review = reviewRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá id=" + id));

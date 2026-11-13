@@ -154,3 +154,7 @@ UPDATE reviews r SET booking_id = (
     ORDER BY b.completed_at DESC NULLS LAST LIMIT 1)
 WHERE r.booking_id IS NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS uq_reviews_booking ON reviews (booking_id) WHERE booking_id IS NOT NULL;
+
+-- Chủ xe phản hồi đánh giá về xe.
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS owner_reply TEXT;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS owner_replied_at TIMESTAMP;

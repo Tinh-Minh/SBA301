@@ -41,6 +41,13 @@ public class Review {
     @Column(name = "approved", nullable = false)
     private Boolean approved = false;
 
+    /** Phản hồi của chủ xe cho đánh giá này. */
+    @Column(name = "owner_reply", columnDefinition = "TEXT")
+    private String ownerReply;
+
+    @Column(name = "owner_replied_at")
+    private LocalDateTime ownerRepliedAt;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

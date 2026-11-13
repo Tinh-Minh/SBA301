@@ -52,6 +52,13 @@ public class ReviewController {
         return ApiResponse.ok(reviewService.getPaged(carId, customerId, pageable));
     }
 
+    /** Chủ xe phản hồi đánh giá về xe của mình. Body: {"reply": "..."} */
+    @PreAuthorize("hasRole('OWNER')")
+    @PostMapping("/api/reviews/{id}/reply")
+    public ApiResponse<ReviewResponse> reply(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        return ApiResponse.ok("Đã gửi phản hồi", reviewService.replyAsOwner(id, body.get("reply")));
+    }
+
     // Admin gỡ đánh giá rác / vi phạm
     @PreAuthorize("hasRole('ADMIN')")
     @org.springframework.web.bind.annotation.DeleteMapping("/api/admin/reviews/{id}")
