@@ -249,7 +249,8 @@ public class VNPayServiceImpl implements VNPayService {
             return response;
         } catch (Exception e) {
             response.put("RspCode", "99");
-            response.put("Message", "Unknown error: " + e.getMessage());
+            log.error("Lỗi xử lý IPN VNPay", e);
+            response.put("Message", "Unknown error");
             return response;
         }
     }

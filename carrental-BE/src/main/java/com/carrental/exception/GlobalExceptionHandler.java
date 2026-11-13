@@ -80,7 +80,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("HttpMessageNotReadable traceId={} msg={}", RequestTraceFilter.currentTraceId(), ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .headers(headers)
-                .body(failure(ErrorCode.INVALID_REQUEST, ex.getMessage(), List.of()));
+                .body(failure(ErrorCode.INVALID_REQUEST, "Dữ liệu gửi lên không đúng định dạng JSON", List.of()));
     }
 
     @Override
