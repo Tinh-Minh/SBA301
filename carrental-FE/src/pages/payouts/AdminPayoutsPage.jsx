@@ -12,6 +12,33 @@ const statusOf = row => row.status !== "SUCCESS" && row.subscriptionStatus === "
 /** Ưu tiên thời điểm thanh toán thật; chưa thanh toán thì dùng thời điểm tạo giao dịch. */
 const timeOf = row => row.paidAt ?? row.createdAt;
 
+/** Các khoản hoàn cọc đang chờ admin chuyển tiền và xác nhận (kèm mã chuyển khoản). */
+function PendingRefunds() {
+    const refunds = useApiQuery(["admin", "refunds", "pending"],
+        () => transactionService.listPage({ page: 0, size: 50, sort: "id,desc", type: "BOOKING_REFUND", status: "PENDING" }));
+    const [refs, setRefs] = useState({});
+    const [error, setError] = useState("");
+    const rows = refunds.data?.content ?? [];
+    if (!rows.length) return null;
+    async function confirm(id) {
+        setError("");
+        try { await transactionService.confirmRefund(id, refs[id] ?? ""); await refunds.reload(); }
+        catch (e) { setError(e.message); }
+    }
+    return <section className="rounded-2xl border border-[#FDBA8C] bg-[#FFF7F2] p-4">
+      <h2 className="font-bold text-[#292929]">Hoàn cọc chờ xử lý ({rows.length})</h2>
+      <p className="text-xs text-[#666666]">Chuyển tiền cho khách rồi nhập mã chuyển khoản để xác nhận đã hoàn.</p>
+      {error ? <p role="alert" className="mt-2 text-sm text-[#B91C1C]">{error}</p> : null}
+      <ul className="mt-3 flex flex-col gap-2">{rows.map(row => <li key={row.id} className="flex flex-wrap items-center gap-2 rounded-xl bg-white p-3 text-sm">
+        <span className="font-mono text-xs">#{row.id}</span>
+        <span>Đơn {row.bookingCode ?? row.bookingId}</span>
+        <b>{formatMoney(row.amount)}</b>
+        <input value={refs[row.id] ?? ""} onChange={e => setRefs(prev => ({ ...prev, [row.id]: e.target.value }))} placeholder="Mã chuyển khoản" className="min-w-40 flex-1 rounded-xl border border-[#E9E9E7] px-3 py-1.5"/>
+        <button type="button" disabled={!refs[row.id]?.trim()} onClick={() => confirm(row.id)} className="rounded-xl bg-[#FC6C26] px-3 py-1.5 font-bold text-white disabled:opacity-50">Đã hoàn tiền</button>
+      </li>)}</ul>
+    </section>;
+}
+
 export default function AdminPayouts() {
     const [page, setPage] = useState(0);
     const [selected, setSelected] = useState(null);
@@ -19,6 +46,7 @@ export default function AdminPayouts() {
     const rows = list.data?.content ?? [];
     return <div className="flex flex-col gap-5">
     <AdminPageHeader code="A06" title="Giao dịch gói đăng tin" description="Danh sách giao dịch thanh toán gói. Không còn khoản chi trả theo chuyến thuê."/>
+    <PendingRefunds/>
     <AdminState loading={list.loading && !list.data} error={list.error} empty={!!list.data && rows.length === 0} label="giao dịch" onRetry={list.reload}/>
     {rows.length ? <div className="overflow-x-auto rounded-2xl border border-[#E9E9E7] bg-white">
       <table className="w-full min-w-[720px] text-left text-sm">
