@@ -1,4 +1,5 @@
 package com.carrental.dto.request;
+import com.carrental.validation.StrictIntegerDeserializer;
 
 import com.carrental.entity.Car;
 import com.carrental.entity.Customer;

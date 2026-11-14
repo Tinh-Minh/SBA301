@@ -1,6 +1,6 @@
 package com.carrental.security;
 
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

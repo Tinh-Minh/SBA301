@@ -1,4 +1,5 @@
-package com.carrental.web;
+package com.carrental.util;
+
 
 import com.carrental.config.DocumentProperties;
 import com.carrental.dto.request.document.UserDocumentSubmissionCommand;

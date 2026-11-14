@@ -25,7 +25,7 @@ import com.carrental.repository.UserDocumentRepository;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
 import com.carrental.service.CustomerService;
-import com.carrental.service.PublicImageStorageService;
+import com.carrental.storage.PublicImageStorageService;
 import com.carrental.util.RequestChecks;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.Root;

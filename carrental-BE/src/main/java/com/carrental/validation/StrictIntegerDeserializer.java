@@ -1,4 +1,5 @@
-package com.carrental.dto.request;
+package com.carrental.validation;
+
 
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.JsonToken;

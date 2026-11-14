@@ -3,7 +3,7 @@ package com.carrental.exception;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.util.DbErrors;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessResourceFailureException;

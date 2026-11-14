@@ -2,7 +2,7 @@ package com.carrental.security;
 
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.exception.ErrorCode;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;

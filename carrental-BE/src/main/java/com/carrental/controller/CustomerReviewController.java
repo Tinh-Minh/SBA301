@@ -22,7 +22,7 @@ public class CustomerReviewController {
     public record CustomerReviewRequest(
             @NotNull(message = "Vui lòng chọn số sao")
             @Min(value = 1, message = "Số sao tối thiểu là 1") @Max(value = 5, message = "Số sao tối đa là 5")
-            @tools.jackson.databind.annotation.JsonDeserialize(using = com.carrental.dto.request.StrictIntegerDeserializer.class)
+            @tools.jackson.databind.annotation.JsonDeserialize(using = com.carrental.validation.StrictIntegerDeserializer.class)
             Integer rating,
             @Size(max = 1000, message = "Nhận xét tối đa 1000 ký tự") String comment) {}
 

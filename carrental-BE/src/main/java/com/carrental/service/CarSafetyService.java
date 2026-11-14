@@ -1,4 +1,5 @@
 package com.carrental.service;
+import com.carrental.storage.PublicImageStorageService;
 
 import com.carrental.dto.request.safety.*;
 import com.carrental.dto.response.safety.*;

@@ -12,7 +12,7 @@ import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.TokenResponse;
 import com.carrental.security.CurrentAccount;
 import com.carrental.service.AuthService;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.CacheControl;

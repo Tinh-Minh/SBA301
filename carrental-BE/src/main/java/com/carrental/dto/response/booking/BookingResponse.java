@@ -114,8 +114,8 @@ public record BookingResponse(
                 reviewed, handovers.stream().map(HandoverResponse::from).toList(),
                 vCode, discount, depStatus, rem, b.getReturnReportedAt(),
                 b.getDepositPaidAt(),
-                b.getCreatedAt() != null ? b.getCreatedAt().plus(com.carrental.service.BookingMoneyPolicy.DEPOSIT_PAYMENT_WINDOW) : null,
-                b.getDepositPaidAt() != null ? b.getDepositPaidAt().plus(com.carrental.service.BookingMoneyPolicy.OWNER_RESPONSE_WINDOW) : null,
+                b.getCreatedAt() != null ? b.getCreatedAt().plus(com.carrental.util.BookingMoneyPolicy.DEPOSIT_PAYMENT_WINDOW) : null,
+                b.getDepositPaidAt() != null ? b.getDepositPaidAt().plus(com.carrental.util.BookingMoneyPolicy.OWNER_RESPONSE_WINDOW) : null,
                 b.getRentalPaymentStatus(),
                 b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO)
                         .subtract(b.getDepositAmount() != null ? b.getDepositAmount() : BigDecimal.ZERO).max(BigDecimal.ZERO),

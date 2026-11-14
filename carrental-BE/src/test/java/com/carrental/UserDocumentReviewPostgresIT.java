@@ -27,7 +27,7 @@ import com.carrental.repository.UserDocumentRepository;
 import com.carrental.storage.PrivateDocumentStorage.UploadedDocumentImage;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentReceipt;
 import com.carrental.storage.PrivateDocumentStorage;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.net.URI;

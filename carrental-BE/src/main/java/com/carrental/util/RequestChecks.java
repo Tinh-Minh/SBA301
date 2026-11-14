@@ -5,7 +5,7 @@ import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.security.CurrentAccount;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
