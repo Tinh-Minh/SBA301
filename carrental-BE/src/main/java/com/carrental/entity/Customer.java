@@ -1,0 +1,90 @@
+package com.carrental.entity;
+
+import com.carrental.enums.CustomerStatus;
+import com.carrental.enums.KycStatus;
+import com.carrental.enums.Role;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "customers")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Customer extends BaseEntity {
+
+    @Column(name = "full_name", nullable = false, length = 150)
+    private String fullName;
+
+    @Column(name = "email", nullable = false, length = 150)
+    private String email;
+
+    @Column(name = "phone", nullable = false, unique = true, length = 20)
+    private String phone;
+
+    @Column(name = "password_hash", nullable = false, length = 255)
+    private String passwordHash;
+
+    /** Thời điểm đổi mật khẩu gần nhất (giờ VN). Token cấp trước thời điểm này bị vô hiệu. */
+    @Column(name = "password_changed_at")
+    private java.time.LocalDateTime passwordChangedAt;
+
+    @Column(name = "date_of_birth")
+    private LocalDate dateOfBirth;
+
+    @Column(name = "address", length = 300)
+    private String address;
+
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
+    @Column(name = "zalo_phone", length = 20)
+    private String zaloPhone;
+
+    @Column(name = "contact_note", length = 255)
+    private String contactNote;
+
+    @Column(name = "email_verified", nullable = false)
+    @Builder.Default
+    private Boolean emailVerified = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "kyc_status", nullable = false, length = 20)
+    @Builder.Default
+    private KycStatus kycStatus = KycStatus.NONE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    @Builder.Default
+    private Role role = Role.CUSTOMER;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 20)
+    @Builder.Default
+    private CustomerStatus status = CustomerStatus.ACTIVE;
+
+    // Tài khoản ngân hàng nhận tiền hoàn cọc (khách) / tiền thuê (chủ xe).
+    @Column(name = "bank_account_number", length = 30)
+    private String bankAccountNumber;
+
+    @Column(name = "bank_name", length = 100)
+    private String bankName;
+
+    /** Chi nhánh / phòng giao dịch mở tài khoản. */
+    @Column(name = "bank_branch", length = 150)
+    private String bankBranch;
+
+    @Column(name = "bank_account_holder", length = 150)
+    private String bankAccountHolder;
+
+    public boolean hasBankAccount() {
+        return bankAccountNumber != null && !bankAccountNumber.isBlank()
+                && bankName != null && !bankName.isBlank()
+                && bankBranch != null && !bankBranch.isBlank()
+                && bankAccountHolder != null && !bankAccountHolder.isBlank();
+    }
+}

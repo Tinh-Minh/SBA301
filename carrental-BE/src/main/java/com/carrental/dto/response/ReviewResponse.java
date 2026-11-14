@@ -1,0 +1,50 @@
+package com.carrental.dto.response;
+
+import com.carrental.entity.Review;
+
+import java.time.LocalDateTime;
+
+public record ReviewResponse(
+        Long id,
+        Long carId,
+        String carLicensePlate,
+        String carBrandModel,
+        String carName,
+        Long customerId,
+        String customerName,
+        String customerAvatar,
+        Integer rating,
+        String comment,
+        Boolean approved,
+        LocalDateTime createdAt,
+        String ownerReply,
+        LocalDateTime ownerRepliedAt
+) {
+    public static ReviewResponse from(Review r) {
+        if (r == null) return null;
+        Long carId = r.getCar() != null ? r.getCar().getId() : null;
+        String licensePlate = r.getCar() != null ? r.getCar().getLicensePlate() : null;
+        String carBrandModel = r.getCar() != null ? (r.getCar().getBrand() + " " + r.getCar().getModel()) : null;
+        String carName = carBrandModel != null ? carBrandModel.trim() : null;
+        Long customerId = r.getCustomer() != null ? r.getCustomer().getId() : null;
+        String customerName = r.getCustomer() != null ? r.getCustomer().getFullName() : null;
+        String customerAvatar = r.getCustomer() != null ? r.getCustomer().getAvatarUrl() : null;
+
+        return new ReviewResponse(
+                r.getId(),
+                carId,
+                licensePlate,
+                carBrandModel,
+                carName,
+                customerId,
+                customerName,
+                customerAvatar,
+                r.getRating(),
+                r.getComment(),
+                Boolean.TRUE.equals(r.getApproved()),
+                r.getCreatedAt(),
+                r.getOwnerReply(),
+                r.getOwnerRepliedAt()
+        );
+    }
+}

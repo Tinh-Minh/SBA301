@@ -1,0 +1,12 @@
+# Ignore all files and directories at root level
+/*
+
+# Whitelist allowed directories and files
+!/carrental-BE/
+!/carrental-FE/
+!/docs/
+!/README.md
+!/seeddb.sql
+!/docker-compose.yml
+!/.gitignore
+/.idea/

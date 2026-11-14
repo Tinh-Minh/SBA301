@@ -1,0 +1,69 @@
+# Chạy toàn bộ hệ thống bằng một lệnh, tại thư mục gốc dự án:
+#   docker compose up --build
+#
+# - db:       PostgreSQL 17, dữ liệu lưu ở volume pgdata. Lần đầu database trống,
+#             backend tự tạo bảng và nạp dữ liệu mẫu (seed_data.sql).
+# - backend:  http://localhost:8080 – cấu hình lấy từ carrental-BE/.env,
+#             riêng kết nối DB được ghi đè để trỏ vào service db.
+# - frontend: http://localhost:3000
+# Làm sạch toàn bộ dữ liệu: docker compose down -v
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: carrental
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Postgres123}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d carrental"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ./carrental-BE
+    env_file:
+      - ./carrental-BE/.env
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/carrental
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-Postgres123}
+      APP_DOCUMENT_STORAGE_ROOT: /data/private-documents
+      APP_UPLOAD_ROOT: /data/public-uploads
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "8080:8080"
+    volumes:
+      - uploads:/data
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./carrental-FE
+      args:
+        BACKEND_URL: http://backend:8080
+    environment:
+      BACKEND_URL: http://backend:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
