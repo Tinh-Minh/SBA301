@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 import com.carrental.config.security.JwtProperties;
 import com.carrental.dto.request.auth.LoginRequest;
 import com.carrental.dto.request.auth.RegisterRequest;
+import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.dto.response.TokenResponse;
 import com.carrental.entity.Customer;
 import com.carrental.enums.CustomerStatus;
@@ -18,12 +19,14 @@ import com.carrental.enums.Role;
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;
 import com.carrental.repository.CustomerRepository;
+import java.sql.SQLException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import org.hibernate.exception.ConstraintViolationException;
 import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,6 +34,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -161,6 +165,37 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void registrationNamesEachTakenFieldWithoutRepeatingTheValue() {
+        RegisterRequest request = registrationRequest();
+        when(customers.existsByEmailIgnoreCase(request.getEmail())).thenReturn(true);
+        when(customers.existsByPhone(request.getPhone())).thenReturn(true);
+
+        AppException error = registrationFailure(request);
+
+        assertThat(error.errorCode()).isEqualTo(ErrorCode.ACCOUNT_ALREADY_EXISTS);
+        assertThat(error.fieldErrors()).extracting(FieldErrorResponse::field).containsExactly("email", "phone");
+        assertThat(error.fieldErrors()).extracting(FieldErrorResponse::message)
+                .containsExactly("Email này đã được đăng ký. Hãy dùng email khác.",
+                        "Số điện thoại này đã được đăng ký. Hãy dùng số khác.");
+        assertThat(error.getMessage()).doesNotContain(request.getEmail(), request.getPhone());
+        verify(customers, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void registrationMapsThePhoneUniqueIndexToThePhoneField() {
+        RegisterRequest request = registrationRequest();
+        when(customers.existsByEmailIgnoreCase(request.getEmail())).thenReturn(false);
+        when(customers.existsByPhone(request.getPhone())).thenReturn(false);
+        when(customers.saveAndFlush(any(Customer.class))).thenThrow(new DataIntegrityViolationException("duplicate",
+                new ConstraintViolationException("duplicate", new SQLException("duplicate", "23505"), "customers_phone_key")));
+
+        AppException error = registrationFailure(request);
+
+        assertThat(error.fieldErrors()).extracting(FieldErrorResponse::field).containsExactly("phone");
+        assertThat(error.getMessage()).doesNotContain(request.getPhone());
+    }
+
+    @Test
     void verifyEmailMarksTheMatchingCurrentCustomerVerified() {
         Customer customer = customer(CustomerStatus.ACTIVE, "$2a$10$" + "G".repeat(53));
         customer.setEmailVerified(false);
@@ -180,6 +215,24 @@ class AuthServiceImplTest {
 
         assertThat(customer.getEmailVerified()).isTrue();
         verify(customers).flush();
+    }
+
+    private AppException registrationFailure(RegisterRequest request) {
+        try {
+            service.register(request);
+            throw new AssertionError("Registration should be rejected");
+        } catch (AppException exception) {
+            return exception;
+        }
+    }
+
+    private RegisterRequest registrationRequest() {
+        RegisterRequest request = new RegisterRequest();
+        request.setFullName("New Customer");
+        request.setEmail("taken@example.test");
+        request.setPhone("0912345678");
+        request.setPassword("Good password 123!");
+        return request;
     }
 
     private AppException loginFailure(LoginRequest request) {

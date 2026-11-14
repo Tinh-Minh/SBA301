@@ -21,6 +21,7 @@ import com.carrental.security.MailRateLimiter;
 import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -61,6 +62,8 @@ import com.carrental.config.RequestTraceFilter;
 public class AuthServiceImpl implements AuthService {
 
     private static final List<String> UNIQUE_CONSTRAINTS = List.of("uq_customers_email_lower", "customers_phone_key");
+    private static final String EMAIL_ALREADY_REGISTERED = "Email này đã được đăng ký. Hãy dùng email khác.";
+    private static final String PHONE_ALREADY_REGISTERED = "Số điện thoại này đã được đăng ký. Hãy dùng số khác.";
     private static final Pattern BCRYPT_HASH = Pattern.compile(
             "^\\$2[aby]\\$(0[4-9]|[12][0-9]|3[01])\\$[./A-Za-z0-9]{53}$");
     private static final com.carrental.security.LoginAttemptGuard LOGIN_ATTEMPTS = new com.carrental.security.LoginAttemptGuard();
@@ -130,9 +133,14 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public CustomerProfileResponse register(RegisterRequest request, String clientIp) {
         Customer customer = request.toEntity(passwordEncoder.encode(request.getPassword()));
-        if (customers.existsByEmailIgnoreCase(customer.getEmail()) || customers.existsByPhone(customer.getPhone())) {
-            throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS);
+        List<FieldErrorResponse> conflicts = new ArrayList<>();
+        if (customers.existsByEmailIgnoreCase(customer.getEmail())) {
+            conflicts.add(new FieldErrorResponse("email", EMAIL_ALREADY_REGISTERED));
         }
+        if (customers.existsByPhone(customer.getPhone())) {
+            conflicts.add(new FieldErrorResponse("phone", PHONE_ALREADY_REGISTERED));
+        }
+        if (!conflicts.isEmpty()) throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, conflicts);
         mailRateLimiter.checkAndRecord(customer.getEmail(), clientIp);
         try {
             Customer saved = customers.saveAndFlush(customer);
@@ -140,7 +148,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("auth-register customerId={}", saved.getId());
             return CustomerProfileResponse.from(saved);
         } catch (DataIntegrityViolationException exception) {
-            if (isAccountUniqueViolation(exception)) throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, exception);
+            if (isAccountUniqueViolation(exception)) throw accountAlreadyExists(exception);
             throw exception;
         }
     }
@@ -407,12 +415,29 @@ public class AuthServiceImpl implements AuthService {
                 """.formatted(HtmlUtils.htmlEscape(fullName));
     }
 
+    private AppException accountAlreadyExists(Throwable exception) {
+        List<FieldErrorResponse> errors = switch (uniqueConstraintName(exception)) {
+            case "uq_customers_email_lower" -> List.of(new FieldErrorResponse("email", EMAIL_ALREADY_REGISTERED));
+            case "customers_phone_key" -> List.of(new FieldErrorResponse("phone", PHONE_ALREADY_REGISTERED));
+            default -> List.of();
+        };
+        if (errors.isEmpty()) return new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, exception);
+        return new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, errors);
+    }
+
     private boolean isAccountUniqueViolation(Throwable exception) {
+        return UNIQUE_CONSTRAINTS.contains(uniqueConstraintName(exception));
+    }
+
+    private String uniqueConstraintName(Throwable exception) {
+        String found = "";
         for (Throwable cause = exception; cause != null; cause = cause.getCause()) {
-            if (cause instanceof ConstraintViolationException violation && violation.getSQLException() != null
-                    && "23505".equals(violation.getSQLException().getSQLState())
-                    && UNIQUE_CONSTRAINTS.contains(violation.getConstraintName())) return true;
+            if (!(cause instanceof ConstraintViolationException violation) || violation.getSQLException() == null
+                    || !"23505".equals(violation.getSQLException().getSQLState())
+                    || violation.getConstraintName() == null) continue;
+            found = violation.getConstraintName();
+            if (UNIQUE_CONSTRAINTS.contains(found)) return found;
         }
-        return false;
+        return found;
     }
 }

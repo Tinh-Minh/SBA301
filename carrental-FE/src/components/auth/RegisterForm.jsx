@@ -1,5 +1,5 @@
+import { useEffect, useState } from "react";
 import { EyeIcon } from "@/components/auth/EyeIcon.jsx";
-import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAuth } from "@/hooks/useAuth.js";
@@ -18,7 +18,7 @@ export function RegisterForm() {
     const [passwordVisible, setPasswordVisible] = useState(false);
     const [confirmVisible, setConfirmVisible] = useState(false);
     const { register: createAccount } = useAuth();
-    const { register, control, handleSubmit, setError, formState: { errors, isSubmitting, isValid } } = useForm({
+    const { register, control, handleSubmit, setError, clearErrors, formState: { errors, isSubmitting, isValid } } = useForm({
         resolver: zodResolver(registrationSchema),
         mode: "onChange",
         defaultValues: { fullName: "", email: "", phone: "", password: "", confirmPassword: "", terms: false },
@@ -26,7 +26,11 @@ export function RegisterForm() {
     const watched = useWatch({ control, name: ["fullName", "email", "phone", "password"] });
     const [fullName = "", email = "", phone = "", password = ""] = watched ?? [];
     const strength = usePasswordStrength({ password, fullName, email, phone });
+    useEffect(() => {
+        clearErrors("root");
+    }, [email, phone, clearErrors]);
     const onSubmit = handleSubmit(async ({ confirmPassword, terms, ...values }) => {
+        clearErrors(["email", "phone", "root"]);
         try {
             await createAccount(values);
             const email = values.email.trim();
@@ -34,7 +38,13 @@ export function RegisterForm() {
             window.sessionStorage.setItem(VERIFICATION_LAST_SENT_AT_KEY, String(Date.now()));
             navigate("/verify-email", { state: { email } });
         } catch (error) {
-            setError("root.server", { message: error.message });
+            const conflicts = (error.fieldErrors ?? []).filter(item =>
+                (item?.field === "email" || item?.field === "phone") && item.message);
+            if (conflicts.length) {
+                conflicts.forEach(item => setError(item.field, { message: item.message }));
+                return;
+            }
+            setError("root.server", { message: error.message || "Không tạo được tài khoản." });
         }
     });
 
@@ -51,15 +61,17 @@ export function RegisterForm() {
                 <label htmlFor="reg-email">Email <span className="auth-required">*</span></label>
                 <div className="auth-control">
                     <span className="material-symbols-outlined" aria-hidden="true">mail</span>
-                    <input className={fieldClass} id="reg-email" placeholder="name@example.com" required type="email" autoComplete="email" aria-label="Email" {...register("email")} aria-invalid={Boolean(errors.email)} />
+                    <input className={fieldClass} id="reg-email" placeholder="name@example.com" required type="email" autoComplete="email" aria-label="Email" aria-describedby={errors.email ? "reg-email-error" : undefined} {...register("email")} aria-invalid={Boolean(errors.email)} />
                 </div>
+                {errors.email?.message ? <p id="reg-email-error" role="alert" className="auth-field-error">{errors.email.message}</p> : null}
             </div>
             <div className="auth-field-group">
                 <label htmlFor="reg-phone">Số điện thoại <span className="auth-required">*</span></label>
                 <div className="auth-control">
                     <span className="material-symbols-outlined" aria-hidden="true">phone</span>
-                    <input className={fieldClass} id="reg-phone" placeholder="0912 345 678" required type="tel" autoComplete="tel" aria-label="Số điện thoại" {...register("phone")} aria-invalid={Boolean(errors.phone)} />
+                    <input className={fieldClass} id="reg-phone" placeholder="0912 345 678" required type="tel" autoComplete="tel" aria-label="Số điện thoại" aria-describedby={errors.phone ? "reg-phone-error" : undefined} {...register("phone")} aria-invalid={Boolean(errors.phone)} />
                 </div>
+                {errors.phone?.message ? <p id="reg-phone-error" role="alert" className="auth-field-error">{errors.phone.message}</p> : null}
             </div>
         </div>
         <div className="auth-field-group">
@@ -90,6 +102,6 @@ export function RegisterForm() {
             </label>
         </div>
         <button className="auth-submit" type="submit" disabled={isSubmitting || !isValid}>{isSubmitting ? "Đang tạo tài khoản..." : "Tạo tài khoản"}</button>
-        <FormErrors errors={errors} />
+        <FormErrors errors={{ fullName: errors.fullName, password: errors.password, confirmPassword: errors.confirmPassword, terms: errors.terms, root: errors.root }} />
     </form>;
 }

@@ -9,6 +9,7 @@ import com.carrental.dto.request.customer.ChangeCustomerStatusRequest;
 import com.carrental.dto.request.customer.CustomerListQuery;
 import com.carrental.dto.request.customer.UpdateProfileRequest;
 import com.carrental.dto.response.CustomerAdminResponse;
+import com.carrental.dto.response.FieldErrorResponse;
 import com.carrental.dto.response.CustomerProfileResponse;
 import com.carrental.dto.response.CustomerSummaryResponse;
 import com.carrental.dto.response.PageResponse;
@@ -128,12 +129,18 @@ public class CustomerServiceImpl implements CustomerService {
         if (request.emailWasProvided() && !email.equalsIgnoreCase(customer.getEmail())) {
             customers.findByEmailIgnoreCase(email)
                     .filter(other -> !other.getId().equals(customer.getId()))
-                    .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
+                    .ifPresent(other -> {
+                        throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, List.of(
+                                new FieldErrorResponse("email", "Email này đã được đăng ký. Hãy dùng email khác.")));
+                    });
         }
         if (request.phoneWasProvided() && !phone.equals(customer.getPhone())) {
             customers.findByPhone(phone)
                     .filter(other -> !other.getId().equals(customer.getId()))
-                    .ifPresent(other -> { throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS); });
+                    .ifPresent(other -> {
+                        throw new AppException(ErrorCode.ACCOUNT_ALREADY_EXISTS, List.of(
+                                new FieldErrorResponse("phone", "Số điện thoại này đã được đăng ký. Hãy dùng số khác.")));
+                    });
         }
 
         boolean changed = applyProfileUpdate(customer, request, fullName, dateOfBirth, address, email, phone,

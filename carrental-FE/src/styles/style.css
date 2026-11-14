@@ -260,6 +260,8 @@
 .auth-field--action { padding-right:44px; }
 .auth-field::placeholder { color:#8a847a; }
 .auth-field:focus { outline:none;border-color:#fc6c26;box-shadow:0 0 0 3px rgba(252,108,38,.18); }
+.auth-field[aria-invalid="true"] { border-color:#b91c1c;background:#fff7f7; }
+.auth-field-error { margin:0;color:#b91c1c;font-size:12px;font-weight:600;line-height:1.4; }
 .auth-screen input.auth-field:-webkit-autofill,.auth-screen input.auth-field:-webkit-autofill:hover,.auth-screen input.auth-field:-webkit-autofill:focus { -webkit-text-fill-color:#25251f;caret-color:#25251f;box-shadow:0 0 0 1000px #faf8f2 inset;transition:background-color 9999s ease-out; }
 .auth-submit { display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin-top:4px;border-radius:12px;background:#fc6c26;color:#fff;font-size:15px;font-weight:700; }
 .auth-submit:hover { background:#b9430c; }

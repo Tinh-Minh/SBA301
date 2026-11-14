@@ -191,6 +191,8 @@ class AuthSecurityPostgresIT {
             assertThat(response.body()).doesNotContain(email).doesNotContain(phone);
             assertTrace(response, json(response));
         }
+        assertThat(json(emailConflict).path("errors").toString()).contains("\"field\":\"email\"").doesNotContain("\"field\":\"phone\"");
+        assertThat(json(phoneConflict).path("errors").toString()).contains("\"field\":\"phone\"").doesNotContain("\"field\":\"email\"");
     }
 
     @Test
@@ -222,6 +224,10 @@ class AuthSecurityPostgresIT {
 
             assertError(emailConflict, 409, "ACCOUNT_ALREADY_EXISTS");
             assertError(phoneConflict, 409, "ACCOUNT_ALREADY_EXISTS");
+            assertThat(json(emailConflict).path("errors").toString()).contains("\"field\":\"email\"").doesNotContain("\"field\":\"phone\"");
+            assertThat(json(phoneConflict).path("errors").toString()).contains("\"field\":\"phone\"").doesNotContain("\"field\":\"email\"");
+            assertThat(emailConflict.body()).doesNotContain(emailMarker, phoneMarker, passwordMarker);
+            assertThat(phoneConflict.body()).doesNotContain(emailMarker, phoneMarker, passwordMarker);
             assertThat(jdbc.queryForObject("select count(*) from customers where lower(email)=lower(?)",
                     Integer.class, emailMarker)).isEqualTo(1);
             assertThat(jdbc.queryForObject("select count(*) from customers where email=?",
