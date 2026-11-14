@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 // Chỉ bật với chuột thật (pointer: fine) và khi người dùng không yêu cầu giảm chuyển động.
 const LIFE_MS = 420;
 const MAX_POINTS = 48;
+const TAIL_X = 7;
+const TAIL_Y = 16;
 
 export function CursorTrail() {
     const canvasRef = useRef(null);
@@ -48,7 +50,8 @@ export function CursorTrail() {
         };
 
         const onMove = event => {
-            points.push({ x: event.clientX, y: event.clientY, t: performance.now() });
+            // Mũi tên chuột có đầu ở (clientX, clientY); vệt xuất phát từ đuôi mũi tên (lệch xuống-phải).
+            points.push({ x: event.clientX + TAIL_X, y: event.clientY + TAIL_Y, t: performance.now() });
             if (points.length > MAX_POINTS) points.shift();
             if (!running) { running = true; frame = requestAnimationFrame(draw); }
         };
