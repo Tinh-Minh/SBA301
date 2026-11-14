@@ -141,7 +141,7 @@ html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
 
 /* ---------- Video nền cho các trang bên trong (trừ trang chủ, đăng nhập/đăng ký) ---------- */
 .app-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
-  background: #c9782a url("/images/app-background.jpg") center 35% / cover no-repeat; }
+  background: #7a1f5c url("/images/app-background.jpg") center 45% / cover no-repeat; }
 /* Không phủ cả màn hình. Chữ nằm thẳng trên video có quầng sáng màu kem nhẹ để dễ đọc;
    chữ trong thẻ trắng có quầng trùng màu nền nên không nhìn thấy. */
 :is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, p, span, a, label, li, dt, dd, nav, small) {
