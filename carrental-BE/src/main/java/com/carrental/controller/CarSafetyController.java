@@ -1,11 +1,11 @@
 package com.carrental.controller;
 
+import com.carrental.dto.request.safety.*;
+import com.carrental.dto.response.safety.*;
+import com.carrental.enums.*;
+
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.PageResponse;
-import com.carrental.dto.safety.SafetyDtos.SafetyRecordRequest;
-import com.carrental.dto.safety.SafetyDtos.SafetyRecordResponse;
-import com.carrental.dto.safety.SafetyDtos.SafetySummaryResponse;
-import com.carrental.dto.safety.SafetyDtos.SafetyVerifyRequest;
 import com.carrental.enums.VerificationStatus;
 import com.carrental.service.CarSafetyService;
 import com.carrental.util.PageRequestFactory;

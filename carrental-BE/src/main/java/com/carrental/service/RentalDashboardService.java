@@ -1,6 +1,8 @@
 package com.carrental.service;
 
-import com.carrental.dto.booking.BookingDtos.*;
+import com.carrental.dto.request.booking.*;
+import com.carrental.dto.response.booking.*;
+
 import com.carrental.entity.Booking;
 import com.carrental.entity.Car;
 import com.carrental.entity.CarImage;

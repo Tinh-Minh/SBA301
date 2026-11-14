@@ -1,6 +1,8 @@
 package com.carrental.controller;
 
-import com.carrental.dto.booking.BookingDtos.*;
+import com.carrental.dto.request.booking.*;
+import com.carrental.dto.response.booking.*;
+
 import com.carrental.dto.request.BookingDepositPaymentRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.PageResponse;

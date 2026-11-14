@@ -1,13 +1,10 @@
 package com.carrental.service;
 
+import com.carrental.dto.request.safety.*;
+import com.carrental.dto.response.safety.*;
+import com.carrental.enums.*;
+
 import com.carrental.dto.response.PageResponse;
-import com.carrental.dto.safety.SafetyDtos.SafetyItem;
-import com.carrental.dto.safety.SafetyDtos.SafetyLevel;
-import com.carrental.dto.safety.SafetyDtos.SafetyRecordRequest;
-import com.carrental.dto.safety.SafetyDtos.SafetyRecordResponse;
-import com.carrental.dto.safety.SafetyDtos.SafetySummaryResponse;
-import com.carrental.dto.safety.SafetyDtos.SafetyVerifyRequest;
-import com.carrental.dto.safety.SafetyDtos.Validity;
 import com.carrental.entity.Car;
 import com.carrental.entity.CarDocument;
 import com.carrental.entity.CarSafetyRecord;
