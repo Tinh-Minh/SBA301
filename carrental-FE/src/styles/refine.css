@@ -1,247 +1,285 @@
 /* =====================================================================
-   CarDB – lớp tinh chỉnh giao diện cho mọi màn trừ trang chủ.
-   Không nằm trong @layer nên thắng utility của Tailwind mà không cần sửa từng trang.
-   Phạm vi: html[data-surface="app"] (khách) và html[data-surface="console"] (chủ xe, admin).
+   CarDB – Warm Editorial Automotive Design System
+   Đồng bộ ngôn ngữ thiết kế từ Trang chủ (Home) & Đăng nhập (Auth)
+   sang toàn bộ các màn hình Khách hàng (app) và Chủ xe / Admin (console).
    ===================================================================== */
 :root {
-  --ink: #1f1f1d;
-  --ink-2: #57564f;
-  --ink-3: #8a887f;
-  --line: #e7e5df;
-  --line-strong: #d6d3cb;
-  --canvas: #f6f5f1;
+  --ink: #25251f;
+  --ink-2: #5c584f;
+  --ink-3: #868379;
+  --line: #e4e2d8;
+  --line-strong: #d2cfc3;
+  --canvas: #f2f2ed;
+  --canvas-warm: #eae8e0;
   --paper: #ffffff;
+  --paper-warm: #faf9f5;
   --accent: #fc6c26;
-  --accent-ink: #b9430c;
-  --accent-wash: #fff4ec;
-  --radius: 10px;
-  --ease: cubic-bezier(.2, .7, .3, 1);
+  --accent-ink: #c84910;
+  --accent-wash: #fff3eb;
+  --radius-card: 20px;
+  --radius-inner: 14px;
+  --shadow-card: 0 10px 30px -14px rgba(37, 37, 31, 0.08), 0 2px 6px -2px rgba(37, 37, 31, 0.04);
+  --shadow-card-hover: 0 18px 38px -14px rgba(37, 37, 31, 0.14), 0 4px 10px -2px rgba(37, 37, 31, 0.06);
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
 /* ---------- Vệt chuột ---------- */
-.cursor-trail { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 2147483000; pointer-events: none; }
-
-/* ---------- Nền & chữ ---------- */
-:is(html[data-surface="app"], html[data-surface="console"]) body { background: var(--canvas); }
-:is(html[data-surface="app"], html[data-surface="console"]) main { color: var(--ink); }
-:is(html[data-surface="app"], html[data-surface="console"]) main[class*="bg-[#F7F7F5]"] { background: var(--canvas); }
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2) { letter-spacing: -.02em; }
-:is(html[data-surface="app"], html[data-surface="console"]) main h1 { font-size: clamp(24px, 2.2vw, 30px); line-height: 1.2; }
-
-/* ---------- Thẻ: phẳng, viền mảnh, bo vừa phải ---------- */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="shadow-sm"], [class*="shadow-md"], [class*="shadow-lg"], [class*="shadow-xs"], .shadow) {
-  box-shadow: none;
-}
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-2xl, .rounded-3xl) { border-radius: 14px; }
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-xl) { border-radius: var(--radius); }
-:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="border-[#E9E9E7]"], .border-card-border, .border-border-light) { border-color: var(--line); }
-/* Thẻ lồng trong thẻ: thẻ con bỏ viền, dùng nền nhạt để tách nhóm */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-2xl, .rounded-xl).bg-white :is(.rounded-2xl, .rounded-xl).bg-white.border {
-  border-color: transparent; background: #fbfaf8;
-}
-/* Khối "nhấn cam" (nền cam nhạt, viền cam) chuyển về trung tính, chỉ giữ vạch cam bên trái */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="bg-[#FFF3EB]"], [class*="bg-[#FFF7F2]"], [class*="bg-accent-soft"], [class*="bg-orange-50"]):not(button):not(a):not(span) {
-  background: #fbfaf8; border-color: var(--line); box-shadow: inset 3px 0 0 var(--accent);
+.cursor-trail {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 2147483000;
+  pointer-events: none;
 }
 
-/* ---------- Cam chỉ cho hành động ---------- */
-/* Chữ cam không phải link/nút (tiêu đề, số tiền, nhãn) -> mực đậm */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, h4, p, span, strong, dd, dt, td, div, li, small, b):is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not(.material-symbols-outlined):not([class*="bg-"]) {
+/* ---------- Nền Editorial ấm & Ánh sáng dịu đầu trang ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) body {
+  position: relative;
+  background-color: var(--canvas);
+  background-image:
+    radial-gradient(ellipse 80% 420px at 50% 0%, rgba(231, 226, 216, 0.85) 0%, rgba(242, 242, 237, 0) 75%),
+    radial-gradient(circle 520px at 90% 80px, rgba(252, 108, 38, 0.055) 0%, transparent 70%);
+  background-attachment: fixed;
   color: var(--ink);
 }
-/* Link chữ cam ("Xem", "Chi tiết →") -> mực đậm, gạch chân khi trỏ */
-:is(html[data-surface="app"], html[data-surface="console"]) main a:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]),
-:is(html[data-surface="app"], html[data-surface="console"]) main button:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]):not([class*="border"]) {
-  color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--line-strong);
-  text-underline-offset: 4px; text-decoration-thickness: 1px;
-  transition: color .18s var(--ease), text-decoration-color .18s var(--ease);
+
+:is(html[data-surface="app"], html[data-surface="console"]) main {
+  color: var(--ink);
+  background: transparent !important;
 }
-:is(html[data-surface="app"], html[data-surface="console"]) main a:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]):hover,
-:is(html[data-surface="app"], html[data-surface="console"]) main button:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]):not([class*="border"]):hover {
-  color: var(--accent-ink); text-decoration-color: var(--accent);
+
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-section-bg, .bg-surface-bg, .bg-soft-bg, .bg-bg-light, .bg-surface-alt)[class*="min-h"] {
+  background: transparent !important;
 }
-/* Viền cam của khung không phải nút -> viền trung tính */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(div, section, article, li, aside, a):is([class*="border-[#FDBA8C]"], [class*="border-[#FED7AA]"], .border-orange-200, [class*="border-[#FC6C26]"], .border-brand-accent):not([data-active="true"]) {
+
+/* ---------- Typography tạp chí (Editorial) ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3) {
+  letter-spacing: -0.022em;
+}
+
+:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="bg-[#25251F]"], [class*="bg-[#1F1F1D]"]) :is(h1, h2, h3) {
+  color: #faf8f2 !important;
+}
+
+:is(html[data-surface="app"], html[data-surface="console"]) main h1 {
+  font-size: clamp(26px, 2.5vw, 34px);
+  font-weight: 800;
+  line-height: 1.16;
+}
+
+:is(html[data-surface="app"], html[data-surface="console"]) main .ui-money,
+:is(html[data-surface="app"], html[data-surface="console"]) main .tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Topbar / Header: Frosted Warm Ivory (giống thẻ Auth) ---------- */
+html:not([data-surface="home"]) .site-header:not(.auth-overlay),
+html:not([data-surface="home"]) .site-header.auth-overlay.is-scrolled {
+  background: rgba(250, 248, 242, 0.86) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid rgba(214, 211, 203, 0.75) !important;
+  box-shadow: 0 8px 28px -16px rgba(37, 37, 31, 0.12) !important;
+}
+
+/* ---------- Hệ thống Thẻ (Cards): Trắng ngà sắc nét, viền ấm, bóng mềm ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-2xl, .rounded-3xl) {
+  border-radius: var(--radius-card);
+}
+
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-xl) {
+  border-radius: var(--radius-inner);
+}
+
+:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="border-[#E9E9E7]"], .border-card-border, .border-border-light) {
   border-color: var(--line);
 }
-/* Icon cam trang trí -> xám mực */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, h2, h3, span, div, li) > .material-symbols-outlined:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]) { color: var(--ink-2); }
-/* Số liệu xanh/cam trong ô thống kê -> mực đậm, số dạng bảng */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, strong, span)[class*="text-[#047857]"][class*="text-2xl"],
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, strong, span)[class*="text-[#047857]"][class*="text-3xl"],
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, strong, span):is([class*="text-[#B45309]"], [class*="text-[#D97706]"]):is([class*="text-2xl"], [class*="text-3xl"]) { color: var(--ink); }
-:is(html[data-surface="app"], html[data-surface="console"]) main .ui-money { font-variant-numeric: tabular-nums; }
 
-/* ---------- Badge trạng thái: gọn, góc vuông nhẹ ---------- */
-:is(html[data-surface="app"], html[data-surface="console"]) main span.rounded-full:is([class*="text-[11px]"], [class*="text-xs"], [class*="text-[10px]"]):not(.material-symbols-outlined) {
-  border-radius: 6px; padding: 2px 8px; font-weight: 600; letter-spacing: 0; line-height: 18px;
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-white, [class*="bg-card-bg"], .bg-surface-container-lowest):is(.rounded-xl, .rounded-2xl, .rounded-3xl) {
+  background-color: var(--paper);
+  border-color: var(--line);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.22s var(--ease), box-shadow 0.22s var(--ease), transform 0.22s var(--ease);
 }
 
-/* ---------- Bảng ---------- */
-:is(html[data-surface="app"], html[data-surface="console"]) main table { border-collapse: collapse; }
-:is(html[data-surface="app"], html[data-surface="console"]) main thead th {
-  font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3);
-  background: #fbfaf8; border-bottom: 1px solid var(--line);
-}
-:is(html[data-surface="app"], html[data-surface="console"]) main tbody tr { transition: background-color .15s var(--ease); }
-:is(html[data-surface="app"], html[data-surface="console"]) main tbody tr:hover { background: #faf8f4; }
-:is(html[data-surface="app"], html[data-surface="console"]) main tbody td { border-color: #efede8; vertical-align: middle; }
-:is(html[data-surface="app"], html[data-surface="console"]) main td :is([class*="font-mono"]) { color: var(--ink-3); font-size: 11px; }
-
-/* ---------- Ô nhập ---------- */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
-  border-color: var(--line-strong); transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
-}
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(input, select, textarea):hover { border-color: #b9b5aa; }
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(input, select, textarea):focus {
-  outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgb(31 31 29 / .08);
+/* Thẻ con lồng bên trong thẻ trắng: chuyển sang nền giấy kem ấm để phân tầng rõ ràng */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-2xl, .rounded-3xl).bg-white :is(.rounded-2xl, .rounded-xl).bg-white.border {
+  background-color: var(--paper-warm);
+  border-color: #ebe9e1;
+  box-shadow: none;
 }
 
-/* ---------- Nút: đổi màu khi trỏ chuột (mọi màn, kể cả header) ---------- */
-:is(main, .site-header, footer) :is(button, a[role="button"], a[class*="rounded"][class*="px-"], label[class*="rounded"][class*="px-"]) {
-  transition: background-color .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
-}
-/* Nút chính (nền cam) -> chuyển sang mực đậm, nhích lên 1px */
-:is(main, .site-header) :is(button, a, label):is([class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-primary"], [class*="bg-orange-brand"]):not(:disabled):not([aria-current]):hover {
-  background-color: var(--ink) !important; border-color: var(--ink) !important; color: #fff !important;
-  transform: translateY(-1px); box-shadow: 0 6px 16px -8px rgb(31 31 29 / .55);
-}
-:is(main, .site-header) :is(button, a):is([class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-primary"]):not(:disabled):active { transform: translateY(0); box-shadow: none; }
-/* Nút phụ (nền trắng có viền) -> nền cam nhạt, viền & chữ cam */
-:is(main, .site-header) :is(button, a, label)[class*="border"]:is(.bg-white, [class*="bg-transparent"], :not([class*="bg-"])):is([class*="px-"], [class*="h-"]):not(:disabled):not([aria-current]):not([role="tab"]):not(:has(> img)):hover {
-  background-color: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink);
-}
-/* Nút xanh (Zalo...) và nút đỏ (Từ chối, Huỷ) cũng đậm lên khi trỏ */
-main :is(button, a)[class*="bg-emerald"]:not(:disabled):hover,
-main :is(button, a)[class*="bg-[#047857]"]:not(:disabled):hover { filter: brightness(.88); transform: translateY(-1px); }
-main :is(button, a):is([class*="bg-red-6"], [class*="bg-[#DC2626]"], [class*="bg-[#B91C1C]"]):not(:disabled):hover { filter: brightness(.85); transform: translateY(-1px); }
-main :is(button, a)[class*="text-red"][class*="border"]:not(:disabled):hover { background-color: #fef2f2; border-color: #dc2626; color: #b91c1c; }
-:is(main, .site-header) button:disabled { cursor: not-allowed; }
-
-/* ---------- Khu quản trị (chủ xe, admin) ---------- */
-html[data-surface="console"] main > div > aside nav,
-html[data-surface="console"] main > div > aside > div > div:first-child { border-radius: 14px; }
-/* Mục đang chọn: nền mực nhạt + vạch cam thay cho khối cam đặc */
-html[data-surface="console"] aside nav a[aria-current="page"] {
-  background: #efede7 !important; color: var(--ink) !important; font-weight: 700;
-  box-shadow: inset 3px 0 0 var(--accent) !important;
-}
-html[data-surface="console"] aside nav a[aria-current="page"] .material-symbols-outlined { color: var(--accent) !important; }
-html[data-surface="console"] aside nav a[aria-current="page"] span[class*="bg-white/20"] { background: #fff !important; color: var(--ink) !important; }
-html[data-surface="console"] aside nav a:not([aria-current="page"]):hover { background: #f4f2ed; }
-html[data-surface="console"] aside nav a:not([aria-current="page"]):hover .material-symbols-outlined { color: var(--ink); }
-html[data-surface="console"] .nav-group-label {
-  padding: 14px 14px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
-}
-html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
-
-@media (prefers-reduced-motion: reduce) {
-  .cursor-trail { display: none; }
+/* Khối thông báo nhấn cam (Cần bạn xử lý / Việc cần làm) */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(section, div):is([class*="bg-[#FFF3EB]"], [class*="bg-[#FFF7F2]"]) {
+  background: linear-gradient(135deg, #fff9f5 0%, #fff3eb 100%);
+  border-color: #fdba8c;
+  box-shadow: inset 4px 0 0 var(--accent), var(--shadow-card);
 }
 
-/* ---------- Video nền cho các trang bên trong (trừ trang chủ, đăng nhập/đăng ký) ---------- */
-.app-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
-  background: #7a1f5c url("/images/app-background.jpg") center 45% / cover no-repeat; }
-/* Không phủ cả màn hình. Chữ nằm thẳng trên video có quầng sáng màu kem nhẹ để dễ đọc;
-   chữ trong thẻ trắng có quầng trùng màu nền nên không nhìn thấy. */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, p, span, a, label, li, dt, dd, nav, small) {
-  text-shadow: 0 0 1px #faf8f2, 0 0 2px #faf8f2, 0 0 3px #faf8f2, 0 0 4px #faf8f2, 0 0 8px rgb(250 248 242 / .95), 0 0 16px rgb(250 248 242 / .85), 0 0 28px rgb(250 248 242 / .7);
-}
-/* Chữ xám nhạt nằm thẳng trên video (phần đầu trang, dòng tóm tắt) chuyển sang màu mực để đủ tương phản. */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, p, span, nav, a):is([class*="text-[#666666]"], .text-muted-gray, .text-text-secondary, [class*="text-[#8A887F]"]) { color: #3a3934; }
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(button, [class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-emerald"], [class*="bg-[#1F1F1D]"], .text-white),
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(button, [class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-emerald"], [class*="bg-[#1F1F1D]"], .text-white) * { text-shadow: none; }
-/* Bỏ nền đặc của trang để thấy video; thẻ nội dung vẫn trắng. */
-:is(html[data-surface="app"], html[data-surface="console"]) body { background: transparent; }
-:is(html[data-surface="app"], html[data-surface="console"]) main,
-:is(html[data-surface="app"], html[data-surface="console"]) main[class*="bg-[#F7F7F5]"],
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-section-bg, .bg-surface-bg, .bg-soft-bg, .bg-bg-light, .bg-surface-alt)[class*="min-h"] { background: transparent; }
-:is(html[data-surface="app"], html[data-surface="console"]) footer { background: rgb(250 248 242 / .92); }
-
-/* Chữ nằm thẳng trên video nền (không nằm trong thẻ/khối có nền) chuyển sang cam để nổi trên cảnh biển. */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, p, span, nav, a, li, small):not(:is(.bg-white, [class*="bg-white"], [class*="bg-[#F"], [class*="bg-[#E"], [class*="bg-[#D"], [class*="bg-[#1"], [class*="bg-emerald"], [class*="bg-red"], [class*="bg-amber"], [class*="bg-blue"], button, table, form, article, aside, [class*="rounded-2xl"], [class*="rounded-xl"], [class*="rounded-lg"]):not(main) *):not(button):not([class*="bg-"]) {
-  color: #fff;
-  text-shadow: 0 1px 2px rgb(40 20 5 / .75), 0 0 8px rgb(40 20 5 / .55), 0 0 18px rgb(40 20 5 / .35);
-}
-
-/* =====================================================================
-   Liquid Glass (phong cách Apple): kính trong mờ, làm mờ + tăng bão hoà nền phía sau,
-   viền sáng mảnh, vệt phản chiếu ở mép trên và bóng mềm. Áp cho topbar, các ô/thẻ,
-   ô nhập liệu và pop-up ở mọi trang trừ trang chủ.
-   ===================================================================== */
-:root {
-  --glass-bg: rgb(255 255 255 / .74);
-  --glass-bg-strong: rgb(255 255 255 / .84);
-  --glass-border: rgb(255 255 255 / .65);
-  --glass-edge: rgb(31 31 29 / .08);
-  --glass-blur: blur(22px) saturate(185%);
-  --glass-shine: inset 0 1px 0 rgb(255 255 255 / .85), inset 0 -1px 0 rgb(255 255 255 / .25), inset 0 0 0 1px rgb(255 255 255 / .35);
-  --glass-shadow: 0 10px 30px -12px rgb(20 30 40 / .28), 0 2px 6px -2px rgb(20 30 40 / .12);
-}
-.glass-surface,
-html:not([data-surface="home"]) .site-header:not(.auth-overlay),
-html:not([data-surface="home"]) .site-header.auth-overlay.is-scrolled {
-  background: var(--glass-bg) !important;
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
-  border-color: var(--glass-border) !important;
-  box-shadow: var(--glass-shine), var(--glass-shadow) !important;
-}
-/* Topbar: một dải kính nổi, viền đáy sáng như mép kính. */
-html:not([data-surface="home"]) .site-header:not(.auth-overlay),
-html:not([data-surface="home"]) .site-header.auth-overlay.is-scrolled {
-  background: linear-gradient(180deg, rgb(255 255 255 / .62), rgb(255 255 255 / .42)) !important;
-  border-bottom: 1px solid var(--glass-border) !important;
-}
-html:not([data-surface="home"]) .site-header nav a[aria-current="page"],
-html:not([data-surface="home"]) .site-header nav a[class*="bg-[#FFF"] {
-  background: rgb(255 255 255 / .55) !important; box-shadow: var(--glass-shine);
-}
-
-/* Các ô/thẻ nội dung nền trắng trong trang: chuyển thành tấm kính. */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-white, [class*="bg-white/"]):is(.rounded-xl, .rounded-2xl, .rounded-3xl) {
-  background: var(--glass-bg) !important;
-  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
-  border-color: var(--glass-border) !important;
-  box-shadow: var(--glass-shine), var(--glass-shadow) !important;
-}
-/* Kính lồng trong kính: lớp trong nhẹ hơn, không làm mờ lần hai (đỡ nặng máy, đỡ đục). */
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-white, [class*="bg-white/"]):is(.rounded-xl, .rounded-2xl, .rounded-3xl) :is(.bg-white, [class*="bg-white/"]):is(.rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-lg) {
-  background: rgb(255 255 255 / .38) !important; -webkit-backdrop-filter: none; backdrop-filter: none;
-  box-shadow: var(--glass-shine) !important;
-}
-/* Ô nhập liệu: kính mỏng, rõ chữ. */
+/* ---------- Ô nhập liệu (Inputs, Selects, Textareas) ---------- */
 :is(html[data-surface="app"], html[data-surface="console"]) main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
-  background-color: rgb(255 255 255 / .6) !important;
-  border-color: rgb(255 255 255 / .75) !important;
-  box-shadow: inset 0 1px 2px rgb(20 30 40 / .08), 0 1px 0 rgb(255 255 255 / .6);
-}
-:is(html[data-surface="app"], html[data-surface="console"]) main :is(input, select, textarea):focus {
-  background-color: rgb(255 255 255 / .85) !important; border-color: rgb(252 108 38 / .7) !important;
-  box-shadow: 0 0 0 4px rgb(252 108 38 / .15);
+  background-color: #f8f7f3;
+  border-color: var(--line-strong);
+  color: var(--ink);
+  transition: background-color 0.18s var(--ease), border-color 0.18s var(--ease), box-shadow 0.18s var(--ease);
 }
 
-/* Pop-up: hộp thoại, menu tài khoản, menu di động, thông báo. */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea):hover {
+  background-color: #ffffff;
+  border-color: #b5b1a4;
+}
+
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea):focus {
+  outline: none;
+  background-color: #ffffff;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(252, 108, 38, 0.16);
+}
+
+/* ---------- Nút bấm (Buttons & Interactive Links) ---------- */
+:is(main, .site-header, footer) :is(button, a[role="button"], a[class*="rounded"][class*="px-"], label[class*="rounded"][class*="px-"]) {
+  transition: background-color 0.2s var(--ease), color 0.2s var(--ease), border-color 0.2s var(--ease), transform 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+
+/* Nút chính (Cam CarDB -> Than ấm #25251F khi hover, giống phong cách Editorial) */
+:is(main, .site-header) :is(button, a, label):is([class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-primary"], [class*="bg-orange-brand"]):not(:disabled):not([aria-current]):hover {
+  background-color: var(--ink) !important;
+  border-color: var(--ink) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -10px rgba(37, 37, 31, 0.5);
+}
+
+:is(main, .site-header) :is(button, a):is([class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-primary"]):not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Nút phụ có viền */
+:is(main, .site-header) :is(button, a, label)[class*="border"]:is(.bg-white, [class*="bg-transparent"], :not([class*="bg-"])):is([class*="px-"], [class*="h-"]):not(:disabled):not([aria-current]):not([role="tab"]):not(:has(> img)):hover {
+  background-color: var(--accent-wash);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* Nút xanh / đỏ */
+main :is(button, a)[class*="bg-emerald"]:not(:disabled):hover,
+main :is(button, a)[class*="bg-[#047857]"]:not(:disabled):hover {
+  filter: brightness(0.92);
+  transform: translateY(-1px);
+}
+main :is(button, a):is([class*="bg-red-6"], [class*="bg-[#DC2626]"], [class*="bg-[#B91C1C]"]):not(:disabled):hover {
+  filter: brightness(0.9);
+  transform: translateY(-1px);
+}
+:is(main, .site-header) button:disabled {
+  cursor: not-allowed;
+}
+
+/* ---------- Bảng dữ liệu (Tables) ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) main table {
+  border-collapse: collapse;
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main thead th {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: #f6f4ee;
+  border-bottom: 1px solid var(--line);
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main tbody tr {
+  transition: background-color 0.15s var(--ease);
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main tbody tr:hover {
+  background: #faf8f3;
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main tbody td {
+  border-color: #eceae2;
+  vertical-align: middle;
+}
+
+/* ---------- Khu Quản trị Chủ xe & Admin (Console Sidebar) ---------- */
+html[data-surface="console"] aside nav a[aria-current="page"] {
+  background: var(--ink) !important;
+  color: #faf8f2 !important;
+  font-weight: 700;
+  box-shadow: 0 6px 16px -6px rgba(37, 37, 31, 0.35) !important;
+}
+html[data-surface="console"] aside nav a[aria-current="page"] .material-symbols-outlined {
+  color: var(--accent) !important;
+}
+html[data-surface="console"] aside nav a:not([aria-current="page"]):hover {
+  background: #f3f1ea;
+}
+html[data-surface="console"] .nav-group-label {
+  padding: 14px 14px 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+html[data-surface="console"] .nav-group-label:first-child {
+  padding-top: 6px;
+}
+
+/* ---------- Pop-up, Modal, Dropdown Menu (Frosted Ivory Glass) ---------- */
 html:not([data-surface="home"]) [role="dialog"],
 html:not([data-surface="home"]) .site-header nav[id^="account-menu"],
 html:not([data-surface="home"]) .header-mobile-navigation {
-  background: var(--glass-bg-strong) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
-  border: 1px solid var(--glass-border) !important;
-  box-shadow: var(--glass-shine), 0 24px 60px -20px rgb(20 30 40 / .45), 0 4px 12px -4px rgb(20 30 40 / .15) !important;
+  background: rgba(252, 250, 245, 0.96) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 24px 60px -18px rgba(37, 37, 31, 0.28), 0 4px 12px -4px rgba(37, 37, 31, 0.1) !important;
 }
-/* Nền tối phía sau hộp thoại: nhạt hơn và làm mờ để thấy lớp kính. */
-html:not([data-surface="home"]) [role="presentation"][class*="fixed"][class*="inset-0"],
-html:not([data-surface="home"]) div[class*="fixed"][class*="inset-0"][class*="bg-[#292929]"] {
-  background: rgb(20 30 40 / .22) !important;
-  -webkit-backdrop-filter: blur(6px) saturate(120%); backdrop-filter: blur(6px) saturate(120%);
-}
+
 html:not([data-surface="home"]) .toast {
-  background: rgb(31 31 29 / .62) !important; color: #fff;
-  -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgb(255 255 255 / .22) !important;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / .25), 0 18px 40px -16px rgb(0 0 0 / .5) !important;
+  background: rgba(37, 37, 31, 0.92) !important;
+  color: #faf8f2;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow: 0 18px 40px -16px rgba(0, 0, 0, 0.45) !important;
 }
-/* Trình duyệt không hỗ trợ làm mờ nền: dùng nền gần đặc để vẫn đọc được. */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  :root { --glass-bg: rgb(255 255 255 / .9); --glass-bg-strong: rgb(255 255 255 / .96); }
+
+/* ---------- Tiện ích Editorial dùng chung ---------- */
+.editorial-hero-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid #dedad0;
+  background:
+    radial-gradient(circle 380px at 92% 20%, rgba(252, 108, 38, 0.14), transparent 70%),
+    linear-gradient(135deg, #eae6dc 0%, #f4f2eb 58%, #ece8de 100%);
+  box-shadow: 0 12px 32px -16px rgba(37, 37, 31, 0.1);
+}
+
+.editorial-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6c6c61;
+}
+
+.editorial-kicker::before {
+  content: "";
+  display: inline-block;
+  width: 18px;
+  height: 2px;
+  border-radius: 999px;
+  background: #fc6c26;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-trail {
+    display: none;
+  }
 }

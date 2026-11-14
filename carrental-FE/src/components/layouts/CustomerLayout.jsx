@@ -5,11 +5,6 @@ import { Interactions } from "@/components/Interactions.jsx";
 import { ReferenceFooter } from "@/components/ReferenceFooter.jsx";
 import { CursorTrail } from "@/components/CursorTrail.jsx";
 
-/** Ảnh nền (cảng biển) cố định phía sau các trang bên trong. */
-function AppBackground() {
-    return <div className="app-bg" aria-hidden="true"/>;
-}
-
 // "home": trang chủ giữ nguyên thiết kế cũ; "console": khu chủ xe/admin; "app": các màn còn lại.
 function surfaceOf(pathname) {
     if (pathname === "/") return "home";
@@ -27,7 +22,6 @@ export default function CustomerLayout({ children }) {
         <a href="#noi-dung" className="skip-link">Đến nội dung chính</a>
         <Header />
         <Interactions><div id="noi-dung">{children}</div>{surface === "console" ? null : <ReferenceFooter />}</Interactions>
-        {surface === "app" || surface === "console" ? <AppBackground /> : null}
         <CursorTrail />
     </>;
 }
