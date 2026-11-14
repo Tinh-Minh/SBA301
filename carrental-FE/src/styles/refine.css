@@ -103,6 +103,14 @@ html:not([data-surface="home"]) .site-header.auth-overlay.is-scrolled {
   transition: border-color 0.22s var(--ease), box-shadow 0.22s var(--ease), transform 0.22s var(--ease);
 }
 
+/* Thẻ đang được chọn (chọn xe, chọn gói, chọn phương án…): giữ viền cam + vòng sáng, không bị quy tắc thẻ trắng ở trên đè mất. */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is([aria-pressed="true"], [aria-checked="true"], [aria-selected="true"], [data-active="true"]):is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl),
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-xl, .rounded-2xl).bg-white[class*="border-[#FC6C26]"] {
+  border-color: var(--accent) !important;
+  background-color: #fff8f3;
+  box-shadow: 0 0 0 3px rgb(252 108 38 / .18), var(--shadow-card) !important;
+}
+
 /* Thẻ con lồng bên trong thẻ trắng: chuyển sang nền giấy kem ấm để phân tầng rõ ràng */
 :is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-2xl, .rounded-3xl).bg-white :is(.rounded-2xl, .rounded-xl).bg-white.border {
   background-color: var(--paper-warm);
