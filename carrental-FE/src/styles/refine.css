@@ -159,3 +159,8 @@ html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
 :is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-section-bg, .bg-surface-bg, .bg-soft-bg, .bg-bg-light, .bg-surface-alt)[class*="min-h"] { background: transparent; }
 :is(html[data-surface="app"], html[data-surface="console"]) footer { background: rgb(250 248 242 / .92); }
 @media (prefers-reduced-motion: reduce) { .app-bg-video { display: none; } }
+
+/* Chữ nằm thẳng trên video nền (không nằm trong thẻ/khối có nền) chuyển sang cam để nổi trên cảnh biển. */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, p, span, nav, a, li, small):not(:is(.bg-white, [class*="bg-white"], [class*="bg-[#F"], [class*="bg-[#E"], [class*="bg-[#D"], [class*="bg-[#1"], [class*="bg-emerald"], [class*="bg-red"], [class*="bg-amber"], [class*="bg-blue"], button, table, form, article, aside, [class*="rounded-2xl"], [class*="rounded-xl"], [class*="rounded-lg"]):not(main) *):not(button):not([class*="bg-"]) {
+  color: #e65a12;
+}
