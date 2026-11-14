@@ -95,6 +95,8 @@ public record BookingResponse(
         var car = b.getCar();
         // Số điện thoại hai bên chỉ hiện khi đơn còn hiệu lực (đã gửi yêu cầu trở đi), không lộ ra đơn bị từ chối.
         boolean sharePhones = b.getStatus() != BookingStatus.REJECTED && b.getStatus() != BookingStatus.EXPIRED;
+        // Tên và số điện thoại chủ xe chỉ hiện cho khách sau khi đã thanh toán cọc.
+        boolean shareOwner = sharePhones && b.getDepositStatus() == PaymentStatus.PAID;
         String vCode = b.getVoucher() != null ? b.getVoucher().getCode() : null;
         BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
         PaymentStatus depStatus = b.getDepositStatus() != null ? b.getDepositStatus() : PaymentStatus.UNPAID;
@@ -106,8 +108,8 @@ public record BookingResponse(
                 car.getPickupAddress(),
                 b.getCustomer().getId(), b.getCustomer().getFullName(),
                 sharePhones ? (b.getContactPhone() != null ? b.getContactPhone() : b.getCustomer().getPhone()) : null,
-                b.getOwner().getId(), b.getOwner().getFullName(),
-                sharePhones ? (car.getContactPhone() != null ? car.getContactPhone() : b.getOwner().getPhone()) : null,
+                b.getOwner().getId(), shareOwner ? b.getOwner().getFullName() : null,
+                shareOwner ? (car.getContactPhone() != null ? car.getContactPhone() : b.getOwner().getPhone()) : null,
                 b.getPickupAt(), b.getReturnAt(), b.getRentalDays(), b.getRentalHours(),
                 b.getPricePerDay(), b.getPricePerHour(), b.getDayAmount(), b.getHourAmount(), b.getRentalAmount(),
                 b.getDepositAmount(), b.getKmLimitPerDay(), b.getExtraKmFee(), b.getLateFeePerHour(),

@@ -141,7 +141,7 @@ function Trip({ id }) {
         </section>
         <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm shadow-sm">
           <h2 className="mb-2 font-bold">{role === "owner" ? "Khách thuê" : "Chủ xe"}</h2>
-          <p className="font-semibold">{role === "owner" ? b.customerName : b.ownerName}</p>
+          <p className="font-semibold">{role === "owner" ? b.customerName : (b.ownerName ?? <span className="font-normal text-[#8A887F]">Hiển thị sau khi bạn thanh toán tiền cọc</span>)}</p>
           {(role === "owner" ? b.customerPhone : b.ownerPhone) ? <a href={`tel:${role === "owner" ? b.customerPhone : b.ownerPhone}`} className="mt-1 inline-flex items-center gap-1 font-bold text-[#FC6C26]"><Icon name="call" className="text-[16px]"/>{role === "owner" ? b.customerPhone : b.ownerPhone}</a> : null}
           {b.customerNote ? <p className="mt-2 text-[#666666]">Lời nhắn của khách: {b.customerNote}</p> : null}
           {role === "customer" && b.ownerContactedAt ? <p className="mt-2 text-[#065F46]">Chủ xe đã liên hệ lúc {formatDateTime(b.ownerContactedAt)}.</p> : null}

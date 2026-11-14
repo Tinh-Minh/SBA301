@@ -1,5 +1,6 @@
 package com.carrental.service;
 
+import com.carrental.dto.response.OwnerRatingResponse;
 import com.carrental.dto.request.CreateReviewRequest;
 import com.carrental.dto.response.CarReviewSummaryResponse;
 import com.carrental.dto.response.PageResponse;
@@ -32,4 +33,6 @@ public interface ReviewService {
 
     /** Kiểm tra xem tài khoản hiện tại có đủ điều kiện đánh giá xe hay không. */
     ReviewEligibilityResponse checkEligibility(Long carId);
+
+    OwnerRatingResponse ownerRating(Long ownerId);
 }

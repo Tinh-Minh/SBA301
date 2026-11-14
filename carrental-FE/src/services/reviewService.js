@@ -9,6 +9,8 @@ export const reviewService = {
     }),
     /** GET /api/cars/{carId}/reviews */
     byCar: (carId) => request(`/api/cars/${carId}/reviews`, { auth: false }),
+    /** Số sao công khai của chủ xe (không kèm thông tin cá nhân). */
+    ownerRating: (ownerId) => request(`/api/reviews/owners/${ownerId}/rating`, { auth: false }),
     /** GET /api/cars/{carId}/reviews/eligibility */
     checkEligibility: (carId) => request(`/api/cars/${carId}/reviews/eligibility`),
     /** POST /api/reviews/{id}/reply { reply } — chủ xe phản hồi đánh giá */

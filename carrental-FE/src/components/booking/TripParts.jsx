@@ -48,7 +48,7 @@ export function TripCard({ booking, role, highlight }) {
         <StatusBadge meta={bookingStatusMeta[booking.status]}/>
       </div>
       <p className="mt-1 text-sm text-[#666666]">{formatDateTime(booking.pickupAt)} → {formatDateTime(booking.returnAt)} • {durationLabel(booking.rentalDays, booking.rentalHours)}</p>
-      <p className="mt-1 flex flex-wrap justify-between gap-2 text-sm"><span className="text-[#666666]">{role === "owner" ? `Khách: ${booking.customerName}` : `Chủ xe: ${booking.ownerName}`}</span><b className="tabular-nums text-[#1F1F1D]">{formatMoney(booking.finalAmount ?? booking.rentalAmount)}</b></p>
+      <p className="mt-1 flex flex-wrap justify-between gap-2 text-sm"><span className="text-[#666666]">{role === "owner" ? `Khách: ${booking.customerName}` : `Chủ xe: ${booking.ownerName ?? "hiện sau khi cọc"}`}</span><b className="tabular-nums text-[#1F1F1D]">{formatMoney(booking.finalAmount ?? booking.rentalAmount)}</b></p>
       {highlight ? <p className="mt-1 text-xs font-bold text-[#B45309]">{highlight}</p> : null}
     </div>
   </Link>;

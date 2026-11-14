@@ -52,9 +52,11 @@ function Body({ car }) {
     const features = parseFeatures(car.features);
     const dayPrice = car.rentalPricePerDay || car.pricePerDay || 0;
     const monthPrice = car.rentalPricePerMonth;
-    const contactName = car.contactName || car.ownerFullName || "Chủ xe";
+    // Trang công khai không có thông tin liên hệ chủ xe (BE ẩn); chỉ chủ xe/admin xem tin của mình mới có.
     const phone = car.contactPhone || "";
     const zalo = car.contactZalo || car.contactPhone || "";
+    const ownerRating = useApiQuery(["owner-rating", car.ownerId], () => reviewService.ownerRating(car.ownerId), { requiresAuth: false, enabled: Boolean(car.ownerId) });
+    const rating = ownerRating.data;
     const displayedImage = resolveAssetUrl(activeImage) || carImage(car);
 
     return (
@@ -129,18 +131,19 @@ function Body({ car }) {
             <BookingPanel car={car}/>
             <aside className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
                 <h2 className="text-sm font-bold uppercase tracking-wide text-[#292929]">Chủ xe</h2>
-                <div className="mt-3 flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#FC6C26] text-lg font-bold text-white">{contactName.charAt(0).toUpperCase()}</div>
-                    <div>
-                        <p className="font-bold text-[#292929]">{contactName}</p>
-                        <span className="text-xs font-medium text-[#059669]">✓ Đã xác thực danh tính</span>
-                    </div>
+                <div className="mt-3 flex items-center gap-2">
+                    {rating?.reviewCount ? <>
+                        <span className="flex text-[20px] leading-none text-[#F5A623]" aria-hidden="true">{[1, 2, 3, 4, 5].map(i => <span key={i} className={i <= Math.round(rating.averageRating) ? "" : "text-[#E7E5DF]"}>★</span>)}</span>
+                        <span className="text-sm"><b>{rating.averageRating.toLocaleString("vi-VN")}</b><span className="text-[#8A887F]">/5 · {rating.reviewCount} đánh giá</span></span>
+                    </> : <span className="text-sm text-[#8A887F]">{ownerRating.loading ? "Đang tải đánh giá…" : "Chủ xe chưa có đánh giá"}</span>}
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-2">
+                <p className="mt-1 text-xs font-medium text-[#059669]">✓ Đã xác thực danh tính</p>
+                {phone || zalo ? <div className="mt-4 grid grid-cols-2 gap-2">
                     {phone ? <a href={`tel:${phone}`} className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E9E9E7] py-2.5 text-sm font-bold text-[#292929]"><Icon name="call" className="text-[18px]"/>{phone}</a> : null}
                     {zalo ? <a href={`https://zalo.me/${zalo.replace(/\s+/g, "")}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-1.5 rounded-xl border border-[#0068FF] bg-[#F0F6FF] py-2.5 text-sm font-bold text-[#0068FF]">Zalo</a> : null}
                 </div>
-                {monthPrice ? <p className="mt-3 text-xs text-[#666666]">Thuê theo tháng: liên hệ chủ xe, giá tham khảo {formatMoney(monthPrice)}/tháng.</p> : null}
+                : <p className="mt-3 rounded-lg bg-[#FBFAF8] px-3 py-2 text-xs text-[#57564F]">Tên và số điện thoại chủ xe sẽ hiển thị trong đơn thuê sau khi bạn thanh toán tiền cọc.</p>}
+                {monthPrice ? <p className="mt-3 text-xs text-[#666666]">Thuê theo tháng: giá tham khảo {formatMoney(monthPrice)}/tháng, trao đổi với chủ xe sau khi đặt cọc.</p> : null}
                 <Link to="/explore" className="mt-3 block text-center text-xs font-semibold text-[#666666] hover:text-[#FC6C26]">← Xem xe khác</Link>
             </aside>
             </div>

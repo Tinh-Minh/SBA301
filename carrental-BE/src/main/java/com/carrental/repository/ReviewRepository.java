@@ -41,4 +41,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
     Double getApprovedAverageRatingByCarId(@Param("carId") Long carId);
 
     long countByCarIdAndApprovedTrue(Long carId);
+
+    @Query("SELECT COALESCE(AVG(r.rating), 0.0) FROM Review r WHERE r.car.owner.id = :ownerId AND r.approved = true")
+    Double getApprovedAverageRatingByOwnerId(@Param("ownerId") Long ownerId);
+
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.car.owner.id = :ownerId AND r.approved = true")
+    long countApprovedByOwnerId(@Param("ownerId") Long ownerId);
 }
