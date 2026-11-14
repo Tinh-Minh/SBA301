@@ -20,8 +20,9 @@ function fromParams(params) {
     const fallback = defaultWindow();
     return {
         city: params.get("city") || params.get("location") || "",
-        pickupAt: (params.get("pickupAt") || "").slice(0, 16),
-        returnAt: (params.get("returnAt") || "").slice(0, 16),
+        // Chưa chọn ngày thì dùng khung gợi ý (9:00 mai → 9:00 ngày kia) để hiện xe ngay.
+        pickupAt: (params.get("pickupAt") || fallback.pickupAt || "").slice(0, 16),
+        returnAt: (params.get("returnAt") || fallback.returnAt || "").slice(0, 16),
         carType: params.get("carType") || "",
         brand: params.get("brand") || "",
         seats: params.get("seats") || "",
