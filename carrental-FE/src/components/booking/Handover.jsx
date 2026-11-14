@@ -157,7 +157,7 @@ export function HandoverView({ handover, booking, mode, busy, error, onRespond, 
         Tôi không đồng ý với số tiền phí phát sinh (ghi lý do vào ô ghi chú)
       </label> : null}
       <button type="button" disabled={busy} onClick={respond} className="self-start rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{busy ? "Đang gửi…" : "Gửi xác nhận biên bản"}</button>
-      <p className="text-xs text-[#666666]">Chỉ khi tất cả các mục được đánh dấu “Đúng hiện trạng”, {handover.type === "PICKUP" ? "chuyến thuê mới bắt đầu" : "chuyến thuê mới hoàn tất"}.</p>
+      <p className="text-xs text-[#666666]">Chỉ khi tất cả các mục được đánh dấu “Đúng hiện trạng”, {handover.type === "PICKUP" ? "bạn mới mở khoá bước thanh toán số tiền còn lại để nhận xe" : "chuyến thuê mới hoàn tất"}.</p>
     </div> : null}
     {mode === "revise" && handover.type === "RETURN" && handover.status === "DISPUTED" ? <div className="mt-4 grid gap-2 sm:grid-cols-2">
       <label className="text-xs font-semibold text-[#666666]">Phí khác (đ) — sửa nếu khách không đồng ý<input type="number" min={0} value={newFee} onChange={e => setNewFee(e.target.value)} className={`${fieldClass} mt-1`}/></label>

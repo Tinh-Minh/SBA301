@@ -25,7 +25,7 @@ const ownerNavigation = [
     { code: "O02", href: ownerRoutes.vehicles, label: "Xe của tôi", icon: "garage_home", badgeKey: "cars" },
     { code: "O04", href: ownerRoutes.calendar, label: "Lịch hiển thị", icon: "calendar_month" },
     { code: "O05", href: ownerRoutes.subscriptions, label: "Gói đăng tin", icon: "workspace_premium" },
-    { code: "O07", href: ownerRoutes.payouts, label: "Giao dịch gói", icon: "account_balance_wallet" },
+    { code: "O07", href: ownerRoutes.payouts, label: "Kiểm soát dòng tiền", icon: "account_balance_wallet" },
 ];
 
 function OwnerContent() {
@@ -43,7 +43,7 @@ export const ownerPages = [
     page("owner", <AliasRedirect to="/owner/dashboard" />),
     page("owner/calendar", <OwnerCalendarPage />, "Lịch hiển thị tin"),
     page("owner/dashboard", <OwnerDashboardPage />, "Bảng điều khiển chủ xe"),
-    page("owner/payouts", <OwnerPayoutsPage />, "Giao dịch gói đăng tin"),
+    page("owner/payouts", <OwnerPayoutsPage />, "Kiểm soát dòng tiền với nền tảng"),
     page("owner/bookings", <OwnerBookingsPage />, "Đơn thuê xe"),
     page("owner/vehicles/:id/overview", <OwnerCarOverviewPage />, "Theo dõi xe"),
     page("owner/requests", <AliasRedirect to="/owner/bookings" />),

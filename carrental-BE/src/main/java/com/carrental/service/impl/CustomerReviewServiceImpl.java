@@ -60,9 +60,10 @@ public class CustomerReviewServiceImpl implements CustomerReviewService {
         }
         CustomerReview saved = customerReviewRepository.save(CustomerReview.builder()
                 .bookingId(bookingId).ownerId(user.getId()).customerId(b.getCustomer().getId())
-                .rating(rating).comment(text == null || text.isEmpty() ? null : text).build());
-        log.info("Chủ xe {} đánh giá khách {} cho đơn {}: {} sao", user.getId(), b.getCustomer().getId(), bookingId, rating);
-        return toItem(saved, user.getFullName());
+                .rating(rating).comment(text == null || text.isEmpty() ? null : text)
+                .approved(false).build());
+        log.info("Chủ xe {} đánh giá khách {} cho đơn {}: {} sao (chờ Admin duyệt)", user.getId(), b.getCustomer().getId(), bookingId, rating);
+        return toItem(saved, b, user.getFullName(), b.getCustomer().getFullName());
     }
 
     /** Chủ xe của đơn / admin / chính khách hàng xem đánh giá khách theo đơn kèm uy tín chung của khách. */
@@ -74,12 +75,16 @@ public class CustomerReviewServiceImpl implements CustomerReviewService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đơn thuê id=" + bookingId));
         boolean isOwner = b.getOwner().getId().equals(user.getId());
         boolean isCustomer = b.getCustomer().getId().equals(user.getId());
-        if (!isOwner && !isCustomer && !currentUserService.isAdmin(user)) {
+        boolean isAdmin = currentUserService.isAdmin(user);
+        if (!isOwner && !isCustomer && !isAdmin) {
             throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền với đơn thuê này");
         }
-        CustomerReviewItem review = customerReviewRepository.findByBookingId(bookingId)
-                .map(r -> toItem(r, b.getOwner().getFullName())).orElse(null);
-        boolean canReview = isOwner && review == null && b.getStatus() == BookingStatus.COMPLETED;
+        CustomerReview raw = customerReviewRepository.findByBookingId(bookingId).orElse(null);
+        // Khách thuê chỉ thấy đánh giá khi đã được Admin duyệt; Chủ xe của đơn và Admin thấy cả trạng thái chờ duyệt.
+        CustomerReviewItem review = (raw != null && (Boolean.TRUE.equals(raw.getApproved()) || isOwner || isAdmin))
+                ? toItem(raw, b, b.getOwner().getFullName(), b.getCustomer().getFullName())
+                : null;
+        boolean canReview = isOwner && raw == null && b.getStatus() == BookingStatus.COMPLETED;
         return new BookingCustomerReview(review, canReview, summary(b.getCustomer()));
     }
 
@@ -97,18 +102,80 @@ public class CustomerReviewServiceImpl implements CustomerReviewService {
         return summary(customer);
     }
 
-    private CustomerRatingSummary summary(Customer customer) {
-        List<CustomerReviewItem> items = customerReviewRepository.findByCustomerIdOrderByCreatedAtDesc(customer.getId())
-                .stream()
-                .map(r -> toItem(r, customerRepository.findById(r.getOwnerId()).map(Customer::getFullName).orElse(null)))
+    @Override
+    @Transactional(readOnly = true)
+    public List<CustomerReviewItem> myGivenReviews() {
+        Customer user = currentUserService.getCurrentUser();
+        return customerReviewRepository.findByOwnerIdOrderByCreatedAtDesc(user.getId()).stream()
+                .map(r -> toItem(r, user.getFullName()))
                 .toList();
-        Double avg = customerReviewRepository.averageRating(customer.getId());
-        return new CustomerRatingSummary(customer.getId(), customer.getFullName(), avg == null ? 0.0 : avg,
-                items.size(), items);
     }
 
-    private static CustomerReviewItem toItem(CustomerReview r, String ownerName) {
-        return new CustomerReviewItem(r.getId(), r.getBookingId(), r.getOwnerId(), ownerName, r.getRating(),
-                r.getComment(), r.getCreatedAt());
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<CustomerReviewItem> getPagedForAdmin(org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<CustomerReview> page = customerReviewRepository.findAllByOrderByIdDesc(pageable);
+        return PageResponse.from(page.map(r -> toItem(r, null)));
+    }
+
+    @Override
+    @Transactional
+    public CustomerReviewItem approveByAdmin(Long id) {
+        CustomerReview r = customerReviewRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá khách hàng id=" + id));
+        r.setApproved(true);
+        CustomerReview saved = customerReviewRepository.save(r);
+        log.info("Admin duyệt đánh giá khách thuê id={} cho đơn bookingId={}", id, r.getBookingId());
+        return toItem(saved, null);
+    }
+
+    @Override
+    @Transactional
+    public void deleteByAdmin(Long id) {
+        CustomerReview r = customerReviewRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá khách hàng id=" + id));
+        customerReviewRepository.delete(r);
+        log.info("Admin gỡ đánh giá khách thuê id={} của đơn bookingId={}", id, r.getBookingId());
+    }
+
+    private CustomerRatingSummary summary(Customer customer) {
+        List<CustomerReviewItem> items = customerReviewRepository.findByCustomerIdAndApprovedTrueOrderByCreatedAtDesc(customer.getId())
+                .stream()
+                .map(r -> toItem(r, null))
+                .toList();
+        Double avg = customerReviewRepository.averageRating(customer.getId());
+        double rounded = avg == null ? 0.0 : Math.round(avg * 10.0) / 10.0;
+        return new CustomerRatingSummary(customer.getId(), customer.getFullName(), rounded, items.size(), items);
+    }
+
+    private CustomerReviewItem toItem(CustomerReview r, String knownOwnerName) {
+        Booking b = bookingRepository.findById(r.getBookingId()).orElse(null);
+        String ownerName = knownOwnerName != null ? knownOwnerName
+                : (b != null && b.getOwner() != null ? b.getOwner().getFullName()
+                        : customerRepository.findById(r.getOwnerId()).map(Customer::getFullName).orElse(null));
+        String customerName = b != null && b.getCustomer() != null ? b.getCustomer().getFullName()
+                : customerRepository.findById(r.getCustomerId()).map(Customer::getFullName).orElse(null);
+        return toItem(r, b, ownerName, customerName);
+    }
+
+    private static CustomerReviewItem toItem(CustomerReview r, Booking b, String ownerName, String customerName) {
+        String bookingCode = b != null ? b.getBookingCode() : null;
+        String carName = b != null && b.getCar() != null
+                ? ((b.getCar().getBrand() != null ? b.getCar().getBrand() + " " : "") + (b.getCar().getModel() != null ? b.getCar().getModel() : "")).trim()
+                : null;
+        return new CustomerReviewItem(
+                r.getId(),
+                r.getBookingId(),
+                bookingCode,
+                carName,
+                r.getOwnerId(),
+                ownerName,
+                r.getCustomerId(),
+                customerName,
+                r.getRating(),
+                r.getComment(),
+                Boolean.TRUE.equals(r.getApproved()),
+                r.getCreatedAt()
+        );
     }
 }

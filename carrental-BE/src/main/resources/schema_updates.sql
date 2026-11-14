@@ -167,9 +167,12 @@ CREATE TABLE IF NOT EXISTS customer_reviews (
     customer_id BIGINT    NOT NULL REFERENCES customers(id),
     rating      INT       NOT NULL CHECK (rating BETWEEN 1 AND 5),
     comment     TEXT,
+    approved    BOOLEAN   NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP NOT NULL DEFAULT (now() AT TIME ZONE 'Asia/Ho_Chi_Minh')
 );
 CREATE INDEX IF NOT EXISTS idx_customer_reviews_customer ON customer_reviews (customer_id);
+ALTER TABLE customer_reviews ADD COLUMN IF NOT EXISTS approved BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE customer_reviews ALTER COLUMN approved SET DEFAULT FALSE;
 
 -- Tài khoản ngân hàng nhận tiền (hoàn cọc cho khách, chi trả cho chủ xe).
 ALTER TABLE customers ADD COLUMN IF NOT EXISTS bank_account_number VARCHAR(30);

@@ -364,9 +364,31 @@ class BookingPaymentAndVoucherIntegrationTest {
                 .andExpect(status().isBadRequest());
         vnpayReturn(txId, deposit, true);
 
-        // Chủ xe xác nhận; khách thanh toán phần còn lại trước khi nhận xe
+        // Chủ xe xác nhận đơn
         as(ownerId, post("/api/bookings/" + bookingId + "/accept")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("CONFIRMED"));
+
+        // Chưa xác nhận biên bản nhận xe thì chưa được thanh toán phần còn lại
+        as(customerId, post("/api/bookings/" + bookingId + "/rental-payment"))
+                .andExpect(status().isBadRequest());
+
+        // Khi biên bản nhận xe đã được xác nhận đúng hiện trạng (PICKUP_PENDING + Handover CONFIRMED)
+        tx.executeWithoutResult(s -> {
+            Booking bk = bookingRepository.findById(bookingId).orElseThrow();
+            bk.setStatus(BookingStatus.PICKUP_PENDING);
+            bookingRepository.save(bk);
+            entityManager.persist(com.carrental.entity.Handover.builder()
+                    .booking(bk)
+                    .handoverType(com.carrental.enums.HandoverType.PICKUP)
+                    .status(com.carrental.enums.HandoverStatus.CONFIRMED)
+                    .odometerKm(12000)
+                    .fuelPercent(100)
+                    .submittedAt(now)
+                    .confirmedAt(now)
+                    .build());
+            entityManager.flush();
+        });
+
         Booking confirmed = bookingRepository.findById(bookingId).orElseThrow();
         long remaining = confirmed.getRentalAmount().subtract(confirmed.getDiscountAmount()).longValue() - deposit;
         ResultActions rentRes = as(customerId, post("/api/bookings/" + bookingId + "/rental-payment"))
@@ -375,7 +397,15 @@ class BookingPaymentAndVoucherIntegrationTest {
                 .andExpect(jsonPath("$.data.amount").value(remaining));
         Long rentTx = Long.valueOf(JsonPath.read(rentRes.andReturn().getResponse().getContentAsString(), "$.data.id").toString());
         vnpayReturn(rentTx, remaining, true);
-        assertThat(bookingRepository.findById(bookingId).orElseThrow().getRentalPaymentStatus()).isEqualTo(PaymentStatus.PAID);
+        Booking afterPay = bookingRepository.findById(bookingId).orElseThrow();
+        assertThat(afterPay.getRentalPaymentStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(afterPay.getStatus()).isEqualTo(BookingStatus.PICKUP_PENDING);
+
+        // Sau khi khách thanh toán xong, chủ xe bấm xác nhận bắt đầu thuê xe -> chuyển sang IN_PROGRESS
+        as(ownerId, post("/api/bookings/" + bookingId + "/start"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"));
+        assertThat(bookingRepository.findById(bookingId).orElseThrow().getStatus()).isEqualTo(BookingStatus.IN_PROGRESS);
     }
 
     @Test

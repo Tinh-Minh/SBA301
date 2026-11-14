@@ -133,15 +133,39 @@ public class RentalDashboardServiceImpl implements RentalDashboardService {
     private boolean ownerMustAct(Booking b) {
         if (b.getStatus() == BookingStatus.REQUESTED || b.getStatus() == BookingStatus.CONFIRMED) return true;
         if (b.getStatus() == BookingStatus.IN_PROGRESS) return true;
-        return (b.getStatus() == BookingStatus.PICKUP_PENDING || b.getStatus() == BookingStatus.RETURN_PENDING)
-                && handoverRepository.findAllByBookingIdOrderByIdAsc(b.getId()).stream()
-                .anyMatch(h -> h.getStatus() == HandoverStatus.DISPUTED);
+        if (b.getStatus() == BookingStatus.PICKUP_PENDING || b.getStatus() == BookingStatus.RETURN_PENDING) {
+            var handovers = handoverRepository.findAllByBookingIdOrderByIdAsc(b.getId());
+            if (handovers.stream().anyMatch(h -> h.getStatus() == HandoverStatus.DISPUTED)) {
+                return true;
+            }
+            if (b.getStatus() == BookingStatus.PICKUP_PENDING
+                    && b.getRentalPaymentStatus() == com.carrental.enums.PaymentStatus.PAID
+                    && handovers.stream().anyMatch(h -> h.getHandoverType() == com.carrental.enums.HandoverType.PICKUP
+                            && h.getStatus() == HandoverStatus.CONFIRMED)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean customerMustAct(Booking b) {
-        return (b.getStatus() == BookingStatus.PICKUP_PENDING || b.getStatus() == BookingStatus.RETURN_PENDING)
-                && handoverRepository.findAllByBookingIdOrderByIdAsc(b.getId()).stream()
-                .anyMatch(h -> h.getStatus() == HandoverStatus.SUBMITTED);
+        if (b.getStatus() == BookingStatus.PICKUP_PENDING || b.getStatus() == BookingStatus.RETURN_PENDING) {
+            var handovers = handoverRepository.findAllByBookingIdOrderByIdAsc(b.getId());
+            if (handovers.stream().anyMatch(h -> h.getStatus() == HandoverStatus.SUBMITTED)) {
+                return true;
+            }
+            if (b.getStatus() == BookingStatus.PICKUP_PENDING
+                    && b.getRentalPaymentStatus() != com.carrental.enums.PaymentStatus.PAID
+                    && handovers.stream().anyMatch(h -> h.getHandoverType() == com.carrental.enums.HandoverType.PICKUP
+                            && h.getStatus() == HandoverStatus.CONFIRMED)) {
+                return true;
+            }
+            if (b.getStatus() == BookingStatus.RETURN_PENDING
+                    && b.getExtraFeeStatus() == com.carrental.enums.PaymentStatus.UNPAID) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static long count(List<Booking> list, Predicate<Booking> p) {
