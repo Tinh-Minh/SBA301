@@ -1,11 +1,12 @@
 import { useEffect, useRef } from "react";
 
-// Vệt chuột: các điểm gần nhất được nối thành một dải mảnh, mờ dần theo thời gian.
+// Pháo hoa cam ở đuôi chuột: mỗi lần di chuột bắn ra vài tia lửa nhỏ, bay toả ra rồi tắt nhanh.
 // Chỉ bật với chuột thật (pointer: fine) và khi người dùng không yêu cầu giảm chuyển động.
-const LIFE_MS = 420;
-const MAX_POINTS = 48;
-const TAIL_X = 7;
+const LIFE_MS = 260;      // tuổi thọ mỗi tia (ngắn)
+const MAX_SPARKS = 90;
+const TAIL_X = 7;         // đuôi mũi tên chuột so với đầu mũi tên
 const TAIL_Y = 16;
+const COLORS = ["252,108,38", "255,149,77", "255,190,120"];
 
 export function CursorTrail() {
     const canvasRef = useRef(null);
@@ -17,9 +18,10 @@ export function CursorTrail() {
 
         const canvas = canvasRef.current;
         const ctx = canvas.getContext("2d");
-        const points = [];
+        const sparks = [];
         let frame = 0;
         let running = false;
+        let last = null;
 
         const resize = () => {
             const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -30,29 +32,39 @@ export function CursorTrail() {
 
         const draw = () => {
             const now = performance.now();
-            while (points.length && now - points[0].t > LIFE_MS) points.shift();
             ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
             ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            for (let i = 1; i < points.length; i++) {
-                const a = points[i - 1], b = points[i];
-                const life = 1 - (now - b.t) / LIFE_MS;      // 1 = mới, 0 = sắp tắt
-                const order = i / points.length;              // đầu vệt dày hơn đuôi
-                ctx.strokeStyle = `rgba(252, 108, 38, ${0.55 * life})`;
-                ctx.lineWidth = 1 + 5 * life * order;
+            for (let i = sparks.length - 1; i >= 0; i--) {
+                const s = sparks[i];
+                const age = now - s.born;
+                if (age > LIFE_MS) { sparks.splice(i, 1); continue; }
+                const life = 1 - age / LIFE_MS;
+                const t = age / 1000;
+                const x = s.x + s.vx * t, y = s.y + s.vy * t + 120 * t * t; // hơi rơi xuống như pháo hoa
+                const tail = 0.018;                                           // vệt ngắn ~18ms quãng bay
+                ctx.strokeStyle = `rgba(${s.color}, ${life})`;
+                ctx.lineWidth = 0.6 + 1.6 * life;
                 ctx.beginPath();
-                ctx.moveTo(a.x, a.y);
-                ctx.lineTo(b.x, b.y);
+                ctx.moveTo(x - s.vx * tail, y - s.vy * tail);
+                ctx.lineTo(x, y);
                 ctx.stroke();
             }
-            if (points.length) frame = requestAnimationFrame(draw);
+            if (sparks.length) frame = requestAnimationFrame(draw);
             else { running = false; ctx.clearRect(0, 0, window.innerWidth, window.innerHeight); }
         };
 
         const onMove = event => {
-            // Mũi tên chuột có đầu ở (clientX, clientY); vệt xuất phát từ đuôi mũi tên (lệch xuống-phải).
-            points.push({ x: event.clientX + TAIL_X, y: event.clientY + TAIL_Y, t: performance.now() });
-            if (points.length > MAX_POINTS) points.shift();
+            const x = event.clientX + TAIL_X, y = event.clientY + TAIL_Y;
+            const dist = last ? Math.hypot(x - last.x, y - last.y) : 0;
+            last = { x, y };
+            const count = Math.min(4, 1 + Math.floor(dist / 12));
+            const now = performance.now();
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 60 + Math.random() * 140;
+                sparks.push({ x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, born: now, color: COLORS[(Math.random() * COLORS.length) | 0] });
+            }
+            if (sparks.length > MAX_SPARKS) sparks.splice(0, sparks.length - MAX_SPARKS);
             if (!running) { running = true; frame = requestAnimationFrame(draw); }
         };
 
