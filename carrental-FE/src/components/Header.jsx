@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useAuth } from "@/hooks/useAuth.js";
 import { useNotice } from "@/context/NoticeProvider.jsx";
 import { Icon } from "@/components/Icon.jsx";
@@ -28,6 +28,15 @@ export function Header({ previewState } = {}) {
     const menuLinks = isAdmin ? [...customerLinks.slice(0, 1), ["/admin/dashboard", "Trang quản trị", "admin_panel_settings"]] : isOwner ? ownerLinks : customerLinks;
     const activePath = previewState === undefined ? path : loggedIn ? "/trips" : "/explore";
     const overPhoto = previewState === undefined && (path === "/login" || path === "/register");
+    // Trên trang ảnh nền (đăng nhập/đăng ký) header trong suốt ở đầu trang, có nền khi đã cuộn xuống.
+    const [scrolled, setScrolled] = useState(false);
+    useEffect(() => {
+        if (!overPhoto) return undefined;
+        const onScroll = () => setScrolled(window.scrollY > 8);
+        onScroll();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, [overPhoto]);
     const [menu, setMenu] = useState(false);
     const [account, setAccount] = useState(false);
     function close() { setMenu(false); setAccount(false); }
@@ -41,7 +50,7 @@ export function Header({ previewState } = {}) {
             notify(error?.message || "Đăng xuất thất bại.", "error");
         }
     }
-    return <header className={`site-header ${overPhoto ? "auth-overlay" : "border-border-light bg-white/95 backdrop-blur-xl"} ${previewState === undefined ? `fixed inset-x-0 top-0 z-50 ${overPhoto ? "" : "border-b"}` : "relative w-full rounded-2xl border shadow-sm"}`}>
+    return <header className={`site-header ${overPhoto ? `auth-overlay${scrolled ? " is-scrolled" : ""}` : "border-border-light bg-white/95 backdrop-blur-xl"} ${previewState === undefined ? `fixed inset-x-0 top-0 z-50 ${overPhoto ? "" : "border-b"}` : "relative w-full rounded-2xl border shadow-sm"}`}>
     <div className="mx-auto flex h-20 max-w-[1440px] items-center justify-between gap-3 px-4 sm:px-6 lg:px-10">
       <SiteBrand compact onClick={close}/>
       <nav aria-label="Điều hướng chính" className="hidden items-center gap-1 lg:flex">{navigation.map(([href, label]) => <Link key={href} to={href} onClick={close} aria-current={activePath.startsWith(href) ? "page" : undefined} className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${activePath.startsWith(href) ? href === "/packages" ? "bg-accent-soft font-semibold text-[#8F3208]" : "bg-accent-soft font-semibold text-brand-accent" : "text-text-secondary hover:bg-section-bg hover:text-text-primary"}`}>{label}</Link>)}</nav>
