@@ -59,13 +59,17 @@ export function nextAction(booking, role) {
     const handover = (booking.handovers ?? []).at(-1);
     if (role === "owner") {
         if (booking.status === "REQUESTED") return booking.ownerContactedAt ? "Đã liên hệ – hãy xác nhận hoặc từ chối" : "Gọi cho khách và xác nhận đã liên hệ";
-        if (booking.status === "CONFIRMED") return booking.rentalPaymentStatus && booking.rentalPaymentStatus !== "PAID" ? "Chờ khách thanh toán phần còn lại" : "Lập biên bản nhận xe khi giao xe";
+        if (booking.status === "CONFIRMED") return "Lập biên bản nhận xe và gửi khách xác nhận";
+        if (booking.status === "PICKUP_PENDING" && handover?.status === "CONFIRMED" && booking.rentalPaymentStatus === "PAID") return "Đã nhận đủ thanh toán – Xác nhận bắt đầu thuê xe";
+        if (booking.status === "PICKUP_PENDING" && handover?.status === "CONFIRMED" && booking.rentalPaymentStatus !== "PAID") return "Chờ khách thanh toán phần còn lại";
         if (booking.status === "IN_PROGRESS") return "Lập biên bản trả xe khi nhận lại xe";
         if (handover?.status === "DISPUTED") return "Khách yêu cầu sửa biên bản";
         if (handover?.status === "SUBMITTED") return "Chờ khách xác nhận biên bản";
     } else {
         if (booking.status === "REQUESTED") return booking.ownerContactedAt ? "Chủ xe đã liên hệ, chờ xác nhận" : "Chờ chủ xe liên hệ";
-        if (booking.status === "CONFIRMED" && booking.rentalPaymentStatus && booking.rentalPaymentStatus !== "PAID") return "Thanh toán phần còn lại trước khi nhận xe";
+        if (booking.status === "CONFIRMED") return "Chờ chủ xe lập biên bản nhận xe";
+        if (booking.status === "PICKUP_PENDING" && handover?.status === "CONFIRMED" && booking.rentalPaymentStatus !== "PAID") return "Thanh toán phần còn lại qua VNPay";
+        if (booking.status === "PICKUP_PENDING" && handover?.status === "CONFIRMED" && booking.rentalPaymentStatus === "PAID") return "Đã thanh toán đủ – Chờ chủ xe xác nhận bắt đầu thuê xe";
         if (handover?.status === "SUBMITTED") return "Kiểm tra và xác nhận biên bản";
         if (handover?.status === "DISPUTED") return "Chờ chủ xe sửa biên bản";
         if (booking.status === "COMPLETED" && !booking.reviewed) return "Đánh giá chuyến đi";

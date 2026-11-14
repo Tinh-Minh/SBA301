@@ -35,6 +35,11 @@ public class CustomerReview {
     @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
 
+    /** Đánh giá khách thuê cần được Admin kiểm duyệt trước khi hiển thị công khai và tính vào điểm uy tín. */
+    @Builder.Default
+    @Column(name = "approved", nullable = false)
+    private Boolean approved = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

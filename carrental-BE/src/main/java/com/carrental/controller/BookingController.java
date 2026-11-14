@@ -223,6 +223,13 @@ public class BookingController {
         return ApiResponse.ok("Đã gửi phản hồi biên bản", bookingService.respondHandover(id, type, request));
     }
 
+    /** Chủ xe xác nhận bắt đầu chuyến thuê sau khi khách đã xác nhận biên bản nhận xe và thanh toán đủ tiền thuê. */
+    @PreAuthorize("hasRole('OWNER')")
+    @PostMapping("/api/bookings/{id}/start")
+    public ApiResponse<BookingResponse> startTrip(@PathVariable Long id) {
+        return ApiResponse.ok("Đã xác nhận bắt đầu thuê xe", bookingService.startTrip(id));
+    }
+
     // ---------------------------------------------------------------- admin
 
     @PreAuthorize("hasRole('ADMIN')")

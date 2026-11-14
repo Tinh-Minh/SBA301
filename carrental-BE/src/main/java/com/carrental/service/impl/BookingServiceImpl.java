@@ -403,8 +403,11 @@ public class BookingServiceImpl implements BookingService {
                 return b.getDepositAmount();
             }
             case BOOKING_PAYMENT -> {
-                if (b.getStatus() != BookingStatus.CONFIRMED) {
-                    throw bad("Chỉ thanh toán phần còn lại khi chủ xe đã xác nhận đơn và trước khi nhận xe");
+                boolean pickupConfirmed = b.getStatus() == BookingStatus.PICKUP_PENDING
+                        && handoverRepository.findByBookingIdAndHandoverType(b.getId(), HandoverType.PICKUP)
+                                .map(h -> h.getStatus() == HandoverStatus.CONFIRMED).orElse(false);
+                if (!pickupConfirmed) {
+                    throw bad("Chỉ thanh toán phần còn lại sau khi bạn đã kiểm tra và xác nhận biên bản nhận xe hoàn toàn đúng");
                 }
                 if (b.getRentalPaymentStatus() == PaymentStatus.PAID) {
                     throw bad("Đơn thuê đã được thanh toán đủ tiền thuê");
@@ -451,6 +454,8 @@ public class BookingServiceImpl implements BookingService {
             case BOOKING_PAYMENT -> {
                 b.setRentalPaymentStatus(PaymentStatus.PAID);
                 b.setRentalPaidAt(now());
+                // Sau khi khách thanh toán xong phần còn lại, giữ trạng thái PICKUP_PENDING
+                // để tài khoản chủ xe hiển thị thông báo đã nhận đủ thanh toán và bấm "Xác nhận bắt đầu thuê xe".
             }
             case BOOKING_EXTRA_FEE -> {
                 b.setExtraFeeStatus(PaymentStatus.PAID);
@@ -705,14 +710,8 @@ public class BookingServiceImpl implements BookingService {
             throw bad("Số km khi trả (" + request.odometerKm() + ") không được nhỏ hơn lúc nhận (" + b.getPickupOdometerKm() + ")");
         }
         if (type == HandoverType.PICKUP) {
-            if (b.getRentalPaymentStatus() != PaymentStatus.PAID) {
-                throw conflict("Khách chưa thanh toán đủ tiền thuê qua hệ thống, chưa thể giao xe");
-            }
             // Kiểm tra lại giấy tờ lúc giao xe: GPLX có thể đã hết hạn hoặc bị thu hồi sau khi đặt.
             requireVerifiedDriver(b.getCustomer(), b.getReturnAt());
-        }
-        if (type == HandoverType.PICKUP && b.getPickupAt().minusHours(24).isAfter(now())) {
-            throw conflict("Chỉ lập biên bản nhận xe trong vòng 24 giờ trước giờ nhận xe");
         }
 
         List<String> storedUrls = publicImageStorageService.storeImages(photos);
@@ -787,9 +786,13 @@ public class BookingServiceImpl implements BookingService {
             h.setStatus(HandoverStatus.CONFIRMED);
             h.setConfirmedAt(now());
             if (type == HandoverType.PICKUP) {
-                b.setStatus(BookingStatus.IN_PROGRESS);
-                b.setPickedUpAt(now());
                 b.setPickupOdometerKm(h.getOdometerKm());
+                if (remainingRental(b).signum() <= 0) {
+                    b.setRentalPaymentStatus(PaymentStatus.PAID);
+                }
+                // Giữ đơn ở trạng thái PICKUP_PENDING (biên bản đã CONFIRMED):
+                // 1) Khách thanh toán số tiền thuê còn lại qua hệ thống
+                // 2) Sau khi thanh toán xong, chủ xe thấy thông báo đã nhận đủ thanh toán và bấm "Xác nhận bắt đầu thuê xe" để chuyển sang IN_PROGRESS.
             } else {
                 b.setReturnedAt(now());
                 if (nz(b.getFinalAmount()).signum() > 0) {
@@ -801,6 +804,34 @@ public class BookingServiceImpl implements BookingService {
             }
         }
         handoverRepository.saveAndFlush(h);
+        return toResponse(bookingRepository.saveAndFlush(b));
+    }
+
+    /**
+     * Chủ xe xác nhận bắt đầu chuyến thuê sau khi:
+     * 1) Khách đã xác nhận biên bản nhận xe đúng hiện trạng (HandoverStatus.CONFIRMED)
+     * 2) Khách đã thanh toán đủ phần tiền thuê còn lại (rentalPaymentStatus == PAID)
+     */
+    @Override
+    @Transactional
+    public BookingResponse startTrip(Long id) {
+        Booking b = ownedBooking(id);
+        requireStatus(b, BookingStatus.PICKUP_PENDING);
+        Handover h = handover(id, HandoverType.PICKUP);
+        if (h.getStatus() != HandoverStatus.CONFIRMED) {
+            throw conflict("Khách thuê chưa xác nhận biên bản nhận xe đúng hiện trạng");
+        }
+        if (b.getRentalPaymentStatus() != PaymentStatus.PAID && remainingRental(b).signum() > 0) {
+            throw conflict("Khách thuê chưa thanh toán đủ số tiền thuê còn lại qua hệ thống");
+        }
+        b.setStatus(BookingStatus.IN_PROGRESS);
+        if (b.getPickedUpAt() == null) {
+            b.setPickedUpAt(now());
+        }
+        if (b.getPickupOdometerKm() == null) {
+            b.setPickupOdometerKm(h.getOdometerKm());
+        }
+        log.info("Chủ xe xác nhận bắt đầu thuê xe cho đơn {}", b.getBookingCode());
         return toResponse(bookingRepository.saveAndFlush(b));
     }
 

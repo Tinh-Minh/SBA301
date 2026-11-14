@@ -58,6 +58,8 @@ public interface BookingService {
 
     BookingResponse reviseHandover(Long id, HandoverType type, ReviseHandoverRequest request, List<MultipartFile> photos);
 
+    BookingResponse startTrip(Long id);
+
     BookingResponse get(Long id);
 
     List<BookingResponse> mineAsCustomer();

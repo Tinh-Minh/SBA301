@@ -29,8 +29,8 @@ const adminNavigation = [
     { group: "Kinh doanh", code: "A04", href: adminRoutes.vouchers, label: "Voucher", icon: "confirmation_number" },
     { group: "Kinh doanh", code: "A05", href: adminRoutes.subscriptions, label: "Quản lý Đăng tin", icon: "workspace_premium" },
     { group: "Kinh doanh", code: "A08", href: adminRoutes.packages, label: "Cấu hình Gói cước", icon: "sell" },
-    { group: "Kinh doanh", code: "A06", href: adminRoutes.payouts, label: "Giao dịch gói", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
-    { group: "Vận hành", code: "A11", href: "/admin/settlements", label: "Hoàn tiền & Chi trả", icon: "account_balance" },
+    { group: "Kinh doanh", code: "A06", href: adminRoutes.payouts, label: "Giao dịch hệ thống", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
+    { group: "Vận hành", code: "A11", href: "/admin/settlements", label: "Dòng tiền & Chi trả Chủ xe", icon: "account_balance" },
     { group: "Kiểm duyệt", code: "A07", href: "/admin/reviews", label: "Đánh giá xe", icon: "reviews" },
 ];
 

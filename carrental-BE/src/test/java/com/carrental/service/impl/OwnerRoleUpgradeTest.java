@@ -39,7 +39,7 @@ class OwnerRoleUpgradeTest {
             Instant.parse("2026-11-11T08:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
 
     @Test
-    void approvingIdentityDocumentPromotesActiveCustomerToOwner() {
+    void approvingIdentityDocumentVerifiesKycButKeepsCustomerRole() {
         CustomerRepository customers = mock(CustomerRepository.class);
         UserDocumentRepository documents = mock(UserDocumentRepository.class);
         PrivateDocumentStorage storage = mock(PrivateDocumentStorage.class);
@@ -67,7 +67,8 @@ class OwnerRoleUpgradeTest {
 
         assertThat(response.kycStatus()).isEqualTo(KycStatus.VERIFIED);
         assertThat(customer.getKycStatus()).isEqualTo(KycStatus.VERIFIED);
-        assertThat(customer.getRole()).isEqualTo(Role.OWNER);
+        // Duyệt CCCD chỉ xác thực danh tính; lên Chủ xe khi Admin duyệt xe đầu tiên.
+        assertThat(customer.getRole()).isEqualTo(Role.CUSTOMER);
     }
 
     @Test

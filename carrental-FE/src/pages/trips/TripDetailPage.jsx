@@ -99,7 +99,7 @@ function Trip({ id }) {
           </div>
         </section> : null}
 
-        {role === "owner" && b.status === "CONFIRMED" && !pickup && b.rentalPaymentStatus === "PAID" ? <HandoverForm type="PICKUP" booking={b} busy={busy} error={error} onSubmit={body => run(() => tripService.submitHandover(b.id, "PICKUP", body))}/> : null}
+        {role === "owner" && b.status === "CONFIRMED" && !pickup ? <HandoverForm type="PICKUP" booking={b} busy={busy} error={error} onSubmit={body => run(() => tripService.submitHandover(b.id, "PICKUP", body))}/> : null}
         {pickup ? <HandoverView handover={pickup} booking={b} busy={busy} error={error}
           mode={role === "customer" && pickup.status === "SUBMITTED" ? "respond" : role === "owner" && pickup.status === "DISPUTED" ? "revise" : "view"}
           onRespond={body => run(() => tripService.respondHandover(b.id, "PICKUP", body))}
@@ -133,11 +133,11 @@ function Trip({ id }) {
             {Number(b.otherFeeAmount) ? <Row term={`Phí khác: ${b.otherFeeNote ?? ""}`} value={formatMoney(b.otherFeeAmount)}/> : null}
             {Number(b.fuelFeeAmount) ? <Row term="Phí xăng/pin hụt" value={formatMoney(b.fuelFeeAmount)}/> : null}
             <Row term="Cọc 40% (khi đặt xe)" value={<span className="text-right"><span className="block tabular-nums">{formatMoney(b.depositAmount)}</span><span className={`block text-xs font-semibold ${b.depositStatus === "PAID" ? "text-[#166534]" : "text-[#B45309]"}`}>{b.depositStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"}</span></span>}/>
-            <Row term="Còn lại (trước khi nhận xe)" value={<span className="text-right"><span className="block tabular-nums">{formatMoney(b.rentalRemainingAmount)}</span><span className={`block text-xs font-semibold ${b.rentalPaymentStatus === "PAID" ? "text-[#166534]" : "text-[#B45309]"}`}>{b.rentalPaymentStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"}</span></span>}/>
+            <Row term="Còn lại (sau khi duyệt biên bản)" value={<span className="text-right"><span className="block tabular-nums">{formatMoney(b.rentalRemainingAmount)}</span><span className={`block text-xs font-semibold ${b.rentalPaymentStatus === "PAID" ? "text-[#166534]" : "text-[#B45309]"}`}>{b.rentalPaymentStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"}</span></span>}/>
             {Number(b.finalAmount) ? <Row term="Phí phát sinh khi trả xe" value={<span className="text-lg font-black text-[#FC6C26]">{formatMoney(b.finalAmount)} <b className="text-xs">({b.extraFeeStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"})</b></span>} strong/> : null}
             {b.kmLimitPerDay ? <Row term="Giới hạn km" value={`${b.kmLimitPerDay} km/ngày`}/> : null}
           </dl>
-          <p className="mt-2 text-xs text-[#666666]">Mọi khoản thanh toán qua VNPay trên CarDB: cọc 40% khi đặt xe, phần còn lại trước khi nhận xe, phí phát sinh khi trả xe. Tiền hoàn và tiền thuê được chuyển khoản trong 1–3 ngày làm việc.</p>
+          <p className="mt-2 text-xs text-[#666666]">Mọi khoản thanh toán qua VNPay trên CarDB: cọc 40% khi đặt xe, phần còn lại sau khi khách xác nhận biên bản nhận xe đúng hiện trạng, phí phát sinh khi trả xe. Tiền hoàn và tiền thuê được chuyển khoản trong 1–3 ngày làm việc.</p>
         </section>
         <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 text-sm shadow-sm">
           <h2 className="mb-2 font-bold">{role === "owner" ? "Khách thuê" : "Chủ xe"}</h2>

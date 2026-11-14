@@ -162,8 +162,8 @@ class OwnerUpgradeLimitAndEmailTest {
         verify(mailSender).send(mailCaptor.capture());
         SimpleMailMessage approvedMail = mailCaptor.getValue();
         assertThat(approvedMail.getTo()).containsExactly("user30@test.vn");
-        assertThat(approvedMail.getSubject()).contains("Chúc mừng");
-        assertThat(approvedMail.getText()).contains("Chủ xe (OWNER)");
+        assertThat(approvedMail.getSubject()).contains("đã được duyệt");
+        assertThat(approvedMail.getText()).contains("đăng ký xe").contains("Chủ xe (OWNER)");
 
         // Test rejection + mail delivery exception resilience + no PII leak in logs
         Customer owner2 = customer(31L, Role.CUSTOMER, CustomerStatus.ACTIVE, KycStatus.PENDING);

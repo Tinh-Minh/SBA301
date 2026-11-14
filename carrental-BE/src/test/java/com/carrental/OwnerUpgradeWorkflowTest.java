@@ -239,12 +239,13 @@ class OwnerUpgradeWorkflowTest {
         assertThat(revHappy.document().verifyStatus()).isEqualTo(VerificationStatus.APPROVED);
         assertThat(revHappy.kycStatus()).isEqualTo(KycStatus.VERIFIED);
 
+        // Duyệt CCCD chỉ xác thực danh tính; tài khoản lên Chủ xe khi Admin duyệt chiếc xe đầu tiên.
         Customer upgraded = customers.findById(happyUser.getId()).orElseThrow();
-        assertThat(upgraded.getRole()).isEqualTo(Role.OWNER);
+        assertThat(upgraded.getRole()).isEqualTo(Role.CUSTOMER);
         assertThat(upgraded.getKycStatus()).isEqualTo(KycStatus.VERIFIED);
 
-        // 11. Already upgraded OWNER cannot submit another identity upgrade document
-        CurrentAccount upgradedAccount = new CurrentAccount(happyUser.getId(), Role.OWNER);
+        // 11. Identity already verified: cannot submit another identity document
+        CurrentAccount upgradedAccount = new CurrentAccount(happyUser.getId(), Role.CUSTOMER);
         assertThatThrownBy(() -> documentService.submit(upgradedAccount, makeCommand("001095000007")))
                 .isInstanceOf(AppException.class)
                 .satisfies(e -> assertThat(((AppException) e).errorCode()).isEqualTo(ErrorCode.INVALID_REQUEST));

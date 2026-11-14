@@ -1,5 +1,6 @@
 package com.carrental.scheduling;
 
+import com.carrental.repository.CustomerReviewRepository;
 import com.carrental.repository.ReviewRepository;
 import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
@@ -17,13 +18,16 @@ public class ReviewAutoApproveScheduler {
     public static final int AUTO_APPROVE_HOURS = 48;
 
     private final ReviewRepository reviewRepository;
+    private final CustomerReviewRepository customerReviewRepository;
 
     @Scheduled(cron = "0 15 * * * *")
     @Transactional
     public void autoApprove() {
         try {
-            int n = reviewRepository.approveCreatedBefore(LocalDateTime.now().minusHours(AUTO_APPROVE_HOURS));
-            if (n > 0) log.info("Tự duyệt {} đánh giá đã chờ quá {} giờ", n, AUTO_APPROVE_HOURS);
+            LocalDateTime cutoff = LocalDateTime.now().minusHours(AUTO_APPROVE_HOURS);
+            int n = reviewRepository.approveCreatedBefore(cutoff);
+            int m = customerReviewRepository.approveCreatedBefore(cutoff);
+            if (n + m > 0) log.info("Tự duyệt {} đánh giá xe và {} đánh giá khách thuê đã chờ quá {} giờ", n, m, AUTO_APPROVE_HOURS);
         } catch (RuntimeException e) {
             log.warn("Không thể tự duyệt đánh giá: {}", e.getMessage());
         }

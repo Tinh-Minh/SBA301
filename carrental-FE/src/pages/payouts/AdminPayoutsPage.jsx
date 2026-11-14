@@ -43,7 +43,9 @@ export default function AdminPayouts() {
       <select value={type} onChange={e => { setType(e.target.value); setPage(0); }} className="rounded-xl border border-[#E9E9E7] bg-white px-3 py-2 text-xs font-semibold text-[#292929]">
         <option value="">Tất cả loại giao dịch</option>
         <option value="PACKAGE_PAYMENT">Mua gói đăng tin</option>
-        <option value="BOOKING_DEPOSIT">Đặt cọc thuê xe</option>
+        <option value="BOOKING_DEPOSIT">Đặt cọc thuê xe (40%)</option>
+        <option value="BOOKING_PAYMENT">Thanh toán tiền thuê còn lại (60%)</option>
+        <option value="BOOKING_EXTRA_FEE">Thanh toán phí phát sinh</option>
         <option value="BOOKING_REFUND">Hoàn cọc thuê xe</option>
       </select>
     </div>

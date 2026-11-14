@@ -16,7 +16,11 @@ import { useAuth } from "@/hooks/useAuth.js";
 import { DRAFT_KEY, OTHER, StepFour, StepOne, StepThree, StepTwo, areas, initial, isUrl, modelsByBrand, photoSlots, segments, steps, validateImageFile } from "@/components/vehicles/VehicleRegistrationSteps.jsx";
 import { repairDisplayText } from "@/utils/text.js";
 
-export default function OwnerVehicleNew() {
+/**
+ * Đăng ký xe. Dùng làm trang riêng cho Chủ xe, hoặc nhúng (`embedded`) trong trang Xác minh để Khách hàng
+ * đăng xe đầu tiên: Admin duyệt xe thì tài khoản tự lên Chủ xe.
+ */
+export default function OwnerVehicleNew({ embedded = false, onCancel, onSuccess } = {}) {
     const navigate = useNavigate();
     const { user } = useAuth();
     const draftKey = `${DRAFT_KEY}:${user?.id ?? "anonymous"}`;
@@ -281,6 +285,7 @@ export default function OwnerVehicleNew() {
         if (!car)
             return;
         localStorage.removeItem(draftKey);
+        if (embedded) { await onSuccess?.(car); return; }
         navigate(ownerRoutes.vehicles);
     }
     const subtitle = `${form.brand} ${form.model} • ${form.licensePlate || "Chưa có biển số"}`;
@@ -342,7 +347,9 @@ export default function OwnerVehicleNew() {
     {step === 4 && create.error ? <p className="text-sm text-on-error-container">{create.error.message}</p> : null}
 
     <div className="flex flex-wrap items-center justify-between gap-2">
-      <Link to={ownerRoutes.vehicles} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Hủy bỏ đăng ký</Link>
+      {embedded
+        ? <button type="button" onClick={() => onCancel?.()} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Hủy bỏ đăng ký</button>
+        : <Link to={ownerRoutes.vehicles} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Hủy bỏ đăng ký</Link>}
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={saveDraft} className="rounded-xl border border-card-border bg-white px-4 py-2.5 text-sm font-bold text-charcoal">Lưu bản nháp</button>
         {step < 4 ? <button key={`btn-advance-${step}`} type="button" disabled={!ready[step - 1]} onClick={() => void advance()} className="inline-flex items-center gap-1.5 rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-hover disabled:opacity-60">

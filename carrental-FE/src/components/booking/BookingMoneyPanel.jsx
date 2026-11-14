@@ -57,6 +57,9 @@ export function BookingMoneyPanel({ booking: b, role, onChanged }) {
     }
 
     const box = "rounded-2xl border border-[#FDBA8C] bg-[#FFF7F2] p-5 shadow-sm";
+    const pickup = (b.handovers ?? []).find(h => h.type === "PICKUP");
+    const pickupConfirmed = pickup?.status === "CONFIRMED";
+
     return <>
       {role === "customer" && b.status === "REQUESTED" && b.depositStatus === "UNPAID" ? <section className={box}>
         <h2 className="text-base font-bold text-[#292929]">Bước 1: Đặt cọc giữ chỗ</h2>
@@ -69,10 +72,25 @@ export function BookingMoneyPanel({ booking: b, role, onChanged }) {
         Đã cọc {formatMoney(b.depositAmount)}. Chủ xe phản hồi trước {formatDateTime(b.ownerResponseDueAt)}; quá hạn yêu cầu tự huỷ và bạn được hoàn 100% cọc.
       </section> : null}
 
-      {role === "customer" && b.status === "CONFIRMED" && b.rentalPaymentStatus !== "PAID" ? <section className={box}>
-        <h2 className="text-base font-bold text-[#292929]">Bước 2: Thanh toán đủ trước khi nhận xe</h2>
-        <p className="mt-1 text-sm text-[#666666]">Còn lại <b>{formatMoney(b.rentalRemainingAmount)}</b>. Chủ xe chỉ giao xe khi bạn đã thanh toán đủ qua CarDB.</p>
+      {role === "customer" && b.status === "CONFIRMED" && !pickup ? <section className="rounded-2xl border border-[#E4E2D8] bg-[#FAF9F5] p-4 text-sm text-[#5C584F]">
+        <h2 className="text-sm font-bold text-[#25251F]">Bước 2: Kiểm tra xe & Biên bản nhận xe</h2>
+        <p className="mt-1">Khi giao xe, chủ xe sẽ lập <b>Biên bản nhận xe</b> kèm ảnh thực tế. Bạn cần kiểm tra và xác nhận toàn bộ hạng mục trong biên bản hoàn toàn đúng trước khi thanh toán số tiền còn lại (<b>{formatMoney(b.rentalRemainingAmount)}</b>).</p>
+      </section> : null}
+
+      {role === "customer" && b.status === "PICKUP_PENDING" && !pickupConfirmed ? <section className="rounded-2xl border border-[#FDBA8C] bg-[#FFF7F2] p-4 text-sm text-[#9A3412]">
+        <h2 className="text-sm font-bold text-[#25251F]">Bước 2: Xác nhận Biên bản nhận xe trước khi thanh toán</h2>
+        <p className="mt-1">Vui lòng kiểm tra kỹ từng hạng mục trong <b>Biên bản nhận xe</b> bên dưới. Chỉ sau khi bạn xác nhận tất cả hạng mục hoàn toàn đúng hiện trạng, bước thanh toán số tiền còn lại (<b>{formatMoney(b.rentalRemainingAmount)}</b>) mới được mở.</p>
+      </section> : null}
+
+      {role === "customer" && b.status === "PICKUP_PENDING" && pickupConfirmed && b.rentalPaymentStatus !== "PAID" ? <section className={box}>
+        <h2 className="text-base font-bold text-[#292929]">Bước 3: Thanh toán phần còn lại</h2>
+        <p className="mt-1 text-sm text-[#666666]">Bạn đã xác nhận <b>Biên bản nhận xe</b> hoàn toàn đúng hiện trạng. Vui lòng thanh toán số tiền còn lại <b>{formatMoney(b.rentalRemainingAmount)}</b> qua VNPay.</p>
         <PayButton label="Thanh toán phần còn lại qua VNPay" onPay={() => tripService.payRental(b.id)}/>
+      </section> : null}
+
+      {role === "customer" && b.status === "PICKUP_PENDING" && pickupConfirmed && b.rentalPaymentStatus === "PAID" ? <section className="rounded-2xl border border-[#A7F3D0] bg-[#ECFDF5] p-5 text-sm text-[#065F46] shadow-sm">
+        <h2 className="text-base font-bold text-[#065F46]">✓ Đã thanh toán đủ 100% tiền thuê xe</h2>
+        <p className="mt-1">Bạn đã xác nhận Biên bản nhận xe và thanh toán đủ phần tiền thuê còn lại (<b>{formatMoney(b.rentalRemainingAmount)}</b>). Hệ thống đã thông báo cho chủ xe xác nhận bàn giao chìa khoá và bắt đầu chuyến thuê.</p>
       </section> : null}
 
       {role === "customer" && b.status === "RETURN_PENDING" && b.extraFeeStatus === "UNPAID" ? <section className={box}>
@@ -81,7 +99,23 @@ export function BookingMoneyPanel({ booking: b, role, onChanged }) {
         <PayButton label="Thanh toán phí phát sinh qua VNPay" onPay={() => tripService.payExtraFee(b.id)}/>
       </section> : null}
 
-      {role === "owner" && b.status === "CONFIRMED" && b.rentalPaymentStatus !== "PAID" ? <p className="rounded-2xl border border-[#E9E9E7] bg-white p-4 text-sm text-[#666666]">Khách chưa thanh toán đủ tiền thuê. Bạn chỉ lập biên bản giao xe sau khi khách thanh toán đủ qua CarDB.</p> : null}
+      {role === "owner" && b.status === "PICKUP_PENDING" && pickupConfirmed && b.rentalPaymentStatus !== "PAID" ? <p className="rounded-2xl border border-[#FDBA8C] bg-[#FFF7F2] p-4 text-sm text-[#9A3412]">Khách đã xác nhận biên bản nhận xe đúng hiện trạng. Đang chờ khách thanh toán phần tiền thuê còn lại (<b>{formatMoney(b.rentalRemainingAmount)}</b>) qua CarDB.</p> : null}
+
+      {role === "owner" && b.status === "PICKUP_PENDING" && pickupConfirmed && b.rentalPaymentStatus === "PAID" ? <section className="rounded-2xl border border-[#047857] bg-[#ECFDF5] p-5 shadow-sm">
+        <h2 className="text-base font-bold text-[#065F46]">✓ Đã nhận đủ thanh toán — Xác nhận bắt đầu thuê xe</h2>
+        <p className="mt-1 text-sm text-[#065F46]">
+          Khách hàng <b>{b.customerName}</b> đã xác nhận <b>Biên bản nhận xe</b> hoàn toàn đúng và đã thanh toán đủ 100% tiền thuê xe qua hệ thống (cọc <b>{formatMoney(b.depositAmount)}</b> + phần còn lại <b>{formatMoney(b.rentalRemainingAmount)}</b>).
+          Vui lòng bàn giao chìa khoá xe cho khách và bấm xác nhận bắt đầu thuê xe.
+        </p>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => act(() => tripService.startTrip(b.id))}
+          className="mt-3 rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-[#e05615] disabled:opacity-50"
+        >
+          {busy ? "Đang xác nhận…" : "Xác nhận bắt đầu thuê xe"}
+        </button>
+      </section> : null}
 
       {b.status === "CONFIRMED" && role === "owner" && now >= pickupMs + 2 * 3600 * 1000 ? <section className="rounded-2xl border border-[#E9E9E7] bg-white p-4 text-sm">
         <p>Khách không đến nhận xe? Đơn sẽ đóng và bạn nhận phí huỷ chuyến theo chính sách.</p>

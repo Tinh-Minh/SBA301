@@ -44,6 +44,7 @@ export const tripService = {
         return request(`/api/bookings/${id}/handovers/${type}`, { method: "PUT", body: form });
     },
     respondHandover: (id, type, body) => request(`/api/bookings/${id}/handovers/${type}/respond`, { method: "POST", json: body }),
+    startTrip: (id) => request(`/api/bookings/${id}/start`, { method: "POST" }),
     ownerDashboard: () => request("/api/dashboards/owner"),
     customerDashboard: () => request("/api/dashboards/customer"),
     adminList: async (query) => toPage(await request("/api/admin/bookings", { query })),

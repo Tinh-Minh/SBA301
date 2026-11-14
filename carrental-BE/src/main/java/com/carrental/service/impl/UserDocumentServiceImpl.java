@@ -253,13 +253,8 @@ public class UserDocumentServiceImpl implements UserDocumentService {
             owner.setKycStatus(currentKyc);
             ownerChanged = true;
         }
+        // Duyệt CCCD chỉ xác thực danh tính. Lên Chủ xe khi Admin duyệt chiếc xe đầu tiên (CarServiceImpl.approveCar).
         Role oldRole = owner.getRole();
-        if (currentKyc == KycStatus.VERIFIED
-                && owner.getStatus() == CustomerStatus.ACTIVE
-                && owner.getRole() == Role.CUSTOMER) {
-            owner.setRole(Role.OWNER);
-            ownerChanged = true;
-        }
         if (ownerChanged) {
             customers.flush();
         }
@@ -457,6 +452,9 @@ public class UserDocumentServiceImpl implements UserDocumentService {
                 message.setSubject("Thông báo: Hồ sơ " + docLabel + " trên CarDB đã được duyệt");
                 message.setText("Xin chào " + greetingName + ",\n\n"
                         + "Chúc mừng bạn! Hồ sơ " + docLabel + " của bạn đã được quản trị viên xác minh thành công.\n"
+                        + (IDENTITY_DOC_TYPES.contains(document.getDocType()) && newRole == Role.CUSTOMER
+                                ? "Bây giờ bạn có thể đăng ký xe kèm giấy tờ xe; khi Admin duyệt xe, tài khoản sẽ được nâng cấp lên Chủ xe (OWNER).\n"
+                                : "")
                         + "Xem chi tiết trạng thái tại:\n"
                         + baseUrl + "/account/verification\n\n"
                         + "Trân trọng,\nĐội ngũ CarDB");
