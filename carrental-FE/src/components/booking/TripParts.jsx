@@ -27,29 +27,29 @@ export function TripTimeline({ booking }) {
     if (["REJECTED", "CANCELLED", "EXPIRED"].includes(booking.status)) return null;
     const done = booking.status === "COMPLETED";
     const current = reached(booking);
-    return <ol className="flex items-start" aria-label="Tiến trình đơn thuê">{steps.map((s, i) => {
+    return <ol className="flex items-start rounded-2xl border border-[#ECEAE2] bg-[#FAF9F5] p-4" aria-label="Tiến trình đơn thuê">{steps.map((s, i) => {
         const passed = done || i < current;
         const now = !done && i === current;
         return <li key={s.id} aria-current={now ? "step" : undefined} className="relative flex flex-1 flex-col items-center gap-2 text-center">
-          {i > 0 ? <span aria-hidden="true" className={`absolute top-[13px] h-0.5 ${passed || now ? "bg-[#1F1F1D]" : "bg-[#E7E5DF]"}`} style={{ right: "calc(50% + 18px)", width: "calc(100% - 36px)" }}/> : null}
-          <span className={`relative z-[1] flex size-7 items-center justify-center rounded-full text-xs font-bold ${passed ? "bg-[#1F1F1D] text-white" : now ? "bg-white text-[#1F1F1D] ring-2 ring-[#FC6C26]" : "bg-white text-[#8A887F] ring-1 ring-[#D6D3CB]"}`}>{passed ? <Icon name="check" className="text-[15px]"/> : i + 1}</span>
-          <span className={`px-1 text-[11px] leading-tight sm:text-xs ${now ? "font-bold text-[#1F1F1D]" : passed ? "text-[#57564F]" : "text-[#8A887F]"}`}>{s.label}</span>
+          {i > 0 ? <span aria-hidden="true" className={`absolute top-[13px] h-0.5 ${passed || now ? "bg-[#25251F]" : "bg-[#E4E2D8]"}`} style={{ right: "calc(50% + 18px)", width: "calc(100% - 36px)" }}/> : null}
+          <span className={`relative z-[1] flex size-7 items-center justify-center rounded-full text-xs font-extrabold ${passed ? "bg-[#25251F] text-white" : now ? "bg-[#FC6C26] text-white ring-4 ring-[#FC6C26]/20" : "bg-white text-[#868379] ring-1 ring-[#D6D3CB]"}`}>{passed ? <Icon name="check" className="text-[15px]"/> : i + 1}</span>
+          <span className={`px-1 text-[11px] leading-tight sm:text-xs ${now ? "font-extrabold text-[#25251F]" : passed ? "font-medium text-[#5C584F]" : "text-[#868379]"}`}>{s.label}</span>
         </li>;
     })}</ol>;
 }
 
 /** Thẻ đơn thuê trong danh sách. */
 export function TripCard({ booking, role, highlight }) {
-    return <Link to={`/trips/${booking.id}`} className={`flex gap-4 rounded-2xl border bg-white p-4 shadow-sm transition hover:border-[#1F1F1D] ${highlight ? "border-[#E7E5DF] shadow-[inset_3px_0_0_#FC6C26]" : "border-[#E9E9E7]"}`}>
-    <img src={resolveAssetUrl(booking.carImageUrl) || "/images/pricing-sedan.webp"} alt="" className="hidden h-20 w-28 shrink-0 rounded-xl object-cover sm:block"/>
+    return <Link to={`/trips/${booking.id}`} className={`group flex gap-4 rounded-2xl border bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-[#25251F] ${highlight ? "border-[#E4E2D8] shadow-[inset_4px_0_0_#FC6C26]" : "border-[#E4E2D8]"}`}>
+    <img src={resolveAssetUrl(booking.carImageUrl) || "/images/pricing-sedan.webp"} alt="" className="hidden h-22 w-32 shrink-0 rounded-xl bg-[#F3F3EE] object-cover sm:block"/>
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="font-bold text-[#292929]">{booking.carName} <span className="font-mono text-xs font-normal text-[#666666]">{booking.bookingCode}</span></p>
+        <p className="font-extrabold text-[#25251F] group-hover:text-[#FC6C26]">{booking.carName} <span className="ml-1 font-mono text-xs font-medium text-[#868379]">{booking.bookingCode}</span></p>
         <StatusBadge meta={bookingStatusMeta[booking.status]}/>
       </div>
-      <p className="mt-1 text-sm text-[#666666]">{formatDateTime(booking.pickupAt)} → {formatDateTime(booking.returnAt)} • {durationLabel(booking.rentalDays, booking.rentalHours)}</p>
-      <p className="mt-1 flex flex-wrap justify-between gap-2 text-sm"><span className="text-[#666666]">{role === "owner" ? `Khách: ${booking.customerName}` : `Chủ xe: ${booking.ownerName ?? "hiện sau khi cọc"}`}</span><b className="tabular-nums text-[#1F1F1D]">{formatMoney(booking.finalAmount ?? booking.rentalAmount)}</b></p>
-      {highlight ? <p className="mt-1 text-xs font-bold text-[#B45309]">{highlight}</p> : null}
+      <p className="mt-1 text-sm text-[#5C584F]">{formatDateTime(booking.pickupAt)} → {formatDateTime(booking.returnAt)} • {durationLabel(booking.rentalDays, booking.rentalHours)}</p>
+      <p className="mt-1.5 flex flex-wrap justify-between gap-2 text-sm"><span className="text-[#6C6C61]">{role === "owner" ? `Khách: ${booking.customerName}` : `Chủ xe: ${booking.ownerName ?? "hiện sau khi cọc"}`}</span><b className="tabular-nums font-extrabold text-[#D95018]">{formatMoney(booking.finalAmount ?? booking.rentalAmount)}</b></p>
+      {highlight ? <p className="mt-1.5 inline-flex items-center gap-1 rounded-lg bg-[#FFF3EB] px-2.5 py-0.5 text-xs font-bold text-[#B45309]">→ {highlight}</p> : null}
     </div>
   </Link>;
 }
