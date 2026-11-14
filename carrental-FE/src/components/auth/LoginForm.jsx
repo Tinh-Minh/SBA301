@@ -1,3 +1,4 @@
+import { EyeIcon } from "@/components/auth/EyeIcon.jsx";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,7 +55,7 @@ export function LoginForm() {
                 <span className="material-symbols-outlined" aria-hidden="true">lock</span>
                 <input className="auth-field auth-field--action" id="login-password" placeholder="Nhập mật khẩu của bạn" required type={passwordVisible ? "text" : "password"} autoComplete="current-password" aria-label="Mật khẩu" {...register("password")} aria-invalid={Boolean(errors.password)} />
                 <button aria-label="Hiện hoặc ẩn mật khẩu" type="button" onClick={() => setPasswordVisible(visible => !visible)}>
-                    <span className="material-symbols-outlined">{passwordVisible ? "visibility_off" : "visibility"}</span>
+                    <EyeIcon off={passwordVisible}/>
                 </button>
             </div>
         </div>
