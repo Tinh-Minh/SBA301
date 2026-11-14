@@ -5,6 +5,7 @@ import com.carrental.dto.response.CarReviewSummaryResponse;
 import com.carrental.dto.response.PageResponse;
 import com.carrental.dto.response.ReviewEligibilityResponse;
 import com.carrental.dto.response.ReviewResponse;
+import com.carrental.entity.Booking;
 import com.carrental.entity.Car;
 import com.carrental.entity.Customer;
 import com.carrental.entity.Review;
@@ -61,7 +62,7 @@ public class ReviewServiceImpl implements ReviewService {
             throw new AppException(HttpStatus.FORBIDDEN, "Bạn chỉ có thể đánh giá xe sau khi hoàn tất chuyến thuê xe này");
         }
 
-        com.carrental.entity.Booking trip = unreviewedTrip(car.getId(), customer.getId());
+        Booking trip = unreviewedTrip(car.getId(), customer.getId());
         if (trip == null) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Bạn đã đánh giá tất cả các chuyến thuê xe này");
         }
@@ -199,7 +200,7 @@ public class ReviewServiceImpl implements ReviewService {
     }
 
     /** Chuyến hoàn tất cũ nhất của khách với xe này mà chưa được đánh giá (mỗi chuyến một đánh giá). */
-    private com.carrental.entity.Booking unreviewedTrip(Long carId, Long customerId) {
+    private Booking unreviewedTrip(Long carId, Long customerId) {
         return bookingRepository.findAllByCarIdAndCustomerIdAndStatusOrderByCompletedAtAsc(
                         carId, customerId, com.carrental.enums.BookingStatus.COMPLETED).stream()
                 .filter(b -> !reviewRepository.existsByBookingId(b.getId()))
