@@ -138,3 +138,19 @@ html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
 @media (prefers-reduced-motion: reduce) {
   .cursor-trail { display: none; }
 }
+
+/* ---------- Video nền cho các trang bên trong (trừ trang chủ, đăng nhập/đăng ký) ---------- */
+.app-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  background: #cfe6ee url("/images/app-bg-poster.jpg") center / cover no-repeat; }
+.app-bg-video { width: 100%; height: 100%; object-fit: cover; }
+/* Lớp kem mờ phía trên video: giữ được cảnh biển nhưng chữ trên nền vẫn đủ tương phản. */
+.app-bg::after { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgb(246 245 241 / .80) 0%, rgb(246 245 241 / .70) 45%, rgb(246 245 241 / .82) 100%);
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+/* Bỏ nền đặc của trang để thấy video; thẻ nội dung vẫn trắng. */
+:is(html[data-surface="app"], html[data-surface="console"]) body { background: transparent; }
+:is(html[data-surface="app"], html[data-surface="console"]) main,
+:is(html[data-surface="app"], html[data-surface="console"]) main[class*="bg-[#F7F7F5]"],
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-section-bg, .bg-surface-bg, .bg-soft-bg, .bg-bg-light, .bg-surface-alt)[class*="min-h"] { background: transparent; }
+:is(html[data-surface="app"], html[data-surface="console"]) footer { background: rgb(250 248 242 / .92); }
+@media (prefers-reduced-motion: reduce) { .app-bg-video { display: none; } }
