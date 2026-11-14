@@ -20,9 +20,8 @@ function fromParams(params) {
     const fallback = defaultWindow();
     return {
         city: params.get("city") || params.get("location") || "",
-        // Chưa chọn ngày thì dùng khung gợi ý (9:00 mai → 9:00 ngày kia) để hiện xe ngay.
-        pickupAt: (params.get("pickupAt") || fallback.pickupAt || "").slice(0, 16),
-        returnAt: (params.get("returnAt") || fallback.returnAt || "").slice(0, 16),
+        pickupAt: (params.get("pickupAt") || "").slice(0, 16),
+        returnAt: (params.get("returnAt") || "").slice(0, 16),
         carType: params.get("carType") || "",
         brand: params.get("brand") || "",
         seats: params.get("seats") || "",
@@ -39,7 +38,9 @@ export function Explorer() {
     const [params, setParams] = useSearchParams();
     const initial = useMemo(() => fromParams(params), []); // eslint-disable-line react-hooks/exhaustive-deps
     const [form, setForm] = useState(initial);
-    const [query, setQuery] = useState(() => (windowError(initial.pickupAt, initial.returnAt) ? null : initial));
+    // Ngày nhận/trả là tuỳ chọn: chưa chọn thì vẫn liệt kê mọi xe đang cho thuê.
+    const hasWindow = q => Boolean(q?.pickupAt || q?.returnAt);
+    const [query, setQuery] = useState(() => (hasWindow(initial) && windowError(initial.pickupAt, initial.returnAt) ? { ...initial, pickupAt: "", returnAt: "" } : initial));
     const [page, setPage] = useState(0);
     const [error, setError] = useState("");
     const [moreFilters, setMoreFilters] = useState(false);
@@ -52,7 +53,7 @@ export function Explorer() {
             minPrice: query.minPrice ? Number(query.minPrice) : undefined,
             maxPrice: query.maxPrice ? Number(query.maxPrice) : undefined,
             transmission: query.transmission || undefined, fuelType: query.fuelType || undefined,
-            pickupAt: toApiTime(query.pickupAt), returnAt: toApiTime(query.returnAt),
+            pickupAt: query.pickupAt ? toApiTime(query.pickupAt) : undefined, returnAt: query.returnAt ? toApiTime(query.returnAt) : undefined,
             sortBy, direction, page, size: 12,
         });
     }, [query, page]);
@@ -61,7 +62,7 @@ export function Explorer() {
     const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
 
     function submit(next = form) {
-        const message = windowError(next.pickupAt, next.returnAt);
+        const message = hasWindow(next) ? windowError(next.pickupAt, next.returnAt) : null;
         setError(message ?? "");
         if (message) return;
         if (next.minPrice && next.maxPrice && Number(next.minPrice) > Number(next.maxPrice)) {
@@ -75,14 +76,15 @@ export function Explorer() {
         setParams(search, { replace: true });
     }
 
-    const duration = query ? splitDuration(query.pickupAt, query.returnAt) : null;
-    const tripQuery = query ? `?pickupAt=${encodeURIComponent(query.pickupAt)}&returnAt=${encodeURIComponent(query.returnAt)}` : "";
+    const timed = Boolean(query?.pickupAt && query?.returnAt);
+    const duration = timed ? splitDuration(query.pickupAt, query.returnAt) : null;
+    const tripQuery = timed ? `?pickupAt=${encodeURIComponent(query.pickupAt)}&returnAt=${encodeURIComponent(query.returnAt)}` : "";
 
     return <div className="flex flex-col gap-5">
     <div>
       <p className="text-[11px] font-bold uppercase tracking-wide text-[#666666]">Thuê xe tự lái</p>
       <h1 className="mt-1 text-2xl font-bold text-[#292929]">Tìm xe trống lịch theo thời gian của bạn</h1>
-      <p className="mt-1 text-sm text-[#666666]">Chọn giờ nhận và trả xe trước: CarDB chỉ hiển thị xe còn trống lịch và tính sẵn tổng tiền theo ngày + giờ.</p>
+      <p className="mt-1 text-sm text-[#666666]">Xem mọi xe đang cho thuê. Chọn giờ nhận và trả xe để lọc xe còn trống lịch và tính sẵn tổng tiền theo ngày + giờ.</p>
     </div>
 
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-3 rounded-2xl border border-[#E9E9E7] bg-white p-4 shadow-sm">
@@ -90,11 +92,11 @@ export function Explorer() {
         <label className="text-xs font-semibold text-[#666666]">Địa điểm nhận xe
           <input value={form.city} onChange={set("city")} placeholder="TP. Hồ Chí Minh, Hà Nội..." className={`${fieldClass} mt-1`}/>
         </label>
-        <label className="text-xs font-semibold text-[#666666]">Nhận xe <span className="text-[#B91C1C]">*</span>
-          <input type="datetime-local" required value={form.pickupAt} onChange={set("pickupAt")} className={`${fieldClass} mt-1`} aria-invalid={Boolean(error && !form.pickupAt)}/>
+        <label className="text-xs font-semibold text-[#666666]">Nhận xe <span className="font-normal text-[#8A887F]">(tuỳ chọn)</span>
+          <input type="datetime-local" value={form.pickupAt} onChange={set("pickupAt")} className={`${fieldClass} mt-1`} aria-invalid={Boolean(error && !form.pickupAt)}/>
         </label>
-        <label className="text-xs font-semibold text-[#666666]">Trả xe <span className="text-[#B91C1C]">*</span>
-          <input type="datetime-local" required value={form.returnAt} min={form.pickupAt || undefined} onChange={set("returnAt")} className={`${fieldClass} mt-1`} aria-invalid={Boolean(error && !form.returnAt)}/>
+        <label className="text-xs font-semibold text-[#666666]">Trả xe <span className="font-normal text-[#8A887F]">(tuỳ chọn)</span>
+          <input type="datetime-local" value={form.returnAt} min={form.pickupAt || undefined} onChange={set("returnAt")} className={`${fieldClass} mt-1`} aria-invalid={Boolean(error && !form.returnAt)}/>
         </label>
         <button type="submit" className="inline-flex items-center justify-center gap-1.5 self-end rounded-xl bg-[#FC6C26] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e55915]"><Icon name="search" className="text-[18px]"/>Tìm xe</button>
       </div>
@@ -130,7 +132,7 @@ export function Explorer() {
       <p className="mt-2 font-bold text-[#292929]">Chọn thời gian nhận và trả xe để xem xe còn trống</p>
       <p className="mt-1 text-sm text-[#666666]">Giá thuê được quy về số ngày (24 giờ) và số giờ lẻ, giờ lẻ tính 1/10 giá ngày và không vượt giá 1 ngày.</p>
     </div> : <>
-      <p className="text-sm text-[#666666]">{result.data ? <><b className="text-[#292929]">{result.data.totalElements}</b> xe trống lịch</> : "Đang tìm…"} • thời gian thuê <b className="text-[#292929]">{durationLabel(duration.days, duration.hours)}</b></p>
+      <p className="text-sm text-[#666666]">{result.data ? <><b className="text-[#292929]">{result.data.totalElements}</b> {timed ? "xe trống lịch" : "xe đang cho thuê"}</> : "Đang tìm…"}{timed ? <> • thời gian thuê <b className="text-[#292929]">{durationLabel(duration.days, duration.hours)}</b></> : " • chọn ngày nhận/trả để lọc xe còn trống và xem tổng tiền"}</p>
       <LiveState loading={result.loading && !result.data} error={result.error} empty={result.data && !rows.length} label="xe trống lịch phù hợp" onRetry={result.reload}/>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {rows.map(car => {
@@ -145,9 +147,11 @@ export function Explorer() {
                 <p className="text-xs text-[#666666]">{car.seats} chỗ • {transmissionLabels[car.transmission]} • {fuelTypeLabels[car.fuelType]}</p>
                 <p className="flex items-center gap-1 text-xs text-[#666666]"><Icon name="location_on" className="text-[14px]"/>{[car.district, car.city].filter(Boolean).join(", ")}</p>
                 <div className="mt-auto flex items-end justify-between gap-2 border-t border-[#F1F1EF] pt-3">
-                  <div><span className="text-xs text-[#666666]">{formatMoney(day)}/ngày • {formatMoney(car.pricePerHour)}/giờ</span>
+                  {timed ? <div><span className="text-xs text-[#666666]">{formatMoney(day)}/ngày • {formatMoney(car.pricePerHour)}/giờ</span>
                     <p className="text-lg font-extrabold text-[#FC6C26]">≈ {formatMoney(estimate(day, query.pickupAt, query.returnAt))}</p>
                     <span className="text-[11px] text-[#666666]">cho {durationLabel(duration.days, duration.hours)}, chưa gồm cọc</span></div>
+                  : <div><p className="text-lg font-extrabold text-[#FC6C26]">{formatMoney(day)}<span className="text-xs font-semibold text-[#666666]">/ngày</span></p>
+                    <span className="text-[11px] text-[#666666]">{formatMoney(car.pricePerHour)}/giờ lẻ</span></div>}
                   <Link to={`/cars/${car.id}${tripQuery}`} className="rounded-xl bg-[#FC6C26] px-4 py-2 text-sm font-bold text-white hover:bg-[#e05615]">Chọn xe</Link>
                 </div>
               </div>
