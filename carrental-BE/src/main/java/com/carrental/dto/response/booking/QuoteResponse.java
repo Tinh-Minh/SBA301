@@ -47,7 +47,29 @@ public record QuoteResponse(
         List<String> breakdown,
         String voucherCode,
         BigDecimal discountAmount,
-        BigDecimal payableRentalAmount) {
+        BigDecimal payableRentalAmount,
+        BigDecimal deliveryDistanceKm,
+        BigDecimal deliveryFee) {
+
+    public QuoteResponse(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, long totalHours,
+            int rentalDays, int rentalHours, BigDecimal pricePerDay, BigDecimal weekendPricePerDay,
+            BigDecimal pricePerHour, BigDecimal dayAmount, BigDecimal hourAmount, BigDecimal rentalAmount,
+            BigDecimal depositAmount, Integer kmLimitPerDay, Integer includedKm, BigDecimal extraKmFee,
+            BigDecimal lateFeePerHour, boolean available, String unavailableReason, List<String> breakdown,
+            String voucherCode, BigDecimal discountAmount, BigDecimal payableRentalAmount) {
+        this(carId, pickupAt, returnAt, totalHours, rentalDays, rentalHours, pricePerDay, weekendPricePerDay,
+                pricePerHour, dayAmount, hourAmount, rentalAmount, depositAmount, kmLimitPerDay, includedKm,
+                extraKmFee, lateFeePerHour, available, unavailableReason, breakdown, voucherCode, discountAmount,
+                payableRentalAmount, null, BigDecimal.ZERO);
+    }
+
+    /** Bản báo giá kèm phí giao xe; cọc 40% tính lại trên (tiền thuê sau giảm + phí giao). */
+    public QuoteResponse withDelivery(BigDecimal distanceKm, BigDecimal fee, BigDecimal newDeposit, List<String> newBreakdown) {
+        return new QuoteResponse(carId, pickupAt, returnAt, totalHours, rentalDays, rentalHours, pricePerDay,
+                weekendPricePerDay, pricePerHour, dayAmount, hourAmount, rentalAmount, newDeposit, kmLimitPerDay,
+                includedKm, extraKmFee, lateFeePerHour, available, unavailableReason, newBreakdown, voucherCode,
+                discountAmount, payableRentalAmount, distanceKm, fee);
+    }
 
     public QuoteResponse(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, long totalHours,
             int rentalDays, int rentalHours, BigDecimal pricePerDay, BigDecimal weekendPricePerDay,

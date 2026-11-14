@@ -86,7 +86,10 @@ public record BookingResponse(
         BigDecimal fuelFeeAmount,
         LocalDateTime cancelledAt,
         BigDecimal cancelFeeAmount,
-        BigDecimal refundAmount) {
+        BigDecimal refundAmount,
+        String deliveryAddress,
+        BigDecimal deliveryDistanceKm,
+        BigDecimal deliveryFee) {
 
     public static BookingResponse from(Booking b, String imageUrl, boolean reviewed, List<Handover> handovers) {
         var car = b.getCar();
@@ -96,6 +99,7 @@ public record BookingResponse(
         BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
         PaymentStatus depStatus = b.getDepositStatus() != null ? b.getDepositStatus() : PaymentStatus.UNPAID;
         BigDecimal rem = b.getFinalAmount();
+        BigDecimal delivery = b.getDeliveryFee() != null ? b.getDeliveryFee() : BigDecimal.ZERO;
         return new BookingResponse(
                 b.getId(), b.getBookingCode(), b.getStatus(),
                 car.getId(), (car.getBrand() + " " + car.getModel()).trim(), car.getLicensePlate(), imageUrl,
@@ -117,8 +121,9 @@ public record BookingResponse(
                 b.getCreatedAt() != null ? b.getCreatedAt().plus(com.carrental.util.BookingMoneyPolicy.DEPOSIT_PAYMENT_WINDOW) : null,
                 b.getDepositPaidAt() != null ? b.getDepositPaidAt().plus(com.carrental.util.BookingMoneyPolicy.OWNER_RESPONSE_WINDOW) : null,
                 b.getRentalPaymentStatus(),
-                b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO)
+                b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO).add(delivery)
                         .subtract(b.getDepositAmount() != null ? b.getDepositAmount() : BigDecimal.ZERO).max(BigDecimal.ZERO),
-                b.getExtraFeeStatus(), b.getFuelFeeAmount(), b.getCancelledAt(), b.getCancelFeeAmount(), b.getRefundAmount());
+                b.getExtraFeeStatus(), b.getFuelFeeAmount(), b.getCancelledAt(), b.getCancelFeeAmount(), b.getRefundAmount(),
+                b.getDeliveryAddress(), b.getDeliveryDistanceKm(), delivery);
     }
 }

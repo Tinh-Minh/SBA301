@@ -149,11 +149,11 @@ public class RentalDashboardServiceImpl implements RentalDashboardService {
     }
 
     /**
-     * Doanh thu của chủ xe cho một đơn hoàn tất: tiền thuê GỐC + phí phát sinh.
+     * Doanh thu của chủ xe cho một đơn hoàn tất: tiền thuê GỐC + phí giao xe + phí phát sinh.
      * Khoản giảm giá voucher do nền tảng chịu (bù cho chủ xe), không trừ vào doanh thu chủ xe.
      */
     public static BigDecimal ownerEarning(Booking b) {
-        return nz(b.getRentalAmount()).add(nz(b.getExtraKmAmount())).add(nz(b.getLateAmount())).add(nz(b.getOtherFeeAmount()));
+        return nz(b.getRentalAmount()).add(nz(b.getDeliveryFee())).add(nz(b.getExtraKmAmount())).add(nz(b.getLateAmount())).add(nz(b.getOtherFeeAmount()));
     }
 
     private static BigDecimal nz(BigDecimal v) {

@@ -81,6 +81,24 @@ public class Booking extends BaseEntity {
     @Column(name = "deposit_amount", nullable = false, precision = 14, scale = 0)
     private BigDecimal depositAmount;
 
+    /** Giao xe tận nơi (null = khách tự đến lấy xe tại địa chỉ của xe). */
+    @Column(name = "delivery_address", length = 300)
+    private String deliveryAddress;
+
+    @Column(name = "delivery_latitude", precision = 9, scale = 6)
+    private BigDecimal deliveryLatitude;
+
+    @Column(name = "delivery_longitude", precision = 9, scale = 6)
+    private BigDecimal deliveryLongitude;
+
+    @Column(name = "delivery_distance_km", precision = 7, scale = 1)
+    private BigDecimal deliveryDistanceKm;
+
+    /** Phí giao xe, tính vào giá trị chuyến (cọc 40%, phần còn lại, phí huỷ, chi trả chủ xe). */
+    @Column(name = "delivery_fee", nullable = false, precision = 14, scale = 0)
+    @Builder.Default
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
+
     @Column(name = "km_limit_per_day")
     private Integer kmLimitPerDay;
 

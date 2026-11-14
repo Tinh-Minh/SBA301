@@ -1,6 +1,8 @@
 import { Link, useSearchParams } from "react-router";
 import { useCallback, useMemo, useState } from "react";
 import { LiveState, fieldClass } from "@/components/LiveUi.jsx";
+import { LocationPicker } from "@/components/location/LocationPicker.jsx";
+import { carPoint, deliveryDistanceKm, deliveryFee, locationPoint, useDeliveryLocation } from "@/utils/delivery.js";
 import { Icon } from "@/components/Icon.jsx";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { carImage, carTypeLabels, formatMoney, fuelTypeLabels, transmissionLabels } from "@/utils/labels.js";
@@ -58,7 +60,13 @@ export function Explorer() {
         });
     }, [query, page]);
     const result = useApiQuery(["vehicles", "search", { query, page }], load, { requiresAuth: false, enabled: Boolean(query) });
-    const rows = result.data?.content ?? [];
+    const where = locationPoint(useDeliveryLocation());
+    // Có vị trí nhận xe thì xếp xe gần lên trước (trong trang hiện tại); xe ở xa vẫn hiện kèm phí giao.
+    const rows = useMemo(() => {
+        const list = (result.data?.content ?? []).map(car => ({ car, km: deliveryDistanceKm(carPoint(car), where) }));
+        if (where) list.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+        return list;
+    }, [result.data, where?.lat, where?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
     const set = (key) => (event) => setForm((current) => ({ ...current, [key]: event.target.value }));
 
     function submit(next = form) {
@@ -88,10 +96,11 @@ export function Explorer() {
     </div>
 
     <form noValidate onSubmit={(event) => { event.preventDefault(); submit(); }} className="flex flex-col gap-3 rounded-2xl border border-[#E9E9E7] bg-white p-4 shadow-sm">
-      <div className="grid gap-3 md:grid-cols-[1.2fr_1fr_1fr_auto]">
-        <label className="text-xs font-semibold text-[#666666]">Địa điểm nhận xe
-          <input value={form.city} onChange={set("city")} placeholder="TP. Hồ Chí Minh, Hà Nội..." className={`${fieldClass} mt-1`}/>
-        </label>
+      <div>
+        <p className="mb-1 text-xs font-semibold text-[#666666]">Địa điểm nhận xe <span className="font-normal text-[#8A887F]">(để tính phí giao xe; vẫn xem được xe ở xa)</span></p>
+        <LocationPicker compact/>
+      </div>
+      <div className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
         <label className="text-xs font-semibold text-[#666666]">Nhận xe <span className="font-normal text-[#8A887F]">(tuỳ chọn)</span>
           <input type="datetime-local" value={form.pickupAt} onChange={set("pickupAt")} className={`${fieldClass} mt-1`} aria-invalid={Boolean(error && !form.pickupAt)}/>
         </label>
@@ -135,8 +144,9 @@ export function Explorer() {
       <p className="text-sm text-[#666666]">{result.data ? <><b className="text-[#292929]">{result.data.totalElements}</b> {timed ? "xe trống lịch" : "xe đang cho thuê"}</> : "Đang tìm…"}{timed ? <> • thời gian thuê <b className="text-[#292929]">{durationLabel(duration.days, duration.hours)}</b></> : " • chọn ngày nhận/trả để lọc xe còn trống và xem tổng tiền"}</p>
       <LiveState loading={result.loading && !result.data} error={result.error} empty={result.data && !rows.length} label="xe trống lịch phù hợp" onRetry={result.reload}/>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {rows.map(car => {
+        {rows.map(({ car, km }) => {
             const day = car.rentalPricePerDay || car.pricePerDay || 0;
+            const fee = deliveryFee(km);
             return <article key={car.id} className="flex flex-col overflow-hidden rounded-2xl border border-[#E9E9E7] bg-white shadow-sm">
               <Link to={`/cars/${car.id}${tripQuery}`}><img src={carImage(car)} alt={`${car.brand} ${car.model}`} className="h-44 w-full object-cover"/></Link>
               <div className="flex flex-1 flex-col gap-2 p-4">
@@ -146,6 +156,7 @@ export function Explorer() {
                 </div>
                 <p className="text-xs text-[#666666]">{car.seats} chỗ • {transmissionLabels[car.transmission]} • {fuelTypeLabels[car.fuelType]}</p>
                 <p className="flex items-center gap-1 text-xs text-[#666666]"><Icon name="location_on" className="text-[14px]"/>{[car.district, car.city].filter(Boolean).join(", ")}</p>
+                {km != null ? <p className={`text-xs font-semibold ${fee ? "text-[#B45309]" : "text-[#047857]"}`}>Cách bạn ~{km.toLocaleString("vi-VN")} km · {fee ? `phí giao xe ${formatMoney(fee)}` : "giao xe miễn phí"}</p> : null}
                 <div className="mt-auto flex items-end justify-between gap-2 border-t border-[#F1F1EF] pt-3">
                   {timed ? <div><span className="text-xs text-[#666666]">{formatMoney(day)}/ngày • {formatMoney(car.pricePerHour)}/giờ</span>
                     <p className="text-lg font-extrabold text-[#FC6C26]">≈ {formatMoney(estimate(day, query.pickupAt, query.returnAt))}</p>

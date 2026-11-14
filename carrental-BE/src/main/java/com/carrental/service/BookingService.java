@@ -22,6 +22,10 @@ public interface BookingService {
 
     QuoteResponse quote(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, String voucherCode);
 
+    /** Báo giá kèm phí giao xe tới toạ độ khách chọn (bỏ trống toạ độ = tự lấy xe). */
+    QuoteResponse quote(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, String voucherCode,
+            java.math.BigDecimal deliveryLatitude, java.math.BigDecimal deliveryLongitude);
+
     List<BusyRange> availability(Long carId);
 
     Set<Long> busyCarIds(LocalDateTime from, LocalDateTime to);

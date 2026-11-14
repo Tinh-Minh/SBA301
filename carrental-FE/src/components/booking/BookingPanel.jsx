@@ -9,6 +9,8 @@ import { useSafety } from "@/components/booking/SafetyPanel.jsx";
 import { formatDateTime } from "@/utils/datetime.js";
 import { formatMoney } from "@/utils/labels.js";
 import { defaultWindow, durationLabel, toApiTime, windowError } from "@/utils/rental.js";
+import { LocationPicker } from "@/components/location/LocationPicker.jsx";
+import { locationLabel, locationPoint, useDeliveryLocation, DELIVERY_FREE_KM, DELIVERY_FEE_PER_KM } from "@/utils/delivery.js";
 
 /** Khung đặt xe trên trang chi tiết: chọn giờ → báo giá → gửi yêu cầu thuê. */
 export function BookingPanel({ car }) {
@@ -22,6 +24,11 @@ export function BookingPanel({ car }) {
     const [error, setError] = useState("");
     const [note, setNote] = useState("");
     const [sending, setSending] = useState(false);
+    // Nhận xe: tự đến địa chỉ xe, hoặc giao tận nơi tới vị trí khách đã chọn (phí do máy chủ tính).
+    const location = useDeliveryLocation();
+    const point = locationPoint(location);
+    const [mode, setMode] = useState(() => (point ? "delivery" : "self"));
+    const delivery = mode === "delivery" && point ? point : null;
     const busy = useApiQuery(["availability", car.id], () => tripService.availability(car.id), { requiresAuth: false });
     const own = user && user.id === car.ownerId;
     const safety = useSafety(car.id);
@@ -35,10 +42,10 @@ export function BookingPanel({ car }) {
         if (problem) { setError(problem); return; }
         setError("");
         let alive = true;
-        tripService.quote(car.id, toApiTime(pickupAt), toApiTime(returnAt), voucherCode.trim() || undefined)
+        tripService.quote(car.id, toApiTime(pickupAt), toApiTime(returnAt), voucherCode.trim() || undefined, delivery)
             .then(q => alive && setQuote(q)).catch(e => alive && setError(e.message));
         return () => { alive = false; };
-    }, [car.id, pickupAt, returnAt, voucherCode]);
+    }, [car.id, pickupAt, returnAt, voucherCode, delivery?.lat, delivery?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
 
     async function book() {
         setSending(true);
@@ -50,6 +57,9 @@ export function BookingPanel({ car }) {
                 returnAt: toApiTime(returnAt),
                 customerNote: note.trim() || null,
                 voucherCode: voucherCode.trim() || null,
+                deliveryAddress: delivery ? locationLabel(location) : null,
+                deliveryLatitude: delivery?.lat ?? null,
+                deliveryLongitude: delivery?.lng ?? null,
             });
             navigate(`/trips/${created.id}?created=1`);
         } catch (e) {
@@ -75,13 +85,26 @@ export function BookingPanel({ car }) {
     </div>
     {busy.data?.length ? <p className="mt-2 text-xs text-[#666666]"><Icon name="event_busy" className="text-[14px]"/> Xe đã có lịch: {busy.data.slice(0, 3).map(r => `${formatDateTime(r.from)} → ${formatDateTime(r.to)}`).join("; ")}</p> : null}
 
+    <fieldset className="mt-4">
+      <legend className="text-xs font-semibold text-[#666666]">Nhận xe</legend>
+      <div className="mt-1 grid grid-cols-2 gap-2 text-sm">
+        {[["self", "Tự đến lấy xe"], ["delivery", "Giao tận nơi"]].map(([id, label]) =>
+          <label key={id} className={`flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 ${mode === id ? "border-[#1F1F1D] font-semibold" : "border-[#D6D3CB]"}`}>
+            <input type="radio" name="pickup-mode" checked={mode === id} onChange={() => setMode(id)}/>{label}</label>)}
+      </div>
+      {mode === "self" ? <p className="mt-1.5 text-xs text-[#666666]">Nhận xe tại địa chỉ của xe, miễn phí.</p>
+        : <div className="mt-2"><p className="mb-1 text-xs text-[#666666]">Miễn phí {DELIVERY_FREE_KM} km đầu, sau đó {formatMoney(DELIVERY_FEE_PER_KM)}/km.</p><LocationPicker compact/></div>}
+    </fieldset>
+
     {quote ? (() => {
-      const payable = Number(quote.payableRentalAmount || quote.rentalAmount);
-      const deposit = Math.min(payable, Math.ceil(payable * 0.4 / 1000) * 1000);
+      const deliveryFee = Number(quote.deliveryFee || 0);
+      const payable = Number(quote.payableRentalAmount || quote.rentalAmount) + deliveryFee;
+      const deposit = Number(quote.depositAmount) || Math.min(payable, Math.ceil(payable * 0.4 / 1000) * 1000);
       return <div className="mt-4 text-sm">
         <dl className="flex flex-col gap-1.5">
           <div className="flex justify-between"><dt className="text-[#57564F]">Thời gian thuê</dt><dd className="font-semibold">{durationLabel(quote.rentalDays, quote.rentalHours)}</dd></div>
           {quote.discountAmount ? <div className="flex justify-between text-[#166534]"><dt>Voucher {quote.voucherCode}</dt><dd className="font-semibold tabular-nums">-{formatMoney(quote.discountAmount)}</dd></div> : null}
+          {quote.deliveryDistanceKm != null ? <div className="flex justify-between"><dt className="text-[#57564F]">Giao xe ~{Number(quote.deliveryDistanceKm).toLocaleString("vi-VN")} km</dt><dd className="font-semibold tabular-nums">{deliveryFee ? formatMoney(deliveryFee) : "Miễn phí"}</dd></div> : null}
           <div className="flex items-baseline justify-between border-t border-[#E7E5DF] pt-2"><dt className="font-bold">Tổng tiền thuê</dt><dd className="text-lg font-bold tabular-nums">{formatMoney(payable)}</dd></div>
           <div className="flex justify-between"><dt className="text-[#57564F]">Cọc 40% trả ngay</dt><dd className="font-semibold tabular-nums">{formatMoney(deposit)}</dd></div>
         </dl>

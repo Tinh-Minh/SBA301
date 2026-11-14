@@ -1,5 +1,6 @@
 package com.carrental.controller;
 
+import java.math.BigDecimal;
 import com.carrental.dto.request.*;
 import com.carrental.dto.response.*;
 
@@ -47,8 +48,10 @@ public class BookingController {
             @PathVariable Long carId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime pickupAt,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime returnAt,
-            @RequestParam(required = false) String voucherCode) {
-        return ApiResponse.ok(bookingService.quote(carId, pickupAt, returnAt, voucherCode));
+            @RequestParam(required = false) String voucherCode,
+            @RequestParam(required = false) BigDecimal deliveryLatitude,
+            @RequestParam(required = false) BigDecimal deliveryLongitude) {
+        return ApiResponse.ok(bookingService.quote(carId, pickupAt, returnAt, voucherCode, deliveryLatitude, deliveryLongitude));
     }
 
     @GetMapping("/api/cars/{carId}/availability")

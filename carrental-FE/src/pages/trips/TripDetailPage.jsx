@@ -52,6 +52,7 @@ function Trip({ id }) {
           <p className="font-mono text-xs text-[#666666]">{b.bookingCode}</p>
           <h1 className="text-2xl font-bold text-[#292929]">{b.carName}</h1>
           <p className="text-sm text-[#666666]">{b.carLicensePlate ? `${b.carLicensePlate} • ` : ""}{b.pickupAddress}</p>
+          {b.deliveryAddress ? <p className="text-sm text-[#57564F]"><b>Giao xe tới:</b> {b.deliveryAddress}</p> : null}
         </div>
         <StatusBadge meta={bookingStatusMeta[b.status]}/>
       </div>
@@ -124,6 +125,7 @@ function Trip({ id }) {
             {b.rentalDays ? <Row term={`${b.rentalDays} ngày`} value={formatMoney(b.dayAmount)}/> : null}
             {b.rentalHours ? <Row term={`${b.rentalHours} giờ lẻ × ${formatMoney(b.pricePerHour)}`} value={formatMoney(b.hourAmount)}/> : null}
             <Row term="Tiền thuê" value={formatMoney(b.rentalAmount)} strong/>
+            {b.deliveryAddress ? <Row term={`Giao xe tận nơi ~${Number(b.deliveryDistanceKm ?? 0).toLocaleString("vi-VN")} km`} value={Number(b.deliveryFee) ? formatMoney(b.deliveryFee) : "Miễn phí"}/> : null}
             {b.voucherCode ? <Row term={`Voucher (${b.voucherCode})`} value={<span className="text-[#166534]">-{formatMoney(b.discountAmount)}</span>}/> : null}
             {b.voucherCode && b.discountAmount ? <Row term="Tiền thuê sau giảm" value={formatMoney(Math.max(0, (b.rentalAmount || 0) - (b.discountAmount || 0)))} strong/> : null}
             {Number(b.extraKmAmount) ? <Row term="Phí quá km" value={formatMoney(b.extraKmAmount)}/> : null}

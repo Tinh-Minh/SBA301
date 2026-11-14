@@ -6,6 +6,7 @@ import com.carrental.dto.response.*;
 
 import com.carrental.util.BookingPricing;
 import com.carrental.util.BookingMoneyPolicy;
+import com.carrental.util.DeliveryPolicy;
 import com.carrental.storage.PublicImageStorageService;
 
 import com.carrental.dto.request.booking.*;
@@ -106,7 +107,29 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional(readOnly = true)
     public QuoteResponse quote(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, String voucherCode) {
+        return quoteBase(publicCar(carId), pickupAt, returnAt, voucherCode);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public QuoteResponse quote(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, String voucherCode,
+            BigDecimal deliveryLatitude, BigDecimal deliveryLongitude) {
         Car car = publicCar(carId);
+        QuoteResponse q = quoteBase(car, pickupAt, returnAt, voucherCode);
+        BigDecimal km = DeliveryPolicy.distanceKm(car.getLatitude(), car.getLongitude(), deliveryLatitude, deliveryLongitude);
+        if (km == null) {
+            return q;
+        }
+        BigDecimal fee = DeliveryPolicy.fee(km);
+        BigDecimal payable = q.payableRentalAmount() != null ? q.payableRentalAmount() : q.rentalAmount();
+        List<String> breakdown = new ArrayList<>(q.breakdown());
+        breakdown.add("Giao xe tận nơi ~" + km.toPlainString() + " km: "
+                + (fee.signum() > 0 ? BookingPricing.vnd(fee) + " (miễn phí " + DeliveryPolicy.FREE_KM + " km đầu)" : "miễn phí"));
+        return q.withDelivery(km, fee, BookingMoneyPolicy.depositFor(payable.add(fee)), breakdown);
+    }
+
+    private QuoteResponse quoteBase(Car car, LocalDateTime pickupAt, LocalDateTime returnAt, String voucherCode) {
+        Long carId = car.getId();
         validateWindow(pickupAt, returnAt);
         boolean free = bookingRepository.findOverlapping(carId, pickupAt, returnAt, HOLDING).isEmpty();
         QuoteResponse base = BookingPricing.quote(car, pickupAt, returnAt, free,
@@ -218,9 +241,13 @@ public class BookingServiceImpl implements BookingService {
         QuoteResponse q = BookingPricing.quote(car, request.pickupAt(), request.returnAt(), true, null);
         Voucher voucher = resolveVoucher(request.voucherCode(), q.rentalAmount(), customer);
         BigDecimal discount = calculateDiscount(voucher, q.rentalAmount());
+        // Giao xe tận nơi: phí tính trên máy chủ từ toạ độ xe và điểm giao, không tin số tiền từ client.
+        BigDecimal deliveryKm = DeliveryPolicy.distanceKm(car.getLatitude(), car.getLongitude(),
+                request.deliveryLatitude(), request.deliveryLongitude());
+        BigDecimal deliveryFee = DeliveryPolicy.fee(deliveryKm);
         // Lượt voucher chỉ bị trừ khi chủ xe xác nhận đơn (xem accept), tránh spam yêu cầu để chiếm lượt.
         // Cọc 40% tiền thuê sau giảm, thanh toán ngay qua hệ thống (trong 30 phút) thì yêu cầu mới tới chủ xe.
-        BigDecimal deposit = BookingMoneyPolicy.depositFor(q.rentalAmount().subtract(discount).max(BigDecimal.ZERO));
+        BigDecimal deposit = BookingMoneyPolicy.depositFor(q.rentalAmount().subtract(discount).max(BigDecimal.ZERO).add(deliveryFee));
         PaymentStatus initialDepositStatus = deposit.signum() > 0 ? PaymentStatus.UNPAID : PaymentStatus.NOT_REQUIRED;
 
         Booking booking = Booking.builder()
@@ -234,6 +261,11 @@ public class BookingServiceImpl implements BookingService {
                 .discountAmount(discount)
                 .depositAmount(deposit)
                 .depositStatus(initialDepositStatus)
+                .deliveryAddress(deliveryKm != null ? trim(request.deliveryAddress()) : null)
+                .deliveryLatitude(deliveryKm != null ? request.deliveryLatitude() : null)
+                .deliveryLongitude(deliveryKm != null ? request.deliveryLongitude() : null)
+                .deliveryDistanceKm(deliveryKm)
+                .deliveryFee(deliveryFee)
                 .kmLimitPerDay(car.getKmLimitPerDay()).extraKmFee(car.getExtraKmFee())
                 .lateFeePerHour(car.getLateFeePerHour())
                 .contactPhone(blank(request.contactPhone()) ? customer.getPhone() : request.contactPhone().trim())
@@ -438,8 +470,9 @@ public class BookingServiceImpl implements BookingService {
         b.setCompletedAt(now());
         BigDecimal extras = nz(b.getExtraKmAmount()).add(nz(b.getLateAmount())).add(nz(b.getFuelFeeAmount()))
                 .add(nz(b.getOtherFeeAmount()));
-        BigDecimal gross = b.getRentalAmount().add(extras);
+        BigDecimal gross = b.getRentalAmount().add(nz(b.getDeliveryFee())).add(extras);
         String detail = "tiền thuê " + b.getRentalAmount().toPlainString() + "đ"
+                + (nz(b.getDeliveryFee()).signum() > 0 ? " + phí giao xe " + b.getDeliveryFee().toPlainString() + "đ" : "")
                 + (nz(b.getDiscountAmount()).signum() > 0 ? " (gồm " + b.getDiscountAmount().toPlainString() + "đ voucher nền tảng bù)" : "")
                 + (extras.signum() > 0 ? " + phí phát sinh " + extras.toPlainString() + "đ" : "");
         settlementService.payOwner(b, gross, "Chi trả đơn " + b.getBookingCode() + ": " + detail);
@@ -449,10 +482,10 @@ public class BookingServiceImpl implements BookingService {
         return value == null ? BigDecimal.ZERO : value;
     }
 
-    /** Giá trị chuyến = tiền thuê sau giảm giá. */
+    /** Giá trị chuyến = tiền thuê sau giảm giá + phí giao xe. */
     public static BigDecimal tripValue(Booking b) {
         BigDecimal discount = b.getDiscountAmount() != null ? b.getDiscountAmount() : BigDecimal.ZERO;
-        return b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO);
+        return b.getRentalAmount().subtract(discount).max(BigDecimal.ZERO).add(nz(b.getDeliveryFee()));
     }
 
     /** Số tiền thuê khách đã trả qua hệ thống (cọc + phần còn lại). */

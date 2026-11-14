@@ -11,6 +11,8 @@ import com.carrental.enums.HandoverStatus;
 import com.carrental.enums.HandoverType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -32,4 +34,16 @@ public record CreateBookingRequest(
         @Pattern(regexp = "^$|^\\s*(\\+84|0)[0-9]{9,10}\\s*$", message = "Số điện thoại không hợp lệ") String contactPhone,
         @Size(max = 1000, message = "Lời nhắn tối đa 1000 ký tự")
         @Pattern(regexp = "^[^<>]*$", message = "Lời nhắn không được chứa ký tự < hoặc >") String customerNote,
-        @Size(max = 50, message = "Mã voucher tối đa 50 ký tự") String voucherCode) {}
+        @Size(max = 50, message = "Mã voucher tối đa 50 ký tự") String voucherCode,
+        /* Giao xe tận nơi (tuỳ chọn): bỏ trống toạ độ = khách tự đến lấy xe tại địa chỉ của xe. */
+        @Size(max = 300, message = "Địa chỉ giao xe tối đa 300 ký tự")
+        @Pattern(regexp = "^[^<>]*$", message = "Địa chỉ giao xe không được chứa ký tự < hoặc >") String deliveryAddress,
+        @DecimalMin(value = "-90", message = "Vĩ độ không hợp lệ") @DecimalMax(value = "90", message = "Vĩ độ không hợp lệ") BigDecimal deliveryLatitude,
+        @DecimalMin(value = "-180", message = "Kinh độ không hợp lệ") @DecimalMax(value = "180", message = "Kinh độ không hợp lệ") BigDecimal deliveryLongitude) {
+
+    /** Tương thích chỗ gọi cũ (không giao xe). */
+    public CreateBookingRequest(Long carId, LocalDateTime pickupAt, LocalDateTime returnAt, String contactPhone,
+            String customerNote, String voucherCode) {
+        this(carId, pickupAt, returnAt, contactPhone, customerNote, voucherCode, null, null, null);
+    }
+}

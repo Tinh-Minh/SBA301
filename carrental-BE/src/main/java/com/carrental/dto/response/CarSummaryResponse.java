@@ -29,7 +29,9 @@ public record CarSummaryResponse(
         ListingStatus listingStatus,
         BigDecimal pricePerHour,
         BigDecimal pricePerDay,
-        String primaryImageUrl
+        String primaryImageUrl,
+        BigDecimal latitude,
+        BigDecimal longitude
 ) {
     public static CarSummaryResponse from(Car car) {
         return from(car, null);
@@ -68,7 +70,9 @@ public record CarSummaryResponse(
                 car.getListingStatus(),
                 com.carrental.util.RentalPricing.hourlyRate(dayPrice),
                 dayPrice,
-                primaryImageUrl
+                primaryImageUrl,
+                car.getLatitude(),
+                car.getLongitude()
         );
     }
 }
