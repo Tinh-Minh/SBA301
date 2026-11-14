@@ -8,8 +8,18 @@ body:has(.home-journey-page) footer { scroll-snap-align:start;scroll-snap-stop:n
 .journey-canvas { position:fixed;inset:0;z-index:4;pointer-events:none; }
 .journey-canvas canvas { display:block;width:100%;height:100%; }
 .journey-wheel-cursor { position:fixed;inset:0;z-index:60;width:100%;height:100%;pointer-events:none; }
-.journey-speed { position:fixed;z-index:25;left:5vw;top:calc(var(--journey-header-height, 80px) + 22px);margin:0;color:#8d8d80;font-size:12px;font-weight:600;letter-spacing:.12em;pointer-events:none;font-variant-numeric:tabular-nums; }
-.journey-speed strong { color:#25251f;font-size:15px;letter-spacing:0; }
+.journey-speed { --speed:0;position:fixed;z-index:25;left:max(16px,4vw);top:calc(var(--journey-header-height, 80px) + 16px);width:92px;height:92px;margin:0;border-radius:50%;background:rgb(250 248 242 / .95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 0 0 1px rgb(37 37 31 / .08),0 8px 24px -12px rgb(37 37 31 / .35);pointer-events:none;transition:opacity .4s ease; }
+.journey-speed-dial { position:absolute;inset:0;width:100%;height:100%;overflow:visible; }
+.journey-speed-track,.journey-speed-value { fill:none;stroke-width:5;stroke-linecap:round; }
+.journey-speed-track { stroke:rgb(37 37 31 / .1); }
+.journey-speed-value { stroke:#fc6c26;stroke-dasharray:100;stroke-dashoffset:calc(100 - var(--speed) * 100); }
+.journey-speed-tick { stroke:rgb(37 37 31 / .35);stroke-width:1.2;stroke-linecap:round; }
+.journey-speed-needle { stroke:#25251f;stroke-width:2;stroke-linecap:round;transform-origin:50px 50px;transform:rotate(calc(-135deg + var(--speed) * 270deg)); }
+.journey-speed-hub { fill:#25251f; }
+.journey-speed-readout { position:absolute;left:0;right:0;bottom:12px;margin:0;display:flex;flex-direction:column;align-items:center;line-height:1;font-variant-numeric:tabular-nums; }
+.journey-speed-readout strong { color:#25251f;font-size:16px;font-weight:800; }
+.journey-speed-readout span { margin-top:2px;color:#8d8d80;font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase; }
+@media(max-width:767px){ .journey-speed { width:72px;height:72px; } .journey-speed-readout { bottom:9px; } .journey-speed-readout strong { font-size:13px; } }
 .home-journey-page:not([data-intro-state="complete"]) .journey-speed { opacity:0; }
 .journey-hero { container-type:inline-size;display:flex;flex-direction:column;background:#e7e2d8 url("/images/hero-coast-road.jpg") center 38% / cover no-repeat; }
 .journey-hero::after { content:"";position:absolute;inset:0;background:linear-gradient(180deg,#f2f2edf2 0%,#f2f2ed8c 18%,#f2f2ed00 46%);pointer-events:none; }
