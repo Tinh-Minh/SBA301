@@ -141,7 +141,7 @@ html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
 
 /* ---------- Video nền cho các trang bên trong (trừ trang chủ, đăng nhập/đăng ký) ---------- */
 .app-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
-  background: #5fb8dc url("/images/app-background.jpg") center 40% / cover no-repeat; }
+  background: #c9782a url("/images/app-background.jpg") center 35% / cover no-repeat; }
 /* Không phủ cả màn hình. Chữ nằm thẳng trên video có quầng sáng màu kem nhẹ để dễ đọc;
    chữ trong thẻ trắng có quầng trùng màu nền nên không nhìn thấy. */
 :is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, p, span, a, label, li, dt, dd, nav, small) {
@@ -160,7 +160,8 @@ html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
 
 /* Chữ nằm thẳng trên video nền (không nằm trong thẻ/khối có nền) chuyển sang cam để nổi trên cảnh biển. */
 :is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, p, span, nav, a, li, small):not(:is(.bg-white, [class*="bg-white"], [class*="bg-[#F"], [class*="bg-[#E"], [class*="bg-[#D"], [class*="bg-[#1"], [class*="bg-emerald"], [class*="bg-red"], [class*="bg-amber"], [class*="bg-blue"], button, table, form, article, aside, [class*="rounded-2xl"], [class*="rounded-xl"], [class*="rounded-lg"]):not(main) *):not(button):not([class*="bg-"]) {
-  color: #e65a12;
+  color: #fff;
+  text-shadow: 0 1px 2px rgb(40 20 5 / .75), 0 0 8px rgb(40 20 5 / .55), 0 0 18px rgb(40 20 5 / .35);
 }
 
 /* =====================================================================
@@ -169,8 +170,8 @@ html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
    ô nhập liệu và pop-up ở mọi trang trừ trang chủ.
    ===================================================================== */
 :root {
-  --glass-bg: rgb(255 255 255 / .52);
-  --glass-bg-strong: rgb(255 255 255 / .72);
+  --glass-bg: rgb(255 255 255 / .74);
+  --glass-bg-strong: rgb(255 255 255 / .84);
   --glass-border: rgb(255 255 255 / .65);
   --glass-edge: rgb(31 31 29 / .08);
   --glass-blur: blur(22px) saturate(185%);
