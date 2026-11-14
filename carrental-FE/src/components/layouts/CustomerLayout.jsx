@@ -5,12 +5,9 @@ import { Interactions } from "@/components/Interactions.jsx";
 import { ReferenceFooter } from "@/components/ReferenceFooter.jsx";
 import { CursorTrail } from "@/components/CursorTrail.jsx";
 
-/** Video nền (bãi biển) cho các trang bên trong, phủ lớp kem mờ để chữ và thẻ trắng vẫn dễ đọc. */
+/** Ảnh nền (cảng biển) cố định phía sau các trang bên trong. */
 function AppBackground() {
-    const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    return <div className="app-bg" aria-hidden="true">
-        {reduced ? null : <video className="app-bg-video" src="/videos/app-bg.mp4" poster="/images/app-bg-poster.jpg" autoPlay muted loop playsInline preload="auto"/>}
-    </div>;
+    return <div className="app-bg" aria-hidden="true"/>;
 }
 
 // "home": trang chủ giữ nguyên thiết kế cũ; "console": khu chủ xe/admin; "app": các màn còn lại.
