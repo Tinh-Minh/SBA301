@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DateField } from "@/components/DateField.jsx";
 import { useApiMutation } from "@/hooks/useApiMutation.js";
 import { formatDate, toLocalDate } from "@/utils/datetime.js";
-import { kycStatusLabels } from "@/utils/labels.js";
+import { kycStatusLabels, resolveAssetUrl } from "@/utils/labels.js";
 import { updateSessionAccount } from "@/utils/session.js";
 import { changePassword, updateMyProfile, uploadMyAvatar } from "@/services/accountService.js";
 import { authenticate } from "@/services/authService.js";
@@ -19,6 +19,11 @@ export function Editor({ profile, kyc, onSaved }) {
     const [avatarUrl, setAvatarUrl] = useState(profile.avatarUrl ?? "");
     const [avatarBusy, setAvatarBusy] = useState(false);
     const [avatarError, setAvatarError] = useState("");
+    useEffect(() => {
+        if (profile.avatarUrl) {
+            setAvatarUrl(profile.avatarUrl);
+        }
+    }, [profile.avatarUrl]);
     const [dateOfBirth, setDob] = useState(toLocalDate(profile.dateOfBirth) ?? "");
     const [address, setAddress] = useState(profile.address ?? "");
     const [currentPassword, setCurrentPassword] = useState("");
@@ -78,42 +83,41 @@ export function Editor({ profile, kyc, onSaved }) {
         <div className="sm:col-span-2"><Field label="Địa chỉ" htmlFor={editing ? "profile-address" : undefined}>{editing ? <input id="profile-address" value={address} onChange={event => setAddress(event.target.value)} className={profileInputClass}/> : (profile.address || "Chưa cập nhật")}</Field></div>
         <div className="sm:col-span-2">
           <Field label="Ảnh đại diện">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3.5">
               <div className="size-14 shrink-0 overflow-hidden rounded-full border border-card-border bg-[#F7F7F5] flex items-center justify-center">
-                {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="size-full object-cover"/> : <span className="text-xl font-bold text-[#666666]">{profile.fullName?.charAt(0) || "U"}</span>}
+                {avatarUrl ? <img src={resolveAssetUrl(avatarUrl)} alt="Avatar" className="size-full object-cover"/> : <span className="text-xl font-bold text-[#666666]">{profile.fullName?.charAt(0) || "U"}</span>}
               </div>
-              {editing ? (
-                <div>
-                  <label className="inline-flex cursor-pointer items-center rounded-xl border border-[#767676] bg-white px-3 py-1.5 text-xs font-bold text-[#292929] hover:bg-[#F7F7F5]">
-                    {avatarBusy ? "Đang tải ảnh lên…" : "Tải ảnh từ máy"}
-                    <input
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      disabled={avatarBusy}
-                      onChange={async (event) => {
-                        const file = event.target.files?.[0];
-                        event.target.value = "";
-                        if (!file) return;
-                        if (file.size > 5 * 1024 * 1024) { setAvatarError("Ảnh tối đa 5MB"); return; }
-                        setAvatarBusy(true);
-                        setAvatarError("");
-                        try {
-                          const updated = await uploadMyAvatar(file);
-                          setAvatarUrl(updated.avatarUrl);
-                          updateSessionAccount({ avatarUrl: updated.avatarUrl });
-                          onSaved?.();
-                        } catch (err) {
-                          setAvatarError(err?.message || "Không tải ảnh lên được");
-                        } finally {
-                          setAvatarBusy(false);
-                        }
-                      }}
-                    />
-                  </label>
-                  {avatarError ? <p role="alert" className="mt-1 text-xs text-[#B91C1C]">{avatarError}</p> : null}
-                </div>
-              ) : null}
+              <div>
+                <label className="inline-flex cursor-pointer items-center rounded-xl border border-[#D2CFC3] bg-white px-3.5 py-2 text-xs font-bold text-[#25251F] shadow-2xs transition hover:border-[#FC6C26]">
+                  {avatarBusy ? "Đang tải ảnh lên…" : "Đổi ảnh đại diện"}
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    disabled={avatarBusy}
+                    onChange={async (event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = "";
+                      if (!file) return;
+                      if (file.size > 5 * 1024 * 1024) { setAvatarError("Ảnh tối đa 5MB"); return; }
+                      setAvatarBusy(true);
+                      setAvatarError("");
+                      try {
+                        const updated = await uploadMyAvatar(file);
+                        const nextAvatar = `${updated.avatarUrl}${updated.avatarUrl?.includes("?") ? "&" : "?"}t=${Date.now()}`;
+                        setAvatarUrl(nextAvatar);
+                        updateSessionAccount({ avatarUrl: nextAvatar });
+                        onSaved?.();
+                      } catch (err) {
+                        setAvatarError(err?.message || "Không tải ảnh lên được");
+                      } finally {
+                        setAvatarBusy(false);
+                      }
+                    }}
+                  />
+                </label>
+                {avatarError ? <p role="alert" className="mt-1 text-xs text-[#B91C1C]">{avatarError}</p> : null}
+              </div>
             </div>
           </Field>
         </div>

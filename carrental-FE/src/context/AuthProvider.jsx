@@ -60,6 +60,7 @@ export function AuthProvider({ children }) {
                     role: profile.role,
                     kycStatus: profile.kycStatus,
                     fullName: profile.fullName ?? current.account.fullName,
+                    avatarUrl: profile.avatarUrl ?? current.account.avatarUrl ?? null,
                 });
             }
             return profile;
@@ -68,6 +69,11 @@ export function AuthProvider({ children }) {
             return null;
         }
     }, []);
+    useEffect(() => {
+        if (session?.accessToken && session?.account?.id && !session.account.avatarUrl) {
+            void refreshAccount();
+        }
+    }, [session?.accessToken, session?.account?.id, session?.account?.avatarUrl, refreshAccount]);
     const value = useMemo(() => {
         const user = session?.account ?? null;
         return {
