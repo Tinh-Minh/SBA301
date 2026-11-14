@@ -63,7 +63,7 @@ export function BookingPanel({ car }) {
     return <section className="rounded-2xl border border-[#E9E9E7] bg-white p-5 shadow-sm">
     <div className="flex items-baseline justify-between gap-2">
       <h2 className="text-lg font-bold text-[#292929]">Đặt xe</h2>
-      <p className="text-sm"><b className="text-xl text-[#FC6C26]">{formatMoney(car.rentalPricePerDay || car.pricePerDay)}</b><span className="text-[#666666]">/ngày</span></p>
+      <p className="text-sm"><b className="text-xl tabular-nums text-[#1F1F1D]">{formatMoney(car.rentalPricePerDay || car.pricePerDay)}</b><span className="text-[#666666]">/ngày</span></p>
     </div>
     <p className="text-xs text-[#666666]">{formatMoney(car.pricePerHour)}/giờ lẻ{car.weekendPricePerDay ? ` • cuối tuần ${formatMoney(car.weekendPricePerDay)}/ngày` : ""}</p>
     <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
@@ -75,33 +75,48 @@ export function BookingPanel({ car }) {
     </div>
     {busy.data?.length ? <p className="mt-2 text-xs text-[#666666]"><Icon name="event_busy" className="text-[14px]"/> Xe đã có lịch: {busy.data.slice(0, 3).map(r => `${formatDateTime(r.from)} → ${formatDateTime(r.to)}`).join("; ")}</p> : null}
 
-    {quote ? <dl className="mt-4 flex flex-col gap-1.5 rounded-xl bg-[#FFF7F2] p-4 text-sm">
-      <div className="flex justify-between"><dt className="text-[#666666]">Thời gian thuê</dt><dd className="font-semibold">{durationLabel(quote.rentalDays, quote.rentalHours)}</dd></div>
-      {quote.breakdown.map(line => <div key={line} className="flex justify-between text-xs text-[#666666]"><dt>{line}</dt></div>)}
-      <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê gốc</dt><dd className="text-base font-bold">{formatMoney(quote.rentalAmount)}</dd></div>
-      {quote.discountAmount ? <div className="flex justify-between text-xs text-[#166534]"><dt>Giảm giá voucher ({quote.voucherCode})</dt><dd className="font-bold">-{formatMoney(quote.discountAmount)}</dd></div> : null}
-      <div className="flex justify-between border-t border-[#FED7AA] pt-2"><dt className="font-bold">Tiền thuê sau giảm</dt><dd className="text-lg font-black text-[#FC6C26]">{formatMoney(quote.payableRentalAmount || quote.rentalAmount)}</dd></div>
-      <div className="flex justify-between"><dt className="text-[#666666]">Cọc 40% (thanh toán ngay khi đặt)</dt><dd className="font-semibold">{formatMoney(Math.min(Number(quote.payableRentalAmount || quote.rentalAmount), Math.ceil(Number(quote.payableRentalAmount || quote.rentalAmount) * 0.4 / 1000) * 1000))}</dd></div>
-      <p className="text-xs text-[#666666]">Phần còn lại thanh toán qua CarDB trước khi nhận xe. Huỷ trong 1 giờ sau khi cọc: miễn phí; trước chuyến hơn 7 ngày: phí 10%; trong 7 ngày: phí 40% giá trị chuyến.</p>
-      {quote.includedKm ? <div className="flex justify-between text-xs text-[#666666]"><dt>Km bao gồm</dt><dd>{quote.includedKm} km{quote.extraKmFee ? `, vượt ${formatMoney(quote.extraKmFee)}/km` : ""}</dd></div> : null}
-      {quote.lateFeePerHour ? <div className="flex justify-between text-xs text-[#666666]"><dt>Trả trễ</dt><dd>{formatMoney(quote.lateFeePerHour)}/giờ</dd></div> : null}
-      {!quote.available ? <p role="alert" className="mt-1 font-semibold text-[#B91C1C]">{quote.unavailableReason}</p> : null}
-    </dl> : null}
+    {quote ? (() => {
+      const payable = Number(quote.payableRentalAmount || quote.rentalAmount);
+      const deposit = Math.min(payable, Math.ceil(payable * 0.4 / 1000) * 1000);
+      return <div className="mt-4 text-sm">
+        <dl className="flex flex-col gap-1.5">
+          <div className="flex justify-between"><dt className="text-[#57564F]">Thời gian thuê</dt><dd className="font-semibold">{durationLabel(quote.rentalDays, quote.rentalHours)}</dd></div>
+          {quote.discountAmount ? <div className="flex justify-between text-[#166534]"><dt>Voucher {quote.voucherCode}</dt><dd className="font-semibold tabular-nums">-{formatMoney(quote.discountAmount)}</dd></div> : null}
+          <div className="flex items-baseline justify-between border-t border-[#E7E5DF] pt-2"><dt className="font-bold">Tổng tiền thuê</dt><dd className="text-lg font-bold tabular-nums">{formatMoney(payable)}</dd></div>
+          <div className="flex justify-between"><dt className="text-[#57564F]">Cọc 40% trả ngay</dt><dd className="font-semibold tabular-nums">{formatMoney(deposit)}</dd></div>
+        </dl>
+        {!quote.available ? <p role="alert" className="mt-2 font-semibold text-[#B91C1C]">{quote.unavailableReason}</p> : null}
+        <details className="mt-2 text-xs text-[#57564F]">
+          <summary className="font-semibold text-[#1F1F1D] underline decoration-[#D6D3CB] underline-offset-4 hover:decoration-[#FC6C26]">Xem chi tiết giá</summary>
+          <dl className="mt-2 flex flex-col gap-1 rounded-lg bg-[#FBFAF8] p-3">
+            {quote.breakdown.map(line => <div key={line}><dt>{line}</dt></div>)}
+            <div className="flex justify-between"><dt>Tiền thuê gốc</dt><dd className="tabular-nums">{formatMoney(quote.rentalAmount)}</dd></div>
+            {quote.includedKm ? <div className="flex justify-between"><dt>Km bao gồm</dt><dd>{quote.includedKm} km{quote.extraKmFee ? `, vượt ${formatMoney(quote.extraKmFee)}/km` : ""}</dd></div> : null}
+            {quote.lateFeePerHour ? <div className="flex justify-between"><dt>Trả trễ</dt><dd>{formatMoney(quote.lateFeePerHour)}/giờ</dd></div> : null}
+            <div className="flex justify-between"><dt>Còn lại (trả trước khi nhận xe)</dt><dd className="tabular-nums">{formatMoney(payable - deposit)}</dd></div>
+          </dl>
+        </details>
+      </div>;
+    })() : null}
     {error ? <p role="alert" className="mt-3 rounded-xl bg-[#FEF2F2] px-3 py-2 text-sm text-[#B91C1C]">{error}</p> : null}
 
     {own ? <p className="mt-4 rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Đây là xe của bạn.</p>
       : !loggedIn ? <Link to={`/login?next=${next}`} className="mt-4 flex justify-center rounded-xl bg-[#FC6C26] py-3 font-bold text-white">Đăng nhập để đặt xe</Link>
       : unsafe ? <p className="mt-4 rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Xe đang có đăng kiểm/bảo hiểm hết hạn hoặc không đạt nên tạm thời không nhận đặt.</p>
-      : !kycVerified ? <div className="mt-4 rounded-xl bg-[#FFF7ED] p-3 text-sm text-[#9A3412]">Bạn cần xác minh danh tính và giấy phép lái xe trước khi thuê xe. <Link to="/account/verification" className="font-bold text-[#FC6C26]">Xác minh ngay</Link></div>
+      : !kycVerified ? <><p className="mt-4 text-sm text-[#57564F]">Cần xác minh danh tính và giấy phép lái xe trước khi thuê.</p><Link to="/account/verification" className="mt-2 flex justify-center rounded-xl bg-[#FC6C26] py-3 font-bold text-white">Xác minh để đặt xe</Link></>
       : <>
         <label className="mt-4 block text-xs font-semibold text-[#666666]">Lời nhắn cho chủ xe (tuỳ chọn)<textarea rows={2} maxLength={1000} value={note} onChange={e => setNote(e.target.value)} placeholder="VD: nhận xe tại nhà, cần ghế trẻ em…" className={`${fieldClass} mt-1`}/></label>
         <button type="button" disabled={!quote?.available || sending} onClick={book} className="mt-3 w-full rounded-xl bg-[#FC6C26] py-3 font-bold text-white hover:bg-[#e05615] disabled:opacity-50">{sending ? "Đang gửi…" : "Gửi yêu cầu thuê xe"}</button>
       </>}
-    <ol className="mt-4 grid gap-1 text-xs text-[#666666]">
-      <li>1. Gửi yêu cầu, chưa phải trả tiền trên CarDB.</li>
-      <li>2. Chủ xe gọi cho bạn để thống nhất, rồi xác nhận đơn.</li>
-      <li>3. Khi nhận xe, chủ xe chụp hiện trạng + giấy tờ; bạn kiểm tra và xác nhận từng mục trên CarDB.</li>
-      <li>4. Trả xe: hai bên đối chiếu km, nhiên liệu, phụ phí trong biên bản trả xe.</li>
-    </ol>
+    <details className="mt-4 border-t border-[#E7E5DF] pt-3 text-xs text-[#57564F]">
+      <summary className="font-semibold text-[#1F1F1D] underline decoration-[#D6D3CB] underline-offset-4 hover:decoration-[#FC6C26]">Chính sách huỷ & quy trình nhận xe</summary>
+      <p className="mt-2">Huỷ trong 1 giờ sau khi cọc: miễn phí. Trước chuyến hơn 7 ngày: phí 10%. Trong 7 ngày: phí 40% giá trị chuyến.</p>
+      <ol className="mt-2 grid gap-1">
+        <li>1. Gửi yêu cầu và thanh toán cọc 40% qua VNPay.</li>
+        <li>2. Chủ xe gọi cho bạn để thống nhất, rồi xác nhận đơn.</li>
+        <li>3. Thanh toán phần còn lại trước khi nhận xe; chủ xe chụp hiện trạng, bạn kiểm tra và xác nhận.</li>
+        <li>4. Trả xe: hai bên đối chiếu km, nhiên liệu, phụ phí trong biên bản trả xe.</li>
+      </ol>
+    </details>
   </section>;
 }

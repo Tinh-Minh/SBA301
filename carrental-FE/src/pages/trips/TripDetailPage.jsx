@@ -5,7 +5,7 @@ import { LivePage, LiveState, fieldClass } from "@/components/LiveUi.jsx";
 import { RequireAuth } from "@/components/RequireAuth.jsx";
 import { StatusBadge } from "@/components/owner/StatusBadge.jsx";
 import { HandoverForm, HandoverView } from "@/components/booking/Handover.jsx";
-import { TripTimeline } from "@/components/booking/TripParts.jsx";
+import { TripTimeline, nextAction } from "@/components/booking/TripParts.jsx";
 import { CustomerReviewPanel } from "@/components/booking/CustomerReviewPanel.jsx";
 import { BookingMoneyPanel, CANCEL_POLICY, estimateCancelFee } from "@/components/booking/BookingMoneyPanel.jsx";
 import { useApiQuery } from "@/hooks/useApiQuery.js";
@@ -16,7 +16,7 @@ import { formatMoney } from "@/utils/labels.js";
 import { bookingStatusMeta, durationLabel } from "@/utils/rental.js";
 
 function Row({ term, value, strong }) {
-    return <div className="flex justify-between gap-3 py-1"><dt className="text-[#666666]">{term}</dt><dd className={strong ? "font-bold text-[#292929]" : "text-[#292929]"}>{value}</dd></div>;
+    return <div className="flex justify-between gap-3 py-1"><dt className="min-w-0 text-[#666666]">{term}</dt><dd className={`shrink-0 ${strong ? "font-bold text-[#292929]" : "text-[#292929]"}`}>{value}</dd></div>;
 }
 
 function Trip({ id }) {
@@ -56,6 +56,7 @@ function Trip({ id }) {
         <StatusBadge meta={bookingStatusMeta[b.status]}/>
       </div>
       <TripTimeline booking={b}/>
+      {nextAction(b, role === "owner" ? "owner" : "customer") && role !== "admin" ? <p className="flex items-center gap-2 rounded-xl bg-[#FBFAF8] px-4 py-3 text-sm shadow-[inset_3px_0_0_#FC6C26]"><Icon name="arrow_forward" className="text-[18px] text-[#FC6C26]"/><span><span className="text-[#8A887F]">Bước tiếp theo: </span><b>{nextAction(b, role === "owner" ? "owner" : "customer")}</b></span></p> : null}
       {b.rejectReason ? <p className="rounded-xl bg-[#FEF2F2] p-3 text-sm text-[#B91C1C]">Chủ xe từ chối: {b.rejectReason}</p> : null}
       {b.cancelReason ? <p className="rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Đơn đã huỷ ({({ OWNER: "chủ xe", ADMIN: "quản trị viên", CUSTOMER: "khách", CUSTOMER_NO_SHOW: "khách không đến", OWNER_NO_SHOW: "chủ xe không giao xe", SYSTEM: "hệ thống" })[b.cancelledBy] ?? "khách"}): {b.cancelReason}</p> : null}
       {b.status === "EXPIRED" ? <p className="rounded-xl bg-[#F3F4F6] p-3 text-sm text-[#374151]">Yêu cầu đã hết hạn{b.cancelReason ? "" : " (chưa thanh toán cọc hoặc chủ xe chưa xác nhận kịp)"}.</p> : null}
@@ -129,8 +130,8 @@ function Trip({ id }) {
             {Number(b.lateAmount) ? <Row term="Phí trả trễ" value={formatMoney(b.lateAmount)}/> : null}
             {Number(b.otherFeeAmount) ? <Row term={`Phí khác: ${b.otherFeeNote ?? ""}`} value={formatMoney(b.otherFeeAmount)}/> : null}
             {Number(b.fuelFeeAmount) ? <Row term="Phí xăng/pin hụt" value={formatMoney(b.fuelFeeAmount)}/> : null}
-            <Row term="Cọc 40% (trả khi đặt xe)" value={<span>{formatMoney(b.depositAmount)} <b className={b.depositStatus === "PAID" ? "text-[#166534]" : "text-[#D97706]"}>({b.depositStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"})</b></span>}/>
-            <Row term="Còn lại (trả trước khi nhận xe)" value={<span>{formatMoney(b.rentalRemainingAmount)} <b className={b.rentalPaymentStatus === "PAID" ? "text-[#166534]" : "text-[#D97706]"}>({b.rentalPaymentStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"})</b></span>}/>
+            <Row term="Cọc 40% (khi đặt xe)" value={<span className="text-right"><span className="block tabular-nums">{formatMoney(b.depositAmount)}</span><span className={`block text-xs font-semibold ${b.depositStatus === "PAID" ? "text-[#166534]" : "text-[#B45309]"}`}>{b.depositStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"}</span></span>}/>
+            <Row term="Còn lại (trước khi nhận xe)" value={<span className="text-right"><span className="block tabular-nums">{formatMoney(b.rentalRemainingAmount)}</span><span className={`block text-xs font-semibold ${b.rentalPaymentStatus === "PAID" ? "text-[#166534]" : "text-[#B45309]"}`}>{b.rentalPaymentStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"}</span></span>}/>
             {Number(b.finalAmount) ? <Row term="Phí phát sinh khi trả xe" value={<span className="text-lg font-black text-[#FC6C26]">{formatMoney(b.finalAmount)} <b className="text-xs">({b.extraFeeStatus === "PAID" ? "Đã thanh toán" : "Chưa thanh toán"})</b></span>} strong/> : null}
             {b.kmLimitPerDay ? <Row term="Giới hạn km" value={`${b.kmLimitPerDay} km/ngày`}/> : null}
           </dl>
