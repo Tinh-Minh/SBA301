@@ -1,0 +1,140 @@
+/* =====================================================================
+   CarDB – lớp tinh chỉnh giao diện cho mọi màn trừ trang chủ.
+   Không nằm trong @layer nên thắng utility của Tailwind mà không cần sửa từng trang.
+   Phạm vi: html[data-surface="app"] (khách) và html[data-surface="console"] (chủ xe, admin).
+   ===================================================================== */
+:root {
+  --ink: #1f1f1d;
+  --ink-2: #57564f;
+  --ink-3: #8a887f;
+  --line: #e7e5df;
+  --line-strong: #d6d3cb;
+  --canvas: #f6f5f1;
+  --paper: #ffffff;
+  --accent: #fc6c26;
+  --accent-ink: #b9430c;
+  --accent-wash: #fff4ec;
+  --radius: 10px;
+  --ease: cubic-bezier(.2, .7, .3, 1);
+}
+
+/* ---------- Vệt chuột ---------- */
+.cursor-trail { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 2147483000; pointer-events: none; }
+
+/* ---------- Nền & chữ ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) body { background: var(--canvas); }
+:is(html[data-surface="app"], html[data-surface="console"]) main { color: var(--ink); }
+:is(html[data-surface="app"], html[data-surface="console"]) main[class*="bg-[#F7F7F5]"] { background: var(--canvas); }
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2) { letter-spacing: -.02em; }
+:is(html[data-surface="app"], html[data-surface="console"]) main h1 { font-size: clamp(24px, 2.2vw, 30px); line-height: 1.2; }
+
+/* ---------- Thẻ: phẳng, viền mảnh, bo vừa phải ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="shadow-sm"], [class*="shadow-md"], [class*="shadow-lg"], [class*="shadow-xs"], .shadow) {
+  box-shadow: none;
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-2xl, .rounded-3xl) { border-radius: 14px; }
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-xl) { border-radius: var(--radius); }
+:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="border-[#E9E9E7]"], .border-card-border, .border-border-light) { border-color: var(--line); }
+/* Thẻ lồng trong thẻ: thẻ con bỏ viền, dùng nền nhạt để tách nhóm */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.rounded-2xl, .rounded-xl).bg-white :is(.rounded-2xl, .rounded-xl).bg-white.border {
+  border-color: transparent; background: #fbfaf8;
+}
+/* Khối "nhấn cam" (nền cam nhạt, viền cam) chuyển về trung tính, chỉ giữ vạch cam bên trái */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is([class*="bg-[#FFF3EB]"], [class*="bg-[#FFF7F2]"], [class*="bg-accent-soft"], [class*="bg-orange-50"]):not(button):not(a):not(span) {
+  background: #fbfaf8; border-color: var(--line); box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* ---------- Cam chỉ cho hành động ---------- */
+/* Chữ cam không phải link/nút (tiêu đề, số tiền, nhãn) -> mực đậm */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, h4, p, span, strong, dd, dt, td, div, li, small, b):is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not(.material-symbols-outlined):not([class*="bg-"]) {
+  color: var(--ink);
+}
+/* Link chữ cam ("Xem", "Chi tiết →") -> mực đậm, gạch chân khi trỏ */
+:is(html[data-surface="app"], html[data-surface="console"]) main a:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]),
+:is(html[data-surface="app"], html[data-surface="console"]) main button:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]):not([class*="border"]) {
+  color: var(--ink); font-weight: 600; text-decoration: underline; text-decoration-color: var(--line-strong);
+  text-underline-offset: 4px; text-decoration-thickness: 1px;
+  transition: color .18s var(--ease), text-decoration-color .18s var(--ease);
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main a:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]):hover,
+:is(html[data-surface="app"], html[data-surface="console"]) main button:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]):not([class*="bg-"]):not([class*="border"]):hover {
+  color: var(--accent-ink); text-decoration-color: var(--accent);
+}
+/* Viền cam của khung không phải nút -> viền trung tính */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(div, section, article, li, aside, a):is([class*="border-[#FDBA8C]"], [class*="border-[#FED7AA]"], .border-orange-200, [class*="border-[#FC6C26]"], .border-brand-accent):not([data-active="true"]) {
+  border-color: var(--line);
+}
+/* Icon cam trang trí -> xám mực */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, h2, h3, span, div, li) > .material-symbols-outlined:is([class*="text-[#FC6C26]"], .text-brand-accent, .text-primary, .text-orange-brand, [class*="text-[#9A3412]"], [class*="text-[#B9430C]"]) { color: var(--ink-2); }
+/* Số liệu xanh/cam trong ô thống kê -> mực đậm, số dạng bảng */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, strong, span)[class*="text-[#047857]"][class*="text-2xl"],
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, strong, span)[class*="text-[#047857]"][class*="text-3xl"],
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(p, strong, span):is([class*="text-[#B45309]"], [class*="text-[#D97706]"]):is([class*="text-2xl"], [class*="text-3xl"]) { color: var(--ink); }
+:is(html[data-surface="app"], html[data-surface="console"]) main .ui-money { font-variant-numeric: tabular-nums; }
+
+/* ---------- Badge trạng thái: gọn, góc vuông nhẹ ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) main span.rounded-full:is([class*="text-[11px]"], [class*="text-xs"], [class*="text-[10px]"]):not(.material-symbols-outlined) {
+  border-radius: 6px; padding: 2px 8px; font-weight: 600; letter-spacing: 0; line-height: 18px;
+}
+
+/* ---------- Bảng ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) main table { border-collapse: collapse; }
+:is(html[data-surface="app"], html[data-surface="console"]) main thead th {
+  font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3);
+  background: #fbfaf8; border-bottom: 1px solid var(--line);
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main tbody tr { transition: background-color .15s var(--ease); }
+:is(html[data-surface="app"], html[data-surface="console"]) main tbody tr:hover { background: #faf8f4; }
+:is(html[data-surface="app"], html[data-surface="console"]) main tbody td { border-color: #efede8; vertical-align: middle; }
+:is(html[data-surface="app"], html[data-surface="console"]) main td :is([class*="font-mono"]) { color: var(--ink-3); font-size: 11px; }
+
+/* ---------- Ô nhập ---------- */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea) {
+  border-color: var(--line-strong); transition: border-color .15s var(--ease), box-shadow .15s var(--ease);
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(input, select, textarea):hover { border-color: #b9b5aa; }
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(input, select, textarea):focus {
+  outline: none; border-color: var(--ink); box-shadow: 0 0 0 3px rgb(31 31 29 / .08);
+}
+
+/* ---------- Nút: đổi màu khi trỏ chuột (mọi màn, kể cả header) ---------- */
+:is(main, .site-header, footer) :is(button, a[role="button"], a[class*="rounded"][class*="px-"], label[class*="rounded"][class*="px-"]) {
+  transition: background-color .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), transform .2s var(--ease), box-shadow .2s var(--ease);
+}
+/* Nút chính (nền cam) -> chuyển sang mực đậm, nhích lên 1px */
+:is(main, .site-header) :is(button, a, label):is([class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-primary"], [class*="bg-orange-brand"]):not(:disabled):not([aria-current]):hover {
+  background-color: var(--ink) !important; border-color: var(--ink) !important; color: #fff !important;
+  transform: translateY(-1px); box-shadow: 0 6px 16px -8px rgb(31 31 29 / .55);
+}
+:is(main, .site-header) :is(button, a):is([class*="bg-[#FC6C26]"], [class*="bg-brand-accent"], [class*="bg-primary"]):not(:disabled):active { transform: translateY(0); box-shadow: none; }
+/* Nút phụ (nền trắng có viền) -> nền cam nhạt, viền & chữ cam */
+:is(main, .site-header) :is(button, a, label)[class*="border"]:is(.bg-white, [class*="bg-transparent"], :not([class*="bg-"])):is([class*="px-"], [class*="h-"]):not(:disabled):not([aria-current]):not([role="tab"]):not(:has(> img)):hover {
+  background-color: var(--accent-wash); border-color: var(--accent); color: var(--accent-ink);
+}
+/* Nút xanh (Zalo...) và nút đỏ (Từ chối, Huỷ) cũng đậm lên khi trỏ */
+main :is(button, a)[class*="bg-emerald"]:not(:disabled):hover,
+main :is(button, a)[class*="bg-[#047857]"]:not(:disabled):hover { filter: brightness(.88); transform: translateY(-1px); }
+main :is(button, a):is([class*="bg-red-6"], [class*="bg-[#DC2626]"], [class*="bg-[#B91C1C]"]):not(:disabled):hover { filter: brightness(.85); transform: translateY(-1px); }
+main :is(button, a)[class*="text-red"][class*="border"]:not(:disabled):hover { background-color: #fef2f2; border-color: #dc2626; color: #b91c1c; }
+:is(main, .site-header) button:disabled { cursor: not-allowed; }
+
+/* ---------- Khu quản trị (chủ xe, admin) ---------- */
+html[data-surface="console"] main > div > aside nav,
+html[data-surface="console"] main > div > aside > div > div:first-child { border-radius: 14px; }
+/* Mục đang chọn: nền mực nhạt + vạch cam thay cho khối cam đặc */
+html[data-surface="console"] aside nav a[aria-current="page"] {
+  background: #efede7 !important; color: var(--ink) !important; font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--accent) !important;
+}
+html[data-surface="console"] aside nav a[aria-current="page"] .material-symbols-outlined { color: var(--accent) !important; }
+html[data-surface="console"] aside nav a[aria-current="page"] span[class*="bg-white/20"] { background: #fff !important; color: var(--ink) !important; }
+html[data-surface="console"] aside nav a:not([aria-current="page"]):hover { background: #f4f2ed; }
+html[data-surface="console"] aside nav a:not([aria-current="page"]):hover .material-symbols-outlined { color: var(--ink); }
+html[data-surface="console"] .nav-group-label {
+  padding: 14px 14px 4px; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3);
+}
+html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-trail { display: none; }
+}
