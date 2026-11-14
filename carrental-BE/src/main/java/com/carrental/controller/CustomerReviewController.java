@@ -1,10 +1,10 @@
 package com.carrental.controller;
 
+import com.carrental.dto.request.*;
+import com.carrental.dto.response.*;
+
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.service.CustomerReviewService;
-import com.carrental.service.CustomerReviewService.BookingCustomerReview;
-import com.carrental.service.CustomerReviewService.CustomerRatingSummary;
-import com.carrental.service.CustomerReviewService.CustomerReviewItem;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -18,13 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 public class CustomerReviewController {
-
-    public record CustomerReviewRequest(
-            @NotNull(message = "Vui lòng chọn số sao")
-            @Min(value = 1, message = "Số sao tối thiểu là 1") @Max(value = 5, message = "Số sao tối đa là 5")
-            @tools.jackson.databind.annotation.JsonDeserialize(using = com.carrental.validation.StrictIntegerDeserializer.class)
-            Integer rating,
-            @Size(max = 1000, message = "Nhận xét tối đa 1000 ký tự") String comment) {}
 
     private final CustomerReviewService customerReviewService;
 

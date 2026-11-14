@@ -1,5 +1,8 @@
 package com.carrental.controller;
 
+import com.carrental.dto.request.*;
+import com.carrental.dto.response.*;
+
 import com.carrental.dto.request.booking.*;
 import com.carrental.dto.response.booking.*;
 
@@ -167,7 +170,7 @@ public class BookingController {
     /** Các phiếu hoàn/chi trả/phạt của đơn (khách, chủ xe của đơn hoặc admin). */
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/api/bookings/{id}/settlements")
-    public ApiResponse<java.util.List<com.carrental.service.SettlementService.SlipResponse>> settlements(@PathVariable Long id) {
+    public ApiResponse<java.util.List<SlipResponse>> settlements(@PathVariable Long id) {
         bookingService.get(id); // kiểm tra quyền xem đơn
         return ApiResponse.ok(settlementService.forBooking(id));
     }
