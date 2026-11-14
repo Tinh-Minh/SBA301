@@ -1,4 +1,5 @@
-package com.carrental.service;
+package com.carrental.util;
+
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

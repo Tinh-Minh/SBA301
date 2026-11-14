@@ -1,5 +1,6 @@
 package com.carrental.controller;
 
+import com.carrental.dto.response.OwnerRatingResponse;
 import com.carrental.dto.request.CreateReviewRequest;
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.CarReviewSummaryResponse;
@@ -36,7 +37,13 @@ public class ReviewController {
         return ApiResponse.ok(reviewService.checkEligibility(carId));
     }
 
-    @GetMapping("/api/reviews/{id}")
+    /** Số sao công khai của chủ xe (không lộ thông tin cá nhân). */
+    @GetMapping("/api/reviews/owners/{ownerId}/rating")
+    public ApiResponse<OwnerRatingResponse> ownerRating(@PathVariable Long ownerId) {
+        return ApiResponse.ok(reviewService.ownerRating(ownerId));
+    }
+
+    @GetMapping("/api/reviews/{id:[0-9]+}")
     public ApiResponse<ReviewResponse> getById(@PathVariable Long id) {
         return ApiResponse.ok(reviewService.getById(id));
     }

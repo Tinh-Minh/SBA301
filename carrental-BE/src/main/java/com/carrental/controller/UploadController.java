@@ -1,7 +1,7 @@
 package com.carrental.controller;
 
 import com.carrental.dto.response.ApiResponse;
-import com.carrental.service.PublicImageStorageService;
+import com.carrental.storage.PublicImageStorageService;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;

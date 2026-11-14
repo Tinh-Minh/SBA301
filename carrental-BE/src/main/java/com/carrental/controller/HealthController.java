@@ -2,7 +2,7 @@ package com.carrental.controller;
 
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.dto.response.HealthResponse;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

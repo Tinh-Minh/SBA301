@@ -31,7 +31,7 @@ import com.carrental.storage.PrivateDocumentStorage;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentFile;
 import com.carrental.storage.PrivateDocumentStorage.PrivateDocumentReceipt;
 import com.carrental.util.RequestChecks;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;

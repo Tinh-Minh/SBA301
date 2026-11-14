@@ -1,10 +1,12 @@
 package com.carrental.controller;
 
+import com.carrental.dto.request.*;
+import com.carrental.dto.response.*;
+
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.entity.SettlementSlip.SlipStatus;
 import com.carrental.entity.SettlementSlip.SlipType;
 import com.carrental.service.SettlementService;
-import com.carrental.service.SettlementService.SlipResponse;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;

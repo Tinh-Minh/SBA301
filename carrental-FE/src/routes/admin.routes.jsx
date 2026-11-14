@@ -21,17 +21,17 @@ import { useApiQuery } from "@/hooks/useApiQuery.js";
 import { getAdminBadges } from "@/services/adminService.js";
 
 const adminNavigation = [
-    { code: "A01", href: adminRoutes.dashboard, label: "Tổng quan", icon: "grid_view" },
-    { code: "A02", href: adminRoutes.users, label: "Người dùng & KYC", icon: "verified_user", badgeKey: "kyc", badgeSuffix: "chờ", badgeTone: "warning" },
-    { code: "A03", href: adminRoutes.vehicles, label: "Duyệt xe", icon: "directions_car", badgeKey: "cars", badgeSuffix: "xe", badgeTone: "warning" },
-    { code: "A09", href: "/admin/bookings", label: "Đơn thuê xe", icon: "assignment" },
-    { code: "A10", href: "/admin/safety", label: "Hồ sơ an toàn xe", icon: "shield" },
-    { code: "A04", href: adminRoutes.vouchers, label: "Voucher", icon: "confirmation_number" },
-    { code: "A05", href: adminRoutes.subscriptions, label: "Quản lý Đăng tin", icon: "workspace_premium" },
-    { code: "A08", href: adminRoutes.packages, label: "Cấu hình Gói cước", icon: "sell" },
-    { code: "A06", href: adminRoutes.payouts, label: "Giao dịch gói", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
-    { code: "A11", href: "/admin/settlements", label: "Hoàn tiền & Chi trả", icon: "account_balance" },
-    { code: "A07", href: "/admin/reviews", label: "Đánh giá xe", icon: "reviews" },
+    { group: "Vận hành", code: "A01", href: adminRoutes.dashboard, label: "Tổng quan", icon: "grid_view" },
+    { group: "Kiểm duyệt", code: "A02", href: adminRoutes.users, label: "Người dùng & KYC", icon: "verified_user", badgeKey: "kyc", badgeSuffix: "chờ", badgeTone: "warning" },
+    { group: "Kiểm duyệt", code: "A03", href: adminRoutes.vehicles, label: "Duyệt xe", icon: "directions_car", badgeKey: "cars", badgeSuffix: "xe", badgeTone: "warning" },
+    { group: "Vận hành", code: "A09", href: "/admin/bookings", label: "Đơn thuê xe", icon: "assignment" },
+    { group: "Vận hành", code: "A10", href: "/admin/safety", label: "Hồ sơ an toàn xe", icon: "shield" },
+    { group: "Kinh doanh", code: "A04", href: adminRoutes.vouchers, label: "Voucher", icon: "confirmation_number" },
+    { group: "Kinh doanh", code: "A05", href: adminRoutes.subscriptions, label: "Quản lý Đăng tin", icon: "workspace_premium" },
+    { group: "Kinh doanh", code: "A08", href: adminRoutes.packages, label: "Cấu hình Gói cước", icon: "sell" },
+    { group: "Kinh doanh", code: "A06", href: adminRoutes.payouts, label: "Giao dịch gói", icon: "payments", badgeKey: "payouts", badgeSuffix: "chờ", badgeTone: "info" },
+    { group: "Vận hành", code: "A11", href: "/admin/settlements", label: "Hoàn tiền & Chi trả", icon: "account_balance" },
+    { group: "Kiểm duyệt", code: "A07", href: "/admin/reviews", label: "Đánh giá xe", icon: "reviews" },
 ];
 
 function AdminContent() {

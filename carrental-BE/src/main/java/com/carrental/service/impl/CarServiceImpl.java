@@ -23,7 +23,7 @@ import com.carrental.repository.CarImageRepository;
 import com.carrental.repository.CarRepository;
 import com.carrental.service.CarService;
 import com.carrental.service.CurrentUserService;
-import com.carrental.service.PublicImageStorageService;
+import com.carrental.storage.PublicImageStorageService;
 import com.carrental.util.DbErrors;
 import com.carrental.util.TimeUtil;
 import jakarta.persistence.criteria.Predicate;

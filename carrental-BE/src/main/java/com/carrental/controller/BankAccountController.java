@@ -1,9 +1,10 @@
 package com.carrental.controller;
 
+import com.carrental.dto.request.*;
+import com.carrental.dto.response.*;
+
 import com.carrental.dto.response.ApiResponse;
 import com.carrental.service.BankAccountService;
-import com.carrental.service.BankAccountService.BankAccountRequest;
-import com.carrental.service.BankAccountService.BankAccountResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

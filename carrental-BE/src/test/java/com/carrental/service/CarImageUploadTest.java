@@ -1,5 +1,7 @@
 package com.carrental.service;
 
+import com.carrental.storage.PublicImageStorageService;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;

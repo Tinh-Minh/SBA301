@@ -89,6 +89,7 @@ function fleetPass(progress, mobile) {
 export function CarJourney({ root }) {
     const host = useRef(null);
     const speedRef = useRef(null);
+    const gaugeRef = useRef(null);
     const [status, setStatus] = useState("loading");
     const [attempt, setAttempt] = useState(0);
     useEffect(() => {
@@ -234,6 +235,7 @@ export function CarJourney({ root }) {
             lastScroll = scroll;
             lastSpeedAt = now;
             if (speedRef.current) speedRef.current.textContent = String(Math.round(shownSpeed));
+            if (gaugeRef.current) gaugeRef.current.style.setProperty("--speed", String(Math.min(1, Math.max(0, shownSpeed / 80))));
             if (Math.abs(targetSpeed - shownSpeed) > 0.6) schedule();
             element.dataset.carChapter = chapters[Math.min(chapters.length - 1, index + (t > 0.5 ? 1 : 0))].dataset.carStop;
             for (let chapterIndex = 0; chapterIndex < chapters.length; chapterIndex += 1) {
@@ -297,7 +299,16 @@ export function CarJourney({ root }) {
         {status !== "ready" ? <div className="journey-loading" role="status" data-native>
             {status === "error" ? <><span>Không thể tải mô hình 3D trên thiết bị này.</span><button type="button" onClick={() => setAttempt(value => value + 1)}>Thử lại</button></> : <><span>Đang chuẩn bị hành trình…</span></>}
         </div> : null}
-        <p className="journey-speed" aria-hidden="true"><strong ref={speedRef}>0</strong> KM/H</p>
+        <div className="journey-speed" aria-hidden="true" ref={gaugeRef}>
+          <svg viewBox="0 0 100 100" className="journey-speed-dial">
+            <path className="journey-speed-track" d="M 22.6 77.4 A 38 38 0 1 1 77.4 77.4" pathLength="100"/>
+            <path className="journey-speed-value" d="M 22.6 77.4 A 38 38 0 1 1 77.4 77.4" pathLength="100"/>
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => <line key={i} className="journey-speed-tick" x1="50" y1="9" x2="50" y2={i % 2 ? 13 : 15} transform={`rotate(${-135 + i * 33.75} 50 50)`}/>)}
+            <line className="journey-speed-needle" x1="50" y1="50" x2="50" y2="20"/>
+            <circle className="journey-speed-hub" cx="50" cy="50" r="3.2"/>
+          </svg>
+          <p className="journey-speed-readout"><strong ref={speedRef}>0</strong><span>km/h</span></p>
+        </div>
         <nav className="journey-rail" aria-label="Hành trình trên trang">
             {[['hero','Bắt đầu'],['search','Tìm xe'],['fleet','Bộ sưu tập'],['steps','Kết nối'],['flow','Cách thuê xe'],['drive','Lăn bánh'],['faq','Giải đáp'],['finale','Lên đường']].map(([id,label]) => <a key={id} href={`#journey-${id}`} data-journey-stop={id} aria-label={label}><span>{label}</span></a>)}
         </nav>

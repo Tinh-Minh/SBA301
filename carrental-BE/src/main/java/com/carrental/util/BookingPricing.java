@@ -1,6 +1,9 @@
-package com.carrental.service;
+package com.carrental.util;
 
-import com.carrental.dto.booking.BookingDtos.QuoteResponse;
+
+import com.carrental.dto.request.booking.*;
+import com.carrental.dto.response.booking.*;
+
 import com.carrental.entity.Car;
 import com.carrental.util.RentalPricing;
 import java.math.BigDecimal;
@@ -78,7 +81,7 @@ public final class BookingPricing {
         return value == null ? BigDecimal.ZERO : value;
     }
 
-    static String vnd(BigDecimal amount) {
+    public static String vnd(BigDecimal amount) {
         return String.format(java.util.Locale.ROOT, "%,d đ", amount.setScale(0, RoundingMode.HALF_UP).longValue())
                 .replace(',', '.');
     }

@@ -223,4 +223,13 @@ public class ReviewServiceImpl implements ReviewService {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public com.carrental.dto.response.OwnerRatingResponse ownerRating(Long ownerId) {
+        Double avg = reviewRepository.getApprovedAverageRatingByOwnerId(ownerId);
+        long count = reviewRepository.countApprovedByOwnerId(ownerId);
+        double rounded = Math.round((avg == null ? 0.0 : avg) * 10) / 10.0;
+        return new com.carrental.dto.response.OwnerRatingResponse(ownerId, rounded, count);
+    }
 }

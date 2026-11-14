@@ -63,13 +63,13 @@ public record CarResponse(
     public static CarResponse from(Car car, List<CarImage> images, List<CarDocument> documents) {
         if (car == null) return null;
         Long driverId = null;
-        return build(car, driverId, car.getLicensePlate(), images, documents);
+        return build(car, driverId, car.getLicensePlate(), images, documents, false);
     }
 
-    // Bản công khai cho khách xem tin: hiển thị thông tin liên hệ và hình ảnh
+    // Bản công khai cho khách xem tin: KHÔNG lộ tên/số điện thoại/Zalo chủ xe (chỉ hiện sau khi khách đã cọc, trong đơn thuê).
     public static CarResponse publicView(Car car, List<CarImage> images) {
         if (car == null) return null;
-        return build(car, null, null, images, Collections.emptyList());
+        return build(car, null, null, images, Collections.emptyList(), true);
     }
 
     private static CarResponse build(
@@ -77,7 +77,8 @@ public record CarResponse(
             Long driverId,
             String licensePlate,
             List<CarImage> images,
-            List<CarDocument> documents
+            List<CarDocument> documents,
+            boolean hideOwnerContact
     ) {
         List<CarImageResponse> imgList = images == null ? Collections.emptyList() :
                 images.stream().map(CarImageResponse::from).toList();
@@ -90,7 +91,7 @@ public record CarResponse(
         return new CarResponse(
                 car.getId(),
                 car.getOwner() != null ? car.getOwner().getId() : null,
-                car.getOwner() != null ? car.getOwner().getFullName() : null,
+                car.getOwner() != null && !hideOwnerContact ? car.getOwner().getFullName() : null,
                 driverId,
                 licensePlate,
                 car.getBrand(),
@@ -110,9 +111,9 @@ public record CarResponse(
                 car.getLongitude(),
                 dayPrice,
                 car.getRentalPricePerMonth(),
-                car.getContactName(),
-                car.getContactPhone(),
-                car.getContactZalo(),
+                hideOwnerContact ? null : car.getContactName(),
+                hideOwnerContact ? null : car.getContactPhone(),
+                hideOwnerContact ? null : car.getContactZalo(),
                 car.getStatus(),
                 car.getListingStatus(),
                 car.getCurrentSubscriptionId(),

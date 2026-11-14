@@ -1,3 +1,4 @@
+import { EyeIcon } from "@/components/auth/EyeIcon.jsx";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -67,7 +68,7 @@ export function RegisterForm() {
                 <span className="material-symbols-outlined" aria-hidden="true">lock</span>
                 <input className={`${fieldClass} auth-field--action`} id="reg-password" placeholder="Cụm từ dài, dễ nhớ với bạn" required type={passwordVisible ? "text" : "password"} autoComplete="new-password" aria-label="Mật khẩu" aria-describedby="reg-password-strength" {...register("password")} aria-invalid={Boolean(errors.password)} />
                 <button aria-label="Hiện hoặc ẩn mật khẩu" type="button" onClick={() => setPasswordVisible(visible => !visible)}>
-                    <span className="material-symbols-outlined">{passwordVisible ? "visibility_off" : "visibility"}</span>
+                    <EyeIcon off={passwordVisible}/>
                 </button>
             </div>
             <PasswordStrengthMeter strength={strength} />
@@ -78,7 +79,7 @@ export function RegisterForm() {
                 <span className="material-symbols-outlined" aria-hidden="true">lock_reset</span>
                 <input className={`${fieldClass} auth-field--action`} id="reg-confirm-password" placeholder="Nhập lại mật khẩu" required type={confirmVisible ? "text" : "password"} autoComplete="new-password" aria-label="Nhập lại mật khẩu" {...register("confirmPassword")} aria-invalid={Boolean(errors.confirmPassword)} />
                 <button aria-label="Hiện hoặc ẩn mật khẩu xác nhận" type="button" onClick={() => setConfirmVisible(visible => !visible)}>
-                    <span className="material-symbols-outlined">{confirmVisible ? "visibility_off" : "visibility"}</span>
+                    <EyeIcon off={confirmVisible}/>
                 </button>
             </div>
         </div>

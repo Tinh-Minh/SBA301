@@ -1,4 +1,5 @@
-package com.carrental.service;
+package com.carrental.storage;
+
 
 import com.carrental.exception.AppException;
 import com.carrental.exception.ErrorCode;

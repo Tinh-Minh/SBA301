@@ -1,4 +1,5 @@
-package com.carrental.web;
+package com.carrental.config;
+
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

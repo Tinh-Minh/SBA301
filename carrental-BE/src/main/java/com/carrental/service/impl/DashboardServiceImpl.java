@@ -1,6 +1,8 @@
 package com.carrental.service.impl;
 
-import com.carrental.dto.booking.BookingDtos.AdminBookingStats;
+import com.carrental.dto.request.booking.*;
+import com.carrental.dto.response.booking.*;
+
 import com.carrental.dto.response.PackageSalesStat;
 import com.carrental.dto.response.RevenueDashboardResponse;
 import com.carrental.dto.response.TransactionResponse;

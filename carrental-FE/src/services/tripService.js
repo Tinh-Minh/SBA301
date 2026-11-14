@@ -2,7 +2,7 @@ import { request, toPage } from "@/services/api.js";
 
 /** Đơn thuê xe, biên bản bàn giao, hồ sơ an toàn, bảng theo dõi và tải ảnh. */
 export const tripService = {
-    quote: (carId, pickupAt, returnAt, voucherCode) => request(`/api/cars/${carId}/quote`, { auth: false, query: { pickupAt, returnAt, voucherCode } }),
+    quote: (carId, pickupAt, returnAt, voucherCode, delivery) => request(`/api/cars/${carId}/quote`, { auth: false, query: { pickupAt, returnAt, voucherCode, deliveryLatitude: delivery?.lat, deliveryLongitude: delivery?.lng } }),
     availability: (carId) => request(`/api/cars/${carId}/availability`, { auth: false }),
     create: (body) => request("/api/bookings", { method: "POST", json: body }),
     mine: () => request("/api/bookings/my"),

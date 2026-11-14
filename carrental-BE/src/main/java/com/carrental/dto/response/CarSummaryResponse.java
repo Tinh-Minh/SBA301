@@ -29,7 +29,9 @@ public record CarSummaryResponse(
         ListingStatus listingStatus,
         BigDecimal pricePerHour,
         BigDecimal pricePerDay,
-        String primaryImageUrl
+        String primaryImageUrl,
+        BigDecimal latitude,
+        BigDecimal longitude
 ) {
     public static CarSummaryResponse from(Car car) {
         return from(car, null);
@@ -37,16 +39,16 @@ public record CarSummaryResponse(
 
     public static CarSummaryResponse from(Car car, String primaryImageUrl) {
         if (car == null) return null;
-        return build(car, car.getLicensePlate(), primaryImageUrl);
+        return build(car, car.getLicensePlate(), primaryImageUrl, false);
     }
 
     // Bản công khai cho tìm kiếm xe rao vặt
     public static CarSummaryResponse publicFrom(Car car, String primaryImageUrl) {
         if (car == null) return null;
-        return build(car, null, primaryImageUrl);
+        return build(car, null, primaryImageUrl, true);
     }
 
-    private static CarSummaryResponse build(Car car, String licensePlate, String primaryImageUrl) {
+    private static CarSummaryResponse build(Car car, String licensePlate, String primaryImageUrl, boolean hideOwnerContact) {
         BigDecimal dayPrice = car.getRentalPricePerDay() != null ? car.getRentalPricePerDay() : BigDecimal.ZERO;
         return new CarSummaryResponse(
                 car.getId(),
@@ -61,14 +63,16 @@ public record CarSummaryResponse(
                 car.getDistrict(),
                 dayPrice,
                 car.getRentalPricePerMonth(),
-                car.getContactName(),
-                car.getContactPhone(),
-                car.getContactZalo(),
+                hideOwnerContact ? null : car.getContactName(),
+                hideOwnerContact ? null : car.getContactPhone(),
+                hideOwnerContact ? null : car.getContactZalo(),
                 car.getStatus(),
                 car.getListingStatus(),
                 com.carrental.util.RentalPricing.hourlyRate(dayPrice),
                 dayPrice,
-                primaryImageUrl
+                primaryImageUrl,
+                car.getLatitude(),
+                car.getLongitude()
         );
     }
 }

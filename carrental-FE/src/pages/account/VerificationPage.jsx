@@ -8,7 +8,7 @@ import { LiveState, Pill } from "@/components/LiveUi.jsx";
 
 import { formatDateTime } from "@/utils/datetime.js";
 import { docTypeLabels, verifyStatusLabels } from "@/utils/labels.js";
-import { SubmitForm, tone } from "@/components/account/VerificationForm.jsx";
+import { SubmitForm, VerificationStatus, tone } from "@/components/account/VerificationForm.jsx";
 
 const IDENTITY_DOC_TYPES = new Set(["CITIZEN_ID", "PASSPORT"]);
 
@@ -26,13 +26,12 @@ export default function VerificationLive() {
   const upgradeAttemptsUsed = kyc.data?.upgradeAttemptsUsed ?? derivedUsed;
   const upgradeAttemptsRemaining = kyc.data?.upgradeAttemptsRemaining ?? Math.max(0, maxUpgradeAttempts - upgradeAttemptsUsed);
   const hasPendingUpgrade = kyc.data?.hasPendingUpgradeRequest ?? docs.some(doc => IDENTITY_DOC_TYPES.has(doc.docType) && doc.verifyStatus === "PENDING");
-  const hasPendingDriverLicense = docs.some(doc => doc.docType === "DRIVER_LICENSE" && doc.verifyStatus === "PENDING");
 
   async function reloadAll() {
     await Promise.all([list.reload(), kyc.reload(), refreshAccount()]);
   }
 
-  return <ProfileLayout live active="verification" title="Xác minh giấy tờ" description="Nộp CCCD hoặc Hộ chiếu để nâng cấp lên Chủ xe (OWNER), hoặc GPLX. CarDB duyệt ảnh và cập nhật trạng thái KYC.">
+  return <ProfileLayout live active="verification" title="Xác minh giấy tờ" description="Nộp cùng lúc CCCD/Hộ chiếu và Giấy phép lái xe. Bạn được thuê xe khi Admin duyệt cả hai; CCCD được duyệt cũng giúp nâng cấp lên Chủ xe.">
     {!isAdmin ? (isOwner
       ? <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
         <div>
@@ -48,7 +47,7 @@ export default function VerificationLive() {
             Đã gửi {upgradeAttemptsUsed}/{maxUpgradeAttempts} lần • Còn lại {upgradeAttemptsRemaining} lần
           </span>
         </div>
-        <p className="mt-1 text-xs leading-relaxed text-amber-900">Tài khoản Khách hàng chưa thể vào trang Chủ xe hoặc đăng ký xe. Hãy nộp CCCD hoặc Hộ chiếu bên dưới và chờ Admin xác nhận; ngay sau khi được duyệt, tài khoản sẽ tự động nâng cấp lên Chủ xe.</p>
+        <p className="mt-1 text-xs leading-relaxed text-amber-900">Tài khoản Khách hàng chưa thể vào trang Chủ xe hoặc đăng ký xe. Khi CCCD/Hộ chiếu trong hồ sơ bên dưới được Admin duyệt, tài khoản sẽ tự động nâng cấp lên Chủ xe.</p>
         {hasPendingUpgrade ? (
           <p role="status" className="mt-2 rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-950">
             Bạn đang có yêu cầu nâng cấp chủ xe chờ duyệt (PENDING). Không thể gửi thêm yêu cầu mới trong thời gian chờ.
@@ -61,6 +60,15 @@ export default function VerificationLive() {
         ) : null}
       </div>) : null}
     <LiveState loading={list.loading && !list.data} error={list.error} label="giấy tờ" onRetry={reloadAll} />
+    {list.data ? <VerificationStatus docs={docs}/> : null}
+    {list.data ? <SubmitForm
+      docs={docs}
+      onDone={reloadAll}
+      isOwner={isOwner}
+      maxUpgradeAttempts={maxUpgradeAttempts}
+      upgradeAttemptsRemaining={upgradeAttemptsRemaining}
+    /> : null}
+    {docs.length ? <h2 className="mt-2 text-base font-bold">Lịch sử nộp giấy tờ</h2> : null}
     <div className="flex flex-col gap-3">
       {docs.map(doc => <article key={doc.id} className="rounded-2xl border border-[#E9E9E7] bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -79,15 +87,6 @@ export default function VerificationLive() {
           <p className="mt-1 text-sm text-[#B91C1C]">Lý do: {doc.rejectReason}</p>
         ) : null}
       </article>)}
-      {list.data && !list.data.length ? <p className="text-sm text-[#666666]">Bạn chưa nộp giấy tờ nào.</p> : null}
     </div>
-    <SubmitForm
-      onDone={reloadAll}
-      isOwner={isOwner}
-      hasPendingUpgrade={hasPendingUpgrade}
-      hasPendingDriverLicense={hasPendingDriverLicense}
-      maxUpgradeAttempts={maxUpgradeAttempts}
-      upgradeAttemptsRemaining={upgradeAttemptsRemaining}
-    />
   </ProfileLayout>;
 }

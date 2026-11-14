@@ -5,7 +5,7 @@ import com.carrental.security.ApiAccessDeniedHandler;
 import com.carrental.security.ApiAuthenticationEntryPoint;
 import com.carrental.security.CurrentAccountJwtAuthenticationConverter;
 import com.carrental.security.SecurityErrorResponses;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import java.net.URI;
 import java.util.List;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;

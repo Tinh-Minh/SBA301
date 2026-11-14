@@ -215,3 +215,10 @@ ALTER TABLE bookings ADD COLUMN IF NOT EXISTS refund_amount NUMERIC(14,0);
 ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_transaction_type_check;
 ALTER TABLE transactions ADD CONSTRAINT transactions_transaction_type_check CHECK (transaction_type IN
     ('PACKAGE_PAYMENT', 'BOOKING_DEPOSIT', 'BOOKING_PAYMENT', 'BOOKING_EXTRA_FEE', 'BOOKING_REFUND', 'REFUND'));
+
+-- Giao xe tận nơi: địa chỉ/toạ độ khách chọn, quãng đường ước tính và phí giao (miễn phí 5 km đầu, 30.000đ/km vượt).
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS delivery_address     VARCHAR(300);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS delivery_latitude    NUMERIC(9,6);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS delivery_longitude   NUMERIC(9,6);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS delivery_distance_km NUMERIC(7,1);
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS delivery_fee         NUMERIC(14,0) NOT NULL DEFAULT 0 CHECK (delivery_fee >= 0);

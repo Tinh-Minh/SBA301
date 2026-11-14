@@ -9,7 +9,7 @@ import java.util.UUID;
 import com.carrental.config.ClockConfig;
 import com.carrental.controller.HealthController;
 import com.carrental.exception.GlobalExceptionHandler;
-import com.carrental.web.RequestTraceFilter;
+import com.carrental.config.RequestTraceFilter;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.junit.jupiter.api.Test;
 import org.slf4j.MDC;
