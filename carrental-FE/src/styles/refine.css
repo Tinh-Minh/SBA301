@@ -164,3 +164,85 @@ html[data-surface="console"] .nav-group-label:first-child { padding-top: 6px; }
 :is(html[data-surface="app"], html[data-surface="console"]) main :is(h1, h2, h3, p, span, nav, a, li, small):not(:is(.bg-white, [class*="bg-white"], [class*="bg-[#F"], [class*="bg-[#E"], [class*="bg-[#D"], [class*="bg-[#1"], [class*="bg-emerald"], [class*="bg-red"], [class*="bg-amber"], [class*="bg-blue"], button, table, form, article, aside, [class*="rounded-2xl"], [class*="rounded-xl"], [class*="rounded-lg"]):not(main) *):not(button):not([class*="bg-"]) {
   color: #e65a12;
 }
+
+/* =====================================================================
+   Liquid Glass (phong cách Apple): kính trong mờ, làm mờ + tăng bão hoà nền phía sau,
+   viền sáng mảnh, vệt phản chiếu ở mép trên và bóng mềm. Áp cho topbar, các ô/thẻ,
+   ô nhập liệu và pop-up ở mọi trang trừ trang chủ.
+   ===================================================================== */
+:root {
+  --glass-bg: rgb(255 255 255 / .52);
+  --glass-bg-strong: rgb(255 255 255 / .72);
+  --glass-border: rgb(255 255 255 / .65);
+  --glass-edge: rgb(31 31 29 / .08);
+  --glass-blur: blur(22px) saturate(185%);
+  --glass-shine: inset 0 1px 0 rgb(255 255 255 / .85), inset 0 -1px 0 rgb(255 255 255 / .25), inset 0 0 0 1px rgb(255 255 255 / .35);
+  --glass-shadow: 0 10px 30px -12px rgb(20 30 40 / .28), 0 2px 6px -2px rgb(20 30 40 / .12);
+}
+.glass-surface,
+html:not([data-surface="home"]) .site-header:not(.auth-overlay),
+html:not([data-surface="home"]) .site-header.auth-overlay.is-scrolled {
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--glass-shine), var(--glass-shadow) !important;
+}
+/* Topbar: một dải kính nổi, viền đáy sáng như mép kính. */
+html:not([data-surface="home"]) .site-header:not(.auth-overlay),
+html:not([data-surface="home"]) .site-header.auth-overlay.is-scrolled {
+  background: linear-gradient(180deg, rgb(255 255 255 / .62), rgb(255 255 255 / .42)) !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+html:not([data-surface="home"]) .site-header nav a[aria-current="page"],
+html:not([data-surface="home"]) .site-header nav a[class*="bg-[#FFF"] {
+  background: rgb(255 255 255 / .55) !important; box-shadow: var(--glass-shine);
+}
+
+/* Các ô/thẻ nội dung nền trắng trong trang: chuyển thành tấm kính. */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-white, [class*="bg-white/"]):is(.rounded-xl, .rounded-2xl, .rounded-3xl) {
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur);
+  border-color: var(--glass-border) !important;
+  box-shadow: var(--glass-shine), var(--glass-shadow) !important;
+}
+/* Kính lồng trong kính: lớp trong nhẹ hơn, không làm mờ lần hai (đỡ nặng máy, đỡ đục). */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(.bg-white, [class*="bg-white/"]):is(.rounded-xl, .rounded-2xl, .rounded-3xl) :is(.bg-white, [class*="bg-white/"]):is(.rounded-xl, .rounded-2xl, .rounded-3xl, .rounded-lg) {
+  background: rgb(255 255 255 / .38) !important; -webkit-backdrop-filter: none; backdrop-filter: none;
+  box-shadow: var(--glass-shine) !important;
+}
+/* Ô nhập liệu: kính mỏng, rõ chữ. */
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), select, textarea) {
+  background-color: rgb(255 255 255 / .6) !important;
+  border-color: rgb(255 255 255 / .75) !important;
+  box-shadow: inset 0 1px 2px rgb(20 30 40 / .08), 0 1px 0 rgb(255 255 255 / .6);
+}
+:is(html[data-surface="app"], html[data-surface="console"]) main :is(input, select, textarea):focus {
+  background-color: rgb(255 255 255 / .85) !important; border-color: rgb(252 108 38 / .7) !important;
+  box-shadow: 0 0 0 4px rgb(252 108 38 / .15);
+}
+
+/* Pop-up: hộp thoại, menu tài khoản, menu di động, thông báo. */
+html:not([data-surface="home"]) [role="dialog"],
+html:not([data-surface="home"]) .site-header nav[id^="account-menu"],
+html:not([data-surface="home"]) .header-mobile-navigation {
+  background: var(--glass-bg-strong) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shine), 0 24px 60px -20px rgb(20 30 40 / .45), 0 4px 12px -4px rgb(20 30 40 / .15) !important;
+}
+/* Nền tối phía sau hộp thoại: nhạt hơn và làm mờ để thấy lớp kính. */
+html:not([data-surface="home"]) [role="presentation"][class*="fixed"][class*="inset-0"],
+html:not([data-surface="home"]) div[class*="fixed"][class*="inset-0"][class*="bg-[#292929]"] {
+  background: rgb(20 30 40 / .22) !important;
+  -webkit-backdrop-filter: blur(6px) saturate(120%); backdrop-filter: blur(6px) saturate(120%);
+}
+html:not([data-surface="home"]) .toast {
+  background: rgb(31 31 29 / .62) !important; color: #fff;
+  -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgb(255 255 255 / .22) !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / .25), 0 18px 40px -16px rgb(0 0 0 / .5) !important;
+}
+/* Trình duyệt không hỗ trợ làm mờ nền: dùng nền gần đặc để vẫn đọc được. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --glass-bg: rgb(255 255 255 / .9); --glass-bg-strong: rgb(255 255 255 / .96); }
+}
