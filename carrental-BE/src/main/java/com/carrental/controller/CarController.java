@@ -128,7 +128,7 @@ public class CarController {
     }
 
     // Chủ xe xem danh sách xe của mình (hỗ trợ lọc status và listingStatus)
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
     @GetMapping("/my-cars")
     public ApiResponse<PageResponse<CarSummaryResponse>> getMyCars(
             @RequestParam(required = false) CarStatus status,
@@ -143,7 +143,7 @@ public class CarController {
     }
 
     // Chủ xe đăng ký xe mới
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
     @PostMapping
     public ApiResponse<CarResponse> createCar(
             @Valid @RequestBody CarCreateRequest request
@@ -152,7 +152,7 @@ public class CarController {
     }
 
     // Chủ xe cập nhật thông tin xe
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
     @PutMapping("/{id}")
     public ApiResponse<CarResponse> updateCar(
             @PathVariable Long id,
@@ -172,7 +172,7 @@ public class CarController {
     }
 
     // Tải lên danh sách ảnh xe trực tiếp từ file máy (multipart/form-data)
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
     @PostMapping(path = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<List<CarImageResponse>> uploadCarImages(
             @PathVariable Long id,
@@ -183,7 +183,7 @@ public class CarController {
     }
 
     // Xoá một ảnh xe
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
     @DeleteMapping("/{id}/images/{imageId}")
     public ApiResponse<Void> deleteCarImage(
             @PathVariable Long id,
@@ -194,7 +194,7 @@ public class CarController {
     }
 
     // Chọn ảnh đại diện chính cho xe
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
     @PatchMapping("/{id}/images/{imageId}/primary")
     public ApiResponse<CarImageResponse> setPrimaryCarImage(
             @PathVariable Long id,
@@ -204,7 +204,7 @@ public class CarController {
     }
 
     // Thêm giấy tờ xe (cà vẹt, đăng kiểm, bảo hiểm) qua file multipart
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER')")
     @PostMapping(path = "/{id}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ApiResponse<CarDocumentResponse> addCarDocument(
             @PathVariable Long id,
@@ -217,7 +217,7 @@ public class CarController {
     }
 
     // Xem danh sách giấy tờ của xe
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'CUSTOMER', 'ADMIN')")
     @GetMapping("/{id}/documents")
     public ApiResponse<List<CarDocumentResponse>> getCarDocuments(
             @PathVariable Long id

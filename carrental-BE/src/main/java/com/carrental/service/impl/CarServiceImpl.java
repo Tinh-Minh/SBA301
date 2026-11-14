@@ -65,7 +65,7 @@ public class CarServiceImpl implements CarService {
         log.info("Create car licensePlate={}", request.getLicensePlate());
         try {
             Customer owner = currentUserService.getCurrentUser();
-            CurrentUserService.requireVerifiedOwner(owner);
+            CurrentUserService.requireCarRegistrant(owner);
 
             Car car = request.toEntity();
             if (carRepository.existsByLicensePlateIgnoreCase(car.getLicensePlate())
@@ -226,7 +226,7 @@ public class CarServiceImpl implements CarService {
         log.info("Get my cars status={}, listingStatus={}", status, listingStatus);
         try {
             Customer owner = currentUserService.getCurrentUser();
-            CurrentUserService.requireVerifiedOwner(owner);
+            CurrentUserService.requireCarRegistrant(owner);
             Specification<Car> spec = (root, query, cb) -> {
                 List<Predicate> ps = new ArrayList<>();
                 ps.add(cb.equal(root.get("owner").get("id"), owner.getId()));
@@ -413,6 +413,13 @@ public class CarServiceImpl implements CarService {
 
             car.setRejectReason(null);
             car.setStatus(CarStatus.ACTIVE);
+            // Khách hàng đăng xe lần đầu: xe được duyệt thì tài khoản tự động lên Chủ xe.
+            Customer owner = car.getOwner();
+            if (owner != null && owner.getRole() == com.carrental.enums.Role.CUSTOMER
+                    && owner.getStatus() == com.carrental.enums.CustomerStatus.ACTIVE) {
+                owner.setRole(com.carrental.enums.Role.OWNER);
+                log.info("Nâng cấp tài khoản lên Chủ xe sau khi duyệt xe customerId={} carId={}", owner.getId(), carId);
+            }
             pauseOrResumeSubscription(car, CarStatus.ACTIVE); // duyệt lại xong: cộng bù thời gian slot đã tạm dừng
             return toResponse(carRepository.saveAndFlush(car));
         } catch (AppException e) {
@@ -611,7 +618,7 @@ public class CarServiceImpl implements CarService {
             Customer requester = currentUserService.getCurrentUser();
             Car car = findCarOrThrow(carId);
             if (!currentUserService.isAdmin(requester)) {
-                CurrentUserService.requireVerifiedOwner(requester);
+                CurrentUserService.requireCarRegistrant(requester);
                 if (!currentUserService.isOwner(car, requester)) {
                     throw new AppException(HttpStatus.FORBIDDEN, "Bạn không có quyền xem giấy tờ của xe này");
                 }
@@ -677,7 +684,7 @@ public class CarServiceImpl implements CarService {
 
     private Car loadOwnedCar(Long carId) {
         Customer owner = currentUserService.getCurrentUser();
-        CurrentUserService.requireVerifiedOwner(owner);
+        CurrentUserService.requireCarRegistrant(owner);
         Car car = findCarOrThrow(carId);
         if (!currentUserService.isOwner(car, owner)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Bạn không phải chủ của xe này");

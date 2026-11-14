@@ -31,6 +31,24 @@ public interface CurrentUserService {
                 && customer.getKycStatus() == KycStatus.VERIFIED;
     }
 
+    /**
+     * Được đăng ký xe: tài khoản đang hoạt động, CCCD/Hộ chiếu đã duyệt, là Khách hàng hoặc Chủ xe.
+     * Khách hàng đăng xe đầu tiên và được Admin duyệt xe thì tự động lên Chủ xe.
+     */
+    static boolean canRegisterCars(Customer customer) {
+        return customer != null
+                && customer.getStatus() == CustomerStatus.ACTIVE
+                && (customer.getRole() == Role.OWNER || customer.getRole() == Role.CUSTOMER)
+                && customer.getKycStatus() == KycStatus.VERIFIED;
+    }
+
+    static void requireCarRegistrant(Customer customer) {
+        if (!canRegisterCars(customer)) {
+            throw new AppException(HttpStatus.FORBIDDEN,
+                    "Bạn cần được Admin duyệt CCCD/Hộ chiếu trước khi đăng ký xe");
+        }
+    }
+
     static void requireVerifiedOwner(Customer customer) {
         if (!isVerifiedOwnerAccount(customer)) {
             throw new AppException(HttpStatus.FORBIDDEN,
